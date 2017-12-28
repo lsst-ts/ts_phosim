@@ -4,6 +4,13 @@ import numpy as np
 class PhosimCommu(object):
 
     def __init__(self, phosimDir=None):
+        """
+        
+        Initiate the object.
+        
+        Keyword Arguments:
+            phosimDir {[str]} -- PhoSim directory. (default: {None})
+        """
         
         self.phosimDir = phosimDir
 
@@ -63,7 +70,6 @@ class PhosimCommu(object):
         """
         
         Get the ID in map dictionary defined in PhoSim.
-        https://confluence.lsstcorp.org/display/PHOSIM/Physics+Override+Commands
         
         Arguments:
             dictMap {[dict]} -- Dictionary map.
@@ -240,11 +246,59 @@ class PhosimCommu(object):
 
         return content
 
-    def getDefaultCmd(self):
-        pass
+    def getDefaultCmd(self, filePath=None):
+        """
+        
+        Get the default physical command.
+        
+        Keyword Arguments:
+            filePath {[str]} -- File path to save the physical command. (default: {None})
+        
+        Returns:
+            [str] -- Physical command used in PhoSim.
+        """
 
-    def getDefaultOpdCmd(self):
-        pass
+        # Physics Commands
+        content = ""
+        content += "backgroundmode 0 \n"
+        content += "raydensity 0.0 \n"
+        content += "perturbationmode 1 \n"
+        content += "trackingmode 0 \n"
+        content += "cleartracking \n"
+        content += "clearclouds \n"
+        content += "lascatprob 0.0 \n"
+        content += "contaminationmode 0 \n"
+        content += "diffractionmode 1 \n"
+        content += "straylight 0 \n"
+        content += "detectormode 0 \n"
+
+        if (filePath is not None):
+            self.writeToFile(filePath, content=content, mode="w")
+
+        return content
+
+    def getDefaultOpdCmd(self, filePath=None):
+        """
+        
+        Get the default optical path difference (OPD) physical command.
+        
+        Keyword Arguments:
+            filePath {[str]} -- File path to save the physical command. (default: {None})
+        
+        Returns:
+            [str] -- Physical command used in PhoSim.
+        """
+        
+        # Physics Commands
+        content = ""
+        content += "backgroundmode 0 \n"
+        content += "raydensity 0.0 \n"
+        content += "perturbationmode 1 \n"
+
+        if (filePath is not None):
+            self.writeToFile(filePath, content=content, mode="w")
+
+        return content
 
     def getDefaultInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, filePath=None):
         """
@@ -316,7 +370,7 @@ class PhosimCommu(object):
 
         return content
 
-    def runPhoSim(self, argstring="-h"):
+    def runPhoSim(self, argstring="-v"):
         """
         
         Run the PhoSim program.
@@ -336,6 +390,47 @@ class PhosimCommu(object):
 
         # Run the PhoSim with the related arguments
         self.__runProgram(command, argstring=argstring)
+
+    def getPhoSimArgs(self, instance, extraCommand=None, numProc=1, numThread=1, outputDir=None, 
+                      instrument="lsst", e2ADC=1, logFilePath=None):
+        """
+        
+        Get the arguments needed to run the PhoSim.
+        
+        Arguments:
+            instance {[str]} -- Instance catalog file.
+        
+        Keyword Arguments:
+            extraCommand {[str]} -- Command file to modify the default physics. (default: {None})
+            numProc {int} -- Number of processors. (default: {1})
+            numThread {int} -- Number of threads. (default: {1})
+            outputDir {[str]} -- Output image directory. (default: {None})
+            instrument {str} -- Instrument site directory. (default: {"lsst"})
+            e2ADC {int} -- Whether to generate amplifier images (1 = true, 0 = false). (default: {1})
+            logFilePath {[str]} -- Log file path for PhoSim calculation log. (default: {None})
+        
+        Returns:
+            [str] -- Arguments to run the PhoSim.
+        """
+        
+        argString = "%s -i %s -e %d" % (instance, instrument, e2ADC)
+
+        if (extraCommand is not None):
+            argString += " -c %s" % extraCommand
+
+        if (numProc > 1):
+            argString += " -p %d" % numProc
+
+        if (numThread > 1):
+            argString += " -t %d" % numThread
+
+        if (outputDir is not None):
+            argString += " -o %s" % outputDir
+
+        if (logFilePath is not None):
+            argString += " > %s 2>&1" % logFilePath
+
+        return argString
 
     def __runProgram(self, command, binDir=None, argstring=None):
         """
