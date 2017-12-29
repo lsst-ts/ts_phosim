@@ -5,8 +5,6 @@ from cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval, ZernikeEval
 from wep.SourceProcessor import SourceProcessor
 from wepPhoSim.MetroTool import calc_pssn, psf2eAtmW
 
-import matplotlib.pylab as plt
-
 class OpdMetrology(object):
 
     def __init__(self):
@@ -82,7 +80,7 @@ class OpdMetrology(object):
     def setDefaultLsstGQ(self):
         """
         
-        Set the default LSST Gaussian quadrature (QD) field X, Y and weighting ratio.
+        Set the default LSST Gaussian quadrature (GQ) field X, Y and weighting ratio.
         """
 
         # The distance of point xi (used in Gaussian quadrature plane) to the origin
@@ -110,7 +108,7 @@ class OpdMetrology(object):
     def getDefaultLsstWfsGQ(self):
         """
         
-        Get the default field X, Y of LSST wavefront sensor (WFS) on Gaussian quadrature (QD).
+        Get the default field X, Y of LSST wavefront sensor (WFS) on Gaussian quadrature (GQ).
         
         Returns:
             [list] -- Field X in degree.
@@ -126,7 +124,7 @@ class OpdMetrology(object):
     def setDefaultComcamGQ(self):
         """
         
-        Set the default ComCam Gaussian quadrature (QD) field X, Y and weighting ratio.
+        Set the default ComCam Gaussian quadrature (GQ) field X, Y and weighting ratio.
         """
 
         # ComCam is the cetral raft of LSST cam, which is composed of 3 x 3 CCDs.
@@ -314,8 +312,39 @@ class OpdMetrology(object):
 
         return dm5
 
-    def calcEllip(self, opdFitsFile):
-        pass
+    def calcEllip(self, opdFitsFile, wavelengthInUm, zen=0, debugLevel=0):
+
+        # Remove the affection of piston (z1), x-tilt (z2), and y-tilt (z3) from OPD map.
+        opdRmPTT = self.rmPTTfromOPD(opdFitsFile)[0]
+
+        # Calculate the ellipticity
+        elli = psf2eAtmW(opdRmPTT, wavelengthInUm, zen=zen, debugLevel=debugLevel)[0]
+
+        return elli
+
+    def calcGQvalue(self, valueList):
+        """
+        
+        Calculate the value on Gaussian quadrature (GQ).
+        
+        Arguments:
+            valueList {[list/ ndarray]} -- List of value (PSSN, effective FWHM, dm5, ellipticity).
+        
+        Returns:
+            [float] -- GQ value.
+        
+        Raises:
+            RuntimeError -- Length of weighting ratio != length of value list.
+        """
+
+        # Check the lengths of weighting ratio and value list are the same
+        if (len(self.wt) != len(valueList)):
+            raise RuntimeError("Length of weighting ratio != length of value list.")
+
+        # Calculate the effective value on Gaussain quardure plane
+        GQvalue = np.sum(self.wt*valueList)
+
+        return GQvalue
 
 if __name__ == "__main__":
 
@@ -340,6 +369,16 @@ if __name__ == "__main__":
     pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm)
     print(pssn)
 
+    # Calculate the GQ PSSN
+    metr.setDefaultLsstGQ()
+    pssnList = []
+    for ii in range(31):
+        opdFitsFile = "/Users/Wolf/Documents/aosOutput/image/sim6/iter0/sim6_iter0_opd%d.fits.gz" % ii
+        pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm)
+        pssnList.append(pssn)
+    GQpssn = metr.calcGQvalue(pssnList)
+    print(GQpssn)
+
     # Calculate the effective FWHM
     FWHMeff = metr.calcFWHMeff(pssn)
     print(FWHMeff)
@@ -349,3 +388,5 @@ if __name__ == "__main__":
     print(dm5)
 
     # Calculate the ellipticity
+    elli = metr.calcEllip(opdFitsFile, wavelengthInUm)
+    print(elli)

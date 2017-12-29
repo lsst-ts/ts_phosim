@@ -413,6 +413,19 @@ class PhosimCommu(object):
             [str] -- Arguments to run the PhoSim.
         """
         
+        # Use the absolute path
+        instance = os.path.abspath(instance)
+        
+        if (extraCommand is not None):
+            extraCommand = os.path.abspath(extraCommand)
+
+        if (outputDir is not None):
+            outputDir = os.path.abspath(outputDir)
+
+        if (logFilePath is not None):
+            logFilePath = os.path.abspath(logFilePath)
+
+        # Prepare the argument list
         argString = "%s -i %s -e %d" % (instance, instrument, e2ADC)
 
         if (extraCommand is not None):
