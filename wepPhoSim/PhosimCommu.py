@@ -1,4 +1,4 @@
-import os, subprocess
+import os, subprocess, unittest
 import numpy as np
 
 class PhosimCommu(object):
@@ -14,7 +14,7 @@ class PhosimCommu(object):
         
         self.phosimDir = phosimDir
 
-    def setPhoSimDir(phosimDir):
+    def setPhoSimDir(self, phosimDir):
         """
         
         Set the directory of PhoSim.
@@ -509,38 +509,101 @@ class PhosimCommu(object):
             # Close the file
             fid.close()
 
+class PhosimCommuTest(unittest.TestCase):
+    """
+    Test functions in PhosimCommu.
+    """
+
+    def setUp(self):
+
+        # Directory of phosim
+        self.phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
+
+    def testFunc(self):
+        
+        # Instantiate the phosim communicator
+        phosimCom = PhosimCommu("temp")
+        self.assertEqual(phosimCom.phosimDir, "temp")
+
+        phosimCom.setPhoSimDir(self.phosimDir)
+        self.assertEqual(phosimCom.phosimDir, self.phosimDir)
+
+        phosimFilterID = phosimCom.getFilterId("r")
+        self.assertEqual(phosimFilterID, 2)
+
+        surfaceID = phosimCom.getSurfaceId("M3")
+        self.assertEqual(surfaceID, 2)
+
+        dofInUm = np.zeros(50)
+        content = phosimCom.doDofPert(dofInUm)
+        self.assertEqual(len(content.split("\n")), 51)
+
+        surfId = 1
+        zkInMm = [1]
+        content = phosimCom.doSurfPert(surfId, zkInMm)
+        ansContent = "izernike 1 0 1 \n"
+        self.assertEqual(content, ansContent)
+
+        surfId = 1
+        surfFilePath = "temp.txt"
+        relScale = 1
+        content = phosimCom.doSurfMapPert(surfId, surfFilePath, relScale)
+        ansContent = "surfacemap 1 temp.txt 1 \n"
+        self.assertEqual(content, ansContent)
+
+        camConfigId = 1
+        content = phosimCom.doCameraConfig(camConfigId)
+        ansContent = "camconfig 1 \n"
+        self.assertEqual(content, ansContent)
+
+        opdId = 0
+        fieldXInDeg = 1.0
+        fieldYInDeg = 2.0
+        wavelengthInNm = 500
+        content = phosimCom.generateOpd(opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm)
+        ansContent = "opd  0\t 1.000000\t 2.000000 500.0 \n"
+        self.assertEqual(content, ansContent)
+
+        starId = 0
+        ra = 1.0
+        dec = 1.0
+        magNorm = 2.0
+        sedName = "flat.txt"
+        content = phosimCom.generateStar(starId, ra, dec, magNorm, sedName)
+        ansContent = "object  0\t 1.000000\t 1.000000  2.000000 ../sky/flat.txt 0.0 0.0 0.0 0.0 0.0 0.0 star 0.0 none none \n"
+        self.assertEqual(content, ansContent)
+
+        content = phosimCom.getDefaultCmd()
+        self.assertEqual(len(content.split("\n")), 12)
+
+        content = phosimCom.getDefaultOpdCmd()
+        self.assertEqual(len(content.split("\n")), 4)
+
+        obsId = 100
+        aFilterId = 1
+        content = phosimCom.getDefaultInstance(obsId, aFilterId)
+        self.assertEqual(len(content.split("\n")), 11)
+
+        content = phosimCom.getDefaultOpdInstance(obsId, aFilterId)
+        self.assertEqual(len(content.split("\n")), 5)
+
+        instFileName = os.path.join("..", "testData", "temp.inst")
+        phosimCom.writeToFile(instFileName, content="temp", mode="w")
+        argString = phosimCom.getPhoSimArgs(instFileName)
+
+        absFilePath = os.path.abspath(instFileName)
+        ansArgString = "%s -i lsst -e 1" % absFilePath
+
+        self.assertEqual(argString, ansArgString)
+        os.remove(absFilePath)
+
+        try:
+            phosimCom.runPhoSim()
+        except RuntimeError:
+            print("Do not find PhoSim directory.")
+
 if __name__ == "__main__":
 
-    # Directory of phosim
-    phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
-
-    # Instantiate the phosim communicator
-    phosimCom = PhosimCommu(phosimDir)
-
-    # Run PhoSim
-    # phosimCom.runPhoSim()
-
-    # DOF perturbation
-    # dof = np.random.rand(50)
-    # content = phosimCom.doDofPert(dof)
-    # print(content)
-
-    # Get the filter type
-    # afilter = "g"
-    # afilterId = phosimCom.getFilterId(afilter)
-    # print(afilterId)
-
-    # Do the surface perturbation
-    # zkInMm = np.random.rand(22)
-    # content = phosimCom.doSurfPert(3, zkInMm)
-    # print(content)
-
-    # Do the surface map perturbation
-    surfId = 3
-    surfFilePath = "/data/map1.txt"
-    relScale = 1
-    content = phosimCom.doSurfMapPert(surfId, surfFilePath, relScale)
-    print(content)
-
-
-
+    # Do the unit test
+    unittest.main()
+    
