@@ -1,9 +1,18 @@
-import os
+import os, unittest
 import numpy as np
 
 class CamSim(object):
 
     def __init__(self, camTBinDegC=6.5650, camRotInRad=0, camDataDir=None):
+        """
+        
+        Initiate the CamSim object. This object is used to correct the camera distortion.
+        
+        Keyword Arguments:
+            camTBinDegC {float} -- Camera body temperature in degree C. (default: {6.5650})
+            camRotInRad {float} -- Camera rotation angle in radian. (default: {0})
+            camDataDir {[str]} -- Directory of camera distortion data. (default: {None})
+        """
 
         self.camTBinDegC = camTBinDegC
         self.camRotInRad = camRotInRad
@@ -152,27 +161,50 @@ class CamSim(object):
 
         return distortion
 
+class CamSimTest(unittest.TestCase):
+    """
+    Test functions in CamSim.
+    """
+
+    def setUp(self):
+
+        # Directory of phosim
+        self.camDataDir = "../data/camera"
+
+    def testFunc(self):
+        
+        # Instantiate the CamSim
+        camSim = CamSim()
+
+        camSim.setCamDataDir(self.camDataDir)
+        self.assertEqual(camSim.camDataDir, self.camDataDir)
+
+        rotAngInRad = 1.0
+        camSim.setRotAngInRad(rotAngInRad)
+        self.assertEqual(camSim.camRotInRad, rotAngInRad)
+
+        rotAngInDeg = 30.0
+        camSim.setRotAngInDeg(rotAngInDeg)
+        self.assertEqual(camSim.camRotInRad, rotAngInDeg/180*np.pi)
+
+        tempInDegC = 10.0
+        camSim.setBodyTempInDegC(tempInDegC)
+        self.assertEqual(camSim.camTBinDegC, tempInDegC)
+
+        zenithAngleInDeg = 27.0912
+        zAngleInRad = zenithAngleInDeg/180*np.pi
+        distType = "L1S1zer"
+        camSim.setBodyTempInDegC(6.5650)
+        camSim.setRotAngInRad(-1.2323)
+        distortionInMn = camSim.getCamDistortionInMm(zAngleInRad, distType)
+
+        dataFilePath = os.path.join("..", "testData", "testOpdFunc", "sim6_iter0_pert.cmd")
+        distData = np.loadtxt(dataFilePath, skiprows=88, usecols=(1, 2, 3))
+        idx = (distData[:,0] == 3)
+        absDiff = np.sum(np.abs(distortionInMn - distData[idx,-1]))
+        self.assertTrue(absDiff < 1e-10)
+
 if __name__ == "__main__":
-    
-    camDataDir = "../data/camera"
 
-    camSim = CamSim()
-    camSim.setCamDataDir(camDataDir)
-
-    rotAngInRad = -1.2323
-    camSim.setRotAngInRad(rotAngInRad)
-    print(camSim.camRotInRad)
-
-    camTB = 6.5650
-    camSim.setBodyTempInDegC(camTB)
-    print(camSim.camTBinDegC)
-
-    zenithAngleInDeg = 27.0912
-    zAngleInRad = zenithAngleInDeg/180*np.pi
-    distortionInMn = camSim.getCamDistortionInMm(zAngleInRad, "L1S1zer")
-
-
-
-
-
-
+    # Do the unit test
+    unittest.main()
