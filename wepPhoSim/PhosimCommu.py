@@ -529,7 +529,7 @@ class PhosimCommu(object):
         # Check the file exists or not
         if not os.path.isfile(sedFilePath):
             content = "%d   1.0 \n" % wavelengthInNm
-            self.writeToFile(sedFilePath, content, mode="w")
+            self.writeToFile(sedFilePath, content=content, mode="w")
 
         return sedFilePath
 
