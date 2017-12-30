@@ -8,6 +8,10 @@ from wepPhoSim.MetroTool import calc_pssn, psf2eAtmW
 class OpdMetrology(object):
 
     def __init__(self):
+        """
+        
+        Initiate the OpdMetrology object.
+        """
         
         self.wt = np.array([])
         self.fieldX = np.array([])
