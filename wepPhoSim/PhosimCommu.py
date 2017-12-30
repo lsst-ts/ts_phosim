@@ -509,6 +509,30 @@ class PhosimCommu(object):
             # Close the file
             fid.close()
 
+    def writeSedFile(self, wavelengthInNm):
+        """
+        
+        Write the spectral energy distribution (SED) file used for PhoSim. This is for the monochromatic 
+        light wavelength.
+        
+        Arguments:
+            wavelengthInNm {[float]} -- Wavelength in nm.
+        
+        Returns:
+            [str] -- SED file path.
+        """
+
+        # Generate the SED file path
+        sedFileName = "sed_%d.txt" % wavelengthInNm
+        sedFilePath = os.path.join(self.phosimDir, "data", "sky", sedFileName)
+
+        # Check the file exists or not
+        if not os.path.isfile(sedFilePath):
+            content = "%d   1.0 \n" % wavelengthInNm
+            self.writeToFile(sedFilePath, content, mode="w")
+
+        return sedFilePath
+
 class PhosimCommuTest(unittest.TestCase):
     """
     Test functions in PhosimCommu.
@@ -596,6 +620,10 @@ class PhosimCommuTest(unittest.TestCase):
 
         self.assertEqual(argString, ansArgString)
         os.remove(absFilePath)
+
+        wavelengthInNm = 300.0
+        sedFilePath = phosimCom.writeSedFile(wavelengthInNm)
+        os.remove(sedFilePath)
 
         try:
             phosimCom.runPhoSim()
