@@ -158,6 +158,9 @@ class PhosimCommu(object):
             [str] -- Perturbation command used in PhoSim.
         """
 
+        # Use the absolute path of surface file
+        surfFilePath = os.path.abspath(surfFilePath)
+
         # Write the perturbation of surface map
         content = "surfacemap %d %s %d \n" % (surfId, surfFilePath, relScale)
 
@@ -182,7 +185,7 @@ class PhosimCommu(object):
         # Bit mask that defines which sensor groups are used
         # (For LSST: bitmask where first bit is science sensors on; 
         # second bit is wavefront sensors on; third bit is guiders on)
-        
+
         camConfigId = 4*int(sciSensorOn) + 2*int(wfSensorOn) + int(guidSensorOn)
 
         # Write the camera configuration
@@ -578,9 +581,10 @@ class PhosimCommuTest(unittest.TestCase):
 
         surfId = 1
         surfFilePath = "temp.txt"
+        surfFilePath = os.path.abspath(surfFilePath)
         relScale = 1
         content = phosimCom.doSurfMapPert(surfId, surfFilePath, relScale)
-        ansContent = "surfacemap 1 temp.txt 1 \n"
+        ansContent = "surfacemap 1 %s 1 \n" % surfFilePath
         self.assertEqual(content, ansContent)
 
         content = phosimCom.doCameraConfig(guidSensorOn=True)
