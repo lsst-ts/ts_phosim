@@ -163,20 +163,28 @@ class PhosimCommu(object):
 
         return content
 
-    def doCameraConfig(self, camConfigId):
+    def doCameraConfig(self, sciSensorOn=False, wfSensorOn=False, guidSensorOn=False):
         """
         
         Do the camera configuratioin.
         
-        Arguments:
-            camConfigId {[int]} -- Camera configuration. Bit mask that defines which sensor groups 
-                                   are used. "1": science sensors on. "2": wavefront sensors on.
-                                   "3": guiders on. "7": all sensors (default). 
+        Keyword Arguments:
+            sciSensorOn {[bool]} -- Science sensors are on. (default: {False})
+            wfsSensorOn {[bool]} -- Wavefront sensors are on. (default: {False})
+            guidSensorOn {[bool]} -- Guider sensors are on. (default: {False})
         
         Returns:
             [str] -- Instance command used in PhoSim.
         """
         
+        # Get the camema configuration Id
+
+        # Bit mask that defines which sensor groups are used
+        # (For LSST: bitmask where first bit is science sensors on; 
+        # second bit is wavefront sensors on; third bit is guiders on)
+        
+        camConfigId = 4*int(sciSensorOn) + 2*int(wfSensorOn) + int(guidSensorOn)
+
         # Write the camera configuration
         content = "camconfig %d \n" % camConfigId
 
@@ -312,8 +320,8 @@ class PhosimCommu(object):
         Keyword Arguments:
             ra {float} -- Unrefracted Right Ascension in decimal degrees. (default: {0})
             dec {float} -- Unrefracted Declination in decimal degrees. (default: {0})
-            rot {float} -- Angle of sky relative to camera coordinates in ? (from North over East). 
-                           (default: {0})
+            rot {float} -- Angle of sky relative to camera coordinates (from North over East) in 
+                           decimal degrees. (default: {0})
             mjd {float} -- MJD of observation. (default: {49552.3})
             filePath {[str]} -- File path to save the instance. (default: {None})
         
@@ -575,8 +583,7 @@ class PhosimCommuTest(unittest.TestCase):
         ansContent = "surfacemap 1 temp.txt 1 \n"
         self.assertEqual(content, ansContent)
 
-        camConfigId = 1
-        content = phosimCom.doCameraConfig(camConfigId)
+        content = phosimCom.doCameraConfig(guidSensorOn=True)
         ansContent = "camconfig 1 \n"
         self.assertEqual(content, ansContent)
 
