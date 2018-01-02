@@ -100,6 +100,8 @@ class M2Sim(MirrorSim):
         
         Returns:
             [ndarray] -- Fitted residue in um after removing the fitted zk terms in Zemax coordinate.
+            [ndarray] -- X position in m in Zemax coordinate. 
+            [ndarray] -- Y position in m in Zemax coordinate.
             [ndarray] -- Fitted zk in um in Zemax coordinate.
         """
 
@@ -117,7 +119,48 @@ class M2Sim(MirrorSim):
         resInUmInZemax, zcInUmInZemax = self._MirrorSim__getMirrorResInNormalizedCoor(surfInZemax, 
                 bxInZemax/self.RinM, byInZemax/self.RinM, numTerms, writeZcToFilePath=writeZcToFilePath)
 
-        return resInUmInZemax, zcInUmInZemax
+        return resInUmInZemax, bxInZemax, byInZemax, zcInUmInZemax
+
+    def writeMirZkAndGridResInZemax(self, resFile=None, surfaceGridN=200, gridFileName="M2_1um_grid.DAT", 
+                                    numTerms=22, writeZcToFilePath=None):
+        """
+        
+        Write the grid residue in mm of mirror surface after the fitting with Zk under the Zemax 
+        coordinate.
+        
+        Keyword Arguments:
+            surfaceGridN {int} -- Surface grid number. (default: {200})
+            gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
+            numTerms {int} -- Number of Zernike terms to fit. (default: {22})
+            writeZcToFilePath {[str]} -- [File path to write the fitted zk. (default: {None})
+            resFile {[str]} -- File path to save the grid surface residue map. (default: {None})
+
+        Returns:
+            [str] -- Grid residue map related data.
+        """
+
+        # Get the residure map
+        resInUmInZemax, bxInMinZemax, byInMinZemax = self.getMirrorResInZemax(gridFileName=gridFileName, 
+                                                        numTerms=numTerms, writeZcToFilePath=writeZcToFilePath)[0:3]
+
+        # Change the unit
+        zfInMm = resInUmInZemax * 1e-3
+        xfInMm = bxInMinZemax * 1e3
+        yfInMm = byInMinZemax * 1e3
+        innerRinMm = self.RiInM * 1e3
+        outerRinMm = self.RinM * 1e3
+
+        # Get the residue map used in Zemax
+        # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
+        # Content: (z, dx, dy, dxdy)
+        content = self._MirrorSim__gridSampInMnInZemax(zfInMm, xfInMm, yfInMm, innerRinMm, outerRinMm, 
+                                                        surfaceGridN, surfaceGridN, resFile=resFile)
+
+        return content
+
+    def showMirResMap(self):
+
+        pass
 
 if __name__ == "__main__":
     
@@ -151,6 +194,14 @@ if __name__ == "__main__":
     writeZcToFilePath = "/Users/Wolf/Desktop/tempZc.txt"
 
     # Need to update zernike fit to 28 terms
-    resInUmInZemax, zcInUmInZemax = M2.getMirrorResInZemax(numTerms=22, writeZcToFilePath=writeZcToFilePath)
+    # resInUmInZemax, bxInZemax, byInZemax, zcInUmInZemax = M2.getMirrorResInZemax(numTerms=22, writeZcToFilePath=writeZcToFilePath)
+
+    # Write the grid surface residue map
+    resFile = "/Users/Wolf/Desktop/resM2.txt"
+    # content = M2.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=28, writeZcToFilePath=writeZcToFilePath)
+
+    # Show the grid mirror residue map
+    
+
 
 
