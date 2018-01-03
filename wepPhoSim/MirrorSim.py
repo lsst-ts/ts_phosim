@@ -9,10 +9,18 @@ from lsst.cwfs.tools import ZernikeFit, ZernikeEval
 class MirrorSim(object):
     
     def __init__(self, innerRinM, outerRinM, surf=None, mirrorDataDir=None):
-
-        # Check the raidus
-        if (innerRinM >= outerRinM):
-            raise ValueError("Inner raidus should be smaller than outer raidus.")
+        """
+        
+        Initiate the MirrorSim object.
+        
+        Arguments:
+            innerRinM {[float]} -- Mirror inner radius in m.
+            outerRinM {[float]} -- Mirror outer radius in m.
+        
+        Keyword Arguments:
+            surf {[ndarray]} -- Mirror surface along z direction. (default: {None})
+            mirrorDataDir {[str]} -- Mirror data directory. (default: {None})
+        """
         
         self.RiInM = innerRinM
         self.RinM = outerRinM
@@ -270,13 +278,13 @@ class MirrorSim(object):
             minx = -0.5*(NUM_X_PIXELS-1)*delxInMm
             miny = -0.5*(NUM_Y_PIXELS-1)*delyInMm
 
-            xx = np.arange(minx, -minx + delxInMm, delxInMm)
-            yy = np.arange(miny, -miny + delyInMm, delyInMm)
+            xx = np.linspace(minx, -minx, NUM_X_PIXELS)
+            yy = np.linspace(miny, -miny, NUM_Y_PIXELS)
             xp, yp = np.meshgrid(xx, yy)
 
             xp = xp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS, 1))
             yp = yp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS, 1))
-            zp = zp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS,1))
+            zp = zp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS, 1))
 
             sc = ax[0].scatter(xp, yp, s=25, c=zp*1e6, marker=".", edgecolor="none")
 
@@ -321,6 +329,7 @@ class MirrorSim(object):
 
         return res, zc
 
+    # Reconsider these abstract functions. Maybe delete them in the final.
     def getActForce(self):
         raise NotImplementedError("Should have the child class implemented this.")
 
