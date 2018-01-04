@@ -168,7 +168,7 @@ class CamSimTest(unittest.TestCase):
 
     def setUp(self):
 
-        # Directory of phosim
+        # Directory of camera data
         self.camDataDir = "../data/camera"
 
     def testFunc(self):
