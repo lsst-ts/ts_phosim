@@ -169,7 +169,7 @@ class CamSimTest(unittest.TestCase):
     def setUp(self):
 
         # Directory of camera data
-        self.camDataDir = "../data/camera"
+        self.camDataDir = os.path.join("..", "data", "camera")
 
     def testFunc(self):
         

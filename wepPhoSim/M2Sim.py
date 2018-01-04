@@ -1,4 +1,4 @@
-import os
+import os, unittest
 import numpy as np
 
 from wepPhoSim.MirrorSim import MirrorSim
@@ -205,42 +205,73 @@ class M2Sim(MirrorSim):
         self._MirrorSim__showResMap(resInMmInZemax, bxInMmInZemax, byInMmInZemax, outerRinMm,
                                     resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
 
+class M2SimTest(unittest.TestCase):
+    
+    """
+    Test functions in M2Sim.
+    """
+
+    def setUp(self):
+
+        # Directory of M2 data
+        self.mirrorDataDir = os.path.join("..", "data", "M2")
+
+    def testFunc(self):
+
+        # Instantiate the M2Sim object
+        M2 = M2Sim()
+
+        self.assertEqual(M2.RiInM, 0.9)
+        self.assertEqual(M2.RinM, 1.71)
+
+        M2.setMirrorDataDir(self.mirrorDataDir)
+
+        forceInN = M2.getActForce()
+        self.assertEqual(forceInN.shape, (156, 156))
+
+        zAngleInDeg = 27.0912
+        zAngleInRadian = zAngleInDeg/180*np.pi
+        printthzInUm = M2.getPrintthz(zAngleInRadian)
+
+        ansFilePath = os.path.join("..", "testData", "testM2Func", "M2printthz.txt")
+        ansPrintthzInUm = np.loadtxt(ansFilePath)
+        self.assertLess(np.sum(np.abs(printthzInUm-ansPrintthzInUm)), 1e-10)
+
+        M2TzGrad = -0.0675
+        M2TrGrad = -0.1416
+        tempCorrInUm = M2.getTempCorr(M2TzGrad, M2TrGrad)
+
+        ansFilePath = os.path.join("..", "testData", "testM2Func", "M2tempCorr.txt")
+        ansTempCorrInUm = np.loadtxt(ansFilePath)
+        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 1e-10)
+
+        numTerms = 28
+        mirrorSurfInUm = printthzInUm + tempCorrInUm
+        M2.setSurfAlongZ(mirrorSurfInUm)
+        zcInMmInZemax = M2.getMirrorResInMmInZemax(numTerms=numTerms)[3]
+
+        ansFilePath = os.path.join("..", "testData", "testM2Func", "sim6_M2zlist.txt")
+        ansZcInUmInZemax = np.loadtxt(ansFilePath)
+        ansZcInMmInZemax = ansZcInUmInZemax*1e-3
+        self.assertLess(np.sum(np.abs(zcInMmInZemax[0:numTerms]-ansZcInMmInZemax[0:numTerms])), 1e-9)
+
+        resFile = os.path.join("..", "output", "M2res.txt")
+        M2.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=numTerms)
+        content = np.loadtxt(resFile)
+
+        ansFilePath = os.path.join("..", "testData", "testM2Func", "sim6_M2res.txt")
+        ansContent = np.loadtxt(ansFilePath)
+        self.assertLess(np.sum(np.abs(content[0,:]-ansContent[0,:])), 1e-9)
+        self.assertLess(np.sum(np.abs(content[1:,0]-ansContent[1:,0])), 1e-9)
+
+        writeToResMapFilePath = os.path.join("..", "output", "M2resMap.png")
+        M2.showMirResMap(numTerms=numTerms, resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
+        self.assertTrue(os.path.isfile(writeToResMapFilePath))
+
+        os.remove(resFile)
+        os.remove(writeToResMapFilePath)
+
 if __name__ == "__main__":
 
-    # M2 data directory
-    mirrorDataDir = "../data/M2"
-
-    # Instantiate mirror
-    M2 = M2Sim()
-    M2.setMirrorDataDir(mirrorDataDir)
-
-    forceInN = M2.getActForce()
-
-    zAngleInDeg = 27.0912
-    zAngleInRadian = zAngleInDeg/180*np.pi
-    printthzInUm = M2.getPrintthz(zAngleInRadian)
-
-    M2TzGrad = -0.0675
-    M2TrGrad = -0.1416
-    tempCorrInUm = M2.getTempCorr(M2TzGrad, M2TrGrad)
-
-    mirrorSurfInUm = printthzInUm + tempCorrInUm
-    M2.setSurfAlongZ(mirrorSurfInUm)
-
-    # Get the residue and zc
-    writeZcToFilePath = "/Users/Wolf/Desktop/tempZc.txt"
-
-    # Need to update zernike fit to 28 terms
-    # resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInUmInZemax = M2.getMirrorResInMmInZemax(numTerms=22, writeZcToFilePath=writeZcToFilePath)
-
-    # Write the grid surface residue map
-    resFile = "/Users/Wolf/Desktop/resM2.txt"
-    # content = M2.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=28, writeZcToFilePath=writeZcToFilePath)
-
-    # Show the grid mirror residue map
-    writeToResMapFilePath = "/Users/Wolf/Desktop/resM2map.png"
-    # M2.showMirResMap(numTerms=28, resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
-
-
-
-
+    # Do the unit test
+    unittest.main()

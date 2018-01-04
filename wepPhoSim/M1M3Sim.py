@@ -1,4 +1,4 @@
-import os
+import os, unittest
 import numpy as np
 from scipy.interpolate import Rbf
 
@@ -499,56 +499,100 @@ class M1M3Sim(MirrorSim):
         # That means the direction of M2 to M1M3.
         return -z0
 
-if __name__ == "__main__":
+class M1M3SimTest(unittest.TestCase):
     
-    # M1M3 data directory
-    mirrorDataDir = "../data/M1M3"
+    """
+    Test functions in M1M3Sim.
+    """
 
-    # Instantiate mirror
-    M1M3 = M1M3Sim()
-    M1M3.setMirrorDataDir(mirrorDataDir)
+    def setUp(self):
 
-    forceInN = M1M3.getActForce()
+        # Directory of M1M3 data
+        self.mirrorDataDir = os.path.join("..", "data", "M1M3")
 
-    zAngleInDeg = 27.0912
-    zAngleInRadian = zAngleInDeg/180*np.pi
-    printthzInM = M1M3.getPrintthz(zAngleInRadian)
+    def testFunc(self):
 
-    M1M3TBulk = 0.0902
-    M1M3TxGrad = -0.0894
-    M1M3TyGrad = -0.1973
-    M1M3TzGrad = -0.0316
-    M1M3TrGrad = 0.0187
-    tempCorrInUm = M1M3.getTempCorr(M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad, M1M3TrGrad)
+        # Instantiate the M1M3Sim object
+        M1M3 = M1M3Sim()
+        self.assertEqual(M1M3.RiInM, (2.558, 0.550))
+        self.assertEqual(M1M3.RinM, (4.180, 2.508))
 
-    iSim = 6
-    randSurfInM = M1M3.genMirSurfRandErr(zAngleInRadian, seedNum=iSim)
+        M1M3.setMirrorDataDir(self.mirrorDataDir)
 
-    printthzInUm = printthzInM*1e6
-    randSurfInUm = randSurfInM*1e6
-    mirrorSurfInUm = printthzInUm + randSurfInUm + tempCorrInUm
-    M1M3.setSurfAlongZ(mirrorSurfInUm)
+        forceInN = M1M3.getActForce()
+        self.assertEqual(forceInN.shape, (156, 156))
 
-    # Get the residue and zc
-    writeZcToFilePath = "/Users/Wolf/Desktop/tempM1M3zc.txt"
+        zAngleInDeg = 27.0912
+        zAngleInRadian = zAngleInDeg/180*np.pi
+        printthzInM = M1M3.getPrintthz(zAngleInRadian)
 
-    # Need to update zernike fit to 28 terms
-    resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInMmInZemax = M1M3.getMirrorResInMmInZemax(numTerms=28)
+        ansFilePath = os.path.join("..", "testData", "testM1M3Func", "M1M3printthz.txt")
+        ansPrintthzInM = np.loadtxt(ansFilePath)
+        self.assertLess(np.sum(np.abs(printthzInM-ansPrintthzInM)), 1e-10)
 
-    # Write the grid surface residue map
-    resFile1 = "/Users/Wolf/Desktop/resM1.txt"
-    resFile3 = "/Users/Wolf/Desktop/resM3.txt"
-    resFile = [resFile1, resFile3]
-    contentM1, contentM3 = M1M3.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=28, writeZcInMnToFilePath=writeZcToFilePath)
+        M1M3TBulk = 0.0902
+        M1M3TxGrad = -0.0894
+        M1M3TyGrad = -0.1973
+        M1M3TzGrad = -0.0316
+        M1M3TrGrad = 0.0187
+        tempCorrInUm = M1M3.getTempCorr(M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad, M1M3TrGrad)
 
-    # Show the grid mirror residue map
-    writeToResMapFilePath1 = "/Users/Wolf/Desktop/resM1map.png"
-    writeToResMapFilePath3 = "/Users/Wolf/Desktop/resM3map.png"
-    writeToResMapFilePath = [writeToResMapFilePath1, writeToResMapFilePath3]
-    M1M3.showMirResMap(numTerms=28, resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
+        ansFilePath = os.path.join("..", "testData", "testM1M3Func", "M1M3tempCorr.txt")
+        ansTempCorrInUm = np.loadtxt(ansFilePath)
+        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 1e-10)
 
+        iSim = 6
+        randSurfInM = M1M3.genMirSurfRandErr(zAngleInRadian, seedNum=iSim)
+        
+        ansFilePath = os.path.join("..", "testData", "testM1M3Func", "M1M3surfRand.txt")
+        ansRandSurfInM = np.loadtxt(ansFilePath)
+        self.assertLess(np.sum(np.abs(randSurfInM-ansRandSurfInM)), 1e-10)
 
+        printthzInUm = printthzInM*1e6
+        randSurfInUm = randSurfInM*1e6
+        mirrorSurfInUm = printthzInUm + randSurfInUm + tempCorrInUm
+        M1M3.setSurfAlongZ(mirrorSurfInUm)
 
+        numTerms = 28
+        zcInMmInZemax = M1M3.getMirrorResInMmInZemax(numTerms=numTerms)[3]
 
+        ansFilePath = os.path.join("..", "testData", "testM1M3Func", "sim6_M1M3zlist.txt")
+        ansZcInUmInZemax = np.loadtxt(ansFilePath)
+        ansZcInMmInZemax = ansZcInUmInZemax*1e-3
+        self.assertLess(np.sum(np.abs(zcInMmInZemax[0:numTerms]-ansZcInMmInZemax[0:numTerms])), 1e-9)
 
+        resFile1 = os.path.join("..", "output", "M1res.txt")
+        resFile3 = os.path.join("..", "output", "M3res.txt")
+        resFile = [resFile1, resFile3]
+        M1M3.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=numTerms)
+        content1 = np.loadtxt(resFile1)
+        content3 = np.loadtxt(resFile3)
 
+        ansFilePath1 = os.path.join("..", "testData", "testM1M3Func", "sim6_M1res.txt")
+        ansFilePath3 = os.path.join("..", "testData", "testM1M3Func", "sim6_M3res.txt")
+        ansContent1 = np.loadtxt(ansFilePath1)
+        ansContent3 = np.loadtxt(ansFilePath3)
+
+        self.assertLess(np.sum(np.abs(content1[0,:]-ansContent1[0,:])), 1e-9)
+        self.assertLess(np.sum(np.abs(content1[1:,0]-ansContent1[1:,0])), 1e-9)
+
+        self.assertLess(np.sum(np.abs(content3[0,:]-ansContent3[0,:])), 1e-9)
+        self.assertLess(np.sum(np.abs(content3[1:,0]-ansContent3[1:,0])), 1e-9)
+
+        writeToResMapFilePath1 = os.path.join("..", "output", "M1resMap.png")
+        writeToResMapFilePath3 = os.path.join("..", "output", "M3resMap.png")
+        writeToResMapFilePath = [writeToResMapFilePath1, writeToResMapFilePath3]
+        M1M3.showMirResMap(numTerms=numTerms, resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
+        self.assertTrue(os.path.isfile(writeToResMapFilePath1))
+        self.assertTrue(os.path.isfile(writeToResMapFilePath3))
+
+        os.remove(resFile1)
+        os.remove(resFile3)
+        os.remove(writeToResMapFilePath1)
+        os.remove(writeToResMapFilePath3)
+
+if __name__ == "__main__":
+
+    # Do the unit test
+    unittest.main()
+    

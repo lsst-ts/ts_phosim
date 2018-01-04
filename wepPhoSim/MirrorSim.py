@@ -357,10 +357,10 @@ class MirrorSimTest(unittest.TestCase):
     def setUp(self):
 
         # Directory of M2 data
-        self.mirrorDataDir = "../data/M2"
+        self.mirrorDataDir = os.path.join("..", "data", "M2")
 
         # Directory of M1M3 data
-        self.M1M3DataDir = "../data/M1M3"        
+        self.M1M3DataDir = os.path.join("..", "data", "M1M3")
 
     def testFunc(self):
 
