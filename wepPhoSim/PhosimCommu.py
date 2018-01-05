@@ -193,6 +193,24 @@ class PhosimCommu(object):
 
         return content
 
+    def doSurfLink(self, surfId1, surfId2):
+        """
+        
+        Do the surface linkage.
+        
+        Arguments:
+            surfId1 {[int]} -- Surface ID 1.
+            surfId2 {[int]} -- Surface ID 2.
+        
+        Returns:
+            [str] -- Perturbation command used in PhoSim.
+        """
+
+        # Link the surface
+        content = "surfacelink %d %d \n" % (surfId1, surfId2)
+
+        return content
+
     def generateOpd(self, opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm):
         """
         
@@ -589,6 +607,12 @@ class PhosimCommuTest(unittest.TestCase):
 
         content = phosimCom.doCameraConfig(guidSensorOn=True)
         ansContent = "camconfig 1 \n"
+        self.assertEqual(content, ansContent)
+
+        linkSurfId1 = 1
+        linkSurfId2 = 2
+        content = phosimCom.doSurfLink(linkSurfId1, linkSurfId2)
+        ansContent = "surfacelink 1 2 \n"
         self.assertEqual(content, ansContent)
 
         opdId = 0
