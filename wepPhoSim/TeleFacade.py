@@ -5,7 +5,9 @@ from wepPhoSim.CamSim import CamSim
 from wepPhoSim.M2Sim import M2Sim
 from wepPhoSim.M1M3Sim import M1M3Sim
 from wepPhoSim.PhosimCommu import PhosimCommu
+
 from wepPhoSim.OpdMetrology import OpdMetrology
+from wepPhoSim.SkySim import SkySim
 
 class TeleFacade(object):
     
@@ -207,16 +209,46 @@ class TeleFacade(object):
 
         return value
 
-    def writeDefaultOpdCmdFile(self, opdCmdFileDir, pertFilePath=None):
+    def writeDefaultStarCmdFile(self, cmdFileDir, pertFilePath=None, cmdFileName="starPert.cmd"):
+        """
+        
+        Write the default physical command file of stars with the subsystem perturbation 
+        if necessary. 
+        
+        Arguments:
+            cmdFileDir {[str]} -- Directory to the star command file.
+        
+        Keyword Arguments:
+            cmdFileName {[str]} -- Star command file name. (default: {"starPert.cmd"})
+            pertFilePath {[str]} -- Subsystem perturbation command file path. (default: {None})
+        
+        Returns:
+            [str] -- Command file path.
+        """
+        
+        # Command file path
+        cmdFilePath = os.path.join(cmdFileDir, cmdFileName)
+
+        # Write the default physical setting
+        self.phoSimCommu.getDefaultCmd(filePath=cmdFilePath)
+
+        # Add the subsystem perturbation
+        if (pertFilePath is not None):
+            self.phoSimCommu.writeToFile(cmdFilePath, sourceFile=pertFilePath)
+
+        return cmdFilePath
+
+    def writeDefaultOpdCmdFile(self, cmdFileDir, pertFilePath=None, cmdFileName="opdPert.cmd"):
         """
         
         Write the default physical command file of optical path difference (OPD) with the 
         subsystem perturbation if necessary. 
         
         Arguments:
-            opdCmdFileDir {[str]} -- Directory to the OPD command file.
+            cmdFileDir {[str]} -- Directory to the OPD command file.
         
         Keyword Arguments:
+            cmdFileName {[str]} -- OPD command file name. (default: {"opdPert.cmd"})
             pertFilePath {[str]} -- Subsystem perturbation command file path. (default: {None})
 
         Returns:
@@ -224,8 +256,7 @@ class TeleFacade(object):
         """
 
         # Command file path
-        cmdFileName = "opdPert.cmd"
-        cmdFilePath = os.path.join(opdCmdFileDir, cmdFileName)
+        cmdFilePath = os.path.join(cmdFileDir, cmdFileName)
 
         # Write the default physical setting
         self.phoSimCommu.getDefaultOpdCmd(filePath=cmdFilePath)
@@ -236,7 +267,63 @@ class TeleFacade(object):
 
         return cmdFilePath
 
-    def writeDefaultOpdInstFile(self, instFileDir, opdMetr, obsId, aFilter, wavelengthInNm):
+    def writeDefaultStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), 
+                                    camRot=0, mjd=59552.3, sedName="sed_500.txt", sciSensorOn=False, 
+                                    wfSensorOn=False, guidSensorOn=False, instFileName="star.inst"):
+        """
+        
+        Write the default star instance file.
+        
+        Arguments:
+            instFileDir {[str]} -- Directory to instance file.
+            skySim {[SkySim]} -- SkySim object.
+            obsId {[int]} -- Observation ID.
+            aFilter {[str]} -- Active filter type ("u", "g", "r", "i", "z", "y").
+        
+        Keyword Arguments:
+            boresight {tuple} -- Telescope boresight in (ra, decl). (default: {(0,0)})
+            camRot {float} -- Camera rotation angle. (default: {0})
+            mjd {float} -- MJD of observation. (default: {59552.3})
+            sedName {str} -- The name of the SED file with a file path that is relative to the 
+                             data directory in PhoSim. (default: {"sed_500.txt"})
+            sciSensorOn {bool} -- Science sensors are on. (default: {False})
+            wfSensorOn {bool} -- Wavefront sensors are on. (default: {False})
+            guidSensorOn {bool} -- Guider sensors are on. (default: {False})
+            instFileName {str} -- Star instance file name. (default: {"star.inst"})
+        
+        Returns:
+            [str] -- Instance file path.
+        """
+
+        # Instance file path
+        instFilePath = os.path.join(instFileDir, instFileName)
+
+        # Get the filter ID in PhoSim
+        aFilterId = self.phoSimCommu.getFilterId(aFilter)
+
+        # Write the default instance setting
+        ra = boresight[0]
+        dec = boresight[1]
+        self.phoSimCommu.getDefaultInstance(obsId, aFilterId, ra=ra, dec=dec, rot=-camRot, 
+                                            mjd=mjd, filePath=instFilePath)
+
+        # Write the telescope accumulated degree of freedom (DOF)
+        content = self.phoSimCommu.doDofPert(self.dofInUm)
+
+        # Set the camera configuration
+        content += self.phoSimCommu.doCameraConfig(sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn, 
+                                                    guidSensorOn=guidSensorOn)
+
+        # Write the star source
+        for ii in range(len(skySim.starId)):
+            content += self.phoSimCommu.generateStar(skySim.starId[ii], skySim.ra[ii], 
+                                                skySim.decl[ii], skySim.mag[ii], sedName)
+        self.phoSimCommu.writeToFile(instFilePath, content=content)
+
+        return instFilePath
+
+    def writeDefaultOpdInstFile(self, instFileDir, opdMetr, obsId, aFilter, wavelengthInNm, 
+                                instFileName="opd.inst"):
         """
         
         Write the default optical path difference (OPD) instance file.
@@ -247,13 +334,15 @@ class TeleFacade(object):
             obsId {[int]} -- Observation ID.
             aFilter {[str]} -- Active filter type ("u", "g", "r", "i", "z", "y").
             wavelengthInNm {[float]} -- OPD source wavelength in nm.
+
+        Keyword Arguments:
+            instFileName {[str]} -- OPD instance file name. (default: {"opd.inst"})
         
         Returns:
             [str] -- Instance file path.
         """
         
         # Instance file path
-        instFileName = "opd.inst"
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the filter ID in PhoSim
@@ -288,7 +377,7 @@ class TeleFacade(object):
         dofFilePath = os.path.join(outputFileDir, dofFileName)
         np.savetxt(dofFilePath, self.dofInUm)
 
-    def writePertBaseOnConfigFile(self, pertCmdFileDir, seedNum=None, saveResMapFig=False):
+    def writePertBaseOnConfigFile(self, pertCmdFileDir, seedNum=None, saveResMapFig=False, pertCmdFileName="pert.cmd"):
         """
         
         Write the perturbation command file based on the telescope configuration file.
@@ -298,14 +387,13 @@ class TeleFacade(object):
         
         Keyword Arguments:
             seedNum {[int]} -- Random seed number. (default: {None})
-            saveResMapFig {[bool]} -- Save the mirror surface residue map or not. (default: {False}) 
+            saveResMapFig {[bool]} -- Save the mirror surface residue map or not. (default: {False})
+            pertCmdFileName {[str]} -- Perturbation command file name. (default: {pert.cmd})
         
         Returns:
-            [str] -- Perturbation commend content.
+            [str] -- Perturbation command content.
+            [str] -- Perturbation command file path.
         """
-
-        # Perturbation command file name
-        pertCmdFileName = "pert.cmd"
 
         # Mirror surface residue file name
         M1resFileName = "M1res.txt"
@@ -454,7 +542,7 @@ class TeleFacade(object):
                 self.M2.showMirResMap(numTerms=numTerms, resFile=M2resFilePath, 
                                       writeToResMapFilePath=writeToResMapFilePath)
 
-        return content
+        return content, pertCmdFilePath
                 
     def __getPhoSimCamSurfName(self, camSurfName):
         """
@@ -517,7 +605,7 @@ if __name__ == "__main__":
     outputFileDir = "../output"
 
     # Write the perturbation command file
-    # content = tele.writePertBaseOnConfigFile(outputFileDir, seedNum=iSim, saveResMapFig=True)
+    # content = tele.writePertBaseOnConfigFile(outputFileDir, seedNum=iSim, saveResMapFig=True)[0]
 
     # Set the default LSST GQ metrology
     metr.setDefaultLsstGQ()
@@ -528,7 +616,7 @@ if __name__ == "__main__":
 
     # Write the opd physical command file
     pertFilePath = os.path.join(outputFileDir, "pert.cmd")
-    cmdFilePath = tele.writeDefaultOpdCmdFile(outputFileDir, pertFilePath)
+    cmdFilePath = tele.writeDefaultOpdCmdFile(outputFileDir, pertFilePath=pertFilePath)
 
     # Write the opd instance file
     obsId = 9006000
@@ -549,10 +637,30 @@ if __name__ == "__main__":
     # tele.runPhoSim(argString)
 
     # Calculate the PSSN
-    zen = tele.getConfigValue("zenithAngle", index=1)
-    opdFitsFile = os.path.join(outputImgFileDir, "opd_9006000_0.fits.gz")
-    wavelengthInUm = 0.5
-    pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm, zen=zen, debugLevel=0)
+    # zen = tele.getConfigValue("zenithAngle", index=1)
+    # opdFitsFile = os.path.join(outputImgFileDir, "opd_9006000_0.fits.gz")
+    # wavelengthInUm = 0.5
+    # pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm, zen=zen, debugLevel=0)
+
+    # Write the default star command file
+    cmdFilePath = tele.writeDefaultStarCmdFile(outputFileDir, pertFilePath=pertFilePath)
+
+    # Set the sky information
+    skySim = SkySim()
+    skySim.addStarByRaDecInDeg(0, 1.196, 1.176, 17)
+
+    # Write the default star instance file
+    instFilePath = tele.writeDefaultStarInstFile(outputFileDir, skySim, obsId, aFilter, wfSensorOn=True, 
+                                                    instFileName="star.inst")
+
+    # Get the argument to run the phosim
+    logFilePath = os.path.join(outputImgFileDir, "phosimStar.log")
+    argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
+                                e2ADC=0, logFilePath=logFilePath)
+
+    # Run the phosim
+    # tele.runPhoSim(argString)
+
 
 
 
