@@ -317,6 +317,21 @@ class OpdMetrology(object):
         return dm5
 
     def calcEllip(self, opdFitsFile, wavelengthInUm, zen=0, debugLevel=0):
+        """
+        
+        Calculate the ellipticity.
+        
+        Arguments:
+            opdFitsFile {[str]} -- OPD FITS file.
+            wavelengthInUm {[float]} -- Wavelength in microns.
+        
+        Keyword Arguments:
+            zen {float} -- Telescope zenith angle in degree. (default: {0})
+            debugLevel {int} -- Debug level. The higher value gives more information. (default: {0})
+        
+        Returns:
+            [float] -- Ellipticity.
+        """
 
         # Remove the affection of piston (z1), x-tilt (z2), and y-tilt (z3) from OPD map.
         opdRmPTT = self.rmPTTfromOPD(opdFitsFile)[0]
