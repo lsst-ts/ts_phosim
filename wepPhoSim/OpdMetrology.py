@@ -1,7 +1,8 @@
+import os, unittest
 import numpy as np
 from astropy.io import fits
 
-from cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval, ZernikeEval
+from cwfs.Tool import ZernikeAnnularFit, ZernikeEval
 from wep.SourceProcessor import SourceProcessor
 from wepPhoSim.MetroTool import calc_pssn, psf2eAtmW
 
@@ -155,16 +156,15 @@ class OpdMetrology(object):
         fieldY = np.kron(np.ones(nCol), coorComcam)
         self.setFieldXYinDeg(fieldX, fieldY)
 
-    def getZkFromOpd(self, opdFitsFile, znTerms=22, obscuration=0.61):
+    def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
         """
         
         Get the wavefront error of optical path difference (OPD) in the basis of 
         annular Zernike polynomials.
-        
-        Arguments:
-            opdFitsFile {[str]} -- OPD FITS file.
-        
+                
         Keyword Arguments:
+            opdFitsFile {[str]} -- OPD FITS file. (default: {None})
+            opdMap {[ndarray]} -- OPD map data. (default: {None})
             znTerms {int} -- Number of terms of annular Zk (z1-z22 by default). (default: {22})
             obscuration {float} -- Obscuration of annular Zernike polynomial. (default: {0.61})
         
@@ -179,7 +179,10 @@ class OpdMetrology(object):
         """
 
         # Get the OPD data (PhoSim OPD unit: um)
-        opd = fits.getdata(opdFitsFile)
+        if (opdFitsFile is not None):
+            opd = fits.getdata(opdFitsFile)
+        elif (opdMap is not None):
+            opd = opdMap.copy()
 
         # Check the x, y dimensions of OPD are the same
         if (np.unique(opd.shape).size != 1):
@@ -196,14 +199,15 @@ class OpdMetrology(object):
 
         return zk, opd, opdx, opdy
 
-    def rmPTTfromOPD(self, opdFitsFile):
+    def rmPTTfromOPD(self, opdFitsFile=None, opdMap=None):
         """
         
         Remove the afftection of piston (z1), x-tilt (z2), and y-tilt (z3) from the optical 
         map difference (OPD) map.
         
-        Arguments:
-            opdFitsFile {[str]} -- OPD FITS file.
+        Keyword Arguments:
+            opdFitsFile {[str]} -- OPD FITS file. (default: {None})
+            opdMap {[ndarray]} -- OPD map data. (default: {None})
         
         Returns:
             [ndarray] -- OPD map after removing the affection of z1-z3.
@@ -213,7 +217,8 @@ class OpdMetrology(object):
         
         # Do the spherical Zernike fitting for the OPD map
         # Only fit the first three terms (z1-z3): piston, x-tilt, y-tilt
-        zk, opd, opdx, opdy = self.getZkFromOpd(opdFitsFile, znTerms=3, obscuration=0)
+        zk, opd, opdx, opdy = self.getZkFromOpd(opdFitsFile=opdFitsFile, opdMap=opdMap, 
+                                                znTerms=3, obscuration=0)
 
         # Find the index that the value of OPD is not 0
         idx = (opd != 0)
@@ -248,17 +253,18 @@ class OpdMetrology(object):
         # Add to listed field x, y
         self.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)
 
-    def calcPSSN(self, opdFitsFile, wavelengthInUm, zen=0, debugLevel=0):
+    def calcPSSN(self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0, debugLevel=0):
         """
         
         Calculate the normalized point source sensitivity (PSSN) based on the optical path 
         difference (OPD) map.
         
         Arguments:
-            opdFitsFile {[str]} -- OPD FITS file.
             wavelengthInUm {[float]} -- Wavelength in microns.
         
         Keyword Arguments:
+            opdFitsFile {[str]} -- OPD FITS file. (default: {None})
+            opdMap {[ndarray]} -- OPD map data. (default: {None})
             zen {float} -- Telescope zenith angle in degree. (default: {0})
             debugLevel {int} -- Debug level. The higher value gives more information. (default: {0})
         
@@ -269,7 +275,7 @@ class OpdMetrology(object):
         # Before calc_pssn,
         # (1) Remove PTT (piston, x-tilt, y-tilt),
         # (2) Make sure outside of pupil are all zeros
-        opdRmPTT = self.rmPTTfromOPD(opdFitsFile)[0]
+        opdRmPTT = self.rmPTTfromOPD(opdFitsFile=opdFitsFile, opdMap=opdMap)[0]
 
         # Calculate the normalized point source sensitivity (PSSN)
         pssn = calc_pssn(opdRmPTT, wavelengthInUm, zen=zen, debugLevel=debugLevel)
@@ -316,16 +322,17 @@ class OpdMetrology(object):
 
         return dm5
 
-    def calcEllip(self, opdFitsFile, wavelengthInUm, zen=0, debugLevel=0):
+    def calcEllip(self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0, debugLevel=0):
         """
         
         Calculate the ellipticity.
         
         Arguments:
-            opdFitsFile {[str]} -- OPD FITS file.
             wavelengthInUm {[float]} -- Wavelength in microns.
         
         Keyword Arguments:
+            opdFitsFile {[str]} -- OPD FITS file. (default: {None})
+            opdMap {[ndarray]} -- OPD map data. (default: {None})
             zen {float} -- Telescope zenith angle in degree. (default: {0})
             debugLevel {int} -- Debug level. The higher value gives more information. (default: {0})
         
@@ -334,7 +341,7 @@ class OpdMetrology(object):
         """
 
         # Remove the affection of piston (z1), x-tilt (z2), and y-tilt (z3) from OPD map.
-        opdRmPTT = self.rmPTTfromOPD(opdFitsFile)[0]
+        opdRmPTT = self.rmPTTfromOPD(opdFitsFile=opdFitsFile, opdMap=opdMap)[0]
 
         # Calculate the ellipticity
         elli = psf2eAtmW(opdRmPTT, wavelengthInUm, zen=zen, debugLevel=debugLevel)[0]
@@ -365,47 +372,100 @@ class OpdMetrology(object):
 
         return GQvalue
 
+class OpdMetrologyTest(unittest.TestCase):
+    
+    """
+    Test functions in OpdMetrology.
+    """
+
+    def setUp(self):
+
+        self.testDataDir = os.path.join("..", "testData", "testOpdFunc")
+
+    def testFunc(self):
+
+        # Instantiate the OpdMetrology object
+        metr = OpdMetrology()
+
+        wt = np.array([1])
+        metr.setWeightingRatio(wt)
+        self.assertEqual(metr.wt, wt)
+
+        fieldXInDegree = 0.1
+        fieldYInDegree = 0.2
+        metr.setFieldXYinDeg(fieldXInDegree, fieldYInDegree)
+        self.assertEqual(metr.fieldX, fieldXInDegree)
+        self.assertEqual(metr.fieldY, fieldYInDegree)
+
+        metr.addWeightingRatio(1)
+        self.assertEqual(len(metr.wt), 2)
+
+        metr.normalizeWeightingRatio()
+        self.assertEqual(np.sum(metr.wt), 1)
+
+        fieldXInDegree = 0.2
+        fieldYInDegree = 0.3
+        metr.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)
+        self.assertEqual(len(metr.fieldX), 2)
+
+        metr.setDefaultLsstGQ()
+        self.assertEqual(len(metr.fieldX), 31)
+
+        fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
+        self.assertEqual(len(fieldWFSx), 4)
+
+        metr.setDefaultComcamGQ()
+        self.assertEqual(len(metr.fieldX), 9)
+
+        opdFileName = "sim6_iter0_opd0.fits.gz"
+        opdFilePath = os.path.join(self.testDataDir, opdFileName)
+        zk = metr.getZkFromOpd(opdFitsFile=opdFilePath)[0]
+        
+        ansOpdFileName = "sim6_iter0_opd.zer"
+        ansOpdFilePath = os.path.join(self.testDataDir, ansOpdFileName)
+        allOpdAns = np.loadtxt(ansOpdFilePath)
+        self.assertLess(np.sum(np.abs(zk-allOpdAns[0,:])), 1e-10)
+
+        opdRmPTT, opdx, opdy = metr.rmPTTfromOPD(opdFitsFile=opdFilePath)
+        zkRmPTT = metr.getZkFromOpd(opdMap=opdRmPTT)[0]
+        self.assertLess(np.sum(np.abs(zkRmPTT[0:3])), 5e-2)
+
+        sensorName = "R22_S11"
+        xInpixel = 4000
+        yInPixel = 4072
+        metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, folderPath2FocalPlane=self.testDataDir)
+
+        ansFieldXinDeg = 2000*0.2/3600
+        ansFieldYinDeg = 2036*0.2/3600
+        self.assertAlmostEqual((metr.fieldX[-1], metr.fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg))
+
+        wavelengthInUm = 0.5
+        pssn = metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFilePath)
+
+        ansAllDataFileName = "sim6_iter0_PSSN.txt"
+        ansAllDataFilePath = os.path.join(self.testDataDir, ansAllDataFileName)
+        allData = np.loadtxt(ansAllDataFilePath)
+        self.assertAlmostEqual(pssn, allData[0,0])
+
+        fwhm = metr.calcFWHMeff(pssn)
+        self.assertAlmostEqual(fwhm, allData[1,0])
+
+        dm5 = metr.calcDm5(pssn)
+        self.assertAlmostEqual(dm5, allData[2,0])
+
+        elli = metr.calcEllip(wavelengthInUm, opdFitsFile=opdFilePath)
+
+        ansElliFileName = "sim6_iter0_elli.txt"
+        ansElliFilePath = os.path.join(self.testDataDir, ansElliFileName)
+        allElli = np.loadtxt(ansElliFilePath)
+        self.assertAlmostEqual(elli, allElli[0])
+
+        metr.setDefaultLsstGQ()
+        valueList = allData[0, 0:31]
+        GQvalue = metr.calcGQvalue(valueList)
+        self.assertAlmostEqual(GQvalue, allData[0,-1])
+
 if __name__ == "__main__":
 
-    metr = OpdMetrology()
-
-    # Calculate Zk based on OPD
-    opdFitsFile = "/Users/Wolf/Documents/aosOutput/image/sim6/iter0/sim6_iter0_opd0.fits.gz"
-    zk = metr.getZkFromOpd(opdFitsFile)[0]
-
-    # Folder path of focal plane data
-    folderPath2FocalPlane = "/Users/Wolf/Documents/bitbucket/phosim_syseng2/data/lsst"
-    sensorName = "R13_S11"
-    xInpixel = 2000
-    yInPixel = 2036
-    metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, folderPath2FocalPlane=folderPath2FocalPlane)
-
-    # Remove the PTT
-    opdRmPTT, opdx, opdy = metr.rmPTTfromOPD(opdFitsFile)
-
-    # Calculate PSSN
-    wavelengthInUm = 0.5
-    pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm)
-    print(pssn)
-
-    # Calculate the GQ PSSN
-    metr.setDefaultLsstGQ()
-    pssnList = []
-    for ii in range(31):
-        opdFitsFile = "/Users/Wolf/Documents/aosOutput/image/sim6/iter0/sim6_iter0_opd%d.fits.gz" % ii
-        pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm)
-        pssnList.append(pssn)
-    GQpssn = metr.calcGQvalue(pssnList)
-    print(GQpssn)
-
-    # Calculate the effective FWHM
-    FWHMeff = metr.calcFWHMeff(pssn)
-    print(FWHMeff)
-
-    # Calculate the dm5
-    dm5 = metr.calcDm5(pssn)
-    print(dm5)
-
-    # Calculate the ellipticity
-    elli = metr.calcEllip(opdFitsFile, wavelengthInUm)
-    print(elli)
+    # Do the unit test
+    unittest.main()
