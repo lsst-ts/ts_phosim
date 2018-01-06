@@ -7,7 +7,7 @@ from wepPhoSim.M1M3Sim import M1M3Sim
 from wepPhoSim.TeleFacade import TeleFacade
 from wepPhoSim.PhosimCommu import PhosimCommu
 
-from wepPhoSim.OpdMetrology import OpdMetrology
+from wepPhoSim.SkySim import SkySim
 
 def main():
     pass
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     M1M3 = M1M3Sim()
     M2 = M2Sim()
     phoSimCommu = PhosimCommu()
-    metr = OpdMetrology()
+    skySim = SkySim()
 
     # Instantiate the telescope
     tele = TeleFacade(cam=cam, M1M3=M1M3, M2=M2, phoSimCommu=phoSimCommu)
@@ -45,37 +45,25 @@ if __name__ == "__main__":
     # Write the perturbation command file
     pertCmdFilePath = tele.writePertBaseOnConfigFile(outputFileDir, seedNum=iSim, saveResMapFig=True)
 
-    # Set the default LSST GQ metrology
-    metr.setDefaultLsstGQ()
+    # Add the star
+    skySim.addStarByRaDecInDeg(0, 1.196, 1.176, 17)
 
-    # Add the wavefront sensor
-    fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
-    metr.addFieldXYbyDeg(fieldWFSx, fieldWFSy)
+    # Write the default star command file
+    cmdFilePath = tele.writeDefaultStarCmdFile(outputFileDir, pertFilePath=pertCmdFilePath)
 
-    # Write the opd physical command file
-    cmdFilePath = tele.writeDefaultOpdCmdFile(outputFileDir, pertFilePath=pertCmdFilePath)
 
-    # Write the opd instance file
+    # Write the default star instance file
     obsId = 9006000
     aFilter = "g"
-    wavelengthInNm = 500
-    instFilePath = tele.writeDefaultOpdInstFile(outputFileDir, metr, obsId, aFilter, wavelengthInNm)
-
-    # Write the accumulated DOF file
-    tele.writeAccDofFile(outputFileDir)
+    instFilePath = tele.writeDefaultStarInstFile(outputFileDir, skySim, obsId, aFilter, wfSensorOn=True, 
+                                                    instFileName="star.inst")
 
     # Get the argument to run the phosim
     outputImgFileDir = "./outputImg"
-    logFilePath = os.path.join(outputImgFileDir, "phosimOpd.log")
+    logFilePath = os.path.join(outputImgFileDir, "phosimStar.log")
     argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
-                                    e2ADC=0, logFilePath=logFilePath)
-    
+                                e2ADC=0, logFilePath=logFilePath)
+
     # Run the phosim
     tele.runPhoSim(argString)
 
-    # Calculate the PSSN
-    opdFitsFile = os.path.join(outputImgFileDir, "opd_9006000_0.fits.gz")
-    wavelengthInUm = 0.5
-    pssn = metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFitsFile, zen=0, debugLevel=0)
-    print(pssn)
-    

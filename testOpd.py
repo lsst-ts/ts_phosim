@@ -8,7 +8,7 @@ def main(phosimDir, outputDir, obsId, aFilter, opdWaveInNm, numProc=1):
     # Declare the opd metrology call
     metr = OpdMetrology()
 
-    # Set the lsst camera
+    # Set the lsst camera GQ field points
     metr.setDefaultLsstGQ()
 
     # Write the opd instance

@@ -393,7 +393,6 @@ class TeleFacade(object):
             pertCmdFileName {[str]} -- Perturbation command file name. (default: {pert.cmd})
         
         Returns:
-            [str] -- Perturbation command content.
             [str] -- Perturbation command file path.
         """
 
@@ -544,7 +543,7 @@ class TeleFacade(object):
                 self.M2.showMirResMap(numTerms=numTerms, resFile=M2resFilePath, 
                                       writeToResMapFilePath=writeToResMapFilePath)
 
-        return content, pertCmdFilePath
+        return pertCmdFilePath
                 
     def __getPhoSimCamSurfName(self, camSurfName):
         """
