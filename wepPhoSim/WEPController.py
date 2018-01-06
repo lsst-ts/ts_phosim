@@ -3,14 +3,11 @@ class WEPController(object):
     def __init__(self):
         pass
 
-    def getStar(self):
-    	pass
-
     def evalWavefrontError(self):
-    	pass
+        pass
 
     def publishResult(self):
-    	pass
+        pass
 
 if __name__ == "__main__":
 
