@@ -14,7 +14,9 @@ class TeleFacade(object):
     def __init__(self, cam=None, M1M3=None, M2=None, phoSimCommu=None, configFilePath=None):
         """
         
-        Initiate the TeleFacade object.
+        Initiate the TeleFacade object. This class uses the facade pattern that the high level
+        class telescope helps to write the perturbations of camera, M1M3, and M2 into the PhoSim 
+        by the interface to PhoSim. 
         
         Keyword Arguments:
             cam {[CamSim]} -- CamSim object. (default: {None})
@@ -570,103 +572,110 @@ class TeleFacade(object):
 
         return surfName
 
+class TeleFacadeTest(unittest.TestCase):
+    
+    """
+    Test functions in TeleFacade.
+    """
+
+    def setUp(self):
+        pass
+
+    def testFunc(self):
+        pass
+
+
+
 if __name__ == "__main__":
+
+    # Do the unit test
+    unittest.main()
     
-    cam = CamSim()
-    M1M3 = M1M3Sim()
-    M2 = M2Sim()
-    phoSimCommu = PhosimCommu()
-    metr = OpdMetrology()
+    # cam = CamSim()
+    # M1M3 = M1M3Sim()
+    # M2 = M2Sim()
+    # phoSimCommu = PhosimCommu()
+    # metr = OpdMetrology()
 
-    tele = TeleFacade(cam=cam, M1M3=M1M3, M2=M2, phoSimCommu=phoSimCommu)
+    # tele = TeleFacade(cam=cam, M1M3=M1M3, M2=M2, phoSimCommu=phoSimCommu)
 
-    # Set the telescope degree of freedom
+    # # Set the telescope degree of freedom
 
-    # Subsystem data direction
-    camDataDir = "../data/camera"
-    M1M3dataDir = "../data/M1M3"
-    M2dataDir = "../data/M2"
-    phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
+    # # Subsystem data direction
+    # camDataDir = "../data/camera"
+    # M1M3dataDir = "../data/M1M3"
+    # M2dataDir = "../data/M2"
+    # phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
 
-    # Set the configuration file path
-    configFilePath = "../data/telescopeConfig/GT.inst"
-    tele.setConfigFile(configFilePath)
+    # # Set the configuration file path
+    # configFilePath = "../data/telescopeConfig/GT.inst"
+    # tele.setConfigFile(configFilePath)
 
-    # Get the value
-    varName = "zenithAngle"
-    value = tele.getConfigValue(varName, index=1)
+    # # Get the value
+    # varName = "zenithAngle"
+    # value = tele.getConfigValue(varName, index=1)
 
-    # Set the subsystem directory
-    tele.setSubSysConfigFile(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir, M2dataDir=M2dataDir, 
-                             phosimDir=phosimDir)
+    # # Set the subsystem directory
+    # tele.setSubSysConfigFile(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir, M2dataDir=M2dataDir, 
+    #                          phosimDir=phosimDir)
 
-    # Set the path of perturbation file
-    iSim = 6
-    outputFileDir = "../output"
+    # # Set the path of perturbation file
+    # iSim = 6
+    # outputFileDir = "../output"
 
-    # Write the perturbation command file
-    # content = tele.writePertBaseOnConfigFile(outputFileDir, seedNum=iSim, saveResMapFig=True)[0]
+    # # Write the perturbation command file
+    # # content = tele.writePertBaseOnConfigFile(outputFileDir, seedNum=iSim, saveResMapFig=True)[0]
 
-    # Set the default LSST GQ metrology
-    metr.setDefaultLsstGQ()
+    # # Set the default LSST GQ metrology
+    # metr.setDefaultLsstGQ()
 
-    # Add the wavefront sensor
-    fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
-    metr.addFieldXYbyDeg(fieldWFSx, fieldWFSy)
+    # # Add the wavefront sensor
+    # fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
+    # metr.addFieldXYbyDeg(fieldWFSx, fieldWFSy)
 
-    # Write the opd physical command file
-    pertFilePath = os.path.join(outputFileDir, "pert.cmd")
-    cmdFilePath = tele.writeDefaultOpdCmdFile(outputFileDir, pertFilePath=pertFilePath)
+    # # Write the opd physical command file
+    # pertFilePath = os.path.join(outputFileDir, "pert.cmd")
+    # cmdFilePath = tele.writeDefaultOpdCmdFile(outputFileDir, pertFilePath=pertFilePath)
 
-    # Write the opd instance file
-    obsId = 9006000
-    aFilter = "g"
-    wavelengthInNm = 500
-    instFilePath = tele.writeDefaultOpdInstFile(outputFileDir, metr, obsId, aFilter, wavelengthInNm)
+    # # Write the opd instance file
+    # obsId = 9006000
+    # aFilter = "g"
+    # wavelengthInNm = 500
+    # instFilePath = tele.writeDefaultOpdInstFile(outputFileDir, metr, obsId, aFilter, wavelengthInNm)
 
-    # Write the accumulated DOF file
-    tele.writeAccDofFile(outputFileDir)
+    # # Write the accumulated DOF file
+    # tele.writeAccDofFile(outputFileDir)
 
-    # Get the argument to run the phosim
-    outputImgFileDir = "../outputImg"
-    logFilePath = os.path.join(outputImgFileDir, "phosimOpd.log")
-    argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
-                                    e2ADC=0, logFilePath=logFilePath)
+    # # Get the argument to run the phosim
+    # outputImgFileDir = "../outputImg"
+    # logFilePath = os.path.join(outputImgFileDir, "phosimOpd.log")
+    # argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
+    #                                 e2ADC=0, logFilePath=logFilePath)
     
-    # Run the phosim
-    # tele.runPhoSim(argString)
+    # # Run the phosim
+    # # tele.runPhoSim(argString)
 
-    # Calculate the PSSN
-    # zen = tele.getConfigValue("zenithAngle", index=1)
-    # opdFitsFile = os.path.join(outputImgFileDir, "opd_9006000_0.fits.gz")
-    # wavelengthInUm = 0.5
-    # pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm, zen=zen, debugLevel=0)
+    # # Calculate the PSSN
+    # # zen = tele.getConfigValue("zenithAngle", index=1)
+    # # opdFitsFile = os.path.join(outputImgFileDir, "opd_9006000_0.fits.gz")
+    # # wavelengthInUm = 0.5
+    # # pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm, zen=zen, debugLevel=0)
 
-    # Write the default star command file
-    cmdFilePath = tele.writeDefaultStarCmdFile(outputFileDir, pertFilePath=pertFilePath)
+    # # Write the default star command file
+    # cmdFilePath = tele.writeDefaultStarCmdFile(outputFileDir, pertFilePath=pertFilePath)
 
-    # Set the sky information
-    skySim = SkySim()
-    skySim.addStarByRaDecInDeg(0, 1.196, 1.176, 17)
+    # # Set the sky information
+    # skySim = SkySim()
+    # skySim.addStarByRaDecInDeg(0, 1.196, 1.176, 17)
 
-    # Write the default star instance file
-    instFilePath = tele.writeDefaultStarInstFile(outputFileDir, skySim, obsId, aFilter, wfSensorOn=True, 
-                                                    instFileName="star.inst")
+    # # Write the default star instance file
+    # instFilePath = tele.writeDefaultStarInstFile(outputFileDir, skySim, obsId, aFilter, wfSensorOn=True, 
+    #                                                 instFileName="star.inst")
 
-    # Get the argument to run the phosim
-    logFilePath = os.path.join(outputImgFileDir, "phosimStar.log")
-    argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
-                                e2ADC=0, logFilePath=logFilePath)
+    # # Get the argument to run the phosim
+    # logFilePath = os.path.join(outputImgFileDir, "phosimStar.log")
+    # argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
+    #                             e2ADC=0, logFilePath=logFilePath)
 
-    # Run the phosim
-    # tele.runPhoSim(argString)
-
-
-
-
-
-
-
-
-
-
+    # # Run the phosim
+    # # tele.runPhoSim(argString)

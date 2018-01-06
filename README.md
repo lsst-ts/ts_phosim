@@ -37,3 +37,17 @@
 *OpdMetrology.py: OPD related metrology.*
 <br/>
 *CamSim.py: Camera distortion correction.*
+<br/>
+*MirrorSim.py: Parent class of M1M3Sim and M2Sim classes.*
+<br/>
+*M1M3Sim.py: M1M3 mirror distortion of gravity and temperature gradient.*
+<br/>
+*M2Sim.py: M2 mirror distortion of gravity and temperature gradient.*
+<br/>
+*CoTransform.py: Coordination transformation functions.*
+<br/>
+*TeleFacade.py: Telescope facade pattern that intergate the correction of camera and mirror distortion correction to PhoSim.*
+<br/>
+*SkySim.py: Sky simulator to add the stars.*
+<br/>
+*WEPController.py: Wavefront estimation controller class. This is a high level class to use the wavefront estimation pipeline.*
