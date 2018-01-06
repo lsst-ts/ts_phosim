@@ -434,12 +434,12 @@ class TeleFacade(object):
         if (self.M1M3 is not None):
             
             # Do the gravity correction
-            printthzInM = M1M3.getPrintthz(zAngleInRad)
+            printthzInM = self.M1M3.getPrintthz(zAngleInRad)
 
             # Add the surface error if necessary
             randSurfInM = None
             if (seedNum is not None):
-                randSurfInM = M1M3.genMirSurfRandErr(zAngleInRad, seedNum=seedNum)
+                randSurfInM = self.M1M3.genMirSurfRandErr(zAngleInRad, seedNum=seedNum)
 
             # Do the temperature correction
             M1M3TBulk = self.getConfigValue("M1M3TBulk")
