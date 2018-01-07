@@ -22,7 +22,7 @@ class M2Sim(MirrorSim):
         # Inner radius of M2 mirror in m
         Ri = 0.9
 
-        MirrorSim.__init__(self, Ri, R, surf=surf, mirrorDataDir=mirrorDataDir)
+        super(M2Sim, self).__init__(Ri, R, surf=surf, mirrorDataDir=mirrorDataDir)
 
     def getActForce(self, actForceFileName="M2_1um_force.DAT"):
         """

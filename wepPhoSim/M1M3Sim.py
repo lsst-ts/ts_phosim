@@ -31,7 +31,7 @@ class M1M3Sim(MirrorSim):
         # Inner radius of M3 mirror in m
         R3i = 0.550
 
-        MirrorSim.__init__(self, (Ri, R3i), (R, R3), surf=surf, mirrorDataDir=mirrorDataDir)
+        super(M1M3Sim, self).__init__((Ri, R3i), (R, R3), surf=surf, mirrorDataDir=mirrorDataDir)
 
     def getActForce(self, actForceFileName="M1M3_1um_156_force.DAT"):
         """
