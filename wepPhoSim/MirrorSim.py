@@ -329,7 +329,8 @@ class MirrorSim(object):
 
         return res, zc
 
-    # Reconsider these abstract functions. Maybe delete them in the final.
+    # Because there is no real overload in python, use the following abstract methods 
+    # for just unifying the function namses in child classes.
     def getActForce(self):
         raise NotImplementedError("Should have the child class implemented this.")
 
