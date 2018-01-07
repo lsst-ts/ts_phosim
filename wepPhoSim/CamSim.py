@@ -91,8 +91,7 @@ class CamSim(object):
 
         Arguments:
             zAngleInRad {[float]} -- Zenith angle in radian.
-            distType {[str]} -- Distortion type ("L1RB", "L2RB", "FRB", "L3RB", "FPRB", "L1S1zer", 
-                                "L2S1zer", "L3S1zer", "L1S2zer", "L2S2zer", "L3S2zer").
+            distType {[str]} -- Distortion type.
 
         Keyword Arguments:
             pre_elev {[float]} -- ?? Check with Bo. Unit is radian. (default: {0})
@@ -104,11 +103,11 @@ class CamSim(object):
         """
 
         # Check the distortion type
-        distTypeList = ("L1RB", "L2RB", "FRB", "L3RB", "FPRB", "L1S1zer", "L2S1zer", 
-                        "L3S1zer", "L1S2zer", "L2S2zer", "L3S2zer")
+        fileList = os.listdir(self.camDataDir)
+        distTypeList = [os.path.splitext(aFile)[0] for aFile in fileList if not aFile.startswith(".")]
 
         if distType not in distTypeList:
-            raise ValueError("The distortion of '%s' is not supported." % distType)
+            raise ValueError("The distortion of '%s' is not supported. Only support: %s" % (distType, distTypeList))
 
         # Path to camera distortion parameter file
         dataFile = os.path.join(self.camDataDir, (distType + ".txt"))
