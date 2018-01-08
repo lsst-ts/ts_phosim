@@ -114,8 +114,8 @@ class PhosimCommu(object):
         # List the phosim dof here
         # idx 5-9: M2 dz, dx, dy, rx, ry
         # idx 10-14: Cam dz, dx, dy, rx, ry
-        # idx 15-24: M1M3 20 bending modes
-        # idx 25-54: M2 20 bending modes
+        # idx 15-34: M1M3 20 bending modes
+        # idx 35-54: M2 20 bending modes
 
         # Write the perturbation of degree of freedom 
         content = ""

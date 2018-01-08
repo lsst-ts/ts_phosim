@@ -112,6 +112,10 @@ class TeleFacade(object):
         """
         
         Set the accumulated degree of freedom (DOF) in um.
+        idx 0-4: M2 dz, dx, dy, rx, ry
+        idx 5-9: Cam dz, dx, dy, rx, ry
+        idx 10-29: M1M3 20 bending modes
+        idx 30-49: M2 20 bending modes
         
         Arguments:
             dofInUm {[list/ ndarray]} -- DOF in um.
@@ -123,6 +127,10 @@ class TeleFacade(object):
         """
         
         Accumulate the aggregated degree of freedom (DOF) in um.
+        idx 0-4: M2 dz, dx, dy, rx, ry
+        idx 5-9: Cam dz, dx, dy, rx, ry
+        idx 10-29: M1M3 20 bending modes
+        idx 30-49: M2 20 bending modes
         
         Arguments:
             dofInUm {[list/ ndarray]} -- DOF in um.
