@@ -532,7 +532,13 @@ class PhosimCommu(object):
             # Write the content of source file into the file
             if (sourceFile is not None):
                 fSrc = open(sourceFile, "r")
-                fid.write(fSrc.read())
+                
+                # Enforce to add "\n" if necessary
+                fileContent = fSrc.read()
+                if (not fileContent.endswith("\n")):
+                    fileContent = fileContent + "\n"
+
+                fid.write(fileContent)
                 fSrc.close()
 
             # Close the file
