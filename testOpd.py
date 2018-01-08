@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Analyze the OPD fits images
     opdFitsFile = os.path.join(outputImgDir, "opd_9006050_0.fits.gz")
     zk = metr.getZkFromOpd(opdFitsFile)[0]
-    pssn = metr.calcPSSN(0.5, opdFitsFile)
+    pssn = metr.calcPSSN(opdWaveInNm*1e-3, opdFitsFile)
 
     print(pssn)
 
