@@ -1,4 +1,4 @@
-import os, re, unittest
+import os, re, shutil, unittest
 import numpy as np
 
 from wepPhoSim.CamSim import CamSim
@@ -211,57 +211,50 @@ class TeleFacade(object):
 
         return value
 
-    def writeDefaultStarCmdFile(self, cmdFileDir, pertFilePath=None, cmdFileName="starPert.cmd"):
+    def writeAccDofFile(self, outputFileDir, dofFileName="pert.mat"):
         """
         
-        Write the default physical command file of stars with the subsystem perturbation 
-        if necessary. 
+        Write the accumulated degree of freedom (DOF) in um to file.
         
         Arguments:
-            cmdFileDir {[str]} -- Directory to the star command file.
-        
+            outputFileDir {[str]} -- Output file directory.
+
         Keyword Arguments:
-            cmdFileName {[str]} -- Star command file name. (default: {"starPert.cmd"})
-            pertFilePath {[str]} -- Subsystem perturbation command file path. (default: {None})
-        
+            dofFileName {[str]} -- DOF file name. (default: {"pert.mat"})
+
         Returns:
-            [str] -- Command file path.
+            [str] -- DOF file path.
         """
         
-        # Command file path
-        cmdFilePath = os.path.join(cmdFileDir, cmdFileName)
+        dofFilePath = os.path.join(outputFileDir, dofFileName)
+        np.savetxt(dofFilePath, self.dofInUm)
 
-        # Write the default physical setting
-        self.phoSimCommu.getDefaultCmd(filePath=cmdFilePath)
+        return dofFilePath
 
-        # Add the subsystem perturbation
-        if (pertFilePath is not None):
-            self.phoSimCommu.writeToFile(cmdFilePath, sourceFile=pertFilePath)
-
-        return cmdFilePath
-
-    def writeDefaultOpdCmdFile(self, cmdFileDir, pertFilePath=None, cmdFileName="opdPert.cmd"):
+    def writeCmdFile(self, cmdFileDir, cmdSettingFile=None, pertFilePath=None, cmdFileName="taskPert.cmd"):
         """
         
-        Write the default physical command file of optical path difference (OPD) with the 
-        subsystem perturbation if necessary. 
+        Write the physical command file.
         
         Arguments:
             cmdFileDir {[str]} -- Directory to the OPD command file.
         
         Keyword Arguments:
-            cmdFileName {[str]} -- OPD command file name. (default: {"opdPert.cmd"})
+            cmdSettingFile {[str]} -- Physical command setting file path. (default: {None})
             pertFilePath {[str]} -- Subsystem perturbation command file path. (default: {None})
-
+            cmdFileName {str} -- Command file name. (default: {"taskPert.cmd"})
+        
         Returns:
             [str] -- Command file path.
         """
 
         # Command file path
         cmdFilePath = os.path.join(cmdFileDir, cmdFileName)
+        self.phoSimCommu.writeToFile(cmdFilePath, content="", mode="w")
 
-        # Write the default physical setting
-        self.phoSimCommu.getDefaultOpdCmd(filePath=cmdFilePath)
+        # Write the physical setting
+        if (cmdSettingFile is not None):
+            self.phoSimCommu.writeToFile(cmdFilePath, sourceFile=cmdSettingFile)
 
         # Add the subsystem perturbation
         if (pertFilePath is not None):
@@ -271,7 +264,8 @@ class TeleFacade(object):
 
     def writeDefaultStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), 
                                     camRot=0, mjd=59552.3, sedName="sed_500.txt", sciSensorOn=False, 
-                                    wfSensorOn=False, guidSensorOn=False, instFileName="star.inst"):
+                                    wfSensorOn=False, guidSensorOn=False, instSettingFile=None, 
+                                    instFileName="star.inst"):
         """
         
         Write the default star instance file.
@@ -291,6 +285,7 @@ class TeleFacade(object):
             sciSensorOn {bool} -- Science sensors are on. (default: {False})
             wfSensorOn {bool} -- Wavefront sensors are on. (default: {False})
             guidSensorOn {bool} -- Guider sensors are on. (default: {False})
+            instSettingFile {[str]} -- Instance setting file. (default: {"None"}) 
             instFileName {str} -- Star instance file name. (default: {"star.inst"})
         
         Returns:
@@ -308,6 +303,8 @@ class TeleFacade(object):
         dec = boresight[1]
         self.phoSimCommu.getDefaultInstance(obsId, aFilterId, ra=ra, dec=dec, rot=-camRot, 
                                             mjd=mjd, filePath=instFilePath)
+        if (instFilePath is not None):
+            self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
 
         # Write the telescope accumulated degree of freedom (DOF)
         content = self.phoSimCommu.doDofPert(self.dofInUm)
@@ -325,7 +322,7 @@ class TeleFacade(object):
         return instFilePath
 
     def writeDefaultOpdInstFile(self, instFileDir, opdMetr, obsId, aFilter, wavelengthInNm, 
-                                instFileName="opd.inst"):
+                                instSettingFile=None, instFileName="opd.inst"):
         """
         
         Write the default optical path difference (OPD) instance file.
@@ -338,6 +335,7 @@ class TeleFacade(object):
             wavelengthInNm {[float]} -- OPD source wavelength in nm.
 
         Keyword Arguments:
+            instSettingFile {[str]} -- Instance setting file. (default: {"None"}) 
             instFileName {[str]} -- OPD instance file name. (default: {"opd.inst"})
         
         Returns:
@@ -352,6 +350,8 @@ class TeleFacade(object):
 
         # Write the default instance setting
         self.phoSimCommu.getDefaultOpdInstance(obsId, aFilterId, filePath=instFilePath)
+        if (instSettingFile is not None):
+            self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
 
         # Write the telescope accumulated degree of freedom (DOF)
         content = self.phoSimCommu.doDofPert(self.dofInUm)
@@ -362,24 +362,15 @@ class TeleFacade(object):
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary
-        self.phoSimCommu.writeSedFile(wavelengthInNm)
+        if (self.phoSimCommu.phosimDir is not None):
+            self.phoSimCommu.writeSedFile(wavelengthInNm)
+        else:
+            print("Do not inspect the SED file for no setting of PhoSim directory.")
 
         return instFilePath
 
-    def writeAccDofFile(self, outputFileDir):
-        """
-        
-        Write the accumulated degree of freedom (DOF) in um to file.
-        
-        Arguments:
-            outputFileDir {[str]} -- Output file directory.
-        """
-        
-        dofFileName = "pert.mat"
-        dofFilePath = os.path.join(outputFileDir, dofFileName)
-        np.savetxt(dofFilePath, self.dofInUm)
-
-    def writePertBaseOnConfigFile(self, pertCmdFileDir, seedNum=None, saveResMapFig=False, pertCmdFileName="pert.cmd"):
+    def writePertBaseOnConfigFile(self, pertCmdFileDir, zAngleInDeg=0, rotAngInDeg=0, seedNum=None, 
+                                    saveResMapFig=False, pertCmdFileName="pert.cmd"):
         """
         
         Write the perturbation command file based on the telescope configuration file.
@@ -388,6 +379,9 @@ class TeleFacade(object):
             pertCmdFileDir {[str]} -- Directory to the pertubation command file. 
         
         Keyword Arguments:
+            zAngleInDeg {[float]} -- Zenith angle in degree. (default: {0})
+            rotAngInDeg {[float]} -- Camera rotation angle in degree between -90 and 90 degrees. 
+                                     (default: {0})
             seedNum {[int]} -- Random seed number. (default: {None})
             saveResMapFig {[bool]} -- Save the mirror surface residue map or not. (default: {False})
             pertCmdFileName {[str]} -- Perturbation command file name. (default: {pert.cmd})
@@ -416,12 +410,8 @@ class TeleFacade(object):
         # Perturbation command 
         content = ""
 
-        # Get the zenith angle in degree
-        zAngleInDeg = self.getConfigValue("zenithAngle")
+        # Get the zenith angle in radian
         zAngleInRad = zAngleInDeg/180.0*np.pi
-
-        # Get the camera rotation angle
-        rotAngInRad = self.getConfigValue("camRotation")
 
         # Get the number of zernike terms used in Zemax
         numTerms = self.getConfigValue("znPert")
@@ -506,7 +496,7 @@ class TeleFacade(object):
 
         if (self.cam is not None):
             # Set the camera rotation angle
-            self.cam.setRotAngInRad(rotAngInRad)
+            self.cam.setRotAngInDeg(rotAngInDeg)
 
             # Set the temperature information
             tempInDegC = self.getConfigValue("camTB")
@@ -578,103 +568,118 @@ class TeleFacadeTest(unittest.TestCase):
     """
 
     def setUp(self):
-        pass
+
+        # Set the configuration file path
+        self.configFilePath = os.path.join("..", "data", "telescopeConfig", "GT.inst")
+
+        # Set the subsystem data directory
+        self.camDataDir = os.path.join("..", "data", "camera")
+        self.M1M3dataDir = os.path.join("..", "data", "M1M3")
+        self.M2dataDir = os.path.join("..", "data", "M2")
+        self.phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
+
+        # Set the output dir
+        self.outputDir = os.path.join("..", "output", "temp")
+        os.makedirs(self.outputDir)
+
+        # Set the command setting file
+        self.starCmdSettingFile = os.path.join("..", "data", "cmdFile", "starDefault.cmd")
+
+        # Set the instance setting file
+        self.starInstSettingFile = os.path.join("..", "data", "instFile", "starDefault.inst")
+        self.opdInstSettingFile = os.path.join("..", "data", "instFile", "opdDefault.inst")
 
     def testFunc(self):
-        pass
+        
+        # Instantiate the needed objects
+        cam = CamSim()
+        M1M3 = M1M3Sim()
+        M2 = M2Sim()
+        phoSimCommu = PhosimCommu()
+        metr = OpdMetrology()
+        skySim = SkySim()
 
+        # Instantiate the telescope facade class
+        tele = TeleFacade(cam=cam, M1M3=M1M3, M2=M2, phoSimCommu=phoSimCommu)
 
+        # Set the configuration file path
+        tele.setConfigFile(self.configFilePath)
+        self.assertEqual(tele.configFile, self.configFilePath)
+
+        instFilePath = "temp.inst"
+        argString = tele.getPhoSimArgs(instFilePath)
+        ansArgString = "%s -i lsst -e 1" % os.path.abspath(instFilePath)
+        self.assertEqual(argString, ansArgString)
+
+        instruFile = "comcam10"
+        tele.setInstName(instruFile)
+        self.assertEqual(tele.instName, "comcam")
+        self.assertEqual(tele.defocalDisInMm, 1.0)
+
+        dofInUm = np.random.rand(50)
+        tele.setDofInUm(dofInUm)
+        self.assertEqual(np.sum(np.abs(tele.dofInUm-dofInUm)), 0)
+
+        tele.setDofInUm(np.zeros(50))
+        tele.accDofInUm(dofInUm)
+        self.assertEqual(np.sum(np.abs(tele.dofInUm-dofInUm)), 0)
+
+        tele.setSubSysConfigFile(camDataDir=self.camDataDir, M1M3dataDir=self.M1M3dataDir, 
+                                 M2dataDir=self.M2dataDir)
+        self.assertEqual(tele.cam.camDataDir, self.camDataDir)
+        self.assertEqual(tele.phoSimCommu.phosimDir, None)
+
+        varName = "M1M3TxGrad"
+        value = tele.getConfigValue(varName)
+        self.assertEqual(value, -0.0894)
+
+        dofFilePath = tele.writeAccDofFile(self.outputDir)
+        self.assertLess(np.sum(np.abs(np.loadtxt(dofFilePath)-dofInUm)), 1e-7)
+        os.remove(dofFilePath)
+
+        zAngleInDeg = 27.0912
+        rotAngInDeg = -1.2323/np.pi*180.0
+        iSim = 6
+        # pertCmdFilePath = "/Users/Wolf/Documents/stash/ts_tcs_wep_phosim/output/pert.cmd"
+        pertCmdFilePath = tele.writePertBaseOnConfigFile(self.outputDir, zAngleInDeg=zAngleInDeg, 
+                                           rotAngInDeg=rotAngInDeg, seedNum=iSim, saveResMapFig=True)
+        cmdFile = open(pertCmdFilePath, "r")
+        lines = cmdFile.readlines()
+        cmdFile.close()
+        self.assertEqual(len(lines), 256)
+
+        cmdFilePath = tele.writeCmdFile(self.outputDir, cmdSettingFile=self.starCmdSettingFile, 
+                                        pertFilePath=pertCmdFilePath, cmdFileName="star.cmd")
+
+        starCmdFile = open(cmdFilePath, "r")
+        lines = starCmdFile.readlines()
+        starCmdFile.close()
+        self.assertEqual(len(lines), 267)
+
+        metr.addFieldXYbyDeg(0, 0)
+        obsId = 9006000
+        aFilter = "g"
+        wavelengthInNm = 500
+        instFilePath = tele.writeDefaultOpdInstFile(self.outputDir, metr, obsId, aFilter, wavelengthInNm, 
+                                                                    instSettingFile=self.opdInstSettingFile)
+        opdInstFile = open(instFilePath, "r")
+        lines = opdInstFile.readlines()
+        opdInstFile.close()
+        self.assertEqual(len(lines), 55)
+
+        skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
+        boresight = (0.2, 0.3)
+        instFilePath = tele.writeDefaultStarInstFile(self.outputDir, skySim, obsId, aFilter, boresight, 
+                                                wfSensorOn=True, instSettingFile=self.starInstSettingFile)
+
+        starInstFile = open(instFilePath, "r")
+        lines = starInstFile.readlines()
+        starInstFile.close()
+        self.assertEqual(len(lines), 62)
+
+        shutil.rmtree(self.outputDir)
 
 if __name__ == "__main__":
 
     # Do the unit test
     unittest.main()
-    
-    # cam = CamSim()
-    # M1M3 = M1M3Sim()
-    # M2 = M2Sim()
-    # phoSimCommu = PhosimCommu()
-    # metr = OpdMetrology()
-
-    # tele = TeleFacade(cam=cam, M1M3=M1M3, M2=M2, phoSimCommu=phoSimCommu)
-
-    # # Set the telescope degree of freedom
-
-    # # Subsystem data direction
-    # camDataDir = "../data/camera"
-    # M1M3dataDir = "../data/M1M3"
-    # M2dataDir = "../data/M2"
-    # phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
-
-    # # Set the configuration file path
-    # configFilePath = "../data/telescopeConfig/GT.inst"
-    # tele.setConfigFile(configFilePath)
-
-    # # Get the value
-    # varName = "zenithAngle"
-    # value = tele.getConfigValue(varName, index=1)
-
-    # # Set the subsystem directory
-    # tele.setSubSysConfigFile(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir, M2dataDir=M2dataDir, 
-    #                          phosimDir=phosimDir)
-
-    # # Set the path of perturbation file
-    # iSim = 6
-    # outputFileDir = "../output"
-
-    # # Write the perturbation command file
-    # # content = tele.writePertBaseOnConfigFile(outputFileDir, seedNum=iSim, saveResMapFig=True)[0]
-
-    # # Set the default LSST GQ metrology
-    # metr.setDefaultLsstGQ()
-
-    # # Add the wavefront sensor
-    # fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
-    # metr.addFieldXYbyDeg(fieldWFSx, fieldWFSy)
-
-    # # Write the opd physical command file
-    # pertFilePath = os.path.join(outputFileDir, "pert.cmd")
-    # cmdFilePath = tele.writeDefaultOpdCmdFile(outputFileDir, pertFilePath=pertFilePath)
-
-    # # Write the opd instance file
-    # obsId = 9006000
-    # aFilter = "g"
-    # wavelengthInNm = 500
-    # instFilePath = tele.writeDefaultOpdInstFile(outputFileDir, metr, obsId, aFilter, wavelengthInNm)
-
-    # # Write the accumulated DOF file
-    # tele.writeAccDofFile(outputFileDir)
-
-    # # Get the argument to run the phosim
-    # outputImgFileDir = "../outputImg"
-    # logFilePath = os.path.join(outputImgFileDir, "phosimOpd.log")
-    # argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
-    #                                 e2ADC=0, logFilePath=logFilePath)
-    
-    # # Run the phosim
-    # # tele.runPhoSim(argString)
-
-    # # Calculate the PSSN
-    # # zen = tele.getConfigValue("zenithAngle", index=1)
-    # # opdFitsFile = os.path.join(outputImgFileDir, "opd_9006000_0.fits.gz")
-    # # wavelengthInUm = 0.5
-    # # pssn = metr.calcPSSN(opdFitsFile, wavelengthInUm, zen=zen, debugLevel=0)
-
-    # # Write the default star command file
-    # cmdFilePath = tele.writeDefaultStarCmdFile(outputFileDir, pertFilePath=pertFilePath)
-
-    # # Set the sky information
-    # skySim = SkySim()
-    # skySim.addStarByRaDecInDeg(0, 1.196, 1.176, 17)
-
-    # # Write the default star instance file
-    # instFilePath = tele.writeDefaultStarInstFile(outputFileDir, skySim, obsId, aFilter, wfSensorOn=True, 
-    #                                                 instFileName="star.inst")
-
-    # # Get the argument to run the phosim
-    # logFilePath = os.path.join(outputImgFileDir, "phosimStar.log")
-    # argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgFileDir, 
-    #                             e2ADC=0, logFilePath=logFilePath)
-
-    # # Run the phosim
-    # # tele.runPhoSim(argString)

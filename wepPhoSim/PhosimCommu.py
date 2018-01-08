@@ -275,60 +275,6 @@ class PhosimCommu(object):
 
         return content
 
-    def getDefaultCmd(self, filePath=None):
-        """
-        
-        Get the default physical command.
-        
-        Keyword Arguments:
-            filePath {[str]} -- File path to save the physical command. (default: {None})
-        
-        Returns:
-            [str] -- Physical command used in PhoSim.
-        """
-
-        # Physics Commands
-        content = ""
-        content += "backgroundmode 0 \n"
-        content += "raydensity 0.0 \n"
-        content += "perturbationmode 1 \n"
-        content += "trackingmode 0 \n"
-        content += "cleartracking \n"
-        content += "clearclouds \n"
-        content += "lascatprob 0.0 \n"
-        content += "contaminationmode 0 \n"
-        content += "diffractionmode 1 \n"
-        content += "straylight 0 \n"
-        content += "detectormode 0 \n"
-
-        if (filePath is not None):
-            self.writeToFile(filePath, content=content, mode="w")
-
-        return content
-
-    def getDefaultOpdCmd(self, filePath=None):
-        """
-        
-        Get the default optical path difference (OPD) physical command.
-        
-        Keyword Arguments:
-            filePath {[str]} -- File path to save the physical command. (default: {None})
-        
-        Returns:
-            [str] -- Physical command used in PhoSim.
-        """
-        
-        # Physics Commands
-        content = ""
-        content += "backgroundmode 0 \n"
-        content += "raydensity 0.0 \n"
-        content += "perturbationmode 1 \n"
-
-        if (filePath is not None):
-            self.writeToFile(filePath, content=content, mode="w")
-
-        return content
-
     def getDefaultInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, filePath=None):
         """
         
@@ -355,10 +301,7 @@ class PhosimCommu(object):
         content += "Opsim_obshistid %d \n" % obsId
         content += "Opsim_filter %d \n" % aFilterId
         content += "mjd %.10f \n" % mjd
-        content += "SIM_VISTIME 33.0 \n"
-        content += "SIM_NSNAP 2 \n"
         content += "SIM_SEED %d \n" % (obsId % 10000 + 4)
-        content += "Opsim_rawseeing -1 \n"
 
         # Add the sky information
         content += "rightascension %.6f \n" % ra
@@ -391,8 +334,6 @@ class PhosimCommu(object):
         content = ""
         content += "Opsim_obshistid %d \n" % obsId
         content += "Opsim_filter %d \n" % aFilterId
-        content += "SIM_VISTIME 15.0 \n"
-        content += "SIM_NSNAP 1 \n"
 
         if (filePath is not None):
             self.writeToFile(filePath, content=content, mode="w")
@@ -638,19 +579,13 @@ class PhosimCommuTest(unittest.TestCase):
         ansContent = "object  0\t 1.000000\t 1.000000  2.000000 ../sky/flat.txt 0.0 0.0 0.0 0.0 0.0 0.0 star 0.0 none none \n"
         self.assertEqual(content, ansContent)
 
-        content = phosimCom.getDefaultCmd()
-        self.assertEqual(len(content.split("\n")), 12)
-
-        content = phosimCom.getDefaultOpdCmd()
-        self.assertEqual(len(content.split("\n")), 4)
-
         obsId = 100
         aFilterId = 1
         content = phosimCom.getDefaultInstance(obsId, aFilterId)
-        self.assertEqual(len(content.split("\n")), 11)
+        self.assertEqual(len(content.split("\n")), 8)
 
         content = phosimCom.getDefaultOpdInstance(obsId, aFilterId)
-        self.assertEqual(len(content.split("\n")), 5)
+        self.assertEqual(len(content.split("\n")), 3)
 
         instFileName = os.path.join("..", "testData", "temp.inst")
         phosimCom.writeToFile(instFileName, content="temp", mode="w")
