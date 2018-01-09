@@ -1,6 +1,7 @@
 import os, unittest
 import numpy as np
 from astropy.io import fits
+import matplotlib.pyplot as plt
 
 from cwfs.Tool import ZernikeAnnularFit, ZernikeEval
 from wep.SourceProcessor import SourceProcessor
@@ -372,6 +373,108 @@ class OpdMetrology(object):
 
         return GQvalue
 
+    def showFieldMap(self, folderPath2FocalPlane=None, saveToFilePath=None):
+        """
+        
+        Show the field map in degree.
+        
+        Keyword Arguments:
+            folderPath2FocalPlane {[str]} -- Folder directory to focal plane file. 
+                                            (default: {None})
+            saveToFilePath {str} -- File path to save the figure. (default: {None})
+        """
+
+        # Declare the figure
+        plt.figure()
+        
+        # Get the focal plane information
+        if (folderPath2FocalPlane is not None):
+            sourProc = SourceProcessor()
+            sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
+
+            # Plot the CCD boundary
+            for akey, aitem in sourProc.sensorFocaPlaneInUm.items():
+
+                # Get the CCD dimenstion
+                pixDimX, pixDimY = sourProc.sensorDimList[akey]
+
+                # Do the Euler angle rotation
+                # Only care about the Euler Z at this moment
+                eulerZ = round(float(sourProc.sensorEulerRot[akey][0]))
+                rotIdx = int(np.cos(eulerZ/180*np.pi))
+                if (rotIdx == 0):
+                    temp = pixDimX
+                    pixDimX = pixDimY
+                    pixDimY = temp
+
+                # Calculate the boundary points
+                centerXinUm, centerYinUm = aitem
+                pointXinDeg, pointYinDeg = self.__getCCDBoundaryInDeg(pixDimX, pixDimY, 
+                                                    centerXinUm, centerYinUm)
+
+                # Plot the boundary
+                pointXinDeg.append(pointXinDeg[0])
+                pointYinDeg.append(pointYinDeg[0])
+                plt.plot(pointXinDeg, pointYinDeg, "b")
+
+        # Plot the field X, Y position
+        plt.plot(self.fieldX, self.fieldY, "ro")
+
+        # Plot the 3.5 degree circle
+        circle = plt.Circle((0, 0), 1.75, color="g", fill=False)
+        plt.gcf().gca().add_artist(circle)
+
+        # Do the labeling
+        plt.xlabel("Field X (deg)")
+        plt.ylabel("Field Y (deg)")
+        plt.text(-1.5, -1.5, "R00")
+        plt.text(1.5, -1.5, "R40")
+        plt.text(1.5, 1.5, "R44")
+        plt.text(-1.5, 1.5, "R04")
+
+        # Save the figure or not
+        if (saveToFilePath is not None):
+            plt.savefig(saveToFilePath)
+        else:
+            plt.show()
+
+    def __getCCDBoundaryInDeg(self, pixDimX, pixDimY, centerXinUm, centerYinUm, 
+                                pixel2Um=10, pixel2Arcsec=0.2):
+        """
+        
+        Get the CCD four corners in degree in counter clockwise direction.
+        
+        Arguments:
+            pixDimX {[int]} -- Pixel dimension in x direction.
+            pixDimY {[int]} -- Pixel dimension in y direction.
+            centerXinUm {[float]} -- CCD center x in um on focal plane.
+            centerYinUm {[float]} -- CCD center y in um on focal plane.
+        
+        Keyword Arguments:
+            pixel2Um {float} -- Pixel to um. (default: {10})
+            pixel2Arcsec {float} -- Pixel to arcsec. (default: {0.2})
+        
+        Returns:
+            [list] -- Corner points x in degree.
+            [list] -- Corner points y in degree.
+        """
+
+        # Box center in degree
+        boxCenterX = centerXinUm/pixel2Um*pixel2Arcsec/3600
+        boxCenterY = centerYinUm/pixel2Um*pixel2Arcsec/3600
+
+        # Dimension in degree
+        degDimX = pixDimX*pixel2Arcsec/3600
+        degDimY = pixDimY*pixel2Arcsec/3600
+
+        # Set the boundary points (counter clockwise direction)
+        pointXinDeg = [boxCenterX-degDimX/2, boxCenterX+degDimX/2, boxCenterX+degDimX/2, 
+                        boxCenterX-degDimX/2]
+        pointYinDeg = [boxCenterY-degDimY/2, boxCenterY-degDimY/2, boxCenterY+degDimY/2, 
+                        boxCenterY+degDimY/2]
+
+        return pointXinDeg, pointYinDeg
+
 class OpdMetrologyTest(unittest.TestCase):
     
     """
@@ -468,4 +571,14 @@ class OpdMetrologyTest(unittest.TestCase):
 if __name__ == "__main__":
 
     # Do the unit test
-    unittest.main()
+    # unittest.main()
+
+    metr = OpdMetrology()
+    metr.setDefaultLsstGQ()
+    fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
+    metr.addFieldXYbyDeg(fieldWFSx, fieldWFSy)
+
+    folderPath2FocalPlane = os.path.join("..", "testData", "testOpdFunc")
+    metr.showFieldMap(folderPath2FocalPlane=folderPath2FocalPlane)
+
+
