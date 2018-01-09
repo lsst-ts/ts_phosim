@@ -52,7 +52,7 @@
 <br/>
 *WEPController.py: Wavefront estimation controller class. This is a high level class to use the wavefront estimation pipeline.*
 
-## 6. Test Cases
+## 6. Example Script
 
 *testOpd.py: Test the OPD without the subsystem perturbation.*
 <br/>
