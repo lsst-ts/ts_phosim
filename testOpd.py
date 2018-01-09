@@ -43,8 +43,8 @@ if __name__ == "__main__":
                                     cmdFileName="opd.cmd")
 
     # Write the instance file
-    instFilePath = tele.writeDefaultOpdInstFile(outputDir, metr, obsId, aFilter, opdWaveInNm, 
-                                        instSettingFile=instSettingFile, instFileName="opd.inst")
+    instFilePath = tele.writeOpdInstFile(outputDir, metr, obsId, aFilter, opdWaveInNm, 
+                                instSettingFile=instSettingFile, instFileName="opd.inst")
 
     # Get the argument to run the PhoSim
     logFilePath = os.path.join(outputImgDir, "opdPhoSim.log")

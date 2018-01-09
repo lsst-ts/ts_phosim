@@ -275,10 +275,10 @@ class PhosimCommu(object):
 
         return content
 
-    def getDefaultInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, filePath=None):
+    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, filePath=None):
         """
         
-        Get the default instance catalog.
+        Get the star instance catalog.
         
         Arguments:
             obsId {[int]} -- Observation ID.
@@ -313,7 +313,7 @@ class PhosimCommu(object):
 
         return content
 
-    def getDefaultOpdInstance(self, obsId, aFilterId, filePath=None):
+    def getOpdInstance(self, obsId, aFilterId, filePath=None):
         """
         
         Get the default optical path difference (OPD) instance catalog. It is 
@@ -581,10 +581,10 @@ class PhosimCommuTest(unittest.TestCase):
 
         obsId = 100
         aFilterId = 1
-        content = phosimCom.getDefaultInstance(obsId, aFilterId)
+        content = phosimCom.getStarInstance(obsId, aFilterId)
         self.assertEqual(len(content.split("\n")), 8)
 
-        content = phosimCom.getDefaultOpdInstance(obsId, aFilterId)
+        content = phosimCom.getOpdInstance(obsId, aFilterId)
         self.assertEqual(len(content.split("\n")), 3)
 
         instFileName = os.path.join("..", "testData", "temp.inst")

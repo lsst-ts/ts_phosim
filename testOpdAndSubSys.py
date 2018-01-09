@@ -70,8 +70,8 @@ if __name__ == "__main__":
                                     pertFilePath=pertCmdFilePath, cmdFileName="opd.cmd")
 
     # Write the opd instance file
-    instFilePath = tele.writeDefaultOpdInstFile(outputDir, metr, obsId, aFilter, wavelengthInNm, 
-                                        instSettingFile=instSettingFile, instFileName="opd.inst")
+    instFilePath = tele.writeOpdInstFile(outputDir, metr, obsId, aFilter, wavelengthInNm, 
+                                    instSettingFile=instSettingFile, instFileName="opd.inst")
 
     # Write the accumulated DOF file
     tele.writeAccDofFile(outputDir)

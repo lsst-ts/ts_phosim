@@ -270,13 +270,12 @@ class TeleFacade(object):
 
         return cmdFilePath
 
-    def writeDefaultStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), 
-                                    camRot=0, mjd=59552.3, sedName="sed_500.txt", sciSensorOn=False, 
-                                    wfSensorOn=False, guidSensorOn=False, instSettingFile=None, 
-                                    instFileName="star.inst"):
+    def writeStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), camRot=0, 
+                            mjd=59552.3, sedName="sed_500.txt", sciSensorOn=False, wfSensorOn=False, 
+                            guidSensorOn=False, instSettingFile=None, instFileName="star.inst"):
         """
         
-        Write the default star instance file.
+        Write the star instance file.
         
         Arguments:
             instFileDir {[str]} -- Directory to instance file.
@@ -309,7 +308,7 @@ class TeleFacade(object):
         # Write the default instance setting
         ra = boresight[0]
         dec = boresight[1]
-        self.phoSimCommu.getDefaultInstance(obsId, aFilterId, ra=ra, dec=dec, rot=-camRot, 
+        self.phoSimCommu.getStarInstance(obsId, aFilterId, ra=ra, dec=dec, rot=-camRot, 
                                             mjd=mjd, filePath=instFilePath)
         if (instFilePath is not None):
             self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
@@ -329,11 +328,11 @@ class TeleFacade(object):
 
         return instFilePath
 
-    def writeDefaultOpdInstFile(self, instFileDir, opdMetr, obsId, aFilter, wavelengthInNm, 
-                                instSettingFile=None, instFileName="opd.inst"):
+    def writeOpdInstFile(self, instFileDir, opdMetr, obsId, aFilter, wavelengthInNm, 
+                            instSettingFile=None, instFileName="opd.inst"):
         """
         
-        Write the default optical path difference (OPD) instance file.
+        Write the optical path difference (OPD) instance file.
         
         Arguments:
             instFileDir {[str]} -- Directory to instance file.
@@ -357,7 +356,7 @@ class TeleFacade(object):
         aFilterId = self.phoSimCommu.getFilterId(aFilter)
 
         # Write the default instance setting
-        self.phoSimCommu.getDefaultOpdInstance(obsId, aFilterId, filePath=instFilePath)
+        self.phoSimCommu.getOpdInstance(obsId, aFilterId, filePath=instFilePath)
         if (instSettingFile is not None):
             self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
 
@@ -668,8 +667,8 @@ class TeleFacadeTest(unittest.TestCase):
         obsId = 9006000
         aFilter = "g"
         wavelengthInNm = 500
-        instFilePath = tele.writeDefaultOpdInstFile(self.outputDir, metr, obsId, aFilter, wavelengthInNm, 
-                                                                    instSettingFile=self.opdInstSettingFile)
+        instFilePath = tele.writeOpdInstFile(self.outputDir, metr, obsId, aFilter, wavelengthInNm, 
+                                                instSettingFile=self.opdInstSettingFile)
         opdInstFile = open(instFilePath, "r")
         lines = opdInstFile.readlines()
         opdInstFile.close()
@@ -677,7 +676,7 @@ class TeleFacadeTest(unittest.TestCase):
 
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
         boresight = (0.2, 0.3)
-        instFilePath = tele.writeDefaultStarInstFile(self.outputDir, skySim, obsId, aFilter, boresight, 
+        instFilePath = tele.writeStarInstFile(self.outputDir, skySim, obsId, aFilter, boresight, 
                                                 wfSensorOn=True, instSettingFile=self.starInstSettingFile)
 
         starInstFile = open(instFilePath, "r")
