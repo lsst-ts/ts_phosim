@@ -51,3 +51,13 @@
 *SkySim.py: Sky simulator to add the stars.*
 <br/>
 *WEPController.py: Wavefront estimation controller class. This is a high level class to use the wavefront estimation pipeline.*
+
+## 6. Test Cases
+
+*testOpd.py: Test the OPD without the subsystem perturbation.*
+<br/>
+*testOpdAndSubSys.py: Test the OPD with the subsystem perturbation.*
+<br/>
+*testStarAndSubSys.py: Test the star donut in LSST camera with the subsystem perturbation.*
+<br/>
+*testStarAndSubSysWiComCam.py: Test the star donut in ComCam with the subsystem perturbation.*
