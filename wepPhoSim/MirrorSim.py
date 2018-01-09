@@ -58,16 +58,16 @@ class MirrorSim(object):
 
         return data
 
-    def setSurfAlongZ(self, surfAlongZ):
+    def setSurfAlongZ(self, surfAlongZinUm):
         """
         
-        Set the mirror surface along the z direction.
+        Set the mirror surface along the z direction in um.
         
         Arguments:
-            surfAlongZ {[ndarray]} -- Mirror surface along the z direction.
+            surfAlongZinUm {[ndarray]} -- Mirror surface along the z direction in um.
         """
 
-        self.surf = surfAlongZ
+        self.surf = surfAlongZinUm
 
     def getLUTforce(self, zangleInDeg, LUTfileName):
         """
