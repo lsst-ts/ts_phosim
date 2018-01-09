@@ -186,7 +186,7 @@ class PhosimCommu(object):
         # (For LSST: bitmask where first bit is science sensors on; 
         # second bit is wavefront sensors on; third bit is guiders on)
 
-        camConfigId = 4*int(sciSensorOn) + 2*int(wfSensorOn) + int(guidSensorOn)
+        camConfigId = int(sciSensorOn) + 2*int(wfSensorOn) + 4*int(guidSensorOn)
 
         # Write the camera configuration
         content = "camconfig %d \n" % camConfigId
@@ -553,7 +553,7 @@ class PhosimCommuTest(unittest.TestCase):
         self.assertEqual(content, ansContent)
 
         content = phosimCom.doCameraConfig(guidSensorOn=True)
-        ansContent = "camconfig 1 \n"
+        ansContent = "camconfig 4 \n"
         self.assertEqual(content, ansContent)
 
         linkSurfId1 = 1
