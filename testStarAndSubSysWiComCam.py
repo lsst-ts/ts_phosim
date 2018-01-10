@@ -63,6 +63,7 @@ if __name__ == "__main__":
 
     # Add the star
     skySim.addStarByRaDecInDeg(0, 0, 0, 17)
+    skySim.addStarByRaDecInDeg(1, 0.0033, 0.0033, 18)
 
     # Set the degree of freedom for intra- and extra-focal images
     # Double check the direction with Bo
