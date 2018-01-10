@@ -229,7 +229,7 @@ class OpdMetrology(object):
 
         return opd, opdx, opdy
 
-    def addFieldXYbyCamPos(self, sensorName, xInpixel, yInPixel, folderPath2FocalPlane=None):
+    def addFieldXYbyCamPos(self, sensorName, xInpixel, yInPixel, folderPath2FocalPlane):
         """
         
         Add the new field X, Y in degree by the camera pixel positions.
@@ -238,10 +238,8 @@ class OpdMetrology(object):
             sensorName {[str]} -- Canera sensor name (e.g. "R22_S11", "R40_S02_C0").
             xInpixel {[float]} -- Pixel x on camera coordinate.
             yInPixel {[float]} -- Pixel y on camera coordinate.
-        
-        Keyword Arguments:
             folderPath2FocalPlane {[str]} -- Path to the directory of focal plane data 
-                                            ("focalplanelayout.txt") (default: {None})
+                                            ("focalplanelayout.txt").
         """
 
         # Get the focal plane data and set the sensor name
@@ -373,7 +371,7 @@ class OpdMetrology(object):
 
         return GQvalue
 
-    def showFieldMap(self, folderPath2FocalPlane=None, saveToFilePath=None):
+    def showFieldMap(self, folderPath2FocalPlane=None, saveToFilePath=None, dpi=None, pixel2Arcsec=0.2):
         """
         
         Show the field map in degree.
@@ -382,6 +380,8 @@ class OpdMetrology(object):
             folderPath2FocalPlane {[str]} -- Folder directory to focal plane file. 
                                             (default: {None})
             saveToFilePath {str} -- File path to save the figure. (default: {None})
+            dpi {int} -- The resolution in dots per inch. (default: {None})
+            pixel2Arcsec {float} -- Pixel to arcsec. (default: {0.2})
         """
 
         # Declare the figure
@@ -393,24 +393,11 @@ class OpdMetrology(object):
             sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
 
             # Plot the CCD boundary
-            for akey, aitem in sourProc.sensorFocaPlaneInUm.items():
+            for sensorName in sourProc.sensorDimList.keys():
 
-                # Get the CCD dimenstion
-                pixDimX, pixDimY = sourProc.sensorDimList[akey]
-
-                # Do the Euler angle rotation
-                # Only care about the Euler Z at this moment
-                eulerZ = round(float(sourProc.sensorEulerRot[akey][0]))
-                rotIdx = int(np.cos(eulerZ/180*np.pi))
-                if (rotIdx == 0):
-                    temp = pixDimX
-                    pixDimX = pixDimY
-                    pixDimY = temp
-
-                # Calculate the boundary points
-                centerXinUm, centerYinUm = aitem
-                pointXinDeg, pointYinDeg = self.__getCCDBoundaryInDeg(pixDimX, pixDimY, 
-                                                    centerXinUm, centerYinUm)
+                # Get the CCD corner field points in degree
+                pointXinDeg, pointYinDeg = self.__getCCDBoundInDeg(sourProc, sensorName, 
+                                                                pixel2Arcsec=pixel2Arcsec)
 
                 # Plot the boundary
                 pointXinDeg.append(pointXinDeg[0])
@@ -427,31 +414,36 @@ class OpdMetrology(object):
         # Do the labeling
         plt.xlabel("Field X (deg)")
         plt.ylabel("Field Y (deg)")
+
+        # Label four corner rafts for the identification
         plt.text(-1.5, -1.5, "R00")
         plt.text(1.5, -1.5, "R40")
         plt.text(1.5, 1.5, "R44")
         plt.text(-1.5, 1.5, "R04")
 
+        # Set the axis limit
+        plt.xlim(-2, 2)
+        plt.ylim(-2, 2)
+
+        # Set the same scale
+        plt.axis("equal")
+
         # Save the figure or not
         if (saveToFilePath is not None):
-            plt.savefig(saveToFilePath)
+            plt.savefig(saveToFilePath, dpi=dpi)
         else:
             plt.show()
 
-    def __getCCDBoundaryInDeg(self, pixDimX, pixDimY, centerXinUm, centerYinUm, 
-                                pixel2Um=10, pixel2Arcsec=0.2):
+    def __getCCDBoundInDeg(self, sourProc, sensorName, pixel2Arcsec=0.2):
         """
         
         Get the CCD four corners in degree in counter clockwise direction.
         
         Arguments:
-            pixDimX {[int]} -- Pixel dimension in x direction.
-            pixDimY {[int]} -- Pixel dimension in y direction.
-            centerXinUm {[float]} -- CCD center x in um on focal plane.
-            centerYinUm {[float]} -- CCD center y in um on focal plane.
+            sourProc {[SourceProcessor]} -- SourceProcessor object.
+            sensorName {[str]} -- Sensor name
         
         Keyword Arguments:
-            pixel2Um {float} -- Pixel to um. (default: {10})
             pixel2Arcsec {float} -- Pixel to arcsec. (default: {0.2})
         
         Returns:
@@ -459,21 +451,28 @@ class OpdMetrology(object):
             [list] -- Corner points y in degree.
         """
 
-        # Box center in degree
-        boxCenterX = centerXinUm/pixel2Um*pixel2Arcsec/3600
-        boxCenterY = centerYinUm/pixel2Um*pixel2Arcsec/3600
+        # Set the sensor on sourProc
+        sourProc.config(sensorName=sensorName)
 
-        # Dimension in degree
-        degDimX = pixDimX*pixel2Arcsec/3600
-        degDimY = pixDimY*pixel2Arcsec/3600
+        # Get the dimension of CCD
+        pixDimX, pixDimY = sourProc.sensorDimList[sensorName]
 
-        # Set the boundary points (counter clockwise direction)
-        pointXinDeg = [boxCenterX-degDimX/2, boxCenterX+degDimX/2, boxCenterX+degDimX/2, 
-                        boxCenterX-degDimX/2]
-        pointYinDeg = [boxCenterY-degDimY/2, boxCenterY-degDimY/2, boxCenterY+degDimY/2, 
-                        boxCenterY+degDimY/2]
+        # Define four corner points in the counter-clockwise direction
+        pixelXlist = [0, pixDimX, pixDimX, 0]
+        pixelYlist = [0, 0, pixDimY, pixDimY]
 
-        return pointXinDeg, pointYinDeg
+        # Transform from pixel to field degree
+        fieldXinDegList = []
+        fieldYinDeglist = []
+
+        for ii in range(len(pixelXlist)):
+
+            fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii], pixelYlist[ii], 
+                                                            pixel2Arcsec=pixel2Arcsec)
+            fieldXinDegList.append(fieldX)
+            fieldYinDeglist.append(fieldY)
+
+        return fieldXinDegList, fieldYinDeglist
 
 class OpdMetrologyTest(unittest.TestCase):
     
@@ -536,7 +535,7 @@ class OpdMetrologyTest(unittest.TestCase):
         sensorName = "R22_S11"
         xInpixel = 4000
         yInPixel = 4072
-        metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, folderPath2FocalPlane=self.testDataDir)
+        metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, self.testDataDir)
 
         ansFieldXinDeg = 2000*0.2/3600
         ansFieldYinDeg = 2036*0.2/3600
@@ -568,17 +567,11 @@ class OpdMetrologyTest(unittest.TestCase):
         GQvalue = metr.calcGQvalue(valueList)
         self.assertAlmostEqual(GQvalue, allData[0,-1])
 
+        saveToFilePath = os.path.join("..", "outputImg", "fieldMap.png")
+        metr.showFieldMap(folderPath2FocalPlane=self.testDataDir, saveToFilePath=saveToFilePath)
+        os.remove(saveToFilePath)
+
 if __name__ == "__main__":
 
     # Do the unit test
-    # unittest.main()
-
-    metr = OpdMetrology()
-    metr.setDefaultLsstGQ()
-    fieldWFSx, fieldWFSy = metr.getDefaultLsstWfsGQ()
-    metr.addFieldXYbyDeg(fieldWFSx, fieldWFSy)
-
-    folderPath2FocalPlane = os.path.join("..", "testData", "testOpdFunc")
-    metr.showFieldMap(folderPath2FocalPlane=folderPath2FocalPlane)
-
-
+    unittest.main()
