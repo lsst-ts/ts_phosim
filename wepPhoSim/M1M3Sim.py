@@ -211,7 +211,7 @@ class M1M3Sim(MirrorSim):
             [ndarray] -- Generated mirror surface random error in m.
         """
 
-        # Get the actuator forces of M1M3 based on the look-up table (LUT)
+        # Get the actuator forces in N of M1M3 based on the look-up table (LUT)
         zangleInDeg = zAngleInRadian/np.pi*180
         LUTforce = self.getLUTforce(zangleInDeg, LUTfileName)
 

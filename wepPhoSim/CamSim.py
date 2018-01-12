@@ -84,7 +84,7 @@ class CamSim(object):
         if (value < lowerBound) or (value > upperBound):
             raise ValueError("The setting value should be in (%.3f, %.3f)." % (lowerBound, upperBound))
 
-    def getCamDistortionInMm(self, zAngleInRad, distType, pre_elev=0, pre_camR=0, pre_temp_camR=0):
+    def getCamDistortionInMm(self, zAngleInRad, distType, pre_elev=0, pre_camR=0, pre_temp_cam=0):
         """
 
         Get the camera distortion correction in mm.
@@ -94,9 +94,9 @@ class CamSim(object):
             distType {[str]} -- Distortion type.
 
         Keyword Arguments:
-            pre_elev {[float]} -- ?? Check with Bo. Unit is radian. (default: {0})
-            pre_camR {[float]} -- ?? Check with Bo. Unit is radian. (default: {0})
-            pre_temp_camR {[float]} -- ?? Check with Bo. Unit is degree C. (default: {0})
+            pre_elev {[float]} -- Pre-compensated elevation angle in radian. (default: {0})
+            pre_camR {[float]} -- Pre-compensated camera rotation angle in radian. (default: {0})
+            pre_temp_cam {[float]} -- Pre-compensated camera temperature in degree C. (default: {0})
 
         Returns:
             [ndarray] -- Distortion in mm.
@@ -147,8 +147,8 @@ class CamSim(object):
             distortion += w1*data[p1, 3:] + w2*data[p2, 3:]
 
         # Minus the reference temperature correction. There is the problem here.
-        # If the pre_temp_carR is not on the data list, this statement will fail/ get nothing.
-        distortion -= data[(data[startTempRowIdx:, 2] == pre_temp_camR).argmax() + startTempRowIdx, 3:]
+        # If the pre_temp_cam is not on the data list, this statement will fail/ get nothing.
+        distortion -= data[(data[startTempRowIdx:, 2] == pre_temp_cam).argmax() + startTempRowIdx, 3:]
 
         # The order/ index of Zernike corrections by Andy in file is different from PhoSim use.
         # Reorder the correction here for PhoSim to use.
