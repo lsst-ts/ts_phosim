@@ -105,7 +105,7 @@ class M2Sim(MirrorSim):
 
         return tempCorrInUm
 
-    def getMirrorResInMmInZemax(self, gridFileName="M2_1um_grid.DAT", numTerms=22, 
+    def getMirrorResInMmInZemax(self, gridFileName="M2_1um_grid.DAT", numTerms=28, 
                                 writeZcInMnToFilePath=None):
         """
 
@@ -114,7 +114,7 @@ class M2Sim(MirrorSim):
 
         Keyword Arguments:
             gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {22})
+            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
             writeZcInMnToFilePath {[str]} -- File path to write the fitted zk in mm. (default: {None})
 
         Returns:
@@ -151,7 +151,7 @@ class M2Sim(MirrorSim):
         return resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInMmInZemax
 
     def writeMirZkAndGridResInZemax(self, resFile=None, surfaceGridN=200, gridFileName="M2_1um_grid.DAT",
-                                    numTerms=22, writeZcInMnToFilePath=None):
+                                    numTerms=28, writeZcInMnToFilePath=None):
         """
 
         Write the grid residue in mm of mirror surface after the fitting with Zk under the Zemax
@@ -161,7 +161,7 @@ class M2Sim(MirrorSim):
             resFile {[str]} -- File path to save the grid surface residue map. (default: {None})
             surfaceGridN {int} -- Surface grid number. (default: {200})
             gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {22})
+            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
             writeZcInMnToFilePath {[str]} -- File path to write the fitted zk in mm. (default: {None})
 
         Returns:
@@ -184,14 +184,14 @@ class M2Sim(MirrorSim):
 
         return content
 
-    def showMirResMap(self, gridFileName="M2_1um_grid.DAT", numTerms=22, resFile=None, writeToResMapFilePath=None):
+    def showMirResMap(self, gridFileName="M2_1um_grid.DAT", numTerms=28, resFile=None, writeToResMapFilePath=None):
         """
 
         Show the mirror residue map.
 
         Keyword Arguments:
             gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {22})
+            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
             resFile {[str]} -- File path of the grid surface residue map. (default: {None})
             writeToResMapFilePath {[str]} -- File path to save the residue map. (default: {None})
         """

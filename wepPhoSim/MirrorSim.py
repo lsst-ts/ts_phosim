@@ -3,8 +3,7 @@ import numpy as np
 from scipy.interpolate import Rbf
 import matplotlib.pyplot as plt
 
-# from cwfs.Tool import ZernikeFit, ZernikeEval
-from lsst.cwfs.tools import ZernikeFit, ZernikeEval
+from cwfs.Tool import ZernikeFit, ZernikeEval
 
 class MirrorSim(object):
     
