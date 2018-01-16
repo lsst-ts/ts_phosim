@@ -362,7 +362,7 @@ class PhosimCommu(object):
         self.__runProgram(command, argstring=argstring)
 
     def getPhoSimArgs(self, instance, extraCommand=None, numProc=1, numThread=1, outputDir=None, 
-                      instrument="lsst", e2ADC=1, logFilePath=None):
+                      instrument="lsst", sensorName=None, e2ADC=1, logFilePath=None):
         """
         
         Get the arguments needed to run the PhoSim.
@@ -376,6 +376,8 @@ class PhosimCommu(object):
             numThread {int} -- Number of threads. (default: {1})
             outputDir {[str]} -- Output image directory. (default: {None})
             instrument {str} -- Instrument site directory. (default: {"lsst"})
+            sensorName {str} -- Sensor chip specification (e.g., all, R22_S11, "R22_S11|R22_S12") 
+                                (default: {None})
             e2ADC {int} -- Whether to generate amplifier images (1 = true, 0 = false). (default: {1})
             logFilePath {[str]} -- Log file path for PhoSim calculation log. (default: {None})
         
@@ -406,6 +408,9 @@ class PhosimCommu(object):
 
         if (numThread > 1):
             argString += " -t %d" % numThread
+
+        if (sensorName is not None):
+            argString += " -s %s" % sensorName
 
         if (outputDir is not None):
             argString += " -o %s" % outputDir
@@ -589,10 +594,10 @@ class PhosimCommuTest(unittest.TestCase):
 
         instFileName = os.path.join("..", "testData", "temp.inst")
         phosimCom.writeToFile(instFileName, content="temp", mode="w")
-        argString = phosimCom.getPhoSimArgs(instFileName)
+        argString = phosimCom.getPhoSimArgs(instFileName, sensorName="R22_S11")
 
         absFilePath = os.path.abspath(instFileName)
-        ansArgString = "%s -i lsst -e 1" % absFilePath
+        ansArgString = "%s -i lsst -e 1 -s R22_S11" % absFilePath
 
         self.assertEqual(argString, ansArgString)
         os.remove(absFilePath)

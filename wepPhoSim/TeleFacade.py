@@ -49,7 +49,7 @@ class TeleFacade(object):
         self.phoSimCommu.runPhoSim(argstring=argString)
 
     def getPhoSimArgs(self, instFilePath, cmdFilePath=None, numPro=1, numThread=1, outputDir=None, 
-                        e2ADC=1, logFilePath=None):
+                        sensorName=None, e2ADC=1, logFilePath=None):
         """
         
         Get the arguments needed to run the PhoSim.
@@ -62,6 +62,8 @@ class TeleFacade(object):
             numPro {int} -- Number of processors. (default: {1})
             numThread {int} -- Number of threads. (default: {1})
             outputDir {[str]} -- Output image directory. (default: {None})
+            sensorName {str} -- Sensor chip specification (e.g., all, R22_S11, "R22_S11|R22_S12") 
+                                (default: {None})
             e2ADC {int} -- Whether to generate amplifier images (1 = true, 0 = false). (default: {1})
             logFilePath {[str]} -- Log file path for PhoSim calculation log. (default: {None})
         
@@ -71,7 +73,8 @@ class TeleFacade(object):
 
         argString = self.phoSimCommu.getPhoSimArgs(instFilePath, extraCommand=cmdFilePath, 
                                 numProc=numPro, numThread=numThread, outputDir=outputDir, 
-                                instrument=self.instName, e2ADC=e2ADC, logFilePath=logFilePath)
+                                instrument=self.instName, sensorName=sensorName, e2ADC=e2ADC, 
+                                logFilePath=logFilePath)
 
         return argString
 
