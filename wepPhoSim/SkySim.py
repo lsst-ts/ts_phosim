@@ -1,6 +1,12 @@
 import os, unittest
 import numpy as np
 
+from lsst.obs.lsstSim import LsstSimMapper
+from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords
+from lsst.sims.utils import ObservationMetaData
+
+from wep.SourceProcessor import SourceProcessor, expandDetectorName
+
 class SkySim(object):
 
     def __init__(self):
@@ -97,11 +103,49 @@ class SkySim(object):
         for star in data:
             self.addStarByRaDecInDeg(star[0], star[1], star[2], star[3])
 
-    def addStarByChipPos(self):
-        pass
+    def addStarByChipPos(self, camera, obs, sensorName, starId, xInpixelInCam, yInPixelInCam, 
+                            starMag, folderPath2FocalPlane, epoch=2000.0, includeDistortion=True):
+        """
+        
+        Add the star based on the chip position.
+        
+        Arguments:
+            camera {[Camera]} -- Camera object (e.g. LsstSimMapper().camera).
+            obs {[ObservationMetaData]} -- Observation metadata object.
+            sensorName {[str]} -- Abbreviated sensor name (e.g. "R22_S11").
+            starId {[int]} -- Star ID.
+            xInpixelInCam {[float]} -- Pixel position x on camera coordinate.
+            yInPixelInCam {[float]} -- Pixel position y on camera coordinate.
+            starMag {[float]} -- Star magnitude.
+            folderPath2FocalPlane {[str]} -- Path to the directory of focal plane data 
+                                            ("focalplanelayout.txt").
+        
+        Keyword Arguments:
+            epoch {float} -- Epoch is the mean epoch in years of the celestial coordinate system. 
+                            (default: {2000.0})
+            includeDistortion {bool} -- If True (default), then this method will expect the true pixel 
+                                        coordinates with optical distortion included.  If False, this 
+                                        method will expect TAN_PIXEL coordinates, which are the pixel 
+                                        coordinates with estimated optical distortion removed.  See 
+                                        the documentation in afw.cameraGeom for more details. 
+                                        (default: {True})
+        """
 
-    def addStarByFocalPlane(self):
-        pass
+        # Get the pixel positions in DM team
+        sourProc = SourceProcessor()
+        sourProc.config(sensorName=sensorName, folderPath2FocalPlane=folderPath2FocalPlane)
+        pixelDmX, pixelDmY = sourProc.camXY2DmXY(xInpixelInCam, yInPixelInCam)
+
+        # Expend the sensor name
+        expendedSensorName = expandDetectorName(sensorName)
+
+        # Get the sky position in (ra, decl)
+        raInDeg, declInDeg = raDecFromPixelCoords(pixelDmX, pixelDmY, expendedSensorName, 
+                                                camera=camera, obs_metadata=obs, epoch=epoch, 
+                                                includeDistortion=includeDistortion)
+
+        # Add the star
+        self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
 
 class SkySimTest(unittest.TestCase):
     
@@ -111,7 +155,11 @@ class SkySimTest(unittest.TestCase):
 
     def setUp(self):
 
+        # Star file
         self.skyFile = os.path.join("..", "data", "sky", "wfsStar.txt")
+
+        # Directory to the focal plane file
+        self.testDataDir = os.path.join("..", "testData", "testOpdFunc")
 
     def testFunc(self):
 
@@ -135,6 +183,35 @@ class SkySimTest(unittest.TestCase):
 
         skySim.addStarByFile(self.skyFile)
         self.assertEqual(len(skySim.starId), 8)
+
+    def testAddStarByChipPos(self):
+
+        # Instantiate the skySim object
+        skySim = SkySim()
+
+        # Set the ObservationMetaData
+        RA = 0
+        Dec = 0
+        cameraRotation = 0
+        cameraMJD = 59580.0
+        obs = ObservationMetaData(pointingRA=RA, pointingDec=Dec, rotSkyPos=cameraRotation, 
+                                    mjd=cameraMJD)
+
+        # Set the camera
+        camera = LsstSimMapper().camera
+
+        # Add the star
+        sensorName = "R22_S11"
+        starId = 0
+        starMag = 17
+        xInpixelInCam = 2000
+        yInPixelInCam = 2036
+        skySim.addStarByChipPos(camera, obs, sensorName, starId, xInpixelInCam, yInPixelInCam, 
+                                starMag, self.testDataDir)
+
+        # Test the result
+        self.assertAlmostEqual(skySim.ra[0], 359.99971038)
+        self.assertAlmostEqual(skySim.decl[0], 0.0001889)
 
 if __name__ == "__main__":
 
