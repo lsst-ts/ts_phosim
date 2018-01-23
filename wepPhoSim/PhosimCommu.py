@@ -522,7 +522,8 @@ class PhosimCommuTest(unittest.TestCase):
     def setUp(self):
 
         # Directory of phosim
-        self.phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
+        self.phosimDir = os.path.join(os.path.abspath(os.sep), "home", "ttsai", "Document", 
+                                        "bitbucket", "phosim_syseng2")
 
     def testFunc(self):
         
