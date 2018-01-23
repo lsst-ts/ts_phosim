@@ -11,7 +11,7 @@ def main():
 if __name__ == "__main__":
 
     # Settings 
-    phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
+    phosimDir = "/home/ttsai/Document/bitbucket/phosim_syseng2"
     outputDir = "./output"
     outputImgDir = "./outputImg"
     cmdSettingFile = "./data/cmdFile/opdDefault.cmd"

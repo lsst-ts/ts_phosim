@@ -15,7 +15,7 @@ def main():
 if __name__ == "__main__":
 
     # PhoSim directory
-    phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
+    phosimDir = "/home/ttsai/Document/bitbucket/phosim_syseng2"
 
     # Subsystem data direction
     camDataDir = "./data/camera"
