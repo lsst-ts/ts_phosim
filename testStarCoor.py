@@ -53,8 +53,8 @@ if __name__ == "__main__":
     # Update the telescope degree of freedom
     dofInUm = np.zeros(50)
 
-    # Camera dx
-    dofInUm[6] = 1000
+    # Camera piston
+    dofInUm[5] = 1000
     tele.setDofInUm(dofInUm)
 
     # Add the star
