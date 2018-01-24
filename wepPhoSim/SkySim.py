@@ -84,6 +84,27 @@ class SkySim(object):
         
         self.__init__()
 
+    def exportSkyToFile(self, outputFilePath):
+        """
+        
+        Export the star information into the file.
+        
+        Arguments:
+            outputFilePath {[str]} -- Output file path.
+        """
+        
+        # Add the header (star ID, ra, decl, magnitude)
+        content = "Id\t Ra\t\t Decl\t\t Mag\n"
+
+        # Add the star information
+        for ii in range(len(self.starId)):
+            content += "%d\t %3.6f\t %3.6f\t %3.6f\n" % (self.starId[ii], self.ra[ii], 
+                                                         self.decl[ii], self.mag[ii])
+        # Write into file
+        fid = open(outputFilePath, "w")
+        fid.write(content)
+        fid.close()
+
     def addStarByFile(self, readFilePath, skiprows=1):
         """
         
@@ -183,6 +204,14 @@ class SkySimTest(unittest.TestCase):
 
         skySim.addStarByFile(self.skyFile)
         self.assertEqual(len(skySim.starId), 8)
+
+        outputFilePath = os.path.join(os.path.dirname(self.skyFile), "testSkyOutput.txt")
+        if (not os.path.isfile(outputFilePath)):
+            skySim.exportSkyToFile(outputFilePath)
+            self.assertTrue(os.path.isfile(outputFilePath))
+            os.remove(outputFilePath)
+        else:
+            print("Can't do the export file test because %s exists already." % outputFilePath)
 
     def testAddStarByChipPos(self):
 
