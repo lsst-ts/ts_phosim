@@ -95,10 +95,10 @@ if __name__ == "__main__":
                                 pertFilePath=pertCmdFilePath, cmdFileName="starComCam.cmd")
 
         # Write the star instance file
-        # Set the camRot=0 for the simplification. But actually, there is no correction for ComCam.
+        # Set the rot=0 for the simplification. But actually, there is no correction for ComCam.
         # However, the coordinate is affected by this.
         instFilePath = tele.writeStarInstFile(outputDir, skySim, obsId, aFilter, boresight=boresight, 
-                                                camRot=0, mjd=mjdTime, sedName="sed_500.txt", sciSensorOn=True, 
+                                                rot=0, mjd=mjdTime, sedName="sed_500.txt", sciSensorOn=True, 
                                                 instSettingFile=instSettingFile, instFileName=instFileNameList[str(ii)])
 
         # Get the argument to run the phosim

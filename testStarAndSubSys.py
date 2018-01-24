@@ -76,9 +76,9 @@ if __name__ == "__main__":
                                     pertFilePath=pertCmdFilePath, cmdFileName="star.cmd")
 
     # Write the star instance file
-    # Use the camRot=0 temporally. Need to update it latter.
+    # Use the rot=0 temporally. Need to update it latter.
     instFilePath = tele.writeStarInstFile(outputDir, skySim, obsId, aFilter, boresight=boresight, 
-                                            camRot=0, mjd=mjdTime, sedName="sed_500.txt", wfSensorOn=True, 
+                                            rot=0, mjd=mjdTime, sedName="sed_500.txt", wfSensorOn=True, 
                                             instSettingFile=instSettingFile, instFileName="star.inst")
 
     # Write the accumulated DOF file

@@ -19,7 +19,7 @@ if __name__ == "__main__":
     outputDir = "./output"
     outputImgDir = "./outputImg"
     cmdSettingFile = "./data/cmdFile/starDefault.cmd"
-    instSettingFile = "./data/instFile/starDefault.inst"
+    instSettingFile = "./data/instFile/starSingleExp.inst"
 
     folderPath2FocalPlane = os.path.join(phosimDir, "data", "lsst")
 
@@ -35,8 +35,10 @@ if __name__ == "__main__":
     # Set the ObservationMetaData
     RA = 0
     Dec = 0
-    cameraRotation = 0
+    cameraRotation = 10
     cameraMJD = 59580.0
+
+    # Need to check the unit of rotSkyPos in ObservationMetaData
     obs = ObservationMetaData(pointingRA=RA, pointingDec=Dec, rotSkyPos=cameraRotation, 
                                 mjd=mjdTime)
 
@@ -55,14 +57,14 @@ if __name__ == "__main__":
 
     # Camera piston
     dofInUm[5] = 1000
-    tele.setDofInUm(dofInUm)
+    # tele.setDofInUm(dofInUm)
 
     # Add the star
     sensorName = "R22_S11"
-    starId = [0, 1]
-    starMag = [17, 17]
-    xInpixelInCam = [1000, 2000]
-    yInPixelInCam = [1000, 2036]
+    starId = [0]
+    starMag = [15]
+    xInpixelInCam = [3200]
+    yInPixelInCam = [3800]
     for ii in range(len(starId)):
         skySim.addStarByChipPos(camera, obs, sensorName, starId[ii], xInpixelInCam[ii], yInPixelInCam[ii], 
                                 starMag[ii], folderPath2FocalPlane)
@@ -71,9 +73,9 @@ if __name__ == "__main__":
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="star.cmd")
 
     # Write the star instance file
-    # Use the camRot=0 temporally. Need to update it latter.
+    # Use the rot=0 temporally. Need to update it latter.
     instFilePath = tele.writeStarInstFile(outputDir, skySim, obsId, aFilter, boresight=(RA, Dec), 
-                                            camRot=cameraRotation, mjd=mjdTime, sedName="sed_500.txt", 
+                                            rot=cameraRotation, mjd=mjdTime, sedName="sed_500.txt", 
                                             sciSensorOn=True, instSettingFile=instSettingFile, 
                                             instFileName="star.inst")
 
@@ -83,7 +85,7 @@ if __name__ == "__main__":
     # Get the argument to run the phosim
     logFilePath = os.path.join(outputImgDir, "phosimStar.log")
     argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgDir, 
-                                    e2ADC=1, logFilePath=logFilePath)
+                                    e2ADC=0, logFilePath=logFilePath)
     
     # Run the phosim
     tele.runPhoSim(argString)
