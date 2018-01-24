@@ -65,15 +65,17 @@ if __name__ == "__main__":
     # Set the telescope DOF
     # tele.setDofInUm(dofInUm)
 
-    # Add the star
-    sensorName = "R22_S11"
-    starId = [0]
+    # Add the star on WFS
+    sensorName = ["R44_S00_C0", "R00_S22_C1", "R44_S00_C1", "R00_S22_C0", "R04_S20_C1", 
+                    "R40_S02_C0", "R04_S20_C0", "R40_S02_C1"]
+    starId = range(len(sensorName))
+
     starMag = [15]
-    xInpixelInCam = [3200]
-    yInPixelInCam = [3800]
+    xInpixelInCam = [500]
+    yInPixelInCam = [1000]
     for ii in range(len(starId)):
-        skySim.addStarByChipPos(camera, obs, sensorName, starId[ii], xInpixelInCam[ii], yInPixelInCam[ii], 
-                                starMag[ii], folderPath2FocalPlane)
+        skySim.addStarByChipPos(camera, obs, sensorName[ii], starId[ii], xInpixelInCam[0], yInPixelInCam[0], 
+                                starMag[0], folderPath2FocalPlane)
 
     # Write the star physical command file
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="star.cmd")
@@ -82,7 +84,7 @@ if __name__ == "__main__":
     # Use the rot=0 temporally. Need to update it latter.
     instFilePath = tele.writeStarInstFile(outputDir, skySim, obsId, aFilter, boresight=(RA, Dec), 
                                             rot=cameraRotation, mjd=mjdTime, sedName="sed_500.txt", 
-                                            sciSensorOn=True, instSettingFile=instSettingFile, 
+                                            wfSensorOn=True, instSettingFile=instSettingFile, 
                                             instFileName="star.inst")
 
     # Write the accumulated DOF file
@@ -90,7 +92,7 @@ if __name__ == "__main__":
 
     # Get the argument to run the phosim
     logFilePath = os.path.join(outputImgDir, "phosimStar.log")
-    argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, outputDir=outputImgDir, 
+    argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=8, outputDir=outputImgDir, 
                                     e2ADC=0, logFilePath=logFilePath)
     
     # Run the phosim
