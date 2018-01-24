@@ -273,7 +273,7 @@ class TeleFacade(object):
 
         return cmdFilePath
 
-    def writeStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), camRot=0, 
+    def writeStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), rot=0, 
                             mjd=59552.3, sedName="sed_500.txt", sciSensorOn=False, wfSensorOn=False, 
                             guidSensorOn=False, instSettingFile=None, instFileName="star.inst"):
         """
@@ -288,7 +288,8 @@ class TeleFacade(object):
         
         Keyword Arguments:
             boresight {tuple} -- Telescope boresight in (ra, decl). (default: {(0,0)})
-            camRot {float} -- Camera rotation angle. (default: {0})
+            rot {float} -- Angle of sky relative to camera coordinates (from North over East) in 
+                           decimal degrees. (default: {0})
             mjd {float} -- MJD of observation. (default: {59552.3})
             sedName {str} -- The name of the SED file with a file path that is relative to the 
                              data directory in PhoSim. (default: {"sed_500.txt"})
@@ -311,7 +312,7 @@ class TeleFacade(object):
         # Write the default instance setting
         ra = boresight[0]
         dec = boresight[1]
-        self.phoSimCommu.getStarInstance(obsId, aFilterId, ra=ra, dec=dec, rot=-camRot, 
+        self.phoSimCommu.getStarInstance(obsId, aFilterId, ra=ra, dec=dec, rot=rot, 
                                             mjd=mjd, filePath=instFilePath)
         if (instFilePath is not None):
             self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
