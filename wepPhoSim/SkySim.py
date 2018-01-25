@@ -6,6 +6,7 @@ from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords
 from lsst.sims.utils import ObservationMetaData
 
 from wep.SourceProcessor import SourceProcessor, expandDetectorName
+from bsc.BrightStarDatabase import BrightStarDatabase
 
 class SkySim(object):
 
@@ -19,6 +20,25 @@ class SkySim(object):
         self.ra = np.array([])
         self.decl = np.array([])
         self.mag = np.array([])
+
+        self.dbInfo = {"host":None, "user":None, "password":None, "dbName":None}
+
+    def configDbInfo(self, host, user, password, dbName):
+        """
+        
+        Configure the database information.
+        
+        Arguments:
+            host {[str]} -- Database host name.
+            user {[str]} -- Database user name.
+            password {[str]} -- Database user password.
+            dbName {[str]} -- Database name.
+        """
+
+        self.dbInfo["host"] = host
+        self.dbInfo["user"] = user
+        self.dbInfo["password"] = password
+        self.dbInfo["dbName"] = dbName
 
     def setStarRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """
@@ -168,6 +188,41 @@ class SkySim(object):
         # Add the star
         self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
 
+    def addStarByQueryDatabase(self, aFilter, corner1, corner2, corner3, corner4, 
+                                tableName="bright_stars"):
+        """
+        
+        Add the star by querying the database of bright star catalog in UW.
+        
+        Arguments:
+            aFilter {[str]} -- Active filter type ("u", "g", "r", "i", "z", "y").
+            corner1 {[float]} -- The first corner of the sensor defined as (RA, Decl).
+            corner2 {[float]} -- The second corner of the sensor defined as (RA, Decl).
+            corner3 {[float]} -- The third corner of the sensor defined as (RA, Decl).
+            corner4 {[float]} -- The fourth corner of the sensor defined as (RA, Decl).
+        
+        Keyword Arguments:
+            tableName {str} -- Table name in database. (default: {"bright_stars"})
+        """
+
+        # Instantiate the BrightStarDatabase
+        bsc = BrightStarDatabase()
+
+        # Connect to the database
+        bsc.connect(self.dbInfo["host"], self.dbInfo["user"], self.dbInfo["password"], 
+                    self.dbInfo["dbName"])
+
+        # Query the database        
+        stars = bsc.query(tableName, aFilter, corner1, corner2, corner3, corner4)
+
+        # Disconnect from the database
+        bsc.disconnect()
+
+        # Add the star information
+        starId = np.array(stars.SimobjID).astype("int")
+        mag = getattr(stars, "LSSTMag"+aFilter.upper())
+        self.addStarByRaDecInDeg(starId, stars.RA, stars.Decl, mag)
+
 class SkySimTest(unittest.TestCase):
     
     """
@@ -241,6 +296,38 @@ class SkySimTest(unittest.TestCase):
         # Test the result
         self.assertAlmostEqual(skySim.ra[0], 359.99971038)
         self.assertAlmostEqual(skySim.decl[0], 0.0001889)
+
+    def testAddStarByQueryDatabase(self):
+
+        # Instantiate the skySim object
+        skySim = SkySim()
+
+        # Filter type 
+        aFilter = "u"
+
+        # Remote database setting
+        databaseHost = "localhost:51433"
+        databaseUser = "LSST-2"
+        databasePassword = "L$$TUser"
+        databaseName = "LSSTCATSIM"
+
+        # Config the database
+        skySim.configDbInfo(databaseHost, databaseUser, databasePassword, databaseName)
+
+        # Check the configuration
+        self.assertEqual(skySim.dbInfo["host"], databaseHost)
+
+        # Query the database
+        corner1 = [75.998622, -1]
+        corner2 = [75.998622, -2]
+        corner3 = [75.998985, -1]
+        corner4 = [75.998985, -2]
+        try:
+            skySim.addStarByQueryDatabase(aFilter, corner1, corner2, corner3, corner4)
+            # Check the adding of star
+            self.assertEqual(len(skySim.starId), 3)
+        except Exception as SystemExit:
+            print("Please connect the remote UW database for the testing of query.")
 
 if __name__ == "__main__":
 
