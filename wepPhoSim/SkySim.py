@@ -172,6 +172,91 @@ class SkySim(object):
                                         (default: {True})
         """
 
+        # Get the sky position in (ra, decl)
+        raInDeg, declInDeg = self.__getSkyPosByChipPos(camera, obs, sensorName, xInpixelInCam, 
+                                            yInPixelInCam, folderPath2FocalPlane, epoch=epoch, 
+                                            includeDistortion=includeDistortion)
+
+        # Add the star
+        self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
+
+    def getCornOfChipOnSky(self, camera, obs, sensorName, folderPath2FocalPlane, epoch=2000.0, 
+                            includeDistortion=True):
+        """
+        
+        Get the corner points of chip on sky position in (ra, dec). The direction is counter clockwise 
+        from the origin.
+        
+        Arguments:
+            camera {[Camera]} -- Camera object (e.g. LsstSimMapper().camera).
+            obs {[ObservationMetaData]} -- Observation metadata object.
+            sensorName {[str]} -- Abbreviated sensor name (e.g. "R22_S11").
+            folderPath2FocalPlane {[str]} -- Path to the directory of focal plane data 
+                                            ("focalplanelayout.txt").
+        
+        Keyword Arguments:
+            epoch {float} -- Epoch is the mean epoch in years of the celestial coordinate system. 
+                            (default: {2000.0})
+            includeDistortion {bool} -- If True (default), then this method will expect the true pixel 
+                                        coordinates with optical distortion included.  If False, this 
+                                        method will expect TAN_PIXEL coordinates, which are the pixel 
+                                        coordinates with estimated optical distortion removed.  See 
+                                        the documentation in afw.cameraGeom for more details. 
+                                        (default: {True})
+        
+        Returns:
+            [list] -- List of corner points in tuple. The unit is in (ra, dec).
+        """
+
+        # Get the sensor dimension
+        sourProc = SourceProcessor()
+        sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
+        dimX, dimY = sourProc.sensorDimList[sensorName]
+
+        # Corner in Pixel
+        xInPixel = [0, dimX, dimX, 0]
+        yInPixel = [0, 0, dimY, dimY]
+
+        # Corner in (Ra, Dec)
+        cornerInRaDecList = []
+        for ii in range(4):
+            raInDeg, declInDeg = self.__getSkyPosByChipPos(camera, obs, sensorName, xInPixel[ii], 
+                                                yInPixel[ii], folderPath2FocalPlane, epoch=epoch, 
+                                                includeDistortion=includeDistortion)
+            cornerInRaDecList.append((raInDeg, declInDeg))
+
+        return cornerInRaDecList
+
+    def __getSkyPosByChipPos(self, camera, obs, sensorName, xInpixelInCam, yInPixelInCam, 
+                                folderPath2FocalPlane, epoch=2000.0, includeDistortion=True):
+        """
+        
+        Get the sky position in (ra, dec) based on the chip pixel positions.
+        
+        Arguments:
+            camera {[Camera]} -- Camera object (e.g. LsstSimMapper().camera).
+            obs {[ObservationMetaData]} -- Observation metadata object.
+            sensorName {[str]} -- Abbreviated sensor name (e.g. "R22_S11").
+            xInpixelInCam {[float]} -- Pixel position x on camera coordinate.
+            yInPixelInCam {[float]} -- Pixel position y on camera coordinate.
+            folderPath2FocalPlane {[str]} -- Path to the directory of focal plane data 
+                                            ("focalplanelayout.txt").
+        
+        Keyword Arguments:
+            epoch {float} -- Epoch is the mean epoch in years of the celestial coordinate system. 
+                            (default: {2000.0})
+            includeDistortion {bool} -- If True (default), then this method will expect the true pixel 
+                                        coordinates with optical distortion included.  If False, this 
+                                        method will expect TAN_PIXEL coordinates, which are the pixel 
+                                        coordinates with estimated optical distortion removed.  See 
+                                        the documentation in afw.cameraGeom for more details. 
+                                        (default: {True})
+        
+        Returns:
+            [float] -- Ra in degree.
+            [float] -- Decl in degree.
+        """
+
         # Get the pixel positions in DM team
         sourProc = SourceProcessor()
         sourProc.config(sensorName=sensorName, folderPath2FocalPlane=folderPath2FocalPlane)
@@ -185,8 +270,7 @@ class SkySim(object):
                                                 camera=camera, obs_metadata=obs, epoch=epoch, 
                                                 includeDistortion=includeDistortion)
 
-        # Add the star
-        self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
+        return raInDeg, declInDeg
 
     def addStarByQueryDatabase(self, aFilter, corner1, corner2, corner3, corner4, 
                                 tableName="bright_stars"):
@@ -296,6 +380,10 @@ class SkySimTest(unittest.TestCase):
         # Test the result
         self.assertAlmostEqual(skySim.ra[0], 359.99971038)
         self.assertAlmostEqual(skySim.decl[0], 0.0001889)
+
+        # Test to get the sensor box
+        cornerInRaDecList = skySim.getCornOfChipOnSky(camera, obs, sensorName, self.testDataDir)
+        self.assertEqual(len(cornerInRaDecList), 4)
 
     def testAddStarByQueryDatabase(self):
 
