@@ -52,39 +52,30 @@ class SkySim(object):
             mag {[list/ ndarray]} -- Star magnitude.
         """
 
-        self.__setUniqStarId(starId, doReplacement=True)
-        self.ra = raInDeg
-        self.decl = declInDeg
-        self.mag = mag
+        # Clear the sky first
+        self.resetSky()
 
-    def __setUniqStarId(self, starId, doReplacement=False):
+        # Add the star
+        self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, mag)
+
+    def __checkUniqStarId(self, starId):
         """
         
-        Set the star unique IDs.
+        Check the star ID is unique or not.
         
         Arguments:
-            starId {[list/ ndarray]} -- Star ID.
-
-        Keyword Arguments:
-            doReplacement {bool} -- Do the replacement of star Id or not. 
-                                    (default: {False})
+            starId {[int]} -- Star Id.
         
-        Raises:
-            ValueError -- Star IDs are not unique.
+        Returns:
+            [bool] -- Is unique star Id or not.
         """
 
-        # Collect all star id
-        allStarId = np.append(self.starId, starId).astype("int")
+        isUnique = True
+        if starId in self.starId:
+            isUnique = False
+            print("StarId=%d is not unique." % starId)
 
-        # Check all IDs are unique all not
-        if (len(allStarId) != len(np.unique(allStarId))):
-            raise ValueError("Star IDs are not unique.")
-
-        # Set the star ID
-        if (doReplacement):
-            self.starId = np.array(starId)
-        else:
-            self.starId = allStarId
+        return isUnique
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """
@@ -92,16 +83,44 @@ class SkySim(object):
         Add the star information by (ra, dec) in degrees.
         
         Arguments:
-            starId {[list/ ndarray]} -- Star ID.
-            raInDeg {[list/ ndarray]} -- Star Ra in degree.
-            declInDeg {[list/ ndarray]} -- Star Decl in degree.
-            mag {[list/ ndarray]} -- Star magnitude.
+            starId {[int/ list/ ndarray]} -- Star ID.
+            raInDeg {[float/ list/ ndarray]} -- Star Ra in degree.
+            declInDeg {[float/ list/ ndarray]} -- Star Decl in degree.
+            mag {[float/ list/ ndarray]} -- Star magnitude.
         """
 
-        self.__setUniqStarId(starId, doReplacement=False)
-        self.ra = np.append(self.ra, raInDeg)
-        self.decl = np.append(self.decl, declInDeg)
-        self.mag = np.append(self.mag, mag)
+        # Check the inputs are list or not, and change the type if necessary
+        starId = self.__changeToList(starId)
+        raInDeg = self.__changeToList(raInDeg)
+        declInDeg = self.__changeToList(declInDeg)
+        mag = self.__changeToList(mag)
+
+        # Add the stars
+        for ii in range(len(starId)):
+            if (self.__checkUniqStarId(starId[ii])):
+                self.starId = np.append(self.starId, int(starId[ii]))
+                self.ra = np.append(self.ra, raInDeg[ii])
+                self.decl = np.append(self.decl, declInDeg[ii])
+                self.mag = np.append(self.mag, mag[ii])
+
+    def __changeToList(self, variable):
+        """
+        
+        Change the data type to list.
+        
+        Arguments:
+            variable {[int/ float/ list/ ndarray]} -- Variable.
+        
+        Returns:
+            [list] -- Variable as the list type.
+        """
+
+        try:
+            len(variable)
+        except Exception as TypeError:
+            variable = [variable]
+
+        return variable
 
     def resetSky(self):
         """
@@ -340,10 +359,9 @@ class SkySimTest(unittest.TestCase):
         skySim.addStarByRaDecInDeg(1, 2, 3, 4)
         self.assertEqual(len(skySim.starId), 2)
 
-        try:
-            skySim.addStarByRaDecInDeg(1, 2, 3, 4)
-        except Exception as ValueError:
-            pass
+        # Check to add the second star with the same ID
+        skySim.addStarByRaDecInDeg([1, 2], [2, 2], [3, 3], [4, 4])
+        self.assertEqual(len(skySim.starId), 3)
 
         skySim.resetSky()
         self.assertEqual(len(skySim.starId), 0)
