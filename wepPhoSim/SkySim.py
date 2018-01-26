@@ -52,18 +52,22 @@ class SkySim(object):
             mag {[list/ ndarray]} -- Star magnitude.
         """
 
-        self.__setUniqStarId(starId)
+        self.__setUniqStarId(starId, doReplacement=True)
         self.ra = raInDeg
         self.decl = declInDeg
         self.mag = mag
 
-    def __setUniqStarId(self, starId):
+    def __setUniqStarId(self, starId, doReplacement=False):
         """
         
         Set the star unique IDs.
         
         Arguments:
             starId {[list/ ndarray]} -- Star ID.
+
+        Keyword Arguments:
+            doReplacement {bool} -- Do the replacement of star Id or not. 
+                                    (default: {False})
         
         Raises:
             ValueError -- Star IDs are not unique.
@@ -77,7 +81,10 @@ class SkySim(object):
             raise ValueError("Star IDs are not unique.")
 
         # Set the star ID
-        self.starId = allStarId
+        if (doReplacement):
+            self.starId = np.array(starId)
+        else:
+            self.starId = allStarId
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """
@@ -91,7 +98,7 @@ class SkySim(object):
             mag {[list/ ndarray]} -- Star magnitude.
         """
 
-        self.__setUniqStarId(starId)
+        self.__setUniqStarId(starId, doReplacement=False)
         self.ra = np.append(self.ra, raInDeg)
         self.decl = np.append(self.decl, declInDeg)
         self.mag = np.append(self.mag, mag)
