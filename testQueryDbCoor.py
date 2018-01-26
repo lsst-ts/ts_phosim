@@ -23,6 +23,12 @@ if __name__ == "__main__":
 
     folderPath2FocalPlane = os.path.join(phosimDir, "data", "lsst")
 
+    # Remote database setting
+    databaseHost = "localhost:51433"
+    databaseUser = "LSST-2"
+    databasePassword = "L$$TUser"
+    databaseName = "LSSTCATSIM"
+
     # Set the settings
     obsId = 9006000
     aFilter = "g"
@@ -33,11 +39,11 @@ if __name__ == "__main__":
     camera = LsstSimMapper().camera
 
     # Set the ObservationMetaData
-    RA = 20
-    Dec = 30
+    RA = 0
+    Dec = 0
 
     # The unit of camera rotation angle is in degree
-    cameraRotation = 10
+    cameraRotation = 0
     cameraMJD = 59580.0
 
     obs = ObservationMetaData(pointingRA=RA, pointingDec=Dec, rotSkyPos=cameraRotation, 
@@ -63,17 +69,23 @@ if __name__ == "__main__":
     # dofInUm[6] = 500
 
     # Set the telescope DOF
-    # tele.setDofInUm(dofInUm)
+    tele.setDofInUm(dofInUm)
 
-    # Add the star
+    # Query the star data base
     sensorName = "R22_S11"
-    starId = [0]
-    starMag = [15]
-    xInpixelInCam = [3200]
-    yInPixelInCam = [3800]
-    for ii in range(len(starId)):
-        skySim.addStarByChipPos(camera, obs, sensorName, starId[ii], xInpixelInCam[ii], yInPixelInCam[ii], 
-                                starMag[ii], folderPath2FocalPlane)
+
+    # Get the corner of sensor
+    cornerInRaDecList = skySim.getCornOfChipOnSky(camera, obs, sensorName, folderPath2FocalPlane)
+
+    # Add the star by doing the query
+    skySim.configDbInfo(databaseHost, databaseUser, databasePassword, databaseName)
+    skySim.addStarByQueryDatabase(aFilter, cornerInRaDecList[0], cornerInRaDecList[1], 
+                                    cornerInRaDecList[2], cornerInRaDecList[3])
+
+    # Change the star id
+    # lengthOfStar = 10
+    # skySim.setStarRaDecInDeg(np.arange(len(skySim.starId))[0:lengthOfStar], skySim.ra[0:lengthOfStar], 
+    #                             skySim.decl[0:lengthOfStar], 15*np.ones(lengthOfStar))
 
     # Write the star physical command file
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="star.cmd")

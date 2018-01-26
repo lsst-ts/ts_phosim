@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # dofInUm[6] = 500
 
     # Set the telescope DOF
-    # tele.setDofInUm(dofInUm)
+    tele.setDofInUm(dofInUm)
 
     # Add the star
     sensorName = "R22_S11"
