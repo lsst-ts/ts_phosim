@@ -23,6 +23,9 @@ if __name__ == "__main__":
 
     folderPath2FocalPlane = os.path.join(phosimDir, "data", "lsst")
 
+    # Sky information
+    outputFilePath = "./output/skyWfsInfo.txt"
+
     # Set the settings
     obsId = 9006000
     aFilter = "g"
@@ -33,11 +36,11 @@ if __name__ == "__main__":
     camera = LsstSimMapper().camera
 
     # Set the ObservationMetaData
-    RA = 20
-    Dec = 30
+    RA = 0
+    Dec = 0
 
     # The unit of camera rotation angle is in degree
-    cameraRotation = 10
+    cameraRotation = 0
     cameraMJD = 59580.0
 
     obs = ObservationMetaData(pointingRA=RA, pointingDec=Dec, rotSkyPos=cameraRotation, 
@@ -54,10 +57,10 @@ if __name__ == "__main__":
     tele.setSubSysConfigFile(phosimDir=phosimDir)
 
     # Update the telescope degree of freedom
-    dofInUm = np.zeros(50)
+    # dofInUm = np.zeros(50)
 
     # Camera piston in um
-    dofInUm[5] = 1000
+    # dofInUm[5] = 1000
 
     # Camera dx in um
     # dofInUm[6] = 500
@@ -68,14 +71,19 @@ if __name__ == "__main__":
     # Add the star on WFS
     sensorName = ["R44_S00_C0", "R00_S22_C1", "R44_S00_C1", "R00_S22_C0", "R04_S20_C1", 
                     "R40_S02_C0", "R04_S20_C0", "R40_S02_C1"]
-    starId = range(len(sensorName))
+    starMag = [15, 15]
+    xInpixelInCam = [500, 800]
+    yInPixelInCam = [1000, 1300]
 
-    starMag = [15]
-    xInpixelInCam = [500]
-    yInPixelInCam = [1000]
-    for ii in range(len(starId)):
-        skySim.addStarByChipPos(camera, obs, sensorName[ii], starId[ii], xInpixelInCam[0], yInPixelInCam[0], 
-                                starMag[0], folderPath2FocalPlane)
+    starId = 0
+    for sensor in sensorName:
+        for ii in range(len(xInpixelInCam)):
+            skySim.addStarByChipPos(camera, obs, sensor, starId, xInpixelInCam[ii], yInPixelInCam[ii], 
+                                    starMag[ii], folderPath2FocalPlane)
+            starId += 1
+
+    # Export sky information
+    skySim.exportSkyToFile(outputFilePath)
 
     # Write the star physical command file
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="star.cmd")
