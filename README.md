@@ -58,6 +58,12 @@
 <br/>
 *testOpdAndSubSys.py: Test the OPD with the subsystem perturbation.*
 <br/>
+*testQueryDbCoor.py: Test to add the stars by querying the UW BSC and get the images.*
+<br/>
 *testStarAndSubSys.py: Test the star donut in LSST camera with the subsystem perturbation.*
 <br/>
 *testStarAndSubSysWiComCam.py: Test the star donut in ComCam with the subsystem perturbation.*
+<br/>
+*testStarCoor.py: Test to add the star by pixel position and get the image.*
+<br/>
+*testWfsStarCoor.py: Test to add the stars on WFS and get the images.*
