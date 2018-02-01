@@ -275,7 +275,7 @@ class PhosimCommu(object):
 
         return content
 
-    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, filePath=None):
+    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, simSeed=1000, filePath=None):
         """
         
         Get the star instance catalog.
@@ -285,11 +285,12 @@ class PhosimCommu(object):
             aFilterId {[int]} -- PhoSim lsst filter ID.
         
         Keyword Arguments:
-            ra {float} -- Unrefracted Right Ascension in decimal degrees. (default: {0})
-            dec {float} -- Unrefracted Declination in decimal degrees. (default: {0})
-            rot {float} -- Angle of sky relative to camera coordinates (from North over East) in 
+            ra {[float]} -- Unrefracted Right Ascension in decimal degrees. (default: {0})
+            dec {[float]} -- Unrefracted Declination in decimal degrees. (default: {0})
+            rot {[float]} -- Angle of sky relative to camera coordinates (from North over East) in 
                            decimal degrees. (default: {0})
-            mjd {float} -- MJD of observation. (default: {49552.3})
+            mjd {[float]} -- MJD of observation. (default: {49552.3})
+            simSeed {[int]} -- Random number seed. (default: {1000})
             filePath {[str]} -- File path to save the instance. (default: {None})
         
         Returns:
@@ -301,7 +302,7 @@ class PhosimCommu(object):
         content += "Opsim_obshistid %d \n" % obsId
         content += "Opsim_filter %d \n" % aFilterId
         content += "mjd %.10f \n" % mjd
-        content += "SIM_SEED %d \n" % (obsId % 10000 + 4)
+        content += "SIM_SEED %d \n" % simSeed
 
         # Add the sky information
         content += "rightascension %.6f \n" % ra

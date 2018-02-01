@@ -274,8 +274,9 @@ class TeleFacade(object):
         return cmdFilePath
 
     def writeStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), rot=0, 
-                            mjd=59552.3, sedName="sed_500.txt", sciSensorOn=False, wfSensorOn=False, 
-                            guidSensorOn=False, instSettingFile=None, instFileName="star.inst"):
+                            mjd=59552.3, simSeed=1000, sedName="sed_500.txt", sciSensorOn=False, 
+                            wfSensorOn=False, guidSensorOn=False, instSettingFile=None, 
+                            instFileName="star.inst"):
         """
         
         Write the star instance file.
@@ -287,17 +288,18 @@ class TeleFacade(object):
             aFilter {[str]} -- Active filter type ("u", "g", "r", "i", "z", "y").
         
         Keyword Arguments:
-            boresight {tuple} -- Telescope boresight in (ra, decl). (default: {(0,0)})
-            rot {float} -- Angle of sky relative to camera coordinates (from North over East) in 
+            boresight {[tuple]} -- Telescope boresight in (ra, decl). (default: {(0,0)})
+            rot {[float]} -- Angle of sky relative to camera coordinates (from North over East) in 
                            decimal degrees. (default: {0})
-            mjd {float} -- MJD of observation. (default: {59552.3})
-            sedName {str} -- The name of the SED file with a file path that is relative to the 
+            mjd {[float]} -- MJD of observation. (default: {59552.3})
+            simSeed {[int]} -- Random number seed. (default: {1000})
+            sedName {[str]} -- The name of the SED file with a file path that is relative to the 
                              data directory in PhoSim. (default: {"sed_500.txt"})
-            sciSensorOn {bool} -- Science sensors are on. (default: {False})
-            wfSensorOn {bool} -- Wavefront sensors are on. (default: {False})
-            guidSensorOn {bool} -- Guider sensors are on. (default: {False})
+            sciSensorOn {[bool]} -- Science sensors are on. (default: {False})
+            wfSensorOn {[bool]} -- Wavefront sensors are on. (default: {False})
+            guidSensorOn {[bool]} -- Guider sensors are on. (default: {False})
             instSettingFile {[str]} -- Instance setting file. (default: {"None"}) 
-            instFileName {str} -- Star instance file name. (default: {"star.inst"})
+            instFileName {[str]} -- Star instance file name. (default: {"star.inst"})
         
         Returns:
             [str] -- Instance file path.
@@ -313,7 +315,7 @@ class TeleFacade(object):
         ra = boresight[0]
         dec = boresight[1]
         self.phoSimCommu.getStarInstance(obsId, aFilterId, ra=ra, dec=dec, rot=rot, 
-                                            mjd=mjd, filePath=instFilePath)
+                                            mjd=mjd, simSeed=simSeed, filePath=instFilePath)
         if (instFilePath is not None):
             self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
 
@@ -587,7 +589,6 @@ class TeleFacadeTest(unittest.TestCase):
         self.camDataDir = os.path.join("..", "data", "camera")
         self.M1M3dataDir = os.path.join("..", "data", "M1M3")
         self.M2dataDir = os.path.join("..", "data", "M2")
-        self.phosimDir = "/Users/Wolf/Documents/bitbucket/phosim_syseng2"
 
         # Set the output dir
         self.outputDir = os.path.join("..", "output", "temp")
@@ -651,9 +652,8 @@ class TeleFacadeTest(unittest.TestCase):
         zAngleInDeg = 27.0912
         rotAngInDeg = -1.2323/np.pi*180.0
         iSim = 6
-        # pertCmdFilePath = "/Users/Wolf/Documents/stash/ts_tcs_wep_phosim/output/pert.cmd"
         pertCmdFilePath = tele.writePertBaseOnConfigFile(self.outputDir, zAngleInDeg=zAngleInDeg, 
-                                           rotAngInDeg=rotAngInDeg, seedNum=iSim, saveResMapFig=True)
+                                           rotAngInDeg=rotAngInDeg, seedNum=iSim, saveResMapFig=False)
         cmdFile = open(pertCmdFilePath, "r")
         lines = cmdFile.readlines()
         cmdFile.close()
