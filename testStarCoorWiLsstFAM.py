@@ -30,7 +30,7 @@ if __name__ == "__main__":
     folderPath2FocalPlane = os.path.join(phosimDir, "data", "lsst")
 
     # Sky information
-    outputFilePath = "./output/skyComCamInfo.txt"
+    outputFilePath = "./output/skyLsstFamInfo.txt"
 
     # Set the settings
 
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     tele.setSubSysConfigFile(phosimDir=phosimDir)
 
     # Set the comcam camera
-    tele.setInstName("comcam10")
+    tele.setInstName("lsst")
 
     # Add the star
     sensorName = ["R22_S11", "R22_S10"]
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
             # Write the star physical command file
             cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, 
-                                            cmdFileName="starComCam.cmd")
+                                            cmdFileName="starLsstFam.cmd")
 
         # Write the star instance file
         # Set the rot=0 for the simplification. But actually, there is no correction for ComCam.
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         # Get the argument to run the phosim
         logFilePath = os.path.join(outputImgDirList[str(ii)], logFileNameList[str(ii)])
         argString = tele.getPhoSimArgs(instFilePath, cmdFilePath=cmdFilePath, numPro=2, 
-                                        outputDir=outputImgDirList[str(ii)], e2ADC=0, logFilePath=logFilePath)
+                                        outputDir=outputImgDirList[str(ii)], e2ADC=1, logFilePath=logFilePath)
         argStringList.append(argString)
 
     # Run the phosim

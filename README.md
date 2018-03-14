@@ -69,3 +69,5 @@
 *testWfsStarCoor.py: Test to add the stars on WFS and get the images.*
 <br/>
 *testStarCoorWiComCam.py: Test to add the star by pixel position in ComCam condition and get the images.*
+<br/>
+*testStarCoorWiLsstFAM.py: Test to add the star by pixel position in LSST FAM condition and get the images.*
