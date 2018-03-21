@@ -605,8 +605,11 @@ class PhosimCommuTest(unittest.TestCase):
         os.remove(absFilePath)
 
         wavelengthInNm = 300.0
-        sedFilePath = phosimCom.writeSedFile(wavelengthInNm)
-        os.remove(sedFilePath)
+        try:
+            sedFilePath = phosimCom.writeSedFile(wavelengthInNm)
+            os.remove(sedFilePath)
+        except FileNotFoundError:
+            print("Do not find the sed file.")
 
         try:
             phosimCom.runPhoSim()
