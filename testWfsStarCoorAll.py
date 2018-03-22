@@ -11,6 +11,19 @@ from wepPhoSim.SkySim import SkySim
 def main():
     pass
 
+def checkBoundary(xValues, yValues, minX, maxX, minY, maxY):
+
+    newX = np.array([])
+    newY = np.array([])
+
+    for ii in range(len(xValues)):
+        if (xValues[ii] >= minX) and (xValues[ii]<=maxX):
+            if (yValues[ii] >= minY) and (yValues[ii] <= maxY):
+                newX = np.append(newX, xValues[ii])
+                newY = np.append(newY, yValues[ii])
+
+    return newX, newY
+
 if __name__ == "__main__":
 
     # PhoSim directory
@@ -72,7 +85,7 @@ if __name__ == "__main__":
     sensorName = ["R44_S00_C0", "R00_S22_C1", "R44_S00_C1", "R00_S22_C0", "R04_S20_C1", 
                     "R40_S02_C0", "R04_S20_C0", "R40_S02_C1"]
     starId = 0
-    numOfStar = 20
+    numOfStar = 30
     starMag = 15*np.ones(numOfStar)
     for sensor in sensorName:
 
@@ -82,7 +95,9 @@ if __name__ == "__main__":
         xInPixelInCam = xInPixelInCam.astype(int)
         yInPixelInCam = yInPixelInCam.astype(int)
 
-        for ii in range(numOfStar):
+        xInPixelInCam, yInPixelInCam = checkBoundary(xInPixelInCam, yInPixelInCam, 150, 1850, 150, 3912)
+
+        for ii in range(len(xInPixelInCam)):
             skySim.addStarByChipPos(camera, obs, sensor, starId, xInPixelInCam[ii], yInPixelInCam[ii], 
                                     starMag[ii], folderPath2FocalPlane)
             starId += 1
