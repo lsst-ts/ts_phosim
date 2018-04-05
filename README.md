@@ -28,7 +28,28 @@
 - *lsst_sims*
 - *ts_tcs_wep*
 
-## 4. Content
+## 4. Use of Module
+
+*1. Setup the DM environment:*
+<br/>
+source $path_of_lsst_scientific_pipeline/loadLSST.bash
+<br/>
+setup sims_catUtils -t $user_defined_tag -t sims
+(e.g. setup sims_catUtils -t ttsai -t sims)
+
+*2. Setup the WEP environment:*
+<br/>
+export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep_python
+<br/>
+(e.g. export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep/python)
+
+*3. Setup the wepPhoSim environment:*
+<br/>
+export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep_phosim
+<br/>
+(e.g. export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep_phosim)
+
+## 5. Content
 
 - **PhosimCommu**: Interface to PhoSim.
 - **MetroTool**: Metrology related functions contain the atmosphere model.
@@ -41,7 +62,7 @@
 - **TeleFacade**: Telescope facade pattern that intergate the correction of camera and mirror distortion correction to PhoSim.
 - **SkySim**: Sky simulator to add the stars.
 
-## 5. Example Script
+## 6. Example Script
 
 - **testOpd.py**: Test the OPD without the subsystem perturbation.
 - **testOpdAndSubSys.py**: Test the OPD with the subsystem perturbation.
