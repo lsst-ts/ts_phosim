@@ -1,10 +1,13 @@
 import os, unittest
 import numpy as np
 from astropy.io import fits
+import matplotlib
+# Must be before importing matplotlib.pyplot or pylab!
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from cwfs.Tool import ZernikeAnnularFit, ZernikeEval
-from wep.SourceProcessor import SourceProcessor
+from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
+from lsst.ts.wep.SourceProcessor import SourceProcessor
 from wepPhoSim.MetroTool import calc_pssn, psf2eAtmW
 
 class OpdMetrology(object):
@@ -431,6 +434,7 @@ class OpdMetrology(object):
         # Save the figure or not
         if (saveToFilePath is not None):
             plt.savefig(saveToFilePath, dpi=dpi)
+            plt.close()
         else:
             plt.show()
 
@@ -452,7 +456,7 @@ class OpdMetrology(object):
         """
 
         # Set the sensor on sourProc
-        sourProc.config(sensorName=sensorName)
+        sourProc.config(sensorName=sensorName, pixel2Arcsec=pixel2Arcsec)
 
         # Get the dimension of CCD
         pixDimX, pixDimY = sourProc.sensorDimList[sensorName]
@@ -467,8 +471,7 @@ class OpdMetrology(object):
 
         for ii in range(len(pixelXlist)):
 
-            fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii], pixelYlist[ii], 
-                                                            pixel2Arcsec=pixel2Arcsec)
+            fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii], pixelYlist[ii])
             fieldXinDegList.append(fieldX)
             fieldYinDeglist.append(fieldY)
 

@@ -1,9 +1,12 @@
 import os, unittest
 import numpy as np
 from scipy.interpolate import Rbf
+import matplotlib
+# Must be before importing matplotlib.pyplot or pylab!
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from cwfs.Tool import ZernikeFit, ZernikeEval
+from lsst.ts.wep.cwfs.Tool import ZernikeFit, ZernikeEval
 
 class MirrorSim(object):
     
@@ -300,6 +303,7 @@ class MirrorSim(object):
 
         if (writeToResMapFilePath is not None):
             plt.savefig(writeToResMapFilePath)
+            plt.close()
         else:
             plt.show()
 

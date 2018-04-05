@@ -5,8 +5,8 @@ from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords
 from lsst.sims.utils import ObservationMetaData
 
-from wep.SourceProcessor import SourceProcessor, expandDetectorName
-from bsc.BrightStarDatabase import BrightStarDatabase
+from lsst.ts.wep.SourceProcessor import SourceProcessor, expandDetectorName
+from lsst.ts.wep.bsc.BrightStarDatabase import BrightStarDatabase
 
 class SkySim(object):
 

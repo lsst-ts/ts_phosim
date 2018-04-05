@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.special as sp
 
-from cwfs.Tool import padArray, extractArray
+from lsst.ts.wep.cwfs.Tool import padArray, extractArray
 
 def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0, pmask=0, imagedelta=0, 
               fno=1.2335, debugLevel=0):

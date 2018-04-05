@@ -2,7 +2,7 @@ import os, unittest
 import numpy as np
 from scipy.interpolate import Rbf
 
-from cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
+from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
 
 from wepPhoSim.MirrorSim import MirrorSim
 from wepPhoSim.CoTransform import M1CRS2ZCRS
@@ -549,7 +549,7 @@ class M1M3SimTest(unittest.TestCase):
 
         ansFilePath = os.path.join("..", "testData", "testM1M3Func", "M1M3tempCorr.txt")
         ansTempCorrInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 1e-10)
+        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 6*1e-9)
 
         iSim = 6
         randSurfInM = M1M3.genMirSurfRandErr(zAngleInRadian, seedNum=iSim)
