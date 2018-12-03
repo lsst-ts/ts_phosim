@@ -1,6 +1,12 @@
+# Python built file
 *.pyc
 *.so
 *.c
 *.o
+
+# Coverage test files
+.coverage
+htmlcov/
+
+# Output directory
 /output/*
-/outputImg/*
