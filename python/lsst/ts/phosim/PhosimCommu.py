@@ -1,9 +1,13 @@
 import os
 import subprocess
-import numpy as np
+
+from lsst.ts.phosim.Utility import FilterType, SurfaceType
 
 
 class PhosimCommu(object):
+
+    DOF_START_IDX = 5
+    DOF_NUM = 50
 
     def __init__(self, phosimDir=""):
         """Initialization of PhoSim communication class.
@@ -38,91 +42,108 @@ class PhosimCommu(object):
 
         return self.phosimDir
 
-    def getFilterId(self, aFilter):
-        """
-        
-        Get the active filter ID in PhoSim.
-        
-        Arguments:
-            aFilter {[str]} -- Active filter ("u", "g", "r", "i", "z", "y").
-        
-        Returns:
-            [int] -- Active filter ID in PhoSim.
+    def getFilterId(self, filterType):
+        """Get the active filter ID in PhoSim.
+
+        Parameters
+        ----------
+        filterType : FilterType
+            Active filter
+
+        Returns
+        -------
+        int
+            Active filter ID in PhoSim.
         """
 
-        # Active filter ID in PhoSim
-        phosimFilterID = {"u": 0, "g": 1, "r": 2, "i": 3, "z": 4, "y": 5}
+        filterId = -1
+        if (filterType == FilterType.U):
+            filterId = 0
+        elif (filterType == FilterType.G):
+            filterId = 1
+        elif (filterType == FilterType.R):
+            filterId = 2
+        elif (filterType == FilterType.I):
+            filterId = 3
+        elif (filterType == FilterType.Z):
+            filterId = 4
+        elif (filterType == FilterType.Y):
+            filterId = 5
 
-        # Get the filter ID in PhoSim
-        return self.__getMapId(phosimFilterID, aFilter)
+        return filterId
 
-    def getSurfaceId(self, aSurface):
-        """
-        
-        Get the surface ID in PhoSim.
-        
-        Arguments:
-            aSurface {[str]} -- Surface ("M1", "M2", "M3", "L1F", "L1B", "L2F", "L2B", 
-                                "FilterF", "FilterB", "L3F", "L3B", "FP", "Chip")
-        
-        Returns:
-            [int] -- Surface ID in PhoSim.
+    def getSurfaceId(self, surfaceType):
+        """Get the surface ID in PhoSim.
+
+        Parameters
+        ----------
+        surfaceType : SurfaceType
+            Surface type.
+
+        Returns
+        -------
+        int
+            Surface ID in PhoSim.
         """
 
         # LSST surface ID in PhoSim
         # "L1F" means lense 1 front. "L1B" means lense 1 back.
         # "chip" means individual chip.
-        surfaceID = {"M1": 0, "M2": 1, "M3": 2, "L1F": 3, "L1B": 4, "L2F": 5, 
-                     "L2B": 6, "FilterF": 7, "FilterB": 8, "L3F": 9, "L3B": 10,
-                     "FP": 11, "Chip": 12}
+        surfaceID = -1
+        if (surfaceType == SurfaceType.M1):
+            surfaceID = 0
+        elif (surfaceType == SurfaceType.M2):
+            surfaceID = 1
+        elif (surfaceType == SurfaceType.M3):
+            surfaceID = 2
+        elif (surfaceType == SurfaceType.L1F):
+            surfaceID = 3
+        elif (surfaceType == SurfaceType.L1B):
+            surfaceID = 4
+        elif (surfaceType == SurfaceType.L2F):
+            surfaceID = 5
+        elif (surfaceType == SurfaceType.L2B):
+            surfaceID = 6
+        elif (surfaceType == SurfaceType.FilterF):
+            surfaceID = 7
+        elif (surfaceType == SurfaceType.FilterB):
+            surfaceID = 8
+        elif (surfaceType == SurfaceType.L3F):
+            surfaceID = 9
+        elif (surfaceType == SurfaceType.L3B):
+            surfaceID = 10
+        elif (surfaceType == SurfaceType.FP):
+            surfaceID = 11
+        elif (surfaceType == SurfaceType.Chip):
+            surfaceID = 12
 
-        # Get the surface ID in PhoSim
-        return self.__getMapId(surfaceID, aSurface)
+        return surfaceID
 
-    def __getMapId(self, dictMap, keyWord):
+    def doDofPert(self, dofInUm):
+        """Do the perturbation of DOF.
+
+        DOF: Degree of freedom.
+
+        Parameters
+        ----------
+        dofInUm : list or numpy.ndarray
+            DOF in um.
+
+        Returns
+        -------
+        str
+            Perturbation command used in PhoSim.
+
+        Raises
+        ------
+        ValueError
+            The number of DOF is incorrect.
         """
-        
-        Get the ID in map dictionary defined in PhoSim.
-        
-        Arguments:
-            dictMap {[dict]} -- Dictionary map.
-            keyWord {[str]} -- Keyword.
-        
-        Returns:
-            [int] -- ID.
-        """
 
-        # Get the key word ID in PhoSim
-        keyId = None
-        try:
-            keyId = dictMap[keyWord]
-        except KeyError:
-            print("The keyWord '%s' is not supported." % keyWord)
-
-        return keyId
-
-    def doDofPert(self, dofInUm, phosimStrIdx=5, nDofInPhoSim=50):
-        """
-        
-        Do the perturbation of degree of freedom (DOF).
-        
-        Arguments:
-            dofInUm {[list/ ndarray]} -- DOF in um.
-        
-        Keyword Arguments:
-            phosimStrIdx {int} -- Start index of DOF in PhoSim. (default: {5})
-            nDofInPhoSim {int} -- Allowed number of DOF in PhoSim. (default: {50})
-        
-        Returns:
-            [str] -- Perturbation command used in PhoSim.
-        
-        Raises:
-            ValueError -- The number of DOF is incorrect.
-        """
-    
         # Check the length of degree of freedom.
-        if (len(dofInUm) != int(nDofInPhoSim)):
-            raise ValueError("The length of degree of freedom should be %s." % (int(nDofInPhoSim)))
+        if (len(dofInUm) != int(self.DOF_NUM)):
+            raise ValueError("The length of DOF should be %s."
+                             % int(self.DOF_NUM))
 
         # List the phosim dof here
         # idx 5-9: M2 dz, dx, dy, rx, ry
@@ -130,27 +151,30 @@ class PhosimCommu(object):
         # idx 15-34: M1M3 20 bending modes
         # idx 35-54: M2 20 bending modes
 
-        # Write the perturbation of degree of freedom 
+        # Write the perturbation of degree of freedom
         content = ""
-        for ii in range(len(dofInUm)):
-            content += "move %d %7.4f \n" % (phosimStrIdx+ii, dofInUm[ii])
+        idxRange = range(self.DOF_START_IDX, self.DOF_START_IDX+self.DOF_NUM)
+        for idx, dof in zip(idxRange, dofInUm):
+            content += "move %d %7.4f \n" % (idx, dof)
 
         return content
 
     def doSurfPert(self, surfId, zkInMm):
+        """Do the perturbation of surface in the basis of Zernike polynomial.
+
+        Parameters
+        ----------
+        surfId : int
+            PhoSim surface ID.
+        zkInMm : list or numpy.ndarray
+            Zernike terms in mm starts from z0.
+
+        Returns
+        -------
+        str
+            Perturbation command used in PhoSim.
         """
-        
-        Do the perturbation of surface in the basis of Zernike polynomial.
-        
-        Arguments:
-            surfId {[int]} -- PhoSim surface ID.
-            zkInMm {[list/ ndarray]} -- Zernike terms in mm starts from z0.
-        
-        Returns:
-            [str] -- Perturbation command used in PhoSim.
-        """
-        
-        # Write the perturbation of surface
+
         content = ""
         for ii in range(len(zkInMm)):
             content += "izernike %d %d %s \n" % (surfId, ii, zkInMm[ii])
@@ -158,156 +182,200 @@ class PhosimCommu(object):
         return content
 
     def doSurfMapPert(self, surfId, surfFilePath, relScale):
-        """
-        
-        Do the perturbation of surface map of individual optic.
-        
-        Arguments:
-            surfId {[int]} -- PhoSim surface Id.
-            surfFilePath {[str]} -- File path of surface.
-            relScale {[int]} -- Relative scaling.
-        
-        Returns:
-            [str] -- Perturbation command used in PhoSim.
+        """Do the perturbation of surface map of individual optics.
+
+        Parameters
+        ----------
+        surfId : int
+            PhoSim surface Id.
+        surfFilePath : str
+            File path of surface.
+        relScale : int
+            Relative scaling.
+
+        Returns
+        -------
+        str
+            Perturbation command used in PhoSim.
         """
 
         # Use the absolute path of surface file
         surfFilePath = os.path.abspath(surfFilePath)
 
-        # Write the perturbation of surface map
         content = "surfacemap %d %s %d \n" % (surfId, surfFilePath, relScale)
 
         return content
 
-    def doCameraConfig(self, sciSensorOn=False, wfSensorOn=False, guidSensorOn=False):
+    def doCameraConfig(self, sciSensorOn=False, wfSensorOn=False,
+                       guidSensorOn=False):
+        """Do the camera configuratioin.
+
+        Parameters
+        ----------
+        sciSensorOn : bool, optional
+            Science sensors are on. (the default is False.)
+        wfSensorOn : bool, optional
+            Wavefront sensors are on. (the default is False.)
+        guidSensorOn : bool, optional
+            Guider sensors are on. (the default is False.)
+
+        Returns
+        -------
+        str
+            Instance command used in PhoSim.
         """
-        
-        Do the camera configuratioin.
-        
-        Keyword Arguments:
-            sciSensorOn {[bool]} -- Science sensors are on. (default: {False})
-            wfsSensorOn {[bool]} -- Wavefront sensors are on. (default: {False})
-            guidSensorOn {[bool]} -- Guider sensors are on. (default: {False})
-        
-        Returns:
-            [str] -- Instance command used in PhoSim.
-        """
-        
-        # Get the camema configuration Id
 
         # Bit mask that defines which sensor groups are used
-        # (For LSST: bitmask where first bit is science sensors on; 
+        # (For LSST: bitmask where first bit is science sensors on;
         # second bit is wavefront sensors on; third bit is guiders on)
 
-        camConfigId = int(sciSensorOn) + 2*int(wfSensorOn) + 4*int(guidSensorOn)
+        camConfigId = int(sciSensorOn) + 2*int(wfSensorOn) + \
+            4*int(guidSensorOn)
 
-        # Write the camera configuration
         content = "camconfig %d \n" % camConfigId
 
         return content
 
     def doSurfLink(self, surfId1, surfId2):
-        """
-        
-        Do the surface linkage.
-        
-        Arguments:
-            surfId1 {[int]} -- Surface ID 1.
-            surfId2 {[int]} -- Surface ID 2.
-        
-        Returns:
-            [str] -- Perturbation command used in PhoSim.
+        """Do the surface linkage.
+
+        Parameters
+        ----------
+        surfId1 : int
+            Surface Id 1.
+        surfId2 : int
+            Surface Id 2.
+
+        Returns
+        -------
+        str
+            Perturbation command used in PhoSim.
         """
 
-        # Link the surface
         content = "surfacelink %d %d \n" % (surfId1, surfId2)
 
         return content
 
     def generateOpd(self, opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm):
-        """
-        
-        Generate the oprical path difference (OPD) source.
-        
-        Arguments:
-            opdId {[int]} -- OPD ID.
-            fieldXInDeg {[float]} -- Field X in degree.
-            fieldYInDeg {[float]} -- Field Y in degree.
-            wavelengthInNm {[float]} -- Wavelength of the OPD source in nm.
-        
-        Returns:
-            [str] -- Perturbation command used in PhoSim.
+        """Generate the source of OPD.
+
+        OPD: Optical path difference.
+
+        Parameters
+        ----------
+        opdId : int
+            OPD Id.
+        fieldXInDeg : float
+            Field X in degree.
+        fieldYInDeg : float
+            Field Y in degree.
+        wavelengthInNm : float
+            Wavelength of the OPD source in nm.
+
+        Returns
+        -------
+        str
+            Perturbation command used in PhoSim.
         """
 
-        # Write the OPD information
-        content = "opd %2d\t%9.6f\t%9.6f %5.1f \n" % (opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm)
+        content = "opd %2d\t%9.6f\t%9.6f %5.1f \n" % (
+                  opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm)
 
         return content
 
-    def generateStar(self, starId, ra, dec, magNorm, sedName, redshift=0, 
-                     gamma1=0, gamma2=0, kappa=0, deltaRa=0, deltaDec=0, 
+    def generateStar(self, starId, ra, dec, magNorm, sedName, redshift=0,
+                     gamma1=0, gamma2=0, kappa=0, deltaRa=0, deltaDec=0,
                      sourceType="star", spatialPars=0):
-        """
-        
-        Generate the star source.
-        
-        Arguments:
-            starId {[int]} -- Star ID.
-            ra {[float]} -- The right ascension of the center of the object or image in decimal degrees.
-            dec {[float]} -- The declination of the center of the object in decimal degrees.
-            magNorm {[float]} -- The normalization of the flux of the object in AB magnitudes 
-                                 at (500 nm)/(1+z) (which is roughly equivalent to V (AB) or g (AB)).
-            sedName {[str]} -- The name of the SED file with a file path that is relative to the 
-                               data directory in PhoSim.
-        
-        Keyword Arguments:
-            redshift {number} -- The redshift (or blueshift) of the object. Note that the SED does not 
-                                 need to be redshifted if using this. (default: {0})
-            gamma1 {number} -- The value of the shear parameter gamma1 used in weak lensing. (default: {0})
-            gamma2 {number} -- The value of the shear parameter gamma2 used in weak lensing. (default: {0})
-            kappa {number} -- The value of the magnification parameter in weak lensing. (default: {0})
-            deltaRa {number} -- The value of the declination offset in radians. This can be used either 
-                                for weak lensing or objects that moved from another exposure if you do 
-                                not want to change the source position in the first two columns. (default: {0})
-            deltaDec {number} -- The value of the declination offset in radians. This can be used either for 
-                                 weak lensing or objects that moved from another exposure if you do not want 
-                                 to change the source position in the first two columns. (default: {0})
-            sourceType {str} -- The name of the spatial model to be used as defined below. (default: {"star"})
-            spatialPars {number} -- The associated parameters for each spatial model.There could be none or many. 
-                                    While the parser is reading the model it looks for more parameters based on 
-                                    the name of the model. (default: {0})
-        
-        Returns:
-            [str] -- Perturbation command used in PhoSim.
+        """Generate the star source.
+
+        Parameters
+        ----------
+        starId : int
+            Star Id.
+        ra : float
+            The right ascension of the center of the object or image in
+            decimal degrees.
+        dec : float
+            The declination of the center of the object in decimal degrees.
+        magNorm : float
+            The normalization of the flux of the object in AB magnitudes
+            at (500 nm)/(1+z) (which is roughly equivalent to V (AB) or
+            g (AB)).
+        sedName : str
+            The name of the SED file with a file path that is relative to the
+            data directory in PhoSim.
+        redshift : float, optional
+            The redshift (or blueshift) of the object. Note that the SED does
+            not need to be redshifted if using this. (the default is 0.)
+        gamma1 : float, optional
+            The value of the shear parameter gamma1 used in weak lensing.
+            (the default is 0.)
+        gamma2 : float, optional
+            The value of the shear parameter gamma2 used in weak lensing.
+            (the default is 0.)
+        kappa : float, optional
+            The value of the magnification parameter in weak lensing. (the
+            default is 0.)
+        deltaRa : float, optional
+            The value of the declination offset in radians. This can be used
+            either for weak lensing or objects that moved from another
+            exposure if you do not want to change the source position in the
+            first two columns. (the default is 0.)
+        deltaDec : float, optional
+            The value of the declination offset in radians. This can be used
+            either for weak lensing or objects that moved from another
+            exposure if you do not want to change the source position in the
+            first two columns. (the default is 0.)
+        sourceType : str, optional
+            The name of the spatial model to be used as defined below. (the
+            default is "star".)
+        spatialPars : float, optional
+            The associated parameters for each spatial model.There could be
+            none or many. While the parser is reading the model it looks for
+            more parameters based on the name of the model. (the default is 0.)
+
+        Returns
+        -------
+        str
+            Perturbation command used in PhoSim.
         """
 
-        # Write the star information
-        content = "object %2d\t%9.6f\t%9.6f %9.6f ../sky/%s %.1f %.1f %.1f %.1f %.1f %.1f %s %.1f none none \n" % (
-                    starId, ra, dec, magNorm, sedName, redshift, gamma1, gamma2, kappa, deltaRa, deltaDec, sourceType, 
-                    spatialPars)
+        content = "object %2d\t%9.6f\t%9.6f %9.6f ../sky/%s " % (
+                  starId, ra, dec, magNorm, sedName)
+        content += "%.1f %.1f %.1f %.1f %.1f %.1f %s %.1f none none \n" % (
+                   redshift, gamma1, gamma2, kappa, deltaRa, deltaDec,
+                   sourceType, starId)
 
         return content
 
-    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, mjd=49552.3, simSeed=1000, filePath=None):
-        """
-        
-        Get the star instance catalog.
-        
-        Arguments:
-            obsId {[int]} -- Observation ID.
-            aFilterId {[int]} -- PhoSim lsst filter ID.
-        
-        Keyword Arguments:
-            ra {[float]} -- Unrefracted Right Ascension in decimal degrees. (default: {0})
-            dec {[float]} -- Unrefracted Declination in decimal degrees. (default: {0})
-            rot {[float]} -- Angle of sky relative to camera coordinates (from North over East) in 
-                           decimal degrees. (default: {0})
-            mjd {[float]} -- MJD of observation. (default: {49552.3})
-            simSeed {[int]} -- Random number seed. (default: {1000})
-            filePath {[str]} -- File path to save the instance. (default: {None})
-        
-        Returns:
-            [str] -- Instance command used in PhoSim.
+    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0,
+                        mjd=49552.3, simSeed=1000, filePath=None):
+        """Get the star instance catalog.
+
+        Parameters
+        ----------
+        obsId : int
+            Observation Id.
+        aFilterId : int
+            PhoSim lsst filter ID.
+        ra : float, optional
+            Unrefracted Right Ascension in decimal degrees. (the default is 0.)
+        dec : float, optional
+            Unrefracted Declination in decimal degrees. (the default is 0.)
+        rot : float, optional
+            Angle of sky relative to camera coordinates (from North over East)
+            in decimal degrees. (the default is 0.)
+        mjd : float, optional
+            MJD of observation. (the default is 49552.3.)
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        filePath : str, optional
+            File path to save the instance. (the default is None.)
+
+        Returns
+        -------
+        str
+            Instance command used in PhoSim.
         """
 
         # Observation Parameters
@@ -328,23 +396,25 @@ class PhosimCommu(object):
         return content
 
     def getOpdInstance(self, obsId, aFilterId, filePath=None):
+        """Get the default OPD instance catalog.
+
+        There is no sky information for the optical path difference (OPD).
+
+        Parameters
+        ----------
+        obsId : int
+            Observation Id.
+        aFilterId : int
+            PhoSim LSST filter Id.
+        filePath : str, optional
+            File path to save the instance. (the default is None.)
+
+        Returns
+        -------
+        str
+            Instance command used in PhoSim.
         """
-        
-        Get the default optical path difference (OPD) instance catalog. It is 
-        noted that there is no sky information for OPD.
-        
-        Arguments:
-            obsId {[int]} -- Observation ID.
-            aFilterId {[int]} -- PhoSim lsst filter ID.
-        
-        Keyword Arguments:
-            filePath {[str]} -- File path to save the instance. (default: {None})
-        
-        Returns:
-            [str] -- Instance command used in PhoSim.
-        """
-        
-        # Observation Parameters
+
         content = ""
         content += "Opsim_obshistid %d \n" % obsId
         content += "Opsim_filter %d \n" % aFilterId
@@ -354,68 +424,130 @@ class PhosimCommu(object):
 
         return content
 
-    def runPhoSim(self, argstring="-v"):
-        """
-        
-        Run the PhoSim program.
-        
-        Arguments:
-            phosimDir {[str]} -- PhoSim directory.
-            
-        Keyword Arguments:
-            argstring {[str]} -- Arguments for PhoSim. (default: {"-h})
+    def writeToFile(self, filePath, content=None, sourceFile=None, mode="a"):
+        """Write the file based on the content to put or the source file to
+        copy with.
+
+        Parameters
+        ----------
+        filePath : str
+            File path to write.
+        content : str, optional
+            Content to write into the file. (the default is None.)
+        sourceFile : str, optional
+            Source file to write its content into the file. (the default is
+            None.)
+        mode : str, optional
+            Overwrite ("w") or append ("a") the file. (the default is "a".)
+
+        Raises
+        ------
+        ValueError
+            Mode is not supported.
         """
 
-        # Path of phosim.py script 
-        phosimRunPath = os.path.join(self.phosimDir, "phosim.py")
+        if mode not in ("w", "a"):
+            raise ValueError("Mode: %s is not supported." % mode)
 
-        # Command to execute the python
-        command = " ".join(["python", phosimRunPath])
+        if (content is not None) or (sourceFile is not None):
 
-        # Run the PhoSim with the related arguments
-        self.__runProgram(command, argstring=argstring)
+            # Open the file. If the file path does not exist, the new file
+            # will be generated.
+            # Use the append instead of it.
+            fid = open(filePath, mode)
 
-    def getPhoSimArgs(self, instance, extraCommand=None, numProc=1, numThread=1, outputDir=None, 
-                      instrument="lsst", sensorName=None, e2ADC=1, logFilePath=None):
+            # Write the content into the file
+            if (content is not None):
+                fid.write(content)
+
+            # Write the content of source file into the file
+            if (sourceFile is not None):
+                fSrc = open(sourceFile, "r")
+
+                # Enforce to add "\n" if necessary
+                fileContent = fSrc.read()
+                if (not fileContent.endswith("\n")):
+                    fileContent = fileContent + "\n"
+
+                fid.write(fileContent)
+                fSrc.close()
+
+            # Close the file
+            fid.close()
+
+    def writeSedFile(self, wavelengthInNm):
+        """Write the SED file used for PhoSim.
+
+        This is for the monochromatic light wavelength.
+        SED: Spectral energy distribution.
+
+        Parameters
+        ----------
+        wavelengthInNm : float
+            Wavelength in nm.
+
+        Returns
+        -------
+        str
+            SED file path.
         """
-        
-        Get the arguments needed to run the PhoSim.
-        
-        Arguments:
-            instance {[str]} -- Instance catalog file.
-        
-        Keyword Arguments:
-            extraCommand {[str]} -- Command file to modify the default physics. (default: {None})
-            numProc {int} -- Number of processors. (default: {1})
-            numThread {int} -- Number of threads. (default: {1})
-            outputDir {[str]} -- Output image directory. (default: {None})
-            instrument {str} -- Instrument site directory. (default: {"lsst"})
-            sensorName {str} -- Sensor chip specification (e.g., all, R22_S11, "R22_S11|R22_S12") 
-                                (default: {None})
-            e2ADC {int} -- Whether to generate amplifier images (1 = true, 0 = false). (default: {1})
-            logFilePath {[str]} -- Log file path for PhoSim calculation log. (default: {None})
-        
-        Returns:
-            [str] -- Arguments to run the PhoSim.
+
+        # Generate the SED file path
+        sedFileName = "sed_%d.txt" % wavelengthInNm
+        sedFilePath = os.path.join(self.phosimDir, "data", "sky", sedFileName)
+
+        # Generate the file if necessary
+        if not os.path.exists(sedFilePath):
+            content = "%d   1.0 \n" % wavelengthInNm
+            self.writeToFile(sedFilePath, content=content, mode="w")
+
+        return sedFilePath
+
+    def getPhoSimArgs(self, instanceFile, extraCommandFile=None, numProc=1,
+                      numThread=1, outputDir=None, instrument="lsst",
+                      sensorName=None, e2ADC=1, logFilePath=None):
+        """Get the arguments needed to run the PhoSim.
+
+        Parameters
+        ----------
+        instanceFile : str
+            Instance catalog file.
+        extraCommandFile : str, optional
+            Command file to modify the default physics. (the default is None.)
+        numProc : int, optional
+             Number of processors. (the default is 1.)
+        numThread : int, optional
+            Number of threads. (the default is 1.)
+        outputDir : str, optional
+            Output image directory. (the default is None.)
+        instrument : str, optional
+            Instrument site directory. (the default is "lsst".)
+        sensorName : str, optional
+            Sensor chip specification (e.g., all, R22_S11, "R22_S11|R22_S12").
+            (the default is None.)
+        e2ADC : int, optional
+            Whether to generate amplifier images (1 = true, 0 = false). (the
+            default is 1.)
+        logFilePath : str, optional
+            Log file path of PhoSim calculation. (the default is None.)
+
+        Returns
+        -------
+        str
+            Arguments to run the PhoSim.
         """
-        
+
         # Use the absolute path
-        instance = os.path.abspath(instance)
-        
-        if (extraCommand is not None):
-            extraCommand = os.path.abspath(extraCommand)
-
-        if (outputDir is not None):
-            outputDir = os.path.abspath(outputDir)
-
-        if (logFilePath is not None):
-            logFilePath = os.path.abspath(logFilePath)
+        instanceFile = self._getAbsPathIfNotNone(instanceFile)
+        extraCommandFile = self._getAbsPathIfNotNone(extraCommandFile)
+        outputDir = self._getAbsPathIfNotNone(outputDir)
+        logFilePath = self._getAbsPathIfNotNone(logFilePath)
 
         # Prepare the argument list
-        argString = "%s -i %s -e %d" % (instance, instrument, e2ADC)
+        argString = "%s -i %s -e %d" % (instanceFile, instrument, e2ADC)
 
-        if (extraCommand is not None):
-            argString += " -c %s" % extraCommand
+        if (extraCommandFile is not None):
+            argString += " -c %s" % extraCommandFile
 
         if (numProc > 1):
             argString += " -p %d" % numProc
@@ -434,20 +566,59 @@ class PhosimCommu(object):
 
         return argString
 
-    def __runProgram(self, command, binDir=None, argstring=None):
+    def _getAbsPathIfNotNone(self, filePath=None):
+        """Get the absolute path if the input is not None.
+
+        Parameters
+        ----------
+        filePath : str, optional
+            File path.
+
+        Returns
+        -------
+        str
+            Absolute file path.
         """
-        
-        Run the program w/o arguments.
-        
-        Arguments:
-            command {[string]} -- Command of application.
-        
-        Keyword Arguments:
-            binDir {[str]} -- Directory of binary application. (default: {None})
-            argstring {[str]} -- Arguments of program. (default: {None})
-        
-        Raises:
-            RuntimeError -- There is the error in running the program.
+
+        if (filePath is not None):
+            filePath = os.path.abspath(filePath)
+
+        return filePath
+
+    def runPhoSim(self, argstring="-v"):
+        """Run the PhoSim program.
+
+        Parameters
+        ----------
+        argstring : str, optional
+            Arguments for PhoSim. (the default is "-v".)
+        """
+
+        # Path of phosim.py script
+        phosimRunPath = os.path.join(self.phosimDir, "phosim.py")
+
+        # Command to execute the python
+        command = " ".join(["python", phosimRunPath])
+
+        # Run the PhoSim with the related arguments
+        self._runProgram(command, argstring=argstring)
+
+    def _runProgram(self, command, binDir=None, argstring=None):
+        """Run the program w/o arguments.
+
+        Parameters
+        ----------
+        command : str
+            Command of application.
+        binDir : str, optional
+            Directory of binary application. (the default is None.)
+        argstring : {[type]}, optional
+            Arguments of program. (the default is None.)
+
+        Raises
+        ------
+        RuntimeError
+            There is the error in running the program.
         """
 
         # Directory of binary application
@@ -461,72 +632,6 @@ class PhosimCommu(object):
         # Call the program w/o arguments
         if (subprocess.call(command, shell=True) != 0):
             raise RuntimeError("Error running: %s" % command)
-
-    def writeToFile(self, filePath, content=None, sourceFile=None, mode="a"):
-        """
-        
-        Write the file based on the content to put or the source file to copy with.
-        
-        Arguments:
-            filePath {[str]} -- File path to write.
-        
-        Keyword Arguments:
-            content {[str]} -- Content to write into the file. (default: {None})
-            sourceFile {[str]} -- Source file to write its content into the file. (default: {None})
-            mode {[str]} -- Overwrite ("w") or append ("a") the file. (default: {"a"})
-        """
-
-        if mode not in ("w", "a"):
-            raise ValueError("Mode: %s is not supported." % mode)
-
-        if (content is not None) or (sourceFile is not None):
-
-            # Open the file. If the file path does not exist, the new file will be generated.
-            # Use the append instead of 
-            fid = open(filePath, mode)
-
-            # Write the content into the file
-            if (content is not None):
-                fid.write(content)
-
-            # Write the content of source file into the file
-            if (sourceFile is not None):
-                fSrc = open(sourceFile, "r")
-                
-                # Enforce to add "\n" if necessary
-                fileContent = fSrc.read()
-                if (not fileContent.endswith("\n")):
-                    fileContent = fileContent + "\n"
-
-                fid.write(fileContent)
-                fSrc.close()
-
-            # Close the file
-            fid.close()
-
-    def writeSedFile(self, wavelengthInNm):
-        """
-        
-        Write the spectral energy distribution (SED) file used for PhoSim. This is for the monochromatic 
-        light wavelength.
-        
-        Arguments:
-            wavelengthInNm {[float]} -- Wavelength in nm.
-        
-        Returns:
-            [str] -- SED file path.
-        """
-
-        # Generate the SED file path
-        sedFileName = "sed_%d.txt" % wavelengthInNm
-        sedFilePath = os.path.join(self.phosimDir, "data", "sky", sedFileName)
-
-        # Check the file exists or not
-        if not os.path.isfile(sedFilePath):
-            content = "%d   1.0 \n" % wavelengthInNm
-            self.writeToFile(sedFilePath, content=content, mode="w")
-
-        return sedFilePath
 
 
 if __name__ == "__main__":

@@ -13,6 +13,31 @@ class CamDistType(Enum):
     L3S2zer = 6
 
 
+class FilterType(Enum):
+    U = 1
+    G = 2
+    R = 3
+    I = 4
+    Z = 5
+    Y = 6
+
+
+class SurfaceType(Enum):
+    M1 = 1
+    M2 = 2
+    M3 = 3
+    L1F = 4
+    L1B = 5
+    L2F = 6
+    L2B = 7
+    FilterF = 8
+    FilterB = 9
+    L3F = 10
+    L3B = 11
+    FP = 12
+    Chip = 13
+
+
 def getModulePath(module=lsst.ts.phosim, startIdx=1, endIdx=-4):
     """Get the path of module.
 
