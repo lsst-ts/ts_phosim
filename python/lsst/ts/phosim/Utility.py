@@ -1,6 +1,16 @@
 import os
+from enum import Enum
 
 import lsst.ts.phosim
+
+
+class CamDistType(Enum):
+    L1S1zer = 1
+    L1S2zer = 2
+    L2S1zer = 3
+    L2S2zer = 4
+    L3S1zer = 5
+    L3S2zer = 6
 
 
 def getModulePath(module=lsst.ts.phosim, startIdx=1, endIdx=-4):

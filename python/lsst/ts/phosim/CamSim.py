@@ -1,209 +1,275 @@
-import os, unittest
+import os
 import numpy as np
+
 
 class CamSim(object):
 
-    def __init__(self, camTBinDegC=6.5650, camRotInRad=0, camDataDir=None):
-        """
-        
-        Initiate the CamSim object. This object is used to correct the camera distortion.
-        
-        Keyword Arguments:
-            camTBinDegC {float} -- Camera body temperature in degree C. (default: {6.5650})
-            camRotInRad {float} -- Camera rotation angle in radian. (default: {0})
-            camDataDir {[str]} -- Directory of camera distortion data. (default: {None})
+    # Bound of camera body temperature in degree C.
+    MIN_TEMP_IN_DEG_C = 2
+    MAX_TEMP_IN_DEG_C = 16
+
+    # Pre-compensated elevation angle in radian.
+    PRE_ELEV = 0
+
+    # Pre-compensated camera rotation angle in radian.
+    PRE_CAMR = 0
+
+    # Pre-compensated camera temperature in degree C.
+    PRE_TEMP_CAM = 0
+
+    def __init__(self, camTBinDegC=6.5650, camRotInRad=0, camDataDir=""):
+        """Initialization of CamSim class.
+
+        This class is used to correct the camera distortion.
+
+        Parameters
+        ----------
+        camTBinDegC : float, optional
+            Camera body temperature in degree C. (the default is 6.5650.)
+        camRotInRad : float, optional
+            Camera rotation angle in radian. (the default is 0.)
+        camDataDir : str, optional
+            Directory of camera distortion data. (the default is "".)
         """
 
-        self.camTBinDegC = camTBinDegC
-        self.camRotInRad = camRotInRad
+        self.camTBinDegC = self.setBodyTempInDegC(camTBinDegC)
+        self.camRotInRad = self.setRotAngInRad(camRotInRad)
         self.camDataDir = camDataDir
 
     def setCamDataDir(self, camDataDir):
-        """
-        
-        Set the camera data directory.
-        
-        Arguments:
-            camDataDir {[str]} -- Camera data directory.
+        """Set the camera distortion data directory.
+
+        Parameters
+        ----------
+        camDataDir : str
+            Camera distortion data directory.
         """
 
         self.camDataDir = camDataDir
 
-    def setRotAngInRad(self, rotAngInRad):
-        """
-        
-        Set the camera rotation angle in radian. The value should be in (-pi/2, pi/2).
-        
-        Arguments:
-            rotAngInRad {[float]} -- Rotation angle in radian.
+    def getCamDataDir(self):
+        """Get the camera distortion data directory.
+
+        Returns
+        -------
+        str
+            Camera distortion data directory.
         """
 
-        self.__checkValueInRange(rotAngInRad, -np.pi/2, np.pi/2)
-        self.camRotInRad = rotAngInRad
+        return self.camDataDir
+
+    def setRotAngInRad(self, rotAngInRad):
+        """Set the camera rotation angle in radian.
+
+        The angle should be in (-pi/2, pi/2).
+
+        Parameters
+        ----------
+        rotAngInRad : float
+            Rotation angle in radian.
+        """
+
+        if self._valueInRange(rotAngInRad, -np.pi/2, np.pi/2):
+            self.camRotInRad = rotAngInRad
 
     def setRotAngInDeg(self, rotAngInDeg):
-        """
-        
-        Set the camera rotation angle in degree. The value should be in (-90, 90).
-        
-        Arguments:
-            rotAngInDeg {[float]} -- Rotation angle in degree.
+        """Set the camera rotation angle in degree.
+
+        The angle should be in (-90, 90).
+
+        Parameters
+        ----------
+        rotAngInDeg : float
+            Rotation angle in degree.
         """
 
-        self.__checkValueInRange(rotAngInDeg, -90, 90)
-        
-        # Change the unit from degree to radian
-        self.camRotInRad = rotAngInDeg/180.0*np.pi
+        if self._valueInRange(rotAngInDeg, -90, 90):
+            self.camRotInRad = np.deg2rad(rotAngInDeg)
 
     def setBodyTempInDegC(self, tempInDegC):
-        """
-        
-        Set the camera body temperature in degree C. The value should be in (2, 16).
-        
-        Arguments:
-            tempInDegC {[float]} -- Temperature in degree C.
-        """
+        """Set the camera body temperature in degree C.
 
-        self.__checkValueInRange(tempInDegC, 2, 16)
-        self.camTBinDegC = tempInDegC
-
-    def __checkValueInRange(self, value, lowerBound, upperBound):
-        """
-        
-        Check the value is in the range or not.
-        
-        Arguments:
-            value {[float]} -- Set value.
-            lowerBound {[float]} -- Lower bound.
-            upperBound {[float]} -- Upper bound.
-        
-        Raises:
-            ValueError -- Value is not in the range.
+        Parameters
+        ----------
+        tempInDegC : float
+            Temperature in degree C.
         """
 
-        if (value < lowerBound) or (value > upperBound):
-            raise ValueError("The setting value should be in (%.3f, %.3f)." % (lowerBound, upperBound))
+        if self._valueInRange(tempInDegC, self.MIN_TEMP_IN_DEG_C,
+                              self.MAX_TEMP_IN_DEG_C):
+            self.camTBinDegC = tempInDegC
 
-    def getCamDistortionInMm(self, zAngleInRad, distType, pre_elev=0, pre_camR=0, pre_temp_cam=0):
+    def _valueInRange(self, value, lowerBound, upperBound):
+        """Check the value is in the range or not.
+
+        Parameters
+        ----------
+        value : float
+            Set value.
+        lowerBound : float
+            Lower bound.
+        upperBound : float
+            Upper bound.
+
+        Returns
+        -------
+        bool
+            Ture if the value is in the range.
+
+        Raises
+        ------
+        ValueError
+            The setting value should be in (lowerBound, upperBound).
         """
 
-        Get the camera distortion correction in mm.
+        valueInRange = False
+        if (lowerBound <= value <= upperBound):
+            valueInRange = True
+        else:
+            raise ValueError("The setting value should be in (%.3f, %.3f)."
+                             % (lowerBound, upperBound))
+        return valueInRange
 
-        Arguments:
-            zAngleInRad {[float]} -- Zenith angle in radian.
-            distType {[str]} -- Distortion type.
+    def getCamDistortionInMm(self, zAngleInRad, camDistType):
+        """Get the camera distortion correction in mm.
 
-        Keyword Arguments:
-            pre_elev {[float]} -- Pre-compensated elevation angle in radian. (default: {0})
-            pre_camR {[float]} -- Pre-compensated camera rotation angle in radian. (default: {0})
-            pre_temp_cam {[float]} -- Pre-compensated camera temperature in degree C. (default: {0})
+        Parameters
+        ----------
+        zAngleInRad : float
+            Zenith angle in radian.
+        camDistType : CamDistType
+            Camera distortion type.
 
-        Returns:
-            [ndarray] -- Distortion in mm.
+        Returns
+        -------
+        numpy.ndarray
+            Camera distortion in mm.
         """
 
-        # Check the distortion type
-        fileList = os.listdir(self.camDataDir)
-        distTypeList = [os.path.splitext(aFile)[0] for aFile in fileList if not aFile.startswith(".")]
-
-        if distType not in distTypeList:
-            raise ValueError("The distortion of '%s' is not supported. Only support: %s" % (distType, distTypeList))
-
-        # Path to camera distortion parameter file
+        # Get the distortion data
+        distType = camDistType.name
         dataFile = os.path.join(self.camDataDir, (distType + ".txt"))
-
-        # Read the distortion
         data = np.loadtxt(dataFile, skiprows=1)
 
-        # Calculate the distortion (dx, dy, dz, rx, ry, rz)
-        # Consider the "gravity projection" of camera surface
-        distFun = lambda zenithAngle, camRotAngle: data[0, 3:]*np.cos(zenithAngle) + \
-                    ( data[1, 3:]*np.cos(camRotAngle) + data[2, 3:]*np.sin(camRotAngle) )*np.sin(zenithAngle)
-        distortion = distFun(zAngleInRad, self.camRotInRad) - distFun(pre_elev, pre_camR)
+        # Calculate the gravity and temperature distortions
+        distortion = self._calcGravityDist(data, zAngleInRad) + \
+            self._calcTempDist(data)
 
-        # Do the temperature correction by the simple temperature interpolation/ extrapolation
-        # If the temperature is too low, use the lowest listed temperature to do the correction.
+        # The order/ index of Zernike corrections by Andy in file is different
+        # from PhoSim use. Reorder the correction here for PhoSim to use.
+        zidx = [1, 3, 2, 5, 4, 6, 8, 9, 7, 10, 13, 14, 12, 15, 11, 19,
+                18, 20, 17, 21, 16, 25, 24, 26, 23, 27, 22, 28]
+
+        # The index of python begins from 0.
+        distortion = distortion[[x - 1 for x in zidx]]
+
+        return distortion
+
+    def _calcGravityDist(self, camDistData, zAngleInRad):
+        """Calculate the distortion from gravity.
+
+        Parameters
+        ----------
+        camDistData : numpy.ndarray
+            Camera distortion data.
+        zAngleInRad : float
+            Zenith angle in radian.
+
+        Returns
+        -------
+        numpy.ndarray
+            Distortion from gravity.
+        """
+
+        distortion = self._gravityDistFunc(camDistData, zAngleInRad,
+                                           self.camRotInRad) - \
+            self._gravityDistFunc(camDistData, self.PRE_ELEV,
+                                  self.PRE_CAMR)
+
+        return distortion
+
+    def _gravityDistFunc(self, camDistData, zenithAngle, camRotAngle):
+        """Gravity distortion function.
+
+        Parameters
+        ----------
+        camDistData : numpy.ndarray
+            Camera distortion data.
+        zenithAngle : float
+            Zenith angle.
+        camRotAngle : float
+            Camera rotation angle.
+
+        Returns
+        -------
+        numpy.ndarray
+            Gravity distortion function.
+        """
+
+        distFun = camDistData[0, 3:]*np.cos(zenithAngle) + \
+            (camDistData[1, 3:]*np.cos(camRotAngle) +
+             camDistData[2, 3:]*np.sin(camRotAngle)) * \
+            np.sin(zenithAngle)
+
+        return distFun
+
+    def _calcTempDist(self, camDistData):
+        """Calculate the distortion from temperature.
+
+        Parameters
+        ----------
+        camDistData : numpy.ndarray
+            Camera distortion data.
+
+        Returns
+        -------
+        numpy.ndarray
+            Distortion from temperature.
+        """
+
         # List of data:
-        # [ze. angle, camRot angle, temp (C), dx (mm), dy (mm), dz (mm), Rx (rad), Ry (rad), Rz (rad)]
+        # [ze. angle, camRot angle, temp (C), dx (mm), dy (mm), dz (mm),
+        #  Rx (rad), Ry (rad), Rz (rad)]
         startTempRowIdx = 3
         endTempRowIdx = 10
-        if (self.camTBinDegC <= data[startTempRowIdx, 2]):
-            distortion += data[startTempRowIdx, 3:]
 
-        # If the temperature is too high, use the highest listed temperature to do the correction.
-        elif (self.camTBinDegC >= data[endTempRowIdx, 2]):
-            distortion += data[endTempRowIdx, 3:]
+        # Do the temperature correction by the simple temperature
+        # interpolation/ extrapolation
+
+        # If the temperature is too low, use the lowest listed temperature
+        # to do the correction.
+        if (self.camTBinDegC <= camDistData[startTempRowIdx, 2]):
+            distortion = camDistData[startTempRowIdx, 3:]
+
+        # If the temperature is too high, use the highest listed temperature
+        # to do the correction.
+        elif (self.camTBinDegC >= camDistData[endTempRowIdx, 2]):
+            distortion = camDistData[endTempRowIdx, 3:]
 
         # Get the correction value by the linear fitting
         else:
 
             # Find the temperature boundary indexes
-            p2 = (data[startTempRowIdx:, 2] > self.camTBinDegC).argmax() + startTempRowIdx
+            p2 = (camDistData[startTempRowIdx:, 2] >
+                  self.camTBinDegC).argmax() + startTempRowIdx
             p1 = p2-1
 
             # Calculate the linear weighting
-            w1 = (data[p2, 2] - self.camTBinDegC) / (data[p2, 2] - data[p1, 2])
+            w1 = (camDistData[p2, 2] - self.camTBinDegC) / \
+                 (camDistData[p2, 2] - camDistData[p1, 2])
             w2 = 1-w1
-            distortion += w1*data[p1, 3:] + w2*data[p2, 3:]
+            distortion = w1*camDistData[p1, 3:] + w2*camDistData[p2, 3:]
 
-        # Minus the reference temperature correction. There is the problem here.
-        # If the pre_temp_cam is not on the data list, this statement will fail/ get nothing.
-        distortion -= data[(data[startTempRowIdx:, 2] == pre_temp_cam).argmax() + startTempRowIdx, 3:]
-
-        # The order/ index of Zernike corrections by Andy in file is different from PhoSim use.
-        # Reorder the correction here for PhoSim to use.
-        if (distType[-3:] == "zer"):
-            zidx = [1, 3, 2, 5, 4, 6, 8, 9, 7, 10, 13, 14, 12, 15, 11, 19,
-                    18, 20, 17, 21, 16, 25, 24, 26, 23, 27, 22, 28]
-            # The index of python begins from 0.
-            distortion = distortion[[x - 1 for x in zidx]]
+        # Minus the reference temperature correction. There is the problem
+        # here.
+        # If the PRE_TEMP_CAM is not on the data list, this statement will
+        # fail/ get nothing.
+        distortion -= camDistData[(camDistData[startTempRowIdx:, 2] ==
+                                  self.PRE_TEMP_CAM).argmax() +
+                                  startTempRowIdx, 3:]
 
         return distortion
 
-class CamSimTest(unittest.TestCase):
-    """
-    Test functions in CamSim.
-    """
-
-    def setUp(self):
-
-        # Directory of camera data
-        self.camDataDir = os.path.join("..", "data", "camera")
-
-    def testFunc(self):
-        
-        # Instantiate the CamSim
-        camSim = CamSim()
-
-        camSim.setCamDataDir(self.camDataDir)
-        self.assertEqual(camSim.camDataDir, self.camDataDir)
-
-        rotAngInRad = 1.0
-        camSim.setRotAngInRad(rotAngInRad)
-        self.assertEqual(camSim.camRotInRad, rotAngInRad)
-
-        rotAngInDeg = 30.0
-        camSim.setRotAngInDeg(rotAngInDeg)
-        self.assertEqual(camSim.camRotInRad, rotAngInDeg/180*np.pi)
-
-        tempInDegC = 10.0
-        camSim.setBodyTempInDegC(tempInDegC)
-        self.assertEqual(camSim.camTBinDegC, tempInDegC)
-
-        zenithAngleInDeg = 27.0912
-        zAngleInRad = zenithAngleInDeg/180*np.pi
-        distType = "L1S1zer"
-        camSim.setBodyTempInDegC(6.5650)
-        camSim.setRotAngInRad(-1.2323)
-        distortionInMn = camSim.getCamDistortionInMm(zAngleInRad, distType)
-
-        dataFilePath = os.path.join("..", "testData", "testOpdFunc", "sim6_iter0_pert.cmd")
-        distData = np.loadtxt(dataFilePath, skiprows=88, usecols=(1, 2, 3))
-        idx = (distData[:,0] == 3)
-        absDiff = np.sum(np.abs(distortionInMn - distData[idx,-1]))
-        self.assertTrue(absDiff < 1e-10)
 
 if __name__ == "__main__":
-
-    # Do the unit test
-    unittest.main()
+    pass
