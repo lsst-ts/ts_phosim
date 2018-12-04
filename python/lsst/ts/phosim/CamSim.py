@@ -8,15 +8,6 @@ class CamSim(object):
     MIN_TEMP_IN_DEG_C = 2
     MAX_TEMP_IN_DEG_C = 16
 
-    # Pre-compensated elevation angle in radian.
-    PRE_ELEV = 0
-
-    # Pre-compensated camera rotation angle in radian.
-    PRE_CAMR = 0
-
-    # Pre-compensated camera temperature in degree C.
-    PRE_TEMP_CAM = 0
-
     def __init__(self, camTBinDegC=6.5650, camRotInRad=0, camDataDir=""):
         """Initialization of camera simulator class.
 
@@ -181,10 +172,15 @@ class CamSim(object):
             Distortion from gravity.
         """
 
+        # Pre-compensated elevation angle in radian.
+        pre_elev = 0
+
+        # Pre-compensated camera rotation angle in radian.
+        pre_camR = 0
+
         distortion = self._gravityDistFunc(camDistData, zAngleInRad,
                                            self.camRotInRad) - \
-            self._gravityDistFunc(camDistData, self.PRE_ELEV,
-                                  self.PRE_CAMR)
+            self._gravityDistFunc(camDistData, pre_elev, pre_camR)
 
         return distortion
 
@@ -262,11 +258,14 @@ class CamSim(object):
 
         # Minus the reference temperature correction. There is the problem
         # here.
-        # If the PRE_TEMP_CAM is not on the data list, this statement will
+        # If the pre_temp_cam is not on the data list, this statement will
         # fail/ get nothing.
+
+        # Pre-compensated camera temperature in degree C.
+        pre_temp_cam = 0
+
         distortion -= camDistData[(camDistData[startTempRowIdx:, 2] ==
-                                  self.PRE_TEMP_CAM).argmax() +
-                                  startTempRowIdx, 3:]
+                                  pre_temp_cam).argmax() + startTempRowIdx, 3:]
 
         return distortion
 
