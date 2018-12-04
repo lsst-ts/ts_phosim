@@ -8,83 +8,103 @@ import matplotlib.pyplot as plt
 
 from lsst.ts.wep.cwfs.Tool import ZernikeFit, ZernikeEval
 
+
 class MirrorSim(object):
     
-    def __init__(self, innerRinM, outerRinM, surf=None, mirrorDataDir=None):
+    def __init__(self, innerRinM, outerRinM, mirrorDataDir=""):
+        """Initiate the MirrorSim object.
+
+        Parameters
+        ----------
+        innerRinM : float
+            Mirror inner radius in m.
+        outerRinM : float
+            Mirror outer radius in m.
+        mirrorDataDir : str, optional
+            Mirror data directory. (the default is "".)
         """
-        
-        Initiate the MirrorSim object.
-        
-        Arguments:
-            innerRinM {[float]} -- Mirror inner radius in m.
-            outerRinM {[float]} -- Mirror outer radius in m.
-        
-        Keyword Arguments:
-            surf {[ndarray]} -- Mirror surface along z direction. (default: {None})
-            mirrorDataDir {[str]} -- Mirror data directory. (default: {None})
-        """
-        
+
         self.RiInM = innerRinM
         self.RinM = outerRinM
-        self.surf = surf
-
         self.mirrorDataDir = mirrorDataDir
 
+        self._surf = np.array([])
+
     def setMirrorDataDir(self, mirrorDataDir):
-        """
-        
-        Set the directory of mirror data.
-        
-        Arguments:
-            mirrorDataDir {[str]} -- Directory to mirror data.
+        """Set the directory of mirror data.
+
+        Parameters
+        ----------
+        mirrorDataDir : str
+            Directory to mirror data.
         """
 
         self.mirrorDataDir = mirrorDataDir
 
     def getMirrorData(self, dataFileName, skiprows=0):
-        """
+        """Get the mirror data.
+
+        Parameters
+        ----------
+        dataFileName : str
+            Data file name.
+        skiprows : int, optional
+            Skip the first 'skiprows' lines (the default is 0.)
         
-        Get the mirror data.
-        
-        Arguments:
-            dataFileName {[str]} -- Data file name.
-        
-        Keyword Arguments:
-            skiprows {int} -- Skip the first "skiprows" lines. (default: {0})
-        
-        Returns:
-            [ndarray] -- Mirror data.
+        Returns
+        -------
+        numpy.ndarray
+            Mirror data.
         """
 
-        data = np.loadtxt(os.path.join(self.mirrorDataDir, dataFileName), skiprows=skiprows)
+        filePath = os.path.join(self.mirrorDataDir, dataFileName)
+        data = np.loadtxt(filePath, skiprows=skiprows)
 
         return data
 
     def setSurfAlongZ(self, surfAlongZinUm):
-        """
-        
-        Set the mirror surface along the z direction in um.
-        
-        Arguments:
-            surfAlongZinUm {[ndarray]} -- Mirror surface along the z direction in um.
+        """Set the mirror surface along the z direction in um.
+
+        Parameters
+        ----------
+        surfAlongZinUm : numpy.ndarray
+            Mirror surface along the z direction in um.
         """
 
-        self.surf = surfAlongZinUm
+        self._surf = np.array(surfAlongZinUm, dtype=float)
+
+    def getSurfAlongZ(self):
+        """Get the mirror surface along the z direction in um.
+
+        Returns
+        -------
+        numpy.ndarray
+            Mirror surface along the z direction in um.
+        """
+
+        return self._surf
 
     def getLUTforce(self, zangleInDeg, LUTfileName):
-        """
+        """Get the actuator force of mirror based on LUT.
         
-        Get the actuator force of mirror based on the look-up table (LUT).
+        LUT: Look-up table.
         
-        Arguments:
-            zangleInDeg {[float]} -- Zenith angle in degree.
-            LUTfileName {[str]} -- LUT file name.
+        Parameters
+        ----------
+        zangleInDeg : float
+            Zenith angle in degree.
+        LUTfileName : str
+            LUT file name.
         
-        Returns:
-            [ndarray] -- Actuator forces in specific zenith angle.
+        Returns
+        -------
+        numpy.ndarray
+            Actuator forces in specific zenith angle.
         
-        Raises:
-            ValueError -- Incorrect LUT degree order.
+        Raises
+        ------
+        ValueError
+            The degee order in LUT is incorrect.
         """
 
         # Read the LUT file
@@ -99,19 +119,19 @@ class MirrorSim(object):
         if np.any(stepList <= 0):
             raise ValueError("The degee order in LUT is incorrect.")
 
-        # The specific zenith angle is larger than the listed angle range
+        # If the specific zenith angle is larger than the listed angle range,
+        # use the biggest listed zenith angle data instead.
         if (zangleInDeg >= ruler.max()):
-            # Use the biggest listed zenith angle data instead
             lutForce = lut[1:, -1]
 
-        # The specific zenith angle is smaller than the listed angle range
+        # If the specific zenith angle is smaller than the listed angle range,
+        # use the smallest listed zenith angle data instead.
         elif (zangleInDeg <= ruler.min()):
-            # Use the smallest listed zenith angle data instead
             lutForce = lut[1:, 0]
 
-        # The specific zenith angle is in the listed angle range
+        # If the specific zenith angle is in the listed angle range,
+        # do the linear fit to get the data.
         else:
-            # Linear fit the data
             # Find the boundary indexes for the specific zenith angle
             p1 = np.where(ruler<=zangleInDeg)[0][-1]
             p2 = p1+1
@@ -332,25 +352,23 @@ class MirrorSim(object):
 
         return res, zc
 
-    # Because there is no real overload in python, use the following abstract methods 
-    # for just unifying the function namses in child classes.
     def getActForce(self):
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
 
     def getPrintthz(self):
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
 
     def getTempCorr(self):
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
 
     def getMirrorResInMmInZemax(self):
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
 
     def writeMirZkAndGridResInZemax(self):
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
 
     def showMirResMap(self):
-        raise NotImplementedError("Should have the child class implemented this.")
+        raise NotImplementedError("Child class should implemented this.")
 
 
 if __name__ == "__main__":

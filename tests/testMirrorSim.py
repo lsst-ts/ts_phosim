@@ -11,42 +11,48 @@ class TestMirrorSim(unittest.TestCase):
 
     def setUp(self):
 
-        # Directory of M2 data
-        self.mirrorDataDir = os.path.join(getModulePath(), "configData", "M2")
+        self.innerRinM = 0.9
+        self.outerRinM = 1.710
+        self.mirror = MirrorSim(self.innerRinM, self.outerRinM)
 
-        # Directory of M1M3 data
-        self.M1M3DataDir = os.path.join(getModulePath(), "configData", "M1M3")
+    def testInit(self):
 
-    def testFunc(self):
+        self.assertEqual(self.mirror.RiInM, self.innerRinM)
+        self.assertEqual(self.mirror.RinM, self.outerRinM)
 
-        # Inner raidus
-        innerRinM = 0.9
+    def testSetMirrorDataDir(self):
 
-        # Outer raidus
-        outerRinM = 1.710
+        mirrorDataDir = "MirrorDataDir"
+        self.mirror.setMirrorDataDir(mirrorDataDir)
+        self.assertEqual(self.mirror.mirrorDataDir, mirrorDataDir)
 
-        # Instantiate the MirrorSim object
-        mirror = MirrorSim(innerRinM, outerRinM)
-        self.assertEqual(mirror.RiInM, innerRinM)
-        self.assertEqual(mirror.RinM, outerRinM)
+    def testGetMirrorData(self):
 
-        mirror.setMirrorDataDir(self.mirrorDataDir)
-        self.assertEqual(mirror.mirrorDataDir, self.mirrorDataDir)
+        M2DataDir = os.path.join(getModulePath(), "configData", "M2")
+        self.mirror.setMirrorDataDir(M2DataDir)
 
         dataFileName = "M2_GT_FEA.txt"
-        data = mirror.getMirrorData(dataFileName, skiprows=1)
+        data = self.mirror.getMirrorData(dataFileName, skiprows=1)
         self.assertEqual(data.shape, (9084, 6))
 
-        surfAlongZ = np.random.rand(3, 4)
-        mirror.setSurfAlongZ(surfAlongZ)
-        self.assertEqual(np.sum(np.abs(mirror.surf-surfAlongZ)), 0)
+    def testSetAndGetSurfAlongZ(self):
+
+        surfAlongZinUm = np.random.rand(3, 3)
+        self.mirror.setSurfAlongZ(surfAlongZinUm)
+
+        delta = np.sum(np.abs(self.mirror.getSurfAlongZ() - surfAlongZinUm))
+        self.assertEqual(delta, 0)
+
+    def testGetLUTforce(self):
+
+        M1M3DataDir = os.path.join(getModulePath(), "configData", "M1M3")
 
         zangleInDeg = 1.5
         LUTfileName = "M1M3_LUT.txt"
-        mirror.setMirrorDataDir(self.M1M3DataDir)
-        LUTforce = mirror.getLUTforce(zangleInDeg, LUTfileName)
+        self.mirror.setMirrorDataDir(M1M3DataDir)
+        LUTforce = self.mirror.getLUTforce(zangleInDeg, LUTfileName)
 
-        oriLutForce = mirror.getMirrorData(LUTfileName, skiprows=1)
+        oriLutForce = self.mirror.getMirrorData(LUTfileName, skiprows=1)
         ansLutForce = (oriLutForce[:,1]+oriLutForce[:,2])/2
         self.assertLess(np.sum(np.abs(LUTforce-ansLutForce)), 1e-10)
 
