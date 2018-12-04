@@ -18,7 +18,7 @@ class CamSim(object):
     PRE_TEMP_CAM = 0
 
     def __init__(self, camTBinDegC=6.5650, camRotInRad=0, camDataDir=""):
-        """Initialization of CamSim class.
+        """Initialization of camera simulator class.
 
         This class is used to correct the camera distortion.
 

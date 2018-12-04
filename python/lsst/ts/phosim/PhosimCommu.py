@@ -1,29 +1,42 @@
-import os, subprocess, unittest
+import os
+import subprocess
 import numpy as np
+
 
 class PhosimCommu(object):
 
-    def __init__(self, phosimDir=None):
+    def __init__(self, phosimDir=""):
+        """Initialization of PhoSim communication class.
+
+        Parameters
+        ----------
+        phosimDir : str, optional
+            PhoSim directory. (the default is "".)
         """
-        
-        Initiate the object.
-        
-        Keyword Arguments:
-            phosimDir {[str]} -- PhoSim directory. (default: {None})
-        """
-        
+
         self.phosimDir = phosimDir
 
     def setPhoSimDir(self, phosimDir):
-        """
-        
-        Set the directory of PhoSim.
-        
-        Arguments:
-            phosimDir {[str]} -- Directory of PhoSim.
+        """Set the directory of PhoSim.
+
+        Parameters
+        ----------
+        phosimDir : str
+            Directory of PhoSim.
         """
 
         self.phosimDir = phosimDir
+
+    def getPhoSimDir(self):
+        """Get the directory of PhoSim.
+
+        Returns
+        -------
+        str
+            Directory of PhoSim.
+        """
+
+        return self.phosimDir
 
     def getFilterId(self, aFilter):
         """
@@ -515,108 +528,6 @@ class PhosimCommu(object):
 
         return sedFilePath
 
-class PhosimCommuTest(unittest.TestCase):
-    """
-    Test functions in PhosimCommu.
-    """
-
-    def setUp(self):
-
-        # Directory of phosim
-        self.phosimDir = os.path.join(os.path.abspath(os.sep), "home", "ttsai", "Document", 
-                                        "bitbucket", "phosim_syseng2")
-
-    def testFunc(self):
-        
-        # Instantiate the phosim communicator
-        phosimCom = PhosimCommu("temp")
-        self.assertEqual(phosimCom.phosimDir, "temp")
-
-        phosimCom.setPhoSimDir(self.phosimDir)
-        self.assertEqual(phosimCom.phosimDir, self.phosimDir)
-
-        phosimFilterID = phosimCom.getFilterId("r")
-        self.assertEqual(phosimFilterID, 2)
-
-        surfaceID = phosimCom.getSurfaceId("M3")
-        self.assertEqual(surfaceID, 2)
-
-        dofInUm = np.zeros(50)
-        content = phosimCom.doDofPert(dofInUm)
-        self.assertEqual(len(content.split("\n")), 51)
-
-        surfId = 1
-        zkInMm = [1]
-        content = phosimCom.doSurfPert(surfId, zkInMm)
-        ansContent = "izernike 1 0 1 \n"
-        self.assertEqual(content, ansContent)
-
-        surfId = 1
-        surfFilePath = "temp.txt"
-        surfFilePath = os.path.abspath(surfFilePath)
-        relScale = 1
-        content = phosimCom.doSurfMapPert(surfId, surfFilePath, relScale)
-        ansContent = "surfacemap 1 %s 1 \n" % surfFilePath
-        self.assertEqual(content, ansContent)
-
-        content = phosimCom.doCameraConfig(guidSensorOn=True)
-        ansContent = "camconfig 4 \n"
-        self.assertEqual(content, ansContent)
-
-        linkSurfId1 = 1
-        linkSurfId2 = 2
-        content = phosimCom.doSurfLink(linkSurfId1, linkSurfId2)
-        ansContent = "surfacelink 1 2 \n"
-        self.assertEqual(content, ansContent)
-
-        opdId = 0
-        fieldXInDeg = 1.0
-        fieldYInDeg = 2.0
-        wavelengthInNm = 500
-        content = phosimCom.generateOpd(opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm)
-        ansContent = "opd  0\t 1.000000\t 2.000000 500.0 \n"
-        self.assertEqual(content, ansContent)
-
-        starId = 0
-        ra = 1.0
-        dec = 1.0
-        magNorm = 2.0
-        sedName = "flat.txt"
-        content = phosimCom.generateStar(starId, ra, dec, magNorm, sedName)
-        ansContent = "object  0\t 1.000000\t 1.000000  2.000000 ../sky/flat.txt 0.0 0.0 0.0 0.0 0.0 0.0 star 0.0 none none \n"
-        self.assertEqual(content, ansContent)
-
-        obsId = 100
-        aFilterId = 1
-        content = phosimCom.getStarInstance(obsId, aFilterId)
-        self.assertEqual(len(content.split("\n")), 8)
-
-        content = phosimCom.getOpdInstance(obsId, aFilterId)
-        self.assertEqual(len(content.split("\n")), 3)
-
-        instFileName = os.path.join("..", "testData", "temp.inst")
-        phosimCom.writeToFile(instFileName, content="temp", mode="w")
-        argString = phosimCom.getPhoSimArgs(instFileName, sensorName="R22_S11")
-
-        absFilePath = os.path.abspath(instFileName)
-        ansArgString = "%s -i lsst -e 1 -s R22_S11" % absFilePath
-
-        self.assertEqual(argString, ansArgString)
-        os.remove(absFilePath)
-
-        wavelengthInNm = 300.0
-        try:
-            sedFilePath = phosimCom.writeSedFile(wavelengthInNm)
-            os.remove(sedFilePath)
-        except FileNotFoundError:
-            print("Do not find the sed file.")
-
-        try:
-            phosimCom.runPhoSim()
-        except RuntimeError:
-            print("Do not find PhoSim directory.")
 
 if __name__ == "__main__":
-
-    # Do the unit test
-    unittest.main()
+    pass
