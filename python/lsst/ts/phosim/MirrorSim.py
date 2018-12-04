@@ -12,7 +12,7 @@ from lsst.ts.wep.cwfs.Tool import ZernikeFit, ZernikeEval
 class MirrorSim(object):
     
     def __init__(self, innerRinM, outerRinM, mirrorDataDir=""):
-        """Initiate the MirrorSim object.
+        """Initiate the mirror simulator class.
 
         Parameters
         ----------
@@ -29,6 +29,28 @@ class MirrorSim(object):
         self.mirrorDataDir = mirrorDataDir
 
         self._surf = np.array([])
+
+    def getInnerRinM(self):
+        """Get the inner radius of mirror in meter.
+
+        Returns
+        -------
+        float
+            Inner radius of mirror in meter.
+        """
+
+        return self.RiInM
+
+    def getOuterRinM(self):
+        """Get the outer radius of mirror in meter.
+
+        Returns
+        -------
+        float
+            Outer radius of mirror in meter.
+        """
+
+        return self.RinM
 
     def setMirrorDataDir(self, mirrorDataDir):
         """Set the directory of mirror data.
@@ -50,7 +72,7 @@ class MirrorSim(object):
             Data file name.
         skiprows : int, optional
             Skip the first 'skiprows' lines (the default is 0.)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -86,21 +108,21 @@ class MirrorSim(object):
 
     def getLUTforce(self, zangleInDeg, LUTfileName):
         """Get the actuator force of mirror based on LUT.
-        
+
         LUT: Look-up table.
-        
+
         Parameters
         ----------
         zangleInDeg : float
             Zenith angle in degree.
         LUTfileName : str
             LUT file name.
-        
+
         Returns
         -------
         numpy.ndarray
             Actuator forces in specific zenith angle.
-        
+
         Raises
         ------
         ValueError
@@ -144,27 +166,53 @@ class MirrorSim(object):
 
         return lutForce
 
-    def __gridSampInMnInZemax(self, zfInMm, xfInMm, yfInMm, innerRinMm, outerRinMm, nx, ny, resFile=None):
+    def getActForce(self, actForceFileName):
+        """Get the mirror actuator forces in N.
+
+        Parameters
+        ----------
+        actForceFileName : str
+            Actuator force file name.
+
+        Returns
+        ------
+        numpy.ndarray
+            Actuator forces in N.
         """
-        
-        Get the grid residue map used in Zemax.
-        
-        Arguments:
-            zfInMm {[ndarray]} -- Surface map in mm.
-            xfInMm {[ndarray]} -- x position in mm.
-            yfInMm {[ndarray]} -- y position in mm.
-            innerRinMm {[float]} -- Inner radius in mm.
-            outerRinMm {[float]} -- Outer radius in mm.
-            nx {[int]} -- Number of pixel along x-axis of surface residue map. It is noted that 
-                          the real pixel number is nx + 4.
-            ny {[int]} -- Number of pixel along y-axis of surface residue map. It is noted that 
-                          the real pixel number is ny + 4. 
 
-        Keyword Arguments:
-            resFile {[str]} -- File path to write the surface residue map. (default: {None})
+        forceInN = self.getMirrorData(actForceFileName)
 
-        Returns:
-            [str] -- Grid residue map related data.
+        return forceInN
+
+    def __gridSampInMnInZemax(self, zfInMm, xfInMm, yfInMm, innerRinMm,
+                              outerRinMm, nx, ny, resFile=None):
+        """Get the grid residue map used in Zemax.
+
+        Parameters
+        ----------
+        zfInMm : numpy.ndarray
+            Surface map in mm.
+        xfInMm : numpy.ndarray
+            X position in mm.
+        yfInMm : numpy.ndarray
+            Y position in mm.
+        innerRinMm : float
+            Inner radius in mm.
+        outerRinMm : float
+            Outer radius in mm.
+        nx : int
+            Number of pixel along x-axis of surface residue map. It is noted
+            that the real pixel number is nx + 4.
+        ny : int
+            Number of pixel along y-axis of surface residue map. It is noted
+            that the real pixel number is ny + 4.
+        resFile : str, optional
+            File path to write the surface residue map. (the default is None.)
+        
+        Returns
+        -------
+        str
+            Grid residue map related data.
         """
 
         # Radial basis function approximation/interpolation of surface
@@ -176,7 +224,8 @@ class MirrorSim(object):
         NUM_X_PIXELS = nx+4
         NUM_Y_PIXELS = ny+4
 
-        # This is spatial extension factor, which is calculated by the slope at edge
+        # This is spatial extension factor, which is calculated by the slope
+        # at edge
         extFx = (NUM_X_PIXELS-1) / (nx-1)
         extFy = (NUM_Y_PIXELS-1) / (ny-1)
         extFr = np.sqrt(extFx * extFy)
@@ -193,7 +242,8 @@ class MirrorSim(object):
         epsilon = 1e-4*min(delx, dely)
         
         # Write four numbers for the header line
-        content = "%d %d %.9E %.9E\n" % (NUM_X_PIXELS, NUM_Y_PIXELS, delx, dely)
+        content = "%d %d %.9E %.9E\n" % (NUM_X_PIXELS, NUM_Y_PIXELS, delx,
+                                         dely)
 
         #  Write the rows and columns
         for jj in range(1, NUM_X_PIXELS + 1):
@@ -209,7 +259,8 @@ class MirrorSim(object):
                 # Calculate the radius
                 r = np.sqrt(x**2 + y**2)
 
-                # Set the value as zero when the radius is not between the inner and outer radius.
+                # Set the value as zero when the radius is not between the
+                # inner and outer radius.
                 if (r < innerRinMm/extFr) or (r > outerRinMm*extFr):
                     
                     z = 0
@@ -254,7 +305,8 @@ class MirrorSim(object):
 
         return content
 
-    def __showResMap(self, zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None, writeToResMapFilePath=None):
+    def __showResMap(self, zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
+                     writeToResMapFilePath=None):
         """
         
         Show the mirror residue map.
@@ -352,19 +404,127 @@ class MirrorSim(object):
 
         return res, zc
 
-    def getActForce(self):
-        raise NotImplementedError("Child class should implemented this.")
+    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0,
+                    FEAfileName="", FEAzenFileName="",
+                    FEAhorFileName="", gridFileName=""):
+        """Get the mirror print in um along z direction in specific zenith
+        angle.
 
-    def getPrintthz(self):
+        FEA: Finite element analysis.
+
+        Parameters
+        ----------
+        zAngleInRadian : float
+            Zenith angle in radian.
+        preCompElevInRadian : float, optional
+            Pre-compensation elevation angle in radian. (the default is 0.)
+        FEAfileName : str, optional
+            FEA model data file name. (the default is "".)
+        FEAzenFileName : str, optional
+            FEA model data file name in zenith angle. (the default is "".)
+        FEAhorFileName : str, optional
+            FEA model data file name in horizontal angle. (the default is "".)
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "".)
+
+        Returns
+        ------
+        numpy.ndarray
+            Corrected projection along z direction.
+
+        Raises
+        ------
+        NotImplementedError
+            Child class should implemented this.
+        """
+
         raise NotImplementedError("Child class should implemented this.")
 
     def getTempCorr(self):
+        """Get the mirror print correction along z direction for certain
+        temperature gradient.
+
+        Returns
+        ------
+        numpy.ndarray
+            Corrected projection along z direction.
+
+        Raises
+        ------
+        NotImplementedError
+            Child class should implemented this.
+        """
+
         raise NotImplementedError("Child class should implemented this.")
 
-    def getMirrorResInMmInZemax(self):
+    def getMirrorResInMmInZemax(self, gridFileName="", numTerms=28,
+                                writeZcInMnToFilePath=None):
+        """Get the residue of surface (mirror print along z-axis) in mm under
+        the Zemax coordinate.
+
+        This value is after the fitting with spherical Zernike polynomials
+        (zk).
+        
+        Parameters
+        ----------
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "".)
+        numTerms : {number}, optional
+             Number of Zernike terms to fit. (the default is 28.)
+        writeZcInMnToFilePath : str, optional
+            File path to write the fitted zk in mm. (the default is None.)
+
+        Returns
+        ------
+        numpy.ndarray
+            Fitted residue in mm after removing the fitted zk terms in Zemax
+            coordinate.
+        numpy.ndarray
+            X position in mm in Zemax coordinate.
+        numpy.ndarray
+            Y position in mm in Zemax coordinate.
+        numpy.ndarray
+            Fitted zk in mm in Zemax coordinate.    
+        
+        Raises
+        ------
+        NotImplementedError
+            Child class should implemented this.
+        """
+
         raise NotImplementedError("Child class should implemented this.")
 
-    def writeMirZkAndGridResInZemax(self):
+    def writeMirZkAndGridResInZemax(self, resFile="", surfaceGridN=200,
+                                    gridFileName="", numTerms=28,
+                                    writeZcInMnToFilePath=None):
+        """Write the grid residue in mm of mirror surface after the fitting
+        with Zk under the Zemax coordinate.
+
+        Parameters
+        ----------
+        resFile : str or list, optional
+            File path to save the grid surface residue map. (the default
+            is "".)
+        surfaceGridN : int, optional
+            Surface grid number. (the default is 200.)
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "".)
+        numTerms : int, optional
+            Number of Zernike terms to fit. (the default is 28.)
+        writeZcInMnToFilePath : str, optional
+            File path to write the fitted zk in mm. (the default is None.)
+
+        Returns
+        ------
+        str
+            Grid residue map related data.
+        
+        Raises
+        ------
+        NotImplementedError
+            Child class should implemented this.
+        """
+
         raise NotImplementedError("Child class should implemented this.")
 
     def showMirResMap(self):
@@ -372,6 +532,4 @@ class MirrorSim(object):
 
 
 if __name__ == "__main__":
-
-    # Do the unit test
-    unittest.main()
+    pass

@@ -49,8 +49,10 @@ class M1M3Sim(MirrorSim):
 
         return forceInN
 
-    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0, FEAzenFileName="M1M3_dxdydz_zenith.txt", 
-                    FEAhorFileName="M1M3_dxdydz_horizon.txt", gridFileName="M1M3_1um_156_grid.DAT"):
+    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0,
+                    FEAzenFileName="M1M3_dxdydz_zenith.txt",
+                    FEAhorFileName="M1M3_dxdydz_horizon.txt",
+                    gridFileName="M1M3_1um_156_grid.DAT"):
         """
         
         Get the mirror print in m along z direction in specific zenith angle.
@@ -116,8 +118,9 @@ class M1M3Sim(MirrorSim):
 
         return printthzInM
 
-    def getTempCorr(self, M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad, M1M3TrGrad, 
-                    FEAfileName="M1M3_thermal_FEA.txt", gridFileName="M1M3_1um_156_grid.DAT"):
+    def getTempCorr(self, M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad,
+                    M1M3TrGrad, FEAfileName="M1M3_thermal_FEA.txt",
+                    gridFileName="M1M3_1um_156_grid.DAT"):
         """
         
         Get the mirror print correction in um along z direction for certain temperature gradient.
@@ -240,8 +243,8 @@ class M1M3Sim(MirrorSim):
 
         return randSurfInM
 
-    def getMirrorResInMmInZemax(self, gridFileName="M1M3_1um_156_grid.DAT", numTerms=28, 
-                                writeZcInMnToFilePath=None):
+    def getMirrorResInMmInZemax(self, gridFileName="M1M3_1um_156_grid.DAT",
+                                numTerms=28, writeZcInMnToFilePath=None):
         """
         
         Get the residue of surface (mirror print along z-axis) in mm after the fitting with spherical

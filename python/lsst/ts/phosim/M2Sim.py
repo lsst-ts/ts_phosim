@@ -1,59 +1,70 @@
-import os, unittest
+import os
 import numpy as np
 
-from wepPhoSim.MirrorSim import MirrorSim
-from wepPhoSim.CoTransform import M2CRS2ZCRS
+from lsst.ts.phosim.MirrorSim import MirrorSim
+from lsst.ts.phosim.Utility import phosim2ZemaxCoorTrans
+
 
 class M2Sim(MirrorSim):
 
-    def __init__(self, surf=None, mirrorDataDir=None):
-        """
-        
-        Initiate the M2Sim object.
-        
-        Keyword Arguments:
-            surf {[ndarray]} -- Mirror surface along z direction. (default: {None})
-            mirrorDataDir {[str]} -- Mirror data directory. (default: {None})
+    def __init__(self, mirrorDataDir=""):
+        """Initiate the M2 simulator class.
+
+        Parameters
+        ----------
+        mirrorDataDir : str, optional
+            Mirror data directory. (the default is "".)
         """
 
-        # Outer radius of M2 mirror in m
+        # Inner and outer radius of M2 mirror in m
+        Ri = 0.9
         R = 1.710
 
-        # Inner radius of M2 mirror in m
-        Ri = 0.9
-
-        super(M2Sim, self).__init__(Ri, R, surf=surf, mirrorDataDir=mirrorDataDir)
+        super(M2Sim, self).__init__(Ri, R, mirrorDataDir=mirrorDataDir)
 
     def getActForce(self, actForceFileName="M2_1um_force.DAT"):
+        """Get the mirror actuator forces in N.
+
+        Parameters
+        ----------
+        actForceFileName : str, optional
+            Actuator force file name. (the default is "M2_1um_force.DAT".)
+        
+        Returns
+        -------
+        numpy.ndarray
+            Actuator forces in N.
         """
 
-        Get the mirror actuator forces in N.
+        return super(M2Sim, self).getActForce(actForceFileName)
 
-        Keyword Arguments:
-            actForceFileName {str} -- Actuator force file name. (default: {"M2_1um_force.DAT"})
+    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0,
+                    FEAfileName="M2_GT_FEA.txt", FEAzenFileName="",
+                    FEAhorFileName="", gridFileName=""):
+        """Get the mirror print in um along z direction in specific zenith
+        angle.
 
-        Returns:
-            [ndarray] -- Actuator forces in N.
-        """
+        FEA: Finite element analysis.
 
-        forceInN = self.getMirrorData(actForceFileName)
+        Parameters
+        ----------
+        zAngleInRadian : float
+            Zenith angle in radian.
+        preCompElevInRadian : float, optional
+            Pre-compensation elevation angle in radian. (the default is 0.)
+        FEAfileName : str, optional
+            FEA model data file name. (the default is "M2_GT_FEA.txt".)
+        FEAzenFileName : str, optional
+            FEA model data file name in zenith angle. (the default is "".)
+        FEAhorFileName : str, optional
+            FEA model data file name in horizontal angle. (the default is "".)
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "".)
 
-        return forceInN
-
-    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0, FEAfileName="M2_GT_FEA.txt"):
-        """
-
-        Get the mirror print in um along z direction in specific zenith angle.
-
-        Arguments:
-            zAngleInRadian {[float]} -- Zenith angle in radian.
-
-        Keyword Arguments:
-            preCompElevInRadian {float} -- Pre-compensation elevation angle in radian. (default: {0})
-            FEAfileName {str} -- Finite element analysis (FEA) model data file name. (default: {"M2_GT_FEA.txt"})
-
-        Returns:
-            [ndarray] -- Corrected projection in um along z direction.
+        Returns
+        ------
+        numpy.ndarray
+            Corrected projection in um along z direction.
         """
 
         # Read the FEA file
@@ -67,28 +78,36 @@ class M2Sim(MirrorSim):
 
         # Do the M2 gravitational correction.
         # Map the changes of dz on a plane for certain zenith angle
-        printthzInUm = zdz * np.cos(zAngleInRadian) + hdz * np.sin(zAngleInRadian)
+        printthzInUm = zdz * np.cos(zAngleInRadian) + \
+                       hdz * np.sin(zAngleInRadian)
 
         # Do the pre-compensation elevation angle correction
-        printthzInUm -= zdz * np.cos(preCompElevInRadian) + hdz * np.sin(preCompElevInRadian)
+        printthzInUm -= zdz * np.cos(preCompElevInRadian) + \
+                        hdz * np.sin(preCompElevInRadian)
 
         return printthzInUm
 
     def getTempCorr(self, M2TzGrad, M2TrGrad, FEAfileName="M2_GT_FEA.txt"):
-        """
+        """Get the mirror print correction along z direction for certain
+        temperature gradient.
 
-        Get the mirror print correction in um along z direction for certain temperature gradient.
+        FEA: Finite element analysis.
 
-        Arguments:
-            M2TzGrad {[float]} -- Temperature gradient along z direction in degree C. (+/-2sigma spans 1C).
-            M2TrGrad {[float]} -- Temperature gradient along r direction in degree C. (+/-2sigma spans 1C).
-
-        Keyword Arguments:
-            FEAfileName {str} -- Finite element analysis (FEA) model data file name.
-                                 (default: {"M2_GT_FEA.txt"})
-
-        Returns:
-            [ndarray] -- Corrected projection in um along z direction.
+        Parameters
+        ----------
+        M2TzGrad : float
+            Temperature gradient along z direction in degree C. (+/-2sigma
+            spans 1C).
+        M2TrGrad : float
+            Temperature gradient along r direction in degree C. (+/-2sigma
+            spans 1C).
+        FEAfileName : str, optional
+            FEA model data file name. (the default is "M2_GT_FEA.txt".)
+        
+        Returns
+        -------
+        numpy.ndarray
+            Corrected projection in um along z direction.
         """
 
         # Read the FEA file
@@ -105,23 +124,34 @@ class M2Sim(MirrorSim):
 
         return tempCorrInUm
 
-    def getMirrorResInMmInZemax(self, gridFileName="M2_1um_grid.DAT", numTerms=28, 
-                                writeZcInMnToFilePath=None):
-        """
+    def getMirrorResInMmInZemax(self, gridFileName="M2_1um_grid.DAT",
+                                numTerms=28, writeZcInMnToFilePath=None):
+        """Get the residue of surface (mirror print along z-axis) in mm under
+        the Zemax coordinate.
 
-        Get the residue of surface (mirror print along z-axis) in mm after the fitting with spherical
-        Zernike polynomials (zk) under the Zemax coordinate.
+        This value is after the fitting with spherical Zernike polynomials
+        (zk).
+        
+        Parameters
+        ----------
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "M2_1um_grid.DAT".)
+        numTerms : {number}, optional
+             Number of Zernike terms to fit. (the default is 28.)
+        writeZcInMnToFilePath : str, optional
+            File path to write the fitted zk in mm. (the default is None.)
 
-        Keyword Arguments:
-            gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
-            writeZcInMnToFilePath {[str]} -- File path to write the fitted zk in mm. (default: {None})
-
-        Returns:
-            [ndarray] -- Fitted residue in mm after removing the fitted zk terms in Zemax coordinate.
-            [ndarray] -- X position in mm in Zemax coordinate.
-            [ndarray] -- Y position in mm in Zemax coordinate.
-            [ndarray] -- Fitted zk in mm in Zemax coordinate.
+        Returns
+        ------
+        numpy.ndarray
+            Fitted residue in mm after removing the fitted zk terms in Zemax
+            coordinate.
+        numpy.ndarray
+            X position in mm in Zemax coordinate.
+        numpy.ndarray
+            Y position in mm in Zemax coordinate.
+        numpy.ndarray
+            Fitted zk in mm in Zemax coordinate.    
         """
 
         # Get the bending mode information
@@ -132,11 +162,16 @@ class M2Sim(MirrorSim):
         by = data[:, 1]
 
         # Transform the M2 coordinate to Zemax coordinate
-        bxInZemax, byInZemax, surfInZemax = M2CRS2ZCRS(bx, by, self.surf)
+        bxInZemax, byInZemax, surfInZemax = phosim2ZemaxCoorTrans(
+                                                bx, by, self.getSurfAlongZ())
 
         # Get the mirror residue and zk in um
-        resInUmInZemax, zcInUmInZemax = self._MirrorSim__getMirrorResInNormalizedCoor(surfInZemax,
-                                                bxInZemax/self.RinM, byInZemax/self.RinM, numTerms)
+        RinM = self.getOuterRinM()
+
+        resInUmInZemax, zcInUmInZemax = \
+            self._MirrorSim__getMirrorResInNormalizedCoor(
+                surfInZemax, bxInZemax/RinM, byInZemax/RinM,
+                numTerms)
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -150,37 +185,49 @@ class M2Sim(MirrorSim):
 
         return resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInMmInZemax
 
-    def writeMirZkAndGridResInZemax(self, resFile=None, surfaceGridN=200, gridFileName="M2_1um_grid.DAT",
+    def writeMirZkAndGridResInZemax(self, resFile="", surfaceGridN=200,
+                                    gridFileName="M2_1um_grid.DAT",
                                     numTerms=28, writeZcInMnToFilePath=None):
-        """
+        """Write the grid residue in mm of mirror surface after the fitting
+        with Zk under the Zemax coordinate.
 
-        Write the grid residue in mm of mirror surface after the fitting with Zk under the Zemax
-        coordinate.
+        Parameters
+        ----------
+        resFile : str, optional
+            File path to save the grid surface residue map. (the default
+            is "".)
+        surfaceGridN : int, optional
+            Surface grid number. (the default is 200.)
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "M2_1um_grid.DAT".)
+        numTerms : int, optional
+            Number of Zernike terms to fit. (the default is 28.)
+        writeZcInMnToFilePath : str, optional
+            File path to write the fitted zk in mm. (the default is None.)
 
-        Keyword Arguments:
-            resFile {[str]} -- File path to save the grid surface residue map. (default: {None})
-            surfaceGridN {int} -- Surface grid number. (default: {200})
-            gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
-            writeZcInMnToFilePath {[str]} -- File path to write the fitted zk in mm. (default: {None})
-
-        Returns:
-            [str] -- Grid residue map related data.
+        Returns
+        -------
+        str
+            Grid residue map related data.
         """
 
         # Get the residure map
-        resInMmInZemax, bxInMmInZemax, byInMmInZemax = self.getMirrorResInMmInZemax(gridFileName=gridFileName,
-                                                 numTerms=numTerms, writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
+        resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
+            self.getMirrorResInMmInZemax(
+                        gridFileName=gridFileName, numTerms=numTerms,
+                        writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
 
         # Change the unit from m to mm
-        innerRinMm = self.RiInM * 1e3
-        outerRinMm = self.RinM * 1e3
+        innerRinMm = self.getInnerRinM() * 1e3
+        outerRinMm = self.getOuterRinM() * 1e3
 
         # Get the residue map used in Zemax
         # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
         # Content: (z, dx, dy, dxdy)
-        content = self._MirrorSim__gridSampInMnInZemax(resInMmInZemax, bxInMmInZemax, byInMmInZemax, innerRinMm,
-                                                        outerRinMm, surfaceGridN, surfaceGridN, resFile=resFile)
+        content = self._MirrorSim__gridSampInMnInZemax(
+                            resInMmInZemax, bxInMmInZemax, byInMmInZemax,
+                            innerRinMm, outerRinMm, surfaceGridN, surfaceGridN,
+                            resFile=resFile)
 
         return content
 
@@ -201,77 +248,9 @@ class M2Sim(MirrorSim):
                                                                                      numTerms=numTerms)[0:3]
 
         # Change the unit
-        outerRinMm = self.RinM * 1e3
+        outerRinMm = self.getOuterRinM() * 1e3
         self._MirrorSim__showResMap(resInMmInZemax, bxInMmInZemax, byInMmInZemax, outerRinMm,
                                     resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
 
-class M2SimTest(unittest.TestCase):
-    
-    """
-    Test functions in M2Sim.
-    """
-
-    def setUp(self):
-
-        # Directory of M2 data
-        self.mirrorDataDir = os.path.join("..", "data", "M2")
-
-    def testFunc(self):
-
-        # Instantiate the M2Sim object
-        M2 = M2Sim()
-
-        self.assertEqual(M2.RiInM, 0.9)
-        self.assertEqual(M2.RinM, 1.71)
-
-        M2.setMirrorDataDir(self.mirrorDataDir)
-
-        forceInN = M2.getActForce()
-        self.assertEqual(forceInN.shape, (156, 156))
-
-        zAngleInDeg = 27.0912
-        zAngleInRadian = zAngleInDeg/180*np.pi
-        printthzInUm = M2.getPrintthz(zAngleInRadian)
-
-        ansFilePath = os.path.join("..", "testData", "testM2Func", "M2printthz.txt")
-        ansPrintthzInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(printthzInUm-ansPrintthzInUm)), 1e-10)
-
-        M2TzGrad = -0.0675
-        M2TrGrad = -0.1416
-        tempCorrInUm = M2.getTempCorr(M2TzGrad, M2TrGrad)
-
-        ansFilePath = os.path.join("..", "testData", "testM2Func", "M2tempCorr.txt")
-        ansTempCorrInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 1e-10)
-
-        numTerms = 28
-        mirrorSurfInUm = printthzInUm + tempCorrInUm
-        M2.setSurfAlongZ(mirrorSurfInUm)
-        zcInMmInZemax = M2.getMirrorResInMmInZemax(numTerms=numTerms)[3]
-
-        ansFilePath = os.path.join("..", "testData", "testM2Func", "sim6_M2zlist.txt")
-        ansZcInUmInZemax = np.loadtxt(ansFilePath)
-        ansZcInMmInZemax = ansZcInUmInZemax*1e-3
-        self.assertLess(np.sum(np.abs(zcInMmInZemax[0:numTerms]-ansZcInMmInZemax[0:numTerms])), 1e-9)
-
-        resFile = os.path.join("..", "output", "M2res.txt")
-        M2.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=numTerms)
-        content = np.loadtxt(resFile)
-
-        ansFilePath = os.path.join("..", "testData", "testM2Func", "sim6_M2res.txt")
-        ansContent = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(content[0,:]-ansContent[0,:])), 1e-9)
-        self.assertLess(np.sum(np.abs(content[1:,0]-ansContent[1:,0])), 1e-9)
-
-        writeToResMapFilePath = os.path.join("..", "output", "M2resMap.png")
-        M2.showMirResMap(numTerms=numTerms, resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
-        self.assertTrue(os.path.isfile(writeToResMapFilePath))
-
-        os.remove(resFile)
-        os.remove(writeToResMapFilePath)
-
 if __name__ == "__main__":
-
-    # Do the unit test
-    unittest.main()
+    pass
