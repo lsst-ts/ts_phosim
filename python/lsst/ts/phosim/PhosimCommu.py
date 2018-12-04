@@ -48,7 +48,7 @@ class PhosimCommu(object):
         Parameters
         ----------
         filterType : FilterType
-            Active filter
+            Active filter.
 
         Returns
         -------
