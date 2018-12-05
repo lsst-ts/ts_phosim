@@ -13,6 +13,7 @@ class TestM1M3Sim(unittest.TestCase):
 
         mirrorDataDir = os.path.join(getModulePath(), "configData", "M1M3")
         self.M1M3 = M1M3Sim(mirrorDataDir=mirrorDataDir)
+        self.M1M3.config()
 
     def testInit(self):
 
@@ -25,7 +26,7 @@ class TestM1M3Sim(unittest.TestCase):
         self.assertEqual(forceInN.shape, (156, 156))
 
     def testGetPrintthz(self):
-        
+
         zAngleInDeg = 27.0912
         printthzInM = self._getPrintthzInM(zAngleInDeg)
 
@@ -82,16 +83,16 @@ class TestM1M3Sim(unittest.TestCase):
 
     def testGetMirrorResInMmInZemax(self):
 
-        numTerms = 28
         self._setSurfAlongZ()
-        zcInMmInZemax = self.M1M3.getMirrorResInMmInZemax(numTerms=numTerms)[3]
+        zcInMmInZemax = self.M1M3.getMirrorResInMmInZemax()[3]
 
         ansFilePath = os.path.join(getModulePath(), "tests", "testData",
                                    "testM1M3Func", "sim6_M1M3zlist.txt")
         ansZcInUmInZemax = np.loadtxt(ansFilePath)
         ansZcInMmInZemax = ansZcInUmInZemax*1e-3
 
-        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] - \
+        numTerms = self.M1M3.getNumTerms()
+        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] -
                               ansZcInMmInZemax[0:numTerms]))
         self.assertLess(delta, 1e-9)
 
@@ -107,12 +108,12 @@ class TestM1M3Sim(unittest.TestCase):
         printthzInUm = printthzInM*1e6
         randSurfInUm = randSurfInM*1e6
         mirrorSurfInUm = printthzInUm + randSurfInUm + tempCorrInUm
-        
+
         self.M1M3.setSurfAlongZ(mirrorSurfInUm)
 
     def testWriteMirZkAndGridResInZemax(self):
 
-        resFile = self._writeMirZkAndGridResInZemax()[0]
+        resFile = self._writeMirZkAndGridResInZemax()
         resFile1, resFile3 = resFile
 
         content1 = np.loadtxt(resFile1)
@@ -125,31 +126,31 @@ class TestM1M3Sim(unittest.TestCase):
         ansContent1 = np.loadtxt(ansFilePath1)
         ansContent3 = np.loadtxt(ansFilePath3)
 
-        self.assertLess(np.sum(np.abs(content1[0,:]-ansContent1[0,:])), 1e-9)
-        self.assertLess(np.sum(np.abs(content1[1:,0]-ansContent1[1:,0])), 1e-9)
+        self.assertLess(np.sum(np.abs(content1[0, :]-ansContent1[0, :])), 1e-9)
+        self.assertLess(np.sum(np.abs(content1[1:, 0]-ansContent1[1:, 0])),
+                        1e-9)
 
-        self.assertLess(np.sum(np.abs(content3[0,:]-ansContent3[0,:])), 1e-9)
-        self.assertLess(np.sum(np.abs(content3[1:,0]-ansContent3[1:,0])), 1e-9)
+        self.assertLess(np.sum(np.abs(content3[0, :]-ansContent3[0, :])), 1e-9)
+        self.assertLess(np.sum(np.abs(content3[1:, 0]-ansContent3[1:, 0])),
+                        1e-9)
 
         os.remove(resFile1)
         os.remove(resFile3)
 
     def _writeMirZkAndGridResInZemax(self):
 
-        numTerms = 28
         self._setSurfAlongZ()
 
         resFile1 = os.path.join(getModulePath(), "output", "M1res.txt")
         resFile3 = os.path.join(getModulePath(), "output", "M3res.txt")
         resFile = [resFile1, resFile3]
-        self.M1M3.writeMirZkAndGridResInZemax(resFile=resFile,
-                                              numTerms=numTerms)
+        self.M1M3.writeMirZkAndGridResInZemax(resFile=resFile)
 
-        return resFile, numTerms
+        return resFile
 
     def testShowMirResMap(self):
 
-        resFile, numTerms = self._writeMirZkAndGridResInZemax()
+        resFile = self._writeMirZkAndGridResInZemax()
         resFile1, resFile3 = resFile
 
         writeToResMapFilePath1 = os.path.join(getModulePath(), "output",
@@ -158,7 +159,7 @@ class TestM1M3Sim(unittest.TestCase):
                                               "M3resMap.png")
         writeToResMapFilePath = [writeToResMapFilePath1,
                                  writeToResMapFilePath3]
-        self.M1M3.showMirResMap(numTerms=numTerms, resFile=resFile,
+        self.M1M3.showMirResMap(resFile,
                                 writeToResMapFilePath=writeToResMapFilePath)
         self.assertTrue(os.path.isfile(writeToResMapFilePath1))
         self.assertTrue(os.path.isfile(writeToResMapFilePath3))

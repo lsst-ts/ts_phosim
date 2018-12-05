@@ -24,7 +24,55 @@ class MirrorSim(object):
         self.RinM = outerRinM
         self.mirrorDataDir = mirrorDataDir
 
+        self.actForceFileName = ""
+        self.LUTfileName = ""
+
         self._surf = np.array([])
+        self._numTerms = 0
+
+    def config(self, numTerms=28, actForceFileName="", LUTfileName=""):
+        """Do the configuration.
+
+        LUT: Look-up table.
+
+        Parameters
+        ----------
+        numTerms : int, optional
+            Number of Zernike terms to fit. (the default is 28.)
+        actForceFileName : str
+            Actuator force file name. (the default is "".)
+        LUTfileName : str, optional
+            LUT file name. (the default is "".)
+        """
+
+        self._numTerms = int(numTerms)
+        self._setAttr("actForceFileName", actForceFileName)
+        self._setAttr("LUTfileName", LUTfileName)
+
+    def _setAttr(self, attrName, value):
+        """Set the attribute value.
+
+        Parameters
+        ----------
+        attrName : str
+            Attribute name.
+        value : float, int, str
+            Attribute value.
+        """
+
+        if (value not in (None, "")):
+            setattr(self, attrName, value)
+
+    def getNumTerms(self):
+        """Get the number of Zernike terms to fit.
+
+        Returns
+        -------
+        int
+            Number of Zernike terms to fit.
+        """
+
+        return self._numTerms
 
     def getInnerRinM(self):
         """Get the inner radius of mirror in meter.
@@ -102,7 +150,7 @@ class MirrorSim(object):
 
         return self._surf
 
-    def getLUTforce(self, zangleInDeg, LUTfileName):
+    def getLUTforce(self, zangleInDeg):
         """Get the actuator force of mirror based on LUT.
 
         LUT: Look-up table.
@@ -111,8 +159,6 @@ class MirrorSim(object):
         ----------
         zangleInDeg : float
             Zenith angle in degree.
-        LUTfileName : str
-            LUT file name.
 
         Returns
         -------
@@ -126,7 +172,7 @@ class MirrorSim(object):
         """
 
         # Read the LUT file
-        lut = self.getMirrorData(LUTfileName)
+        lut = self.getMirrorData(self.LUTfileName)
 
         # Get the step. The values of LUT are listed in every step size.
         # The degree range is 0 - 90 degree.
@@ -162,13 +208,8 @@ class MirrorSim(object):
 
         return lutForce
 
-    def getActForce(self, actForceFileName):
+    def getActForce(self):
         """Get the mirror actuator forces in N.
-
-        Parameters
-        ----------
-        actForceFileName : str
-            Actuator force file name.
 
         Returns
         ------
@@ -176,7 +217,7 @@ class MirrorSim(object):
             Actuator forces in N.
         """
 
-        forceInN = self.getMirrorData(actForceFileName)
+        forceInN = self.getMirrorData(self.actForceFileName)
 
         return forceInN
 
@@ -301,7 +342,7 @@ class MirrorSim(object):
 
         return content
 
-    def _getMirrorResInNormalizedCoor(self, surf, x, y, numTerms):
+    def _getMirrorResInNormalizedCoor(self, surf, x, y):
         """Get the residue of surface (mirror print along z-axis) after the
         fitting with Zk in the normalized x, y coordinate.
 
@@ -313,8 +354,6 @@ class MirrorSim(object):
             Normalized x coordinate.
         y : numpy.ndarray
             Normalized y coordinate.
-        numTerms : int
-            Number of Zernike terms to fit.
 
         Returns
         -------
@@ -327,20 +366,16 @@ class MirrorSim(object):
         # Get the surface change along the z-axis in the basis of Zk
         # It is noticed that the x and y coordinates are normalized for the
         # fitting.
-        zc = ZernikeFit(surf, x, y, numTerms)
+        zc = ZernikeFit(surf, x, y, self._numTerms)
 
         # Residue of fitting
         res = surf - ZernikeEval(zc, x, y)
 
         return res, zc
 
-    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0,
-                    FEAfileName="", FEAzenFileName="",
-                    FEAhorFileName="", gridFileName=""):
+    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0):
         """Get the mirror print in um along z direction in specific zenith
         angle.
-
-        FEA: Finite element analysis.
 
         Parameters
         ----------
@@ -348,14 +383,6 @@ class MirrorSim(object):
             Zenith angle in radian.
         preCompElevInRadian : float, optional
             Pre-compensation elevation angle in radian. (the default is 0.)
-        FEAfileName : str, optional
-            FEA model data file name. (the default is "".)
-        FEAzenFileName : str, optional
-            FEA model data file name in zenith angle. (the default is "".)
-        FEAhorFileName : str, optional
-            FEA model data file name in horizontal angle. (the default is "".)
-        gridFileName : str, optional
-            File name of bending mode data. (the default is "".)
 
         Returns
         ------
@@ -387,8 +414,7 @@ class MirrorSim(object):
 
         raise NotImplementedError("Child class should implemented this.")
 
-    def getMirrorResInMmInZemax(self, gridFileName="", numTerms=28,
-                                writeZcInMnToFilePath=None):
+    def getMirrorResInMmInZemax(self, writeZcInMnToFilePath=None):
         """Get the residue of surface (mirror print along z-axis) in mm under
         the Zemax coordinate.
 
@@ -397,10 +423,6 @@ class MirrorSim(object):
 
         Parameters
         ----------
-        gridFileName : str, optional
-            File name of bending mode data. (the default is "".)
-        numTerms : {number}, optional
-             Number of Zernike terms to fit. (the default is 28.)
         writeZcInMnToFilePath : str, optional
             File path to write the fitted zk in mm. (the default is None.)
 
@@ -425,7 +447,6 @@ class MirrorSim(object):
         raise NotImplementedError("Child class should implemented this.")
 
     def writeMirZkAndGridResInZemax(self, resFile="", surfaceGridN=200,
-                                    gridFileName="", numTerms=28,
                                     writeZcInMnToFilePath=None):
         """Write the grid residue in mm of mirror surface after the fitting
         with Zk under the Zemax coordinate.
@@ -437,10 +458,6 @@ class MirrorSim(object):
             is "".)
         surfaceGridN : int, optional
             Surface grid number. (the default is 200.)
-        gridFileName : str, optional
-            File name of bending mode data. (the default is "".)
-        numTerms : int, optional
-            Number of Zernike terms to fit. (the default is 28.)
         writeZcInMnToFilePath : str, optional
             File path to write the fitted zk in mm. (the default is None.)
 
@@ -457,18 +474,13 @@ class MirrorSim(object):
 
         raise NotImplementedError("Child class should implemented this.")
 
-    def showMirResMap(self, gridFileName="", numTerms=28, resFile=None,
-                      writeToResMapFilePath=None):
+    def showMirResMap(self, resFile, writeToResMapFilePath=None):
         """Show the mirror residue map.
 
         Parameters
         ----------
-        gridFileName : str, optional
-            File name of bending mode data. (the default is "".)
-        numTerms : int, optional
-            Number of Zernike terms to fit. (the default is 28.)
-        resFile : str or list, optional
-            File path of the grid surface residue map. (the default is None.)
+        resFile : str or list
+            File path of the grid surface residue map.
         writeToResMapFilePath : str or list, optional
             File path to save the residue map. (the default is None.)
 

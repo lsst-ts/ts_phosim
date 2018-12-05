@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from scipy.interpolate import Rbf
 
@@ -9,7 +8,10 @@ from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
 
 
 class M1M3Sim(MirrorSim):
-    
+
+    # Number of actuator in z direction
+    NUM_Z_ACTUATOR = 156
+
     def __init__(self, mirrorDataDir=""):
         """Initiate the M1M3 simulator class.
 
@@ -29,27 +31,74 @@ class M1M3Sim(MirrorSim):
 
         super(M1M3Sim, self).__init__((R1i, R3i), (R1, R3),
                                       mirrorDataDir=mirrorDataDir)
+        self.gridFileName = ""
+        self.FEAfileName = ""
+        self.FEAzenFileName = ""
+        self.FEAhorFileName = ""
 
-    def getActForce(self, actForceFileName="M1M3_1um_156_force.DAT"):
-        """Get the mirror actuator forces in N.
+        self.forceZenFileName = ""
+        self.forceHorFileName = ""
+        self.forceInflFileName = ""
+
+    def config(self, numTerms=28,
+               actForceFileName="M1M3_1um_156_force.DAT",
+               LUTfileName="M1M3_LUT.txt",
+               gridFileName="M1M3_1um_156_grid.DAT",
+               FEAfileName="M1M3_thermal_FEA.txt",
+               FEAzenFileName="M1M3_dxdydz_zenith.txt",
+               FEAhorFileName="M1M3_dxdydz_horizon.txt",
+               forceZenFileName="M1M3_force_zenith.txt",
+               forceHorFileName="M1M3_force_horizon.txt",
+               forceInflFileName="M1M3_influence_256.txt"):
+        """Do the configuration.
+
+        LUT: Look-up table.
+        FEA: Finite element analysis.
 
         Parameters
         ----------
-        actForceFileName : str, optional
-            Actuator force file name. (the default is "M1M3_1um_156_force.DAT".)
-
-        Returns
-        -------
-        numpy.ndarray
-            Actuator forces in N.
+        numTerms : int, optional
+            Number of Zernike terms to fit. (the default is 28.)
+        actForceFileName : str
+            Actuator force file name. (the default is
+            "M1M3_1um_156_force.DAT".)
+        LUTfileName : str, optional
+            LUT file name. (the default is M1M3_LUT.txt".)
+        gridFileName : str, optional
+            File name of bending mode data. (the default is
+            "M1M3_1um_156_grid.DAT".)
+        FEAfileName : str, optional
+            FEA model data file name. (the default is "M1M3_thermal_FEA.txt".)
+        FEAzenFileName : str, optional
+            FEA model data file name in zenith angle. (the default is
+            "M1M3_dxdydz_zenith.txt".)
+        FEAhorFileName : str, optional
+            FEA model data file name in horizontal angle. (the default is
+            "M1M3_dxdydz_horizon.txt".)
+        forceZenFileName : str, optional
+            File name of actuator forces along zenith direction. (the default
+            is "M1M3_force_zenith.txt".)
+        forceHorFileName : str, optional
+            File name of actuator forces along horizon direction. (the default
+            is "M1M3_force_horizon.txt".)
+        forceInflFileName : str, optional
+            Influence matrix of actuator forces. (the default is
+            "M1M3_influence_256.txt".)
         """
 
-        return super(M1M3Sim, self).getActForce(actForceFileName)
+        super(M1M3Sim, self).config(numTerms=numTerms,
+                                    actForceFileName=actForceFileName,
+                                    LUTfileName=LUTfileName)
+        self._setAttr("gridFileName", gridFileName)
+        self._setAttr("FEAfileName", FEAfileName)
+        self._setAttr("FEAzenFileName", FEAzenFileName)
+        self._setAttr("FEAhorFileName", FEAhorFileName)
 
-    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0,
-                    FEAfileName="", FEAzenFileName="M1M3_dxdydz_zenith.txt",
-                    FEAhorFileName="M1M3_dxdydz_horizon.txt",
-                    gridFileName="M1M3_1um_156_grid.DAT"):
+        self._setAttr("forceZenFileName", forceZenFileName)
+        self._setAttr("forceHorFileName", forceHorFileName)
+        self._setAttr("forceInflFileName", forceInflFileName)
+
+    def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0):
         """Get the mirror print in m along z direction in specific zenith
         angle.
 
@@ -61,18 +110,7 @@ class M1M3Sim(MirrorSim):
             Zenith angle in radian.
         preCompElevInRadian : float, optional
             Pre-compensation elevation angle in radian. (the default is 0.)
-        FEAfileName : str, optional
-            FEA model data file name. (the default is "".)
-        FEAzenFileName : str, optional
-            FEA model data file name in zenith angle. (the default is
-            "M1M3_dxdydz_zenith.txt".)
-        FEAhorFileName : str, optional
-            FEA model data file name in horizontal angle. (the default is
-            "M1M3_dxdydz_horizon.txt".)
-        gridFileName : str, optional
-            File name of bending mode data. (the default is
-            "M1M3_1um_156_grid.DAT".)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -80,12 +118,12 @@ class M1M3Sim(MirrorSim):
         """
 
         # Data needed to determine gravitational print through
-        data = self.getMirrorData(FEAzenFileName)
+        data = self.getMirrorData(self.FEAzenFileName)
         zdx = data[:, 0]
         zdy = data[:, 1]
         zdz = data[:, 2]
 
-        data = self.getMirrorData(FEAhorFileName)
+        data = self.getMirrorData(self.FEAhorFileName)
         hdx = data[:, 0]
         hdy = data[:, 1]
         hdz = data[:, 2]
@@ -93,14 +131,14 @@ class M1M3Sim(MirrorSim):
         # Do the M1M3 gravitational correction.
         # Map the changes of dx, dy, and dz on a plane for certain zenith angle
         printthxInM = zdx * np.cos(zAngleInRadian) + \
-                      hdx * np.sin(zAngleInRadian)
+            hdx * np.sin(zAngleInRadian)
         printthyInM = zdy * np.cos(zAngleInRadian) + \
-                      hdy * np.sin(zAngleInRadian)
+            hdy * np.sin(zAngleInRadian)
         printthzInM = zdz * np.cos(zAngleInRadian) + \
-                      hdz * np.sin(zAngleInRadian)
+            hdz * np.sin(zAngleInRadian)
 
         # Get the bending mode information
-        idx1, idx3, bx, by, bz = self._getMirCoor(gridFileName)
+        idx1, idx3, bx, by, bz = self._getMirCoor()
 
         # Calcualte the mirror ideal shape
         zRef = self._calcIdealShape(bx*1000, by*1000, idx1, idx3)/1000
@@ -132,13 +170,8 @@ class M1M3Sim(MirrorSim):
 
         return printthzInM
 
-    def _getMirCoor(self, gridFileName):
+    def _getMirCoor(self):
         """Get the mirror coordinate and node.
-
-        Parameters
-        ----------
-        gridFileName : str
-            File name of bending mode data.
 
         Returns
         -------
@@ -155,12 +188,12 @@ class M1M3Sim(MirrorSim):
         """
 
         # Get the bending mode information
-        data = self.getMirrorData(gridFileName)
-        
+        data = self.getMirrorData(self.gridFileName)
+
         nodeID = data[:, 0].astype("int")
         nodeM1 = (nodeID == 1)
         nodeM3 = (nodeID == 3)
-        
+
         bx = data[:, 1]
         by = data[:, 2]
         bz = data[:, 3:]
@@ -170,10 +203,10 @@ class M1M3Sim(MirrorSim):
     def _calcIdealShape(self, xInMm, yInMm, idxM1, idxM3, dr1=0, dr3=0, dk1=0,
                         dk3=0):
         """Calculate the ideal shape of mirror along z direction.
-        
+
         This is described by a series of cylindrically-symmetric aspheric
         surfaces.
-        
+
         Parameters
         ----------
         xInMm : numpy.ndarray
@@ -197,6 +230,11 @@ class M1M3Sim(MirrorSim):
         -------
         numpy.ndarray
             Ideal mirror surface along z direction.
+
+        Raises
+        ------
+        ValueError
+            X is unequal to y.
         """
 
         # M1 optical design
@@ -216,9 +254,7 @@ class M1M3Sim(MirrorSim):
         nr = xInMm.shape
         mr = yInMm.shape
         if (nr != mr):
-            print("In the ideal shape calculation, x is [%d] while y is [%d]."
-                  % (nr, mr))
-            sys.exit()
+            raise ValueError("X[%d] is unequal to y[%d]." % (nr, mr))
 
         # Calculation the curvature (c) and conic constant (kappa)
 
@@ -247,13 +283,13 @@ class M1M3Sim(MirrorSim):
 
         # Calculate the radius
         r2 = xInMm**2 + yInMm**2
-        r = np.sqrt(r2)
 
         # Calculate the ideal surface
 
         # The optical elements of telescopes can often be described by a
         # series of cylindrically-symmetric aspheric surfaces:
-        # z(r) = c * r^2/[ 1 + sqrt( 1-(1+k) * c^2 * r^2 ) ] + sum(ai * r^(2*i)) + sum(Aj * Zj)
+        # z(r) = c * r^2/[ 1 + sqrt( 1-(1+k) * c^2 * r^2 ) ] +
+        # sum(ai * r^(2*i)) + sum(Aj * Zj)
         # where i = 1-8, j = 1-N
 
         z0 = cMat * r2 / (1 + np.sqrt(1 - (1 + kMat) * cMat**2 * r2))
@@ -273,8 +309,7 @@ class M1M3Sim(MirrorSim):
         return -z0
 
     def getTempCorr(self, M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad,
-                    M1M3TrGrad, FEAfileName="M1M3_thermal_FEA.txt",
-                    gridFileName="M1M3_1um_156_grid.DAT"):
+                    M1M3TrGrad):
         """Get the mirror print correction along z direction for certain
         temperature gradient.
 
@@ -296,11 +331,6 @@ class M1M3Sim(MirrorSim):
         M1M3TrGrad : float
             Temperature gradient along r direction in degree C (+/-2sigma
             spans 0.1C).
-        FEAfileName : str, optional
-            FEA model data file name.  (the default is "M1M3_thermal_FEA.txt".)
-        gridFileName : str, optional
-            File name of bending mode data. (the default is
-            "M1M3_1um_156_grid.DAT".)
 
         Returns
         -------
@@ -309,7 +339,7 @@ class M1M3Sim(MirrorSim):
         """
 
         # Data needed to determine thermal deformation
-        data = self.getMirrorData(FEAfileName, skiprows=1)
+        data = self.getMirrorData(self.FEAfileName, skiprows=1)
 
         # These are the normalized coordinates
 
@@ -324,8 +354,8 @@ class M1M3Sim(MirrorSim):
         # Below are in M1M3 coordinate system, and in micron
 
         # Do the fitting in the normalized coordinate
-        bx, by = self._getMirCoor(gridFileName)[2:4]
-        R = self.RinM[0]
+        bx, by = self._getMirCoor()[2:4]
+        R = self.getOuterRinM()[0]
         normX = bx/R
         normY = by/R
 
@@ -346,7 +376,7 @@ class M1M3Sim(MirrorSim):
 
         # Get the temprature correction
         tempCorrInUm = M1M3TBulk*tbdz + M1M3TxGrad*txdz + M1M3TyGrad*tydz + \
-                       M1M3TzGrad*tzdz + M1M3TrGrad*trdz
+            M1M3TzGrad*tzdz + M1M3TrGrad*trdz
 
         return tempCorrInUm
 
@@ -378,8 +408,7 @@ class M1M3Sim(MirrorSim):
         # Return the fitted data
         return rbfi(x, y)
 
-    def getMirrorResInMmInZemax(self, gridFileName="M1M3_1um_156_grid.DAT",
-                                numTerms=28, writeZcInMnToFilePath=None):
+    def getMirrorResInMmInZemax(self, writeZcInMnToFilePath=None):
         """Get the residue of surface (mirror print along z-axis) in mm under
         the Zemax coordinate.
 
@@ -388,11 +417,6 @@ class M1M3Sim(MirrorSim):
 
         Parameters
         ----------
-        gridFileName : str, optional
-            File name of bending mode data. (the default is
-            "M1M3_1um_156_grid.DAT".)
-        numTerms : {number}, optional
-            Number of Zernike terms to fit. (the default is 28.)
         writeZcInMnToFilePath : str, optional
             File path to write the fitted zk in mm. (the default is None.)
 
@@ -410,7 +434,7 @@ class M1M3Sim(MirrorSim):
         """
 
         # Get the bending mode information
-        bx, by, bz = self._getMirCoor(gridFileName)[2:5]
+        bx, by, bz = self._getMirCoor()[2:5]
 
         # Transform the M1M3 coordinate to Zemax coordinate
         bxInZemax, byInZemax, surfInZemax = phosim2ZemaxCoorTrans(
@@ -419,7 +443,7 @@ class M1M3Sim(MirrorSim):
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()[0]
         resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
-                    surfInZemax, bxInZemax/RinM, byInZemax/RinM, numTerms)
+                                surfInZemax, bxInZemax/RinM, byInZemax/RinM)
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -434,34 +458,35 @@ class M1M3Sim(MirrorSim):
         return resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInMmInZemax
 
     def writeMirZkAndGridResInZemax(self, resFile=[], surfaceGridN=200,
-                                    gridFileName="M1M3_1um_156_grid.DAT",
-                                    numTerms=28, writeZcInMnToFilePath=None):
-        """
-        
-        Write the grid residue in mm of mirror surface after the fitting with Zk under the Zemax
-        coordinate.
-        
-        Keyword Arguments:
-            resFile {[list]} -- File path to save the grid surface residue map ([M1filePath, M3filePath]). 
-                                (default: {[]]})
-            surfaceGridN {int} -- Surface grid number. (default: {200})
-            gridFileName {str} -- File name of bending mode data. (default: {"M1M3_1um_156_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
-            writeZcInMnToFilePath {[str]} -- File path to write the fitted zk in mm. (default: {None})
-        
-        Returns:
-            [str] -- Grid residue map related data of M1.
-            [str] -- Grid residue map related data of M3.
+                                    writeZcInMnToFilePath=None):
+        """Write the grid residue in mm of mirror surface after the fitting
+        with Zk under the Zemax coordinate.
+
+        Parameters
+        ----------
+        resFile : list, optional
+            File path to save the grid surface residue map. (the default
+            is [].)
+        surfaceGridN : {number}, optional
+            Surface grid number. (the default is 200.)
+        writeZcInMnToFilePath : str, optional
+            File path to write the fitted zk in mm. (the default is None.)
+
+        Returns
+        -------
+        str
+            Grid residue map related data of M1.
+        str
+            Grid residue map related data of M3.
         """
 
         # Get the residure map
         resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
             self.getMirrorResInMmInZemax(
-                        gridFileName=gridFileName, numTerms=numTerms,
                         writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
 
         # Get the mirror node
-        idx1, idx3 = self._getMirCoor(gridFileName)[0:2]
+        idx1, idx3 = self._getMirCoor()[0:2]
 
         # Grid sample map for M1 and M3
         for ii, idx in zip((0, 1), (idx1, idx3)):
@@ -474,8 +499,8 @@ class M1M3Sim(MirrorSim):
             # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
             # Content: (z, dx, dy, dxdy)
             content = self._gridSampInMnInZemax(
-                                resInMmInZemax[idx], bxInMmInZemax[idx], 
-                                byInMmInZemax[idx], innerRinMm, outerRinMm, 
+                                resInMmInZemax[idx], bxInMmInZemax[idx],
+                                byInMmInZemax[idx], innerRinMm, outerRinMm,
                                 surfaceGridN, surfaceGridN,
                                 resFile=resFile[ii])
             if (ii == 0):
@@ -485,26 +510,23 @@ class M1M3Sim(MirrorSim):
 
         return contentM1, contentM3
 
-    def showMirResMap(self, gridFileName="M1M3_1um_156_grid.DAT", numTerms=28,
-                      resFile=[], writeToResMapFilePath=[]):
-        """
-        
-        Show the mirror residue map.
-        
-        Keyword Arguments:
-            gridFileName {str} -- File name of bending mode data. (default: {"M1M3_1um_156_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
-            resFile {list} -- File path of the grid surface residue map. (default: {[]})
-            writeToResMapFilePath {list} -- File path to save the residue map. (default: {[]})
+    def showMirResMap(self, resFile, writeToResMapFilePath=[]):
+        """Show the mirror residue map.
+
+        Parameters
+        ----------
+        resFile : list
+            File path of the grid surface residue map.
+        writeToResMapFilePath : list, optional
+            File path to save the residue map. (the default is [].)
         """
 
         # Get the residure map
         resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
-            self.getMirrorResInMmInZemax(gridFileName=gridFileName,
-                                         numTerms=numTerms)[0:3]
+            self.getMirrorResInMmInZemax()[0:3]
 
         # Get the mirror node
-        idx1, idx3 = self._getMirCoor(gridFileName)[0:2]
+        idx1, idx3 = self._getMirCoor()[0:2]
 
         # Show the mirror maps
         RinMtuple = self.getOuterRinM()
@@ -515,11 +537,8 @@ class M1M3Sim(MirrorSim):
                        byInMmInZemax[idx], outerRinMm, resFile=resFile[ii],
                        writeToResMapFilePath=writeToResMapFilePath[ii])
 
-    def genMirSurfRandErr(self, zAngleInRadian, LUTfileName="M1M3_LUT.txt", 
-                          forceZenFileName="M1M3_force_zenith.txt", 
-                          forceHorFileName="M1M3_force_horizon.txt", 
-                          forceInflFileName="M1M3_influence_256.txt", 
-                          M1M3ForceError=0.05, nzActuator=156, seedNum=0):
+    def genMirSurfRandErr(self, zAngleInRadian, M1M3ForceError=0.05,
+                          seedNum=0):
         """Generate the mirror surface random error.
 
         LUT: Loop-up table.
@@ -528,24 +547,11 @@ class M1M3Sim(MirrorSim):
         ----------
         zAngleInRadian : float
             Zenith angle in radian.
-        LUTfileName : str, optional
-            LUT file name. (the default is "M1M3_LUT.txt".)
-        forceZenFileName : str, optional
-            File name of actuator forces along zenith direction. (the default
-            is "M1M3_force_zenith.txt".)
-        forceHorFileName : str, optional
-            File name of actuator forces along horizon direction. (the default
-            is "M1M3_force_horizon.txt".)
-        forceInflFileName : str, optional
-            Influence matrix of actuator forces. (the default is
-            "M1M3_influence_256.txt".)
         M1M3ForceError : float, optional
             Ratio of actuator force error. (the default is 0.05.)
-        nzActuator : int, optional
-            Number of actuator along z direction. (the default is 156.)
         seedNum : int, optional
             Random seed number. (the default is 0.)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -554,7 +560,7 @@ class M1M3Sim(MirrorSim):
 
         # Get the actuator forces in N of M1M3 based on the look-up table (LUT)
         zangleInDeg = np.rad2deg(zAngleInRadian)
-        LUTforce = self.getLUTforce(zangleInDeg, LUTfileName)
+        LUTforce = self.getLUTforce(zangleInDeg)
 
         # Add 5% force error (self.M1M3ForceError). This is for iteration 0
         # only.
@@ -565,29 +571,26 @@ class M1M3Sim(MirrorSim):
 
         # Balance forces along z-axis
         # This statement is intentionally to make the force balance.
-        nzActuator = int(nzActuator)
+        nzActuator = int(self.NUM_Z_ACTUATOR)
         myu[nzActuator-1] = np.sum(LUTforce[:nzActuator]) - \
-                            np.sum(myu[:nzActuator-1])
+            np.sum(myu[:nzActuator-1])
 
         # Balance forces along y-axis
         # This statement is intentionally to make the force balance.
         myu[nActuator-1] = np.sum(LUTforce[nzActuator:]) - \
-                           np.sum(myu[nzActuator:-1])
+            np.sum(myu[nzActuator:-1])
 
         # Get the net force along the z-axis
-        zf = self.getMirrorData(forceZenFileName)
-        hf = self.getMirrorData(forceHorFileName)
+        zf = self.getMirrorData(self.forceZenFileName)
+        hf = self.getMirrorData(self.forceHorFileName)
         u0 = zf*np.cos(zAngleInRadian) + hf*np.sin(zAngleInRadian)
 
         # Calculate the random surface
-        G = self.getMirrorData(forceInflFileName)
+        G = self.getMirrorData(self.forceInflFileName)
         randSurfInM = G.dot(myu - u0)
 
         return randSurfInM
 
 
 if __name__ == "__main__":
-
-    # Do the unit test
-    unittest.main()
-    
+    pass

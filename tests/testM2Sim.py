@@ -13,6 +13,7 @@ class TestM2Sim(unittest.TestCase):
 
         mirrorDataDir = os.path.join(getModulePath(), "configData", "M2")
         self.M2 = M2Sim(mirrorDataDir=mirrorDataDir)
+        self.M2.config()
 
     def testInit(self):
 
@@ -50,7 +51,7 @@ class TestM2Sim(unittest.TestCase):
 
         numTerms = 28
         self._setSurfAlongZ()
-        zcInMmInZemax = self.M2.getMirrorResInMmInZemax(numTerms=numTerms)[3]
+        zcInMmInZemax = self.M2.getMirrorResInMmInZemax()[3]
 
         ansFilePath = os.path.join(getModulePath(), "tests", "testData",
                                    "testM2Func", "sim6_M2zlist.txt")
@@ -76,7 +77,7 @@ class TestM2Sim(unittest.TestCase):
 
     def testWriteMirZkAndGridResInZemax(self):
 
-        resFile = self._writeMirZkAndGridResInZemax()[0]
+        resFile = self._writeMirZkAndGridResInZemax()
         content = np.loadtxt(resFile)
 
         ansFilePath = os.path.join(getModulePath(), "tests", "testData",
@@ -90,20 +91,19 @@ class TestM2Sim(unittest.TestCase):
 
     def _writeMirZkAndGridResInZemax(self):
 
-        numTerms = 28
         self._setSurfAlongZ()
         resFile = os.path.join(getModulePath(), "output", "M2res.txt")
-        self.M2.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=numTerms)
+        self.M2.writeMirZkAndGridResInZemax(resFile=resFile)
 
-        return resFile, numTerms
+        return resFile
 
     def testShowMirResMap(self):
 
-        resFile, numTerms = self._writeMirZkAndGridResInZemax()
+        resFile = self._writeMirZkAndGridResInZemax()
         writeToResMapFilePath = os.path.join(getModulePath(), "output",
                                              "M2resMap.png")
 
-        self.M2.showMirResMap(numTerms=numTerms, resFile=resFile,
+        self.M2.showMirResMap(resFile,
                               writeToResMapFilePath=writeToResMapFilePath)
         self.assertTrue(os.path.isfile(writeToResMapFilePath))
 

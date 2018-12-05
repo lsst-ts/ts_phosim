@@ -14,11 +14,16 @@ class TestMirrorSim(unittest.TestCase):
         self.innerRinM = 0.9
         self.outerRinM = 1.710
         self.mirror = MirrorSim(self.innerRinM, self.outerRinM)
+        self.mirror.config()
 
     def testInit(self):
 
         self.assertEqual(self.mirror.getInnerRinM(), self.innerRinM)
         self.assertEqual(self.mirror.getOuterRinM(), self.outerRinM)
+
+    def testGetNumTerms(self):
+
+        self.assertEqual(self.mirror.getNumTerms(), 28)
 
     def testSetMirrorDataDir(self):
 
@@ -49,8 +54,10 @@ class TestMirrorSim(unittest.TestCase):
 
         zangleInDeg = 1.5
         LUTfileName = "M1M3_LUT.txt"
+
         self.mirror.setMirrorDataDir(M1M3DataDir)
-        LUTforce = self.mirror.getLUTforce(zangleInDeg, LUTfileName)
+        self.mirror.config(LUTfileName=LUTfileName)
+        LUTforce = self.mirror.getLUTforce(zangleInDeg)
 
         oriLutForce = self.mirror.getMirrorData(LUTfileName, skiprows=1)
         ansLutForce = (oriLutForce[:, 1]+oriLutForce[:, 2])/2
@@ -73,6 +80,11 @@ class TestMirrorSim(unittest.TestCase):
 
         self.assertRaises(NotImplementedError,
                           self.mirror.writeMirZkAndGridResInZemax)
+
+    def testShowMirResMap(self):
+
+        self.assertRaises(NotImplementedError,
+                          self.mirror.showMirResMap, "")
 
 
 if __name__ == "__main__":
