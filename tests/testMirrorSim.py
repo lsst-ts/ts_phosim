@@ -53,7 +53,7 @@ class TestMirrorSim(unittest.TestCase):
         LUTforce = self.mirror.getLUTforce(zangleInDeg, LUTfileName)
 
         oriLutForce = self.mirror.getMirrorData(LUTfileName, skiprows=1)
-        ansLutForce = (oriLutForce[:,1]+oriLutForce[:,2])/2
+        ansLutForce = (oriLutForce[:, 1]+oriLutForce[:, 2])/2
         self.assertLess(np.sum(np.abs(LUTforce-ansLutForce)), 1e-10)
 
     def testGetPrintthz(self):

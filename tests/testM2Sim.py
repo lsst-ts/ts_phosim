@@ -15,7 +15,7 @@ class TestM2Sim(unittest.TestCase):
         self.M2 = M2Sim(mirrorDataDir=mirrorDataDir)
 
     def testInit(self):
-        
+
         self.assertEqual(self.M2.getInnerRinM(), 0.9)
         self.assertEqual(self.M2.getOuterRinM(), 1.71)
 
@@ -57,7 +57,7 @@ class TestM2Sim(unittest.TestCase):
         ansZcInUmInZemax = np.loadtxt(ansFilePath)
         ansZcInMmInZemax = ansZcInUmInZemax*1e-3
 
-        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] - 
+        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] -
                               ansZcInMmInZemax[0:numTerms]))
         self.assertLess(delta, 1e-9)
 
@@ -86,21 +86,26 @@ class TestM2Sim(unittest.TestCase):
                                    "testM2Func", "sim6_M2res.txt")
         ansContent = np.loadtxt(ansFilePath)
 
-        self.assertLess(np.sum(np.abs(content[0,:]-ansContent[0,:])), 1e-9)
-        self.assertLess(np.sum(np.abs(content[1:,0]-ansContent[1:,0])), 1e-9)
+        self.assertLess(np.sum(np.abs(content[0, :]-ansContent[0, :])), 1e-9)
+        self.assertLess(np.sum(np.abs(content[1:, 0]-ansContent[1:, 0])), 1e-9)
 
         os.remove(resFile)
 
-    # def testFunc(self):
+    def testShowMirResMap(self):
 
-    #     numTerms = 28
+        numTerms = 28
+        self._setSurfAlongZ()
+        resFile = os.path.join(getModulePath(), "output", "M2res.txt")
+        self.M2.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=numTerms)
 
-    #     writeToResMapFilePath = os.path.join(getModulePath(), "output", "M2resMap.png")
-    #     M2.showMirResMap(numTerms=numTerms, resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
-    #     self.assertTrue(os.path.isfile(writeToResMapFilePath))
+        writeToResMapFilePath = os.path.join(getModulePath(), "output",
+                                             "M2resMap.png")
+        self.M2.showMirResMap(numTerms=numTerms, resFile=resFile,
+                              writeToResMapFilePath=writeToResMapFilePath)
+        self.assertTrue(os.path.isfile(writeToResMapFilePath))
 
-    #     os.remove(resFile)
-    #     os.remove(writeToResMapFilePath)
+        os.remove(resFile)
+        os.remove(writeToResMapFilePath)
 
 
 if __name__ == "__main__":

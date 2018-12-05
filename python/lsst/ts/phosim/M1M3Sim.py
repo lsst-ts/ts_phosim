@@ -7,6 +7,8 @@ from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
 from wepPhoSim.MirrorSim import MirrorSim
 from wepPhoSim.CoTransform import M1CRS2ZCRS
 
+from lsst.ts.phosim.PlotUtil import plotResMap
+
 class M1M3Sim(MirrorSim):
     
     def __init__(self, surf=None, mirrorDataDir=None):
@@ -270,8 +272,8 @@ class M1M3Sim(MirrorSim):
 
         # Get the mirror residue and zk in um
         RinM = self.RinM[0]
-        resInUmInZemax, zcInUmInZemax = self._MirrorSim__getMirrorResInNormalizedCoor(surfInZemax,
-                                                bxInZemax/RinM, byInZemax/RinM, numTerms)
+        resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
+                    surfInZemax, bxInZemax/RinM, byInZemax/RinM, numTerms)
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -321,9 +323,9 @@ class M1M3Sim(MirrorSim):
         # Get the residue map used in Zemax
         # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
         # Content: (z, dx, dy, dxdy)
-        contentM1 = self._MirrorSim__gridSampInMnInZemax(resInMmInZemax[idx1], bxInMmInZemax[idx1], 
-                                                         byInMmInZemax[idx1], innerRinMm, outerRinMm, 
-                                                         surfaceGridN, surfaceGridN, resFile=resFile[0])
+        contentM1 = self._gridSampInMnInZemax(resInMmInZemax[idx1], bxInMmInZemax[idx1], 
+                                              byInMmInZemax[idx1], innerRinMm, outerRinMm, 
+                                              surfaceGridN, surfaceGridN, resFile=resFile[0])
 
         # Grid sample map for M3
 
@@ -340,7 +342,8 @@ class M1M3Sim(MirrorSim):
 
         return contentM1, contentM3
 
-    def showMirResMap(self, gridFileName="M1M3_1um_156_grid.DAT", numTerms=28, resFile=[], writeToResMapFilePath=[]):
+    def showMirResMap(self, gridFileName="M1M3_1um_156_grid.DAT", numTerms=28,
+                      resFile=[], writeToResMapFilePath=[]):
         """
         
         Show the mirror residue map.
@@ -361,13 +364,13 @@ class M1M3Sim(MirrorSim):
 
         # Show M1 map
         outerRinMm = self.RinM[0] * 1e3
-        self._MirrorSim__showResMap(resInMmInZemax[idx1], bxInMmInZemax[idx1], byInMmInZemax[idx1], outerRinMm,
-                                    resFile=resFile[0], writeToResMapFilePath=writeToResMapFilePath[0])
+        plotResMap(resInMmInZemax[idx1], bxInMmInZemax[idx1], byInMmInZemax[idx1], outerRinMm,
+                   resFile=resFile[0], writeToResMapFilePath=writeToResMapFilePath[0])
 
         # Show M3 map
         outerRinMm = self.RinM[1] * 1e3
-        self._MirrorSim__showResMap(resInMmInZemax[idx3], bxInMmInZemax[idx3], byInMmInZemax[idx3], outerRinMm,
-                                    resFile=resFile[1], writeToResMapFilePath=writeToResMapFilePath[1])
+        plotResMap(resInMmInZemax[idx3], bxInMmInZemax[idx3], byInMmInZemax[idx3], outerRinMm,
+                   resFile=resFile[1], writeToResMapFilePath=writeToResMapFilePath[1])
 
     def __getMirCoor(self, gridFileName="M1M3_1um_156_grid.DAT"):
         """

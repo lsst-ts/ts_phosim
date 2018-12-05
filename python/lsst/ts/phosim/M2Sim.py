@@ -3,6 +3,7 @@ import numpy as np
 
 from lsst.ts.phosim.MirrorSim import MirrorSim
 from lsst.ts.phosim.Utility import phosim2ZemaxCoorTrans
+from lsst.ts.phosim.PlotUtil import plotResMap
 
 
 class M2Sim(MirrorSim):
@@ -168,10 +169,8 @@ class M2Sim(MirrorSim):
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()
 
-        resInUmInZemax, zcInUmInZemax = \
-            self._MirrorSim__getMirrorResInNormalizedCoor(
-                surfInZemax, bxInZemax/RinM, byInZemax/RinM,
-                numTerms)
+        resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
+                        surfInZemax, bxInZemax/RinM, byInZemax/RinM, numTerms)
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -224,33 +223,40 @@ class M2Sim(MirrorSim):
         # Get the residue map used in Zemax
         # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
         # Content: (z, dx, dy, dxdy)
-        content = self._MirrorSim__gridSampInMnInZemax(
+        content = self._gridSampInMnInZemax(
                             resInMmInZemax, bxInMmInZemax, byInMmInZemax,
                             innerRinMm, outerRinMm, surfaceGridN, surfaceGridN,
                             resFile=resFile)
 
         return content
 
-    def showMirResMap(self, gridFileName="M2_1um_grid.DAT", numTerms=28, resFile=None, writeToResMapFilePath=None):
-        """
+    def showMirResMap(self, gridFileName="M2_1um_grid.DAT", numTerms=28,
+                      resFile=None, writeToResMapFilePath=None):
+        """Show the mirror residue map.
 
-        Show the mirror residue map.
-
-        Keyword Arguments:
-            gridFileName {str} -- File name of bending mode data. (default: {"M2_1um_grid.DAT"})
-            numTerms {int} -- Number of Zernike terms to fit. (default: {28})
-            resFile {[str]} -- File path of the grid surface residue map. (default: {None})
-            writeToResMapFilePath {[str]} -- File path to save the residue map. (default: {None})
+        Parameters
+        ----------
+        gridFileName : str, optional
+            File name of bending mode data. (the default is "M2_1um_grid.DAT".)
+        numTerms : int, optional
+            Number of Zernike terms to fit. (the default is 28.)
+        resFile : str, optional
+            File path of the grid surface residue map. (the default is None.)
+        writeToResMapFilePath : str, optional
+            File path to save the residue map. (the default is None.)
         """
 
         # Get the residure map
-        resInMmInZemax, bxInMmInZemax, byInMmInZemax = self.getMirrorResInMmInZemax(gridFileName=gridFileName,
-                                                                                     numTerms=numTerms)[0:3]
+        resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
+                    self.getMirrorResInMmInZemax(gridFileName=gridFileName,
+                                                 numTerms=numTerms)[0:3]
 
         # Change the unit
         outerRinMm = self.getOuterRinM() * 1e3
-        self._MirrorSim__showResMap(resInMmInZemax, bxInMmInZemax, byInMmInZemax, outerRinMm,
-                                    resFile=resFile, writeToResMapFilePath=writeToResMapFilePath)
+        plotResMap(resInMmInZemax, bxInMmInZemax, byInMmInZemax,
+                   outerRinMm, resFile=resFile,
+                   writeToResMapFilePath=writeToResMapFilePath)
+
 
 if __name__ == "__main__":
     pass
