@@ -1,4 +1,3 @@
-import os
 import numpy as np
 
 from lsst.ts.phosim.MirrorSim import MirrorSim
@@ -30,7 +29,7 @@ class M2Sim(MirrorSim):
         ----------
         actForceFileName : str, optional
             Actuator force file name. (the default is "M2_1um_force.DAT".)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -80,11 +79,11 @@ class M2Sim(MirrorSim):
         # Do the M2 gravitational correction.
         # Map the changes of dz on a plane for certain zenith angle
         printthzInUm = zdz * np.cos(zAngleInRadian) + \
-                       hdz * np.sin(zAngleInRadian)
+            hdz * np.sin(zAngleInRadian)
 
         # Do the pre-compensation elevation angle correction
         printthzInUm -= zdz * np.cos(preCompElevInRadian) + \
-                        hdz * np.sin(preCompElevInRadian)
+            hdz * np.sin(preCompElevInRadian)
 
         return printthzInUm
 
@@ -104,7 +103,7 @@ class M2Sim(MirrorSim):
             spans 1C).
         FEAfileName : str, optional
             FEA model data file name. (the default is "M2_GT_FEA.txt".)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -132,7 +131,7 @@ class M2Sim(MirrorSim):
 
         This value is after the fitting with spherical Zernike polynomials
         (zk).
-        
+
         Parameters
         ----------
         gridFileName : str, optional
@@ -152,7 +151,7 @@ class M2Sim(MirrorSim):
         numpy.ndarray
             Y position in mm in Zemax coordinate.
         numpy.ndarray
-            Fitted zk in mm in Zemax coordinate.    
+            Fitted zk in mm in Zemax coordinate.
         """
 
         # Get the bending mode information
@@ -248,8 +247,8 @@ class M2Sim(MirrorSim):
 
         # Get the residure map
         resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
-                    self.getMirrorResInMmInZemax(gridFileName=gridFileName,
-                                                 numTerms=numTerms)[0:3]
+            self.getMirrorResInMmInZemax(gridFileName=gridFileName,
+                                         numTerms=numTerms)[0:3]
 
         # Change the unit
         outerRinMm = self.getOuterRinM() * 1e3
