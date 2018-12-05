@@ -96,10 +96,10 @@ class M2Sim(MirrorSim):
         Parameters
         ----------
         M2TzGrad : float
-            Temperature gradient along z direction in degree C. (+/-2sigma
+            Temperature gradient along z direction in degree C (+/-2sigma
             spans 1C).
         M2TrGrad : float
-            Temperature gradient along r direction in degree C. (+/-2sigma
+            Temperature gradient along r direction in degree C (+/-2sigma
             spans 1C).
         FEAfileName : str, optional
             FEA model data file name. (the default is "M2_GT_FEA.txt".)
@@ -137,7 +137,7 @@ class M2Sim(MirrorSim):
         gridFileName : str, optional
             File name of bending mode data. (the default is "M2_1um_grid.DAT".)
         numTerms : {number}, optional
-             Number of Zernike terms to fit. (the default is 28.)
+            Number of Zernike terms to fit. (the default is 28.)
         writeZcInMnToFilePath : str, optional
             File path to write the fitted zk in mm. (the default is None.)
 
@@ -167,7 +167,6 @@ class M2Sim(MirrorSim):
 
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()
-
         resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
                         surfInZemax, bxInZemax/RinM, byInZemax/RinM, numTerms)
 

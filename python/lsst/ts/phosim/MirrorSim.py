@@ -31,7 +31,7 @@ class MirrorSim(object):
 
         Returns
         -------
-        float or list
+        float or tuple
             Inner radius of mirror in meter.
         """
 
@@ -42,7 +42,7 @@ class MirrorSim(object):
 
         Returns
         -------
-        float or list
+        float or tuple
             Outer radius of mirror in meter.
         """
 
