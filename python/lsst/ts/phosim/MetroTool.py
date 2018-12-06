@@ -3,32 +3,43 @@ import scipy.special as sp
 
 from lsst.ts.wep.cwfs.Tool import padArray, extractArray
 
-def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0, pmask=0, imagedelta=0, 
-              fno=1.2335, debugLevel=0):
-    """
-    
-    Calculate the normalized point source sensitivity (PSSN).
-    
-    Arguments:
-        array {[ndarray]} -- Array that contains either opd or pdf. opd need to be in microns.
-        wlum {[float]} -- Wavelength in microns.
-    
-    Keyword Arguments:
-        aType {str} -- What is used to calculate pssn - either opd or psf. (default: {"opd"})
-        D {float} -- Side length of OPD image in meter. (default: {8.36})
-        r0inmRef {float} -- Fidicial atmosphere r0 @ 500nm in meter, Konstantinos uses 0.20. 
-                            (default: {0.1382})
-        zen {float} -- Telescope zenith angle in degree. (default: {0})
-        pmask {float/ ndarray} -- Pupil mask. when opd is used, it can be generated using opd 
-                                  image, we can put 0 or -1 or whatever here. When psf is used, 
-                                  this needs to be provided separately with same size as array. 
-                                  (default: {0})
-        imagedelta {float} -- Only needed when psf is used. use 0 for opd. (default: {0})
-        fno {float} -- Only needed when psf is used. use 0 for opd. (default: {1.2335})
-        debugLevel {int} -- Debug level. The higher value gives more information. (default: {0})
-    
-    Returns:
-        [float] -- PSSN value.
+
+def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0,
+              pmask=0, imagedelta=0, fno=1.2335, debugLevel=0):
+    """Calculate the normalized point source sensitivity (PSSN).
+
+    Parameters
+    ----------
+    array : numpy.ndarry
+        Array that contains either opd or pdf. opd need to be in microns.
+    wlum : float
+        Wavelength in microns.
+    aType : str, optional
+        What is used to calculate pssn - either opd or psf. (the default is
+        "opd".)
+    D : float, optional
+        Side length of OPD image in meter. (the default is 8.36.)
+    r0inmRef : float, optional
+        Fidicial atmosphere r0 @ 500nm in meter, Konstantinos uses 0.20. (the
+        default is 0.1382.)
+    zen : float, optional
+        Telescope zenith angle in degree. (the default is 0.)
+    pmask : int or numpy.ndarray[int], optional
+        Pupil mask. when opd is used, it can be generated using opd image, we
+        can put 0 or -1 or whatever here. When psf is used, this needs to be
+        provided separately with same size as array. (the default is 0.)
+    imagedelta : float, optional
+        Only needed when psf is used. use 0 for opd. (the default is 0.)
+    fno : float, optional
+        Only needed when psf is used. use 0 for opd. (the default is 1.2335.)
+    debugLevel : int, optional
+        Debug level. The higher value gives more information. (the default
+        is 0.)
+
+    Returns
+    -------
+    float
+        PSSN value.
     """
 
     # Only needed for psf: pmask, imagedelta, fno
@@ -42,7 +53,7 @@ def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0, pmask=0,
     #    because psf=|exp(-2*OPD)|^2. information has been lost in the | |^2.
     #    we need to go forward with psf->mtf,
     #    and take care of the coordinates properly.
-   
+
     # PSSN = (n_eff)_atm / (n_eff)_atm+sys
     # (n_eff))_atm = 1 / (int (PSF^2)_atm dOmega)
     # (n_eff))_atm+sys = 1 / (int (PSF^2)_atm+sys dOmega) 
@@ -93,8 +104,8 @@ def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0, pmask=0,
     opdt = np.zeros((m, m))
 
     # OPD to PSF
-    psft = opd2psf(opdt, iad, wlum, imagedelta=imagedelta, sensorFactor=1, fno=fno, 
-                   debugLevel=debugLevel)
+    psft = opd2psf(opdt, iad, wlum, imagedelta=imagedelta, sensorFactor=1,
+                   fno=fno, debugLevel=debugLevel)
     
     # PSF to optical transfer function (OTF)
     otft = psf2otf(psft)
@@ -142,7 +153,8 @@ def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0, pmask=0,
             psfe = extractArray(array, mk)
         
         else:
-            print("calc_pssn: image provided too small, %d < %d x %6.4f." % (array.shape[0], m, k))
+            print("calc_pssn: image provided too small, %d < %d x %6.4f."
+                  % (array.shape[0], m, k))
             print("IQ is over-estimated !!!")
             psfe = padArray(array, mk)
 
@@ -170,26 +182,33 @@ def calc_pssn(array, wlum, aType="opd", D=8.36, r0inmRef=0.1382, zen=0, pmask=0,
 
     return pssn
 
+
 def createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK"):
-    """
-    
-    Generate the modulation transfer function (MTF) for atmosphere.
-    
-    Arguments:
-        D {[float]} -- Side length of optical path difference (OPD) image in m.
-        m {[int]} -- Dimension of OPD image in pixel. The the number of pixel we want to have 
-                     to cover the length of D.
-        k {[int]} -- Use a k-times bigger array to pad the MTF. Use k=1 for the same size.
-        wlum {[float]} -- Wavelength in um.
-        zen {[float]} -- Telescope zenith angle in degree.
-        r0inmRef {[float]} -- Reference r0 in meter at the wavelength of 0.5 um.
-    
-    Keyword Arguments:
-        model {str} -- Kolmogorov power spectrum ("Kolm") or van Karman power spectrum ("vonK"). 
-                       (default: {"vonK"})
-    
-    Returns:
-        [ndarray] -- MTF at specific atmosphere model.
+    """Generate the modulation transfer function (MTF) for atmosphere.
+
+    Parameters
+    ----------
+    D : float
+        Side length of optical path difference (OPD) image in m.
+    m : int
+        Dimension of OPD image in pixel. The the number of pixel we want to
+        have to cover the length of D.
+    k : int
+        Use a k-times bigger array to pad the MTF. Use k=1 for the same size.
+    wlum : float
+        Wavelength in um.
+    zen : float
+        Telescope zenith angle in degree.
+    r0inmRef : float
+        Reference r0 in meter at the wavelength of 0.5 um.
+    model : str, optional
+        Kolmogorov power spectrum ("Kolm") or van Karman power spectrum
+        ("vonK"). (the default is "vonK".)
+
+    Returns
+    -------
+    numpy.ndarray
+        MTF at specific atmosphere model.
     """
 
     # Get the atmosphere phase structure function
@@ -200,30 +219,41 @@ def createMTFatm(D, m, k, wlum, zen, r0inmRef, model="vonK"):
 
     # Add even number
     N = int(m + np.rint((m * (k - 1) + 1e-5) / 2) * 2)
-   
+
     # Pad the matrix if necessary
     mtfa = padArray(mtfa, N)
 
     return mtfa
 
+
 def atmSF(D, m, wlum, zen, r0inmRef, model):
-    """
-    
-    Get the atmosphere phase structure function.
-    
-    Arguments:
-        D {[float]} -- Side length of optical path difference (OPD) image in m.
-        m {[int]} -- Dimension of OPD image in pixel.
-        wlum {[float]} -- Wavelength in um.
-        zen {[float]} -- Telescope zenith angle in degree.
-        r0inmRef {[float]} -- Reference r0 in meter at the wavelength of 0.5 um.
-        model {[str]} -- Kolmogorov power spectrum ("Kolm") or van Karman power spectrum ("vonK").
-    
-    Returns:
-        [ndarray] -- Atmosphere phase structure function.
-    
-    Raises:
-        ValueError -- The model type is not supported.
+    """Get the atmosphere phase structure function.
+
+    Parameters
+    ----------
+    D : float
+        Side length of optical path difference (OPD) image in m.
+    m : int
+        Dimension of OPD image in pixel.
+    wlum : float
+        Wavelength in um.
+    zen : float
+        Telescope zenith angle in degree.
+    r0inmRef : float
+        Reference r0 in meter at the wavelength of 0.5 um.
+    model : str
+        Kolmogorov power spectrum ("Kolm") or van Karman power spectrum
+        ("vonK").
+
+    Returns
+    -------
+    numpy.ndarray
+        Atmosphere phase structure function.
+
+    Raises
+    ------
+    ValueError
+        The model type is not supported.
     """
 
     # Check the model
@@ -266,7 +296,8 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
         # Modified bessel of 2nd/3rd kind
         sfa_k = sp.kv(5 / 6, (2 * np.pi / L0 * r))
         
-        sfa = sfa_c * (2**(-1 / 6) * sp.gamma(5 / 6) - (2 * np.pi / L0 * r)**(5 / 6) * sfa_k)
+        sfa = sfa_c * (2**(-1 / 6) * sp.gamma(5 / 6) -
+                       (2 * np.pi / L0 * r)**(5 / 6) * sfa_k)
 
         # If we don't do below, everything will be nan after ifft2
         # midp = r.shape[0]/2+1
@@ -278,18 +309,24 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
 
     return sfa
 
+
 def r0Wz(r0inmRef, zen, wlum):
-    """
+    """Get the atomosphere reference r0, which is a function of zenith angle
+    and wavelength.
+
+    Parameters
+    ----------
+    r0inmRef : float
+        Reference r0 in meter at the wavelength of 0.5 um.
+    zen : float
+        Telescope zenith angle in degree.
+    wlum : float
+        Wavelength in um.
     
-    Get the atomosphere reference r0, which is a function of zenith angle and wavelength.
-    
-    Arguments:
-        r0inmRef {[float]} -- Reference r0 in meter at the wavelength of 0.5 um.
-        zen {[float]} -- Telescope zenith angle in degree.
-        wlum {[float]} -- Wavelength in um.
-    
-    Returns:
-        [float] -- Atomosphere reference r0 in meter.
+    Returns
+    -------
+    float
+        Atomosphere reference r0 in meter.
     """
 
     # Telescope zenith angle, change the unit from degree to radian
@@ -301,36 +338,52 @@ def r0Wz(r0inmRef, zen, wlum):
     # Atmosphere reference r0 at the specific wavelength in um
     # 0.5 um is the reference wavelength
     r0a = r0aref * (wlum / 0.5)**1.2
-    
+
     return r0a
+
 
 def psf2eAtmW(array, wlum, aType="opd", D=8.36, pmask=0, r0inmRef=0.1382,
               sensorFactor=1, zen=0, imagedelta=0.2, fno=1.2335, debugLevel=0):
-    """
-    
-    Calculate the ellipticity with the error of atmosphere and weighting function.
-    
-    Arguments:
-        array {[ndarray]} -- Wavefront OPD in micron, or psf image.
-        wlum {[float]} -- Wavelength in microns.
-    
-    Keyword Arguments:
-        aType {str} -- Type of image ("opd" or "psf"). (default: {"opd"})
-        D {[float]} -- Side length of optical path difference (OPD) image in m. 
-                       (default: {8.36})
-        pmask {float/ ndarray} -- Pupil mask. (default: {0})
-        r0inmRef {float} -- Fidicial atmosphere r0 @ 500nm in meter. (default: {0.1382})
-        sensorFactor {float} -- Factor of sensor (check with Bo for this). (default: {1})
-        zen {[float]} -- Telescope zenith angle in degree. (default: {0})
-        imagedelta {float} -- Only needed when psf is used. 1 pixel = 0.2 arcsec. (default: {0.2})
-        fno {float} -- ? Check with Bo. (default: {1.2335})
-        debugLevel {int} -- Debug level. The higher value gives more information. (default: {0})
-    
-    Returns:
-        [float] -- Ellipticity.
-        [float] -- Correlation function (XX).
-        [float] -- Correlation function (YY).
-        [float] -- Correlation function (XY).
+    """Calculate the ellipticity with the error of atmosphere and weighting
+    function.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Wavefront OPD in micron, or psf image.
+    wlum : float
+        Wavelength in microns.
+    aType : str, optional
+        Type of image ("opd" or "psf"). (the default is "opd".)
+    D : float, optional
+        Side length of optical path difference (OPD) image in m. (the default
+        is 8.36.)
+    pmask : int or numpy.ndarray[int], optional
+        Pupil mask. (the default is 0.)
+    r0inmRef : float, optional
+        Fidicial atmosphere r0 @ 500nm in meter. (the default is 0.1382.)
+    sensorFactor : float, optional
+        Factor of sensor. (the default is 1.)
+    zen : float, optional
+        Telescope zenith angle in degree. (the default is 0.)
+    imagedelta : float, optional
+        Only needed when psf is used. 1 pixel = 0.2 arcsec. (the default is
+        0.2.)
+    fno : float, optional
+        Only needed when psf is used. use 0 for opd. (the default is 1.2335.)
+    debugLevel : int, optional
+        The higher value gives more information. (the default is 0.)
+
+    Returns
+    -------
+    float
+        Ellipticity.
+    numpy.ndarray
+        Correlation function (XX).
+    numpy.ndarray
+        Correlation function (YY).
+    numpy.ndarray
+        Correlation function (XY).
     """
 
     # Unlike calc_pssn(), here imagedelta needs to be provided for type='opd'
@@ -342,8 +395,9 @@ def psf2eAtmW(array, wlum, aType="opd", D=8.36, pmask=0, r0inmRef=0.1382,
     # Get the PSF with the system error
     if aType == "opd":
         m = array.shape[0]/sensorFactor
-        psfe = opd2psf(array, 0, wlum, imagedelta=imagedelta, sensorFactor=sensorFactor, 
-                       fno=fno, debugLevel=debugLevel)
+        psfe = opd2psf(array, 0, wlum, imagedelta=imagedelta,
+                       sensorFactor=sensorFactor, fno=fno,
+                       debugLevel=debugLevel)
     else:
         m = max(pmask.shape)
         psfe = array
@@ -364,10 +418,13 @@ def psf2eAtmW(array, wlum, aType="opd", D=8.36, pmask=0, r0inmRef=0.1382,
         print("Below from the Gaussian weigting function on ellipticity.")
 
     # Get the ellipticity and correlation function
-    # The second input of psfeW should be pixeinum (1 pixel = 10 um). Check this part with Bo.
-    e, q11, q22, q12 = psf2eW(psf, imagedelta, wlum, atmModel="Gau", debugLevel=debugLevel)
+    # The second input of psfeW should be pixeinum (1 pixel = 10 um).
+    # Check this part with Bo.
+    e, q11, q22, q12 = psf2eW(psf, imagedelta, wlum, atmModel="Gau",
+                              debugLevel=debugLevel)
 
     return e, q11, q22, q12
+
 
 def psf2eW(psf, pixinum, wlum, atmModel="Gau", debugLevel=0):
     """
