@@ -1,7 +1,7 @@
 import numpy as np
 
 from lsst.ts.phosim.MirrorSim import MirrorSim
-from lsst.ts.phosim.Utility import phosim2ZemaxCoorTrans
+from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans
 from lsst.ts.phosim.PlotUtil import plotResMap
 
 
@@ -161,7 +161,7 @@ class M2Sim(MirrorSim):
         by = data[:, 1]
 
         # Transform the M2 coordinate to Zemax coordinate
-        bxInZemax, byInZemax, surfInZemax = phosim2ZemaxCoorTrans(
+        bxInZemax, byInZemax, surfInZemax = opt2ZemaxCoorTrans(
                                                 bx, by, self.getSurfAlongZ())
 
         # Get the mirror residue and zk in um

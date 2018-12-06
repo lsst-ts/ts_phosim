@@ -1,6 +1,6 @@
 import unittest
 
-from lsst.ts.phosim.Utility import phosim2ZemaxCoorTrans, zemax2phosimCoorTrans
+from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans
 
 
 class TestUtility(unittest.TestCase):
@@ -9,7 +9,7 @@ class TestUtility(unittest.TestCase):
     def testPhosim2ZemaxCoorTrans(self):
 
         xInPhosim, yInPhosim, zInPhosim = 1, 2, 3
-        xInZemax, yInZemax, zInZemax = phosim2ZemaxCoorTrans(
+        xInZemax, yInZemax, zInZemax = opt2ZemaxCoorTrans(
                                         xInPhosim, yInPhosim, zInPhosim)
         self.assertEqual((xInZemax, yInZemax, zInZemax),
                          (-xInPhosim, yInPhosim, -zInPhosim))
@@ -17,7 +17,7 @@ class TestUtility(unittest.TestCase):
     def testZemax2phosimCoorTrans(self):
 
         xInZemax, yInZemax, zInZemax = 1, 2, 3
-        xInPhosim, yInPhosim, zInPhosim = zemax2phosimCoorTrans(
+        xInPhosim, yInPhosim, zInPhosim = zemax2optCoorTrans(
                                             xInZemax, yInZemax, zInZemax)
         self.assertEqual((xInPhosim, yInPhosim, zInPhosim),
                          (-xInZemax, yInZemax, -zInZemax))

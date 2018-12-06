@@ -64,17 +64,17 @@ def getModulePath(module=lsst.ts.phosim, startIdx=1, endIdx=-4):
     return modulePath
 
 
-def phosim2ZemaxCoorTrans(x, y, z):
-    """Do the coordinate transformation from PhoSim to Zemax.
+def opt2ZemaxCoorTrans(x, y, z):
+    """Do the coordinate transformation from optics to Zemax.
 
     Parameters
     ----------
     x : float
-        x coordinate in PhoSim.
+        x coordinate in optics.
     y : float
-        y coordinate in PhoSim.
+        y coordinate in optics.
     z : float
-        z coordinate in PhoSim.
+        z coordinate in optics.
 
     Returns
     -------
@@ -89,8 +89,8 @@ def phosim2ZemaxCoorTrans(x, y, z):
     return -x, y, -z
 
 
-def zemax2phosimCoorTrans(x, y, z):
-    """Do the coordinate transformation from Zemax to PhoSim.
+def zemax2optCoorTrans(x, y, z):
+    """Do the coordinate transformation from Zemax to optics.
 
     Parameters
     ----------
@@ -104,11 +104,11 @@ def zemax2phosimCoorTrans(x, y, z):
     Returns
     -------
     float
-        x coordinate in PhoSim.
+        x coordinate in optics.
     float
-        y coordinate in PhoSim.
+        y coordinate in optics.
     float
-        z coordinate in PhoSim.
+        z coordinate in optics.
     """
 
     return -x, y, -z
