@@ -1,0 +1,14 @@
+=============================== test session starts ================================
+platform darwin -- Python 3.6.2, pytest-3.2.0, py-1.4.34, pluggy-0.4.0
+rootdir: /Users/Wolf/Documents/github/ts_tcs_wep_phosim, inifile:
+plugins: session2file-0.1.9, forked-0.2, xdist-1.19.1, flake8-0.8.1
+
+collecting 0 items
+collecting 1 item
+collecting 1 item
+
+collected 1 item 
+
+testPlotUtil.py .
+
+============================ 1 passed in 16.38 seconds =============================

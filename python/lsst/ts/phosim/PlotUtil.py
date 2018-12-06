@@ -4,6 +4,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from lsst.ts.wep.SourceProcessor import SourceProcessor
+
 
 def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
                writeToResMapFilePath=None):
@@ -84,6 +86,124 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
         plt.close()
     else:
         plt.show()
+
+
+def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
+                 saveToFilePath=None, dpi=None, pixel2Arcsec=0.2):
+    """Show the field map in degree.
+
+    Parameters
+    ----------
+    fieldX : numpy.ndarray, optional
+        Field x in degree. (the default is None.)
+    fieldY : numpy.ndarray, optional
+        Field y in degree. (the default is None.)
+    folderPath2FocalPlane : str, optional
+        Folder directory to focal plane file. (the default is None.)
+    saveToFilePath : str, optional
+        File path to save the figure. (the default is None.)
+    dpi : int, optional
+        The resolution in dots per inch. (the default is None.)
+    pixel2Arcsec : float, optional
+        Pixel to arcsec. (the default is 0.2.)
+    """
+
+    # Declare the figure
+    plt.figure()
+    
+    # Get the focal plane information
+    if (folderPath2FocalPlane is not None):
+        sourProc = SourceProcessor()
+        sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
+
+        # Plot the CCD boundary
+        for sensorName in sourProc.sensorDimList.keys():
+
+            # Get the CCD corner field points in degree
+            pointXinDeg, pointYinDeg = _getCCDBoundInDeg(
+                                            sourProc, sensorName, 
+                                            pixel2Arcsec=pixel2Arcsec)
+
+            # Plot the boundary
+            pointXinDeg.append(pointXinDeg[0])
+            pointYinDeg.append(pointYinDeg[0])
+            plt.plot(pointXinDeg, pointYinDeg, "b")
+
+    # Plot the field X, Y position
+    if (fieldX is not None) and (fieldY is not None):
+        plt.plot(fieldX, fieldY, "ro")
+
+    # Plot the 3.5 degree circle
+    circle = plt.Circle((0, 0), 1.75, color="g", fill=False)
+    plt.gcf().gca().add_artist(circle)
+
+    # Do the labeling
+    plt.xlabel("Field X (deg)")
+    plt.ylabel("Field Y (deg)")
+
+    # Label four corner rafts for the identification
+    plt.text(-1.5, -1.5, "R00")
+    plt.text(1.5, -1.5, "R40")
+    plt.text(1.5, 1.5, "R44")
+    plt.text(-1.5, 1.5, "R04")
+
+    # Set the axis limit
+    plt.xlim(-2, 2)
+    plt.ylim(-2, 2)
+
+    # Set the same scale
+    plt.axis("equal")
+
+    # Save the figure or not
+    if (saveToFilePath is not None):
+        plt.savefig(saveToFilePath, dpi=dpi)
+        plt.close()
+    else:
+        plt.show()
+
+
+def _getCCDBoundInDeg(sourProc, sensorName, pixel2Arcsec=0.2):
+    """Get the CCD four corners in degree in counter clockwise direction.
+
+    Parameters
+    ----------
+    sourProc : SourceProcessor
+        SourceProcessor object.
+    sensorName : str
+        Sensor name
+    pixel2Arcsec : float, optional
+        Pixel to arcsec. (the default is 0.2.)
+    
+    Returns
+    -------
+    list
+        Corner points x in degree.
+    list
+        Corner points y in degree.
+    """
+
+    # Set the sensor on sourProc
+    sourProc.config(sensorName=sensorName, pixel2Arcsec=pixel2Arcsec)
+
+    # Get the dimension of CCD
+    pixDimX, pixDimY = sourProc.sensorDimList[sensorName]
+
+    # Define four corner points in the counter-clockwise direction
+    pixelXlist = [0, pixDimX, pixDimX, 0]
+    pixelYlist = [0, 0, pixDimY, pixDimY]
+
+    # Transform from pixel to field degree
+    fieldXinDegList = []
+    fieldYinDeglist = []
+
+    for ii in range(len(pixelXlist)):
+
+        fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii],
+                                                 pixelYlist[ii])
+        fieldXinDegList.append(fieldX)
+        fieldYinDeglist.append(fieldY)
+
+    return fieldXinDegList, fieldYinDeglist
 
 
 if __name__ == "__main__":
