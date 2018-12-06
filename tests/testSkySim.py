@@ -2,11 +2,8 @@ import os
 import numpy as np
 import unittest
 
-from lsst.sims.utils import ObservationMetaData
-from lsst.obs.lsstSim import LsstSimMapper
-
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, FilterType
 
 
 class TestSkySim(unittest.TestCase):
@@ -14,96 +11,113 @@ class TestSkySim(unittest.TestCase):
 
     def setUp(self):
 
-        # Star file
-        self.skyFile = os.path.join(getModulePath(), "tests", "testData",
-                                    "sky", "wfsStar.txt")
-
         # Directory to the focal plane file
-        self.testDataDir = os.path.join(getModulePath(), "tests", "testData",
-                                        "testOpdFunc")
+        folderPath2FocalPlane = os.path.join(getModulePath(), "tests",
+                                             "testData", "testOpdFunc")
+        self.skySim = SkySim()
+        self.skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
-    def testFunc(self):
+    def testConfigDbInfo(self):
 
-        # Instantiate the skySim object
-        skySim = SkySim()
+        self._setDbInfo()
+        self.assertEqual(self.skySim.dbInfo["host"], "localhost:51433")
 
-        skySim.setStarRaDecInDeg(np.array([0]), np.array([1]), np.array([2]), 
-                                    np.array([3]))
-        self.assertEqual(len(skySim.starId), 1)
+    def _setDbInfo(self):
 
-        skySim.addStarByRaDecInDeg(1, 2, 3, 4)
-        self.assertEqual(len(skySim.starId), 2)
-
-        # Check to add the second star with the same ID
-        skySim.addStarByRaDecInDeg([1, 2], [2, 2], [3, 3], [4, 4])
-        self.assertEqual(len(skySim.starId), 3)
-
-        skySim.resetSky()
-        self.assertEqual(len(skySim.starId), 0)
-
-        skySim.addStarByFile(self.skyFile)
-        self.assertEqual(len(skySim.starId), 8)
-
-        outputFilePath = os.path.join(os.path.dirname(self.skyFile), "testSkyOutput.txt")
-        if (not os.path.isfile(outputFilePath)):
-            skySim.exportSkyToFile(outputFilePath)
-            self.assertTrue(os.path.isfile(outputFilePath))
-            os.remove(outputFilePath)
-        else:
-            print("Can't do the export file test because %s exists already." % outputFilePath)
-
-    def testAddStarByChipPos(self):
-
-        # Instantiate the skySim object
-        skySim = SkySim()
-
-        # Set the ObservationMetaData
-        RA = 0
-        Dec = 0
-        cameraRotation = 0
-        cameraMJD = 59580.0
-        obs = ObservationMetaData(pointingRA=RA, pointingDec=Dec, rotSkyPos=cameraRotation, 
-                                    mjd=cameraMJD)
-
-        # Set the camera
-        camera = LsstSimMapper().camera
-
-        # Add the star
-        sensorName = "R22_S11"
-        starId = 0
-        starMag = 17
-        xInpixelInCam = 2000
-        yInPixelInCam = 2036
-        skySim.addStarByChipPos(camera, obs, sensorName, starId, xInpixelInCam, yInPixelInCam, 
-                                starMag, self.testDataDir)
-
-        # Test the result
-        self.assertAlmostEqual(skySim.ra[0], 359.99971038)
-        self.assertAlmostEqual(skySim.decl[0], 0.0001889)
-
-        # Test to get the sensor box
-        cornerInRaDecList = skySim.getCornOfChipOnSky(camera, obs, sensorName, self.testDataDir)
-        self.assertEqual(len(cornerInRaDecList), 4)
-
-    def testAddStarByQueryDatabase(self):
-
-        # Instantiate the skySim object
-        skySim = SkySim()
-
-        # Filter type 
-        aFilter = "u"
-
-        # Remote database setting
         databaseHost = "localhost:51433"
         databaseUser = "LSST-2"
         databasePassword = "L$$TUser"
         databaseName = "LSSTCATSIM"
 
-        # Config the database
-        skySim.configDbInfo(databaseHost, databaseUser, databasePassword, databaseName)
+        self.skySim.configDbInfo(databaseHost, databaseUser,
+                                 databasePassword, databaseName)
 
-        # Check the configuration
-        self.assertEqual(skySim.dbInfo["host"], databaseHost)
+    def testAddStarByRaDecInDeg(self):
+
+        self.skySim.addStarByRaDecInDeg(1, 2, 3, 4)
+        self.assertEqual(len(self.skySim.starId), 1)
+
+        self.skySim.addStarByRaDecInDeg(2, 2.1, 3, 4)
+        self.assertEqual(len(self.skySim.starId), 2)
+        self.assertEqual(self.skySim.starId[0], 1)
+        self.assertEqual(self.skySim.starId[1], 2)
+
+        # Try to add the same star Id again
+        self.skySim.addStarByRaDecInDeg(2, 2.1, 3, 4)
+        self.assertEqual(len(self.skySim.starId), 2)
+
+    def testResetSky(self):
+
+        self.skySim.addStarByRaDecInDeg(1, 2, 3, 4)
+        self.skySim.resetSky()
+        self.assertEqual(len(self.skySim.starId), 0)
+
+    def testSetStarRaDecInDeg(self):
+
+        self.skySim.setStarRaDecInDeg(np.array([0]), np.array([1]),
+                                      np.array([2]), np.array([3]))
+        self.assertEqual(len(self.skySim.starId), 1)
+
+    def testAddStarByFile(self):
+
+        self._addStarByFile()
+        self.assertEqual(len(self.skySim.starId), 8)
+        self.assertEqual(self.skySim.ra[2], -1.176)
+        self.assertEqual(self.skySim.decl[2], 1.196)
+        self.assertEqual(self.skySim.mag[2], 17.0)
+
+    def _addStarByFile(self):
+
+        skyFile = os.path.join(getModulePath(), "tests", "testData", "sky",
+                               "wfsStar.txt")
+        self.skySim.addStarByFile(skyFile)
+
+    def testExportSkyToFile(self):
+
+        self._addStarByFile()
+        outputFilePath = os.path.join(getModulePath(), "output",
+                                      "testSkyOutput.txt")
+
+        self.skySim.exportSkyToFile(outputFilePath)
+        self.assertTrue(os.path.isfile(outputFilePath))
+        os.remove(outputFilePath)
+
+    def testAddStarByChipPos(self):
+
+        self._setObservationMetaData()
+
+        # Add the star
+        sensorName = "R22_S11"
+        starId = 0
+        xInpixelInCam = 2000
+        yInPixelInCam = 2036
+        starMag = 17
+        self.skySim.addStarByChipPos(sensorName, starId, xInpixelInCam,
+                                     yInPixelInCam, starMag)
+
+        # Test the result
+        self.assertAlmostEqual(self.skySim.ra[0], 359.99971038)
+        self.assertAlmostEqual(self.skySim.decl[0], 0.0001889)
+
+    def _setObservationMetaData(self):
+
+        ra = 0
+        decl = 0
+        rotSkyPos = 0
+        mjd = 59580.0
+        self.skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+
+    def testGetCornOfChipOnSky(self):
+
+        self._setObservationMetaData()
+
+        sensorName = "R22_S11"
+        cornerInRaDecList = self.skySim.getCornOfChipOnSky(sensorName)
+        self.assertEqual(len(cornerInRaDecList), 4)
+
+    def testAddStarByQueryDatabase(self):
+
+        self._setDbInfo()
 
         # Query the database
         corner1 = [75.998622, -1]
@@ -111,11 +125,12 @@ class TestSkySim(unittest.TestCase):
         corner3 = [75.998985, -1]
         corner4 = [75.998985, -2]
         try:
-            skySim.addStarByQueryDatabase(aFilter, corner1, corner2, corner3, corner4)
+            self.skySim.addStarByQueryDatabase(FilterType.U, corner1,
+                                               corner2, corner3, corner4)
             # Check the adding of star
-            self.assertEqual(len(skySim.starId), 3)
+            self.assertEqual(len(self.skySim.starId), 3)
         except Exception as SystemExit:
-            print("Please connect the remote UW database for the testing of query.")
+            print("Please connect the UW database for the testing of query.")
 
 
 if __name__ == "__main__":
