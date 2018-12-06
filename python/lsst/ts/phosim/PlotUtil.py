@@ -1,10 +1,10 @@
 import numpy as np
+from lsst.ts.wep.SourceProcessor import SourceProcessor
+
 import matplotlib
 # Must be before importing matplotlib.pyplot or pylab!
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from lsst.ts.wep.SourceProcessor import SourceProcessor
 
 
 def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
@@ -110,7 +110,7 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
 
     # Declare the figure
     plt.figure()
-    
+
     # Get the focal plane information
     if (folderPath2FocalPlane is not None):
         sourProc = SourceProcessor()
@@ -121,7 +121,7 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
 
             # Get the CCD corner field points in degree
             pointXinDeg, pointYinDeg = _getCCDBoundInDeg(
-                                            sourProc, sensorName, 
+                                            sourProc, sensorName,
                                             pixel2Arcsec=pixel2Arcsec)
 
             # Plot the boundary
@@ -173,7 +173,7 @@ def _getCCDBoundInDeg(sourProc, sensorName, pixel2Arcsec=0.2):
         Sensor name
     pixel2Arcsec : float, optional
         Pixel to arcsec. (the default is 0.2.)
-    
+
     Returns
     -------
     list

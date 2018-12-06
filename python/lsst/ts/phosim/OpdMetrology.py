@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from astropy.io import fits
 
@@ -11,10 +10,10 @@ class OpdMetrology(object):
 
     def __init__(self):
         """Initialization of OPD metrology class.
-        
+
         OPD: Optical path difference.
         """
-        
+
         self.wt = np.array([])
         self.fieldX = np.array([])
         self.fieldY = np.array([])
@@ -80,7 +79,7 @@ class OpdMetrology(object):
 
     def setDefaultLsstGQ(self):
         """Set the default LSST GQ field X, Y and weighting ratio.
-        
+
         GQ: Gaussian quadrature
         """
 
@@ -111,10 +110,10 @@ class OpdMetrology(object):
 
     def getDefaultLsstWfsGQ(self):
         """Get the default field X, Y of LSST WFS on GQ.
-        
+
         WFS: Wavefront sensor.
         GQ: Gaussian quadrature
-        
+
         Returns
         -------
         list
@@ -131,7 +130,7 @@ class OpdMetrology(object):
 
     def setDefaultComcamGQ(self):
         """Set the default ComCam GQ field X, Y and weighting ratio.
-        
+
         GQ: Gaussian quadrature
         """
 
@@ -139,12 +138,9 @@ class OpdMetrology(object):
         # CCDs.
         nRow = 3
         nCol = 3
-        
+
         # Number of field points
         nField = nRow*nCol
-
-        # Number of field points with the consideration of wavefront sensor
-        nFieldWfs = nField
 
         # Get the weighting for all field points (9 for comcam)
         wt = np.ones(nField)
@@ -153,7 +149,7 @@ class OpdMetrology(object):
         # Distance to raft center in degree along x/y direction and the
         # related relative position
         sensorD = 0.2347
-        coorComcam = sensorD * np.array([-1, 0 ,1])
+        coorComcam = sensorD * np.array([-1, 0, 1])
 
         # Generate the fields point x, y coordinates
         fieldX = np.kron(coorComcam, np.ones(nRow))
@@ -164,9 +160,9 @@ class OpdMetrology(object):
                      obscuration=0.61):
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
-        
+
         OPD: Optical path difference.
-        
+
         Parameters
         ----------
         opdFitsFile : str, optional
@@ -178,7 +174,7 @@ class OpdMetrology(object):
             is 22.)
         obscuration : float, optional
             Obscuration of annular Zernike polynomial. (the default is 0.61.)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -220,17 +216,17 @@ class OpdMetrology(object):
 
     def rmPTTfromOPD(self, opdFitsFile=None, opdMap=None):
         """Remove the afftection of piston (z1), x-tilt (z2), and y-tilt (z3)
-        from the OPD map. 
-        
+        from the OPD map.
+
         OPD: Optical path difference.
-        
+
         Parameters
         ----------
         opdFitsFile : str, optional
             OPD FITS file. (the default is None.)
         opdMap : numpy.ndarray, optional
             OPD map data. (the default is None.)
-        
+
         Returns
         -------
         numpy.ndarray
@@ -240,11 +236,11 @@ class OpdMetrology(object):
         numpy.ndarray
             Meshgrid y in OPD map.
         """
-        
+
         # Do the spherical Zernike fitting for the OPD map
         # Only fit the first three terms (z1-z3): piston, x-tilt, y-tilt
         zk, opd, opdx, opdy = self.getZkFromOpd(
-                                    opdFitsFile=opdFitsFile, opdMap=opdMap, 
+                                    opdFitsFile=opdFitsFile, opdMap=opdMap,
                                     znTerms=3, obscuration=0)
 
         # Find the index that the value of OPD is not 0
@@ -309,7 +305,7 @@ class OpdMetrology(object):
         float
             Calculated PSSN.
         """
-        
+
         # Before calc_pssn,
         # (1) Remove PTT (piston, x-tilt, y-tilt),
         # (2) Make sure outside of pupil are all zeros
@@ -323,7 +319,7 @@ class OpdMetrology(object):
 
     def calcFWHMeff(self, pssn):
         """Calculate the effective FWHM.
-        
+
         FWHM: Full width at half maximum.
         PSSN: Normalized point source sensitivity.
 
@@ -331,7 +327,7 @@ class OpdMetrology(object):
         ----------
         pssn : float
             PSSN value.
-        
+
         Returns
         -------
         float
@@ -339,9 +335,9 @@ class OpdMetrology(object):
         """
 
         # FWHMeff_sys = FWHMeff_atm * sqrt(1/PSSN - 1).
-        # FWHMeff_atm = 0.6 arcsec. 
+        # FWHMeff_atm = 0.6 arcsec.
         # Another correction factor (eta = 1.086) is used to account for the
-        # difference between the 
+        # difference between the
         # simple RSS and the more proper convolution.
         # Follow page 7 (section 7.2 FWHM) in document-17242 for more
         # information.
@@ -360,13 +356,13 @@ class OpdMetrology(object):
         ----------
         pssn : float
             PSSN value.
-        
+
         Returns
         -------
         float
             dm5.
         """
-        
+
         # Calculate dm5 (the loss of limiting depth)
         # Check eq. (4.1) in page 4 in document-17242 for more information.
         dm5 = -1.25 * np.log10(pssn)
@@ -390,7 +386,7 @@ class OpdMetrology(object):
         debugLevel : int, optional
             Debug level. The higher value gives more information. (the default
             is 0.)
-        
+
         Returns
         -------
         float
@@ -409,19 +405,19 @@ class OpdMetrology(object):
 
     def calcGQvalue(self, valueList):
         """Calculate the GQ value.
-        
+
         GQ: Gaussian quadrature
-        
+
         Parameters
         ----------
         valueList : list or numpy.ndarray
             List of value (PSSN, effective FWHM, dm5, ellipticity).
-        
+
         Returns
         -------
         float
             GQ value.
-        
+
         Raises
         ------
         ValueError

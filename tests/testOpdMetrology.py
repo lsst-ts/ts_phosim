@@ -62,11 +62,11 @@ class TestOpdMetrology(unittest.TestCase):
 
         opdFilePath = self._getOpdFilePath()
         zk = self.metr.getZkFromOpd(opdFitsFile=opdFilePath)[0]
-        
+
         ansOpdFileName = "sim6_iter0_opd.zer"
         ansOpdFilePath = os.path.join(self.testDataDir, ansOpdFileName)
         allOpdAns = np.loadtxt(ansOpdFilePath)
-        self.assertLess(np.sum(np.abs(zk-allOpdAns[0,:])), 1e-10)
+        self.assertLess(np.sum(np.abs(zk-allOpdAns[0, :])), 1e-10)
 
     def _getOpdFilePath(self):
 
@@ -100,7 +100,7 @@ class TestOpdMetrology(unittest.TestCase):
 
         pssn = self._calcPssn()
         allData = self._getMetroAllAnsData()
-        self.assertAlmostEqual(pssn, allData[0,0])
+        self.assertAlmostEqual(pssn, allData[0, 0])
 
     def _calcPssn(self):
 
@@ -124,7 +124,7 @@ class TestOpdMetrology(unittest.TestCase):
         fwhm = self.metr.calcFWHMeff(pssn)
 
         allData = self._getMetroAllAnsData()
-        self.assertAlmostEqual(fwhm, allData[1,0])
+        self.assertAlmostEqual(fwhm, allData[1, 0])
 
     def testCalcDm5(self):
 
@@ -132,7 +132,7 @@ class TestOpdMetrology(unittest.TestCase):
         dm5 = self.metr.calcDm5(pssn)
 
         allData = self._getMetroAllAnsData()
-        self.assertAlmostEqual(dm5, allData[2,0])
+        self.assertAlmostEqual(dm5, allData[2, 0])
 
     def testCalcEllip(self):
 
@@ -152,7 +152,7 @@ class TestOpdMetrology(unittest.TestCase):
         valueList = allData[0, 0:31]
 
         GQvalue = self.metr.calcGQvalue(valueList)
-        self.assertAlmostEqual(GQvalue, allData[0,-1])
+        self.assertAlmostEqual(GQvalue, allData[0, -1])
 
 
 if __name__ == "__main__":
