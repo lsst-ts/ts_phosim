@@ -114,5 +114,32 @@ def zemax2optCoorTrans(x, y, z):
     return -x, y, -z
 
 
+def mapSurfNameToEnum(surfName):
+    """Map the surface name to Enum: SurfaceType. 
+
+    Parameters
+    ----------
+    surfName : str
+        Surface name.
+
+    Returns
+    -------
+    SurfaceType
+        SurfaceType enum.
+
+    Raises
+    ------
+    ValueError
+        No surface type is found.
+    """
+
+    nameList = [surfaceType.name for surfaceType in SurfaceType]
+    try:
+        idx = nameList.index(surfName.strip())
+        return SurfaceType(idx + 1)
+    except ValueError:
+        raise ValueError ("No surface type is found.")
+
+
 if __name__ == "__main__":
     pass

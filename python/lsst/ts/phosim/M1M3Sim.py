@@ -562,8 +562,8 @@ class M1M3Sim(MirrorSim):
         zangleInDeg = np.rad2deg(zAngleInRadian)
         LUTforce = self.getLUTforce(zangleInDeg)
 
-        # Add 5% force error (self.M1M3ForceError). This is for iteration 0
-        # only.
+        # Assume the M1M3ForceError=0.05
+        # Add 5% force error to the original actuator forces 
         # This means from -5% to +5% of original actuator's force.
         np.random.seed(int(seedNum))
         nActuator = len(LUTforce)
