@@ -1,4 +1,5 @@
-import os, re
+import os
+import re
 import numpy as np
 
 from lsst.ts.phosim.CamSim import CamSim
@@ -10,14 +11,14 @@ from lsst.ts.phosim.Utility import SurfaceType, CamDistType, \
 
 
 class TeleFacade(object):
-    
+
     def __init__(self, configFilePath=None):
         """Initialization of telescope facade class.
-        
+
         This class uses the facade pattern that the high level class telescope
         helps to write the perturbations of camera, M1M3, and M2 into the
-        PhoSim by the interface to PhoSim. 
-        
+        PhoSim by the interface to PhoSim.
+
         Parameters
         ----------
         configFilePath : str, optional
@@ -55,7 +56,7 @@ class TeleFacade(object):
             Name of variable.
         index : int, optional
             Index of value. (the default is 1.)
-        
+
         Returns
         -------
         float, int, or str
@@ -95,13 +96,13 @@ class TeleFacade(object):
 
     def runPhoSim(self, argString):
         """
-        
+
         Run the PhoSim program.
-        
+
         Arguments:
             argString {[str]} -- Arguments for PhoSim.
         """
-        
+
         self.phoSimCommu.runPhoSim(argstring=argString)
 
     def getPhoSimArgs(self, instFilePath, extraCommandFile=None, numPro=1,
@@ -137,10 +138,10 @@ class TeleFacade(object):
         """
 
         argString = self.phoSimCommu.getPhoSimArgs(
-                            instFilePath, extraCommandFile=extraCommandFile, 
+                            instFilePath, extraCommandFile=extraCommandFile,
                             numProc=numPro, numThread=numThread,
                             outputDir=outputDir, instrument=self.instName,
-                            sensorName=sensorName, e2ADC=e2ADC, 
+                            sensorName=sensorName, e2ADC=e2ADC,
                             logFilePath=logFilePath)
 
         return argString
@@ -162,8 +163,7 @@ class TeleFacade(object):
         # Get the instrument name
         m = re.match(r"([a-z]+)(?:(\d+))?$", instName)
         if (m is None):
-             raise ValueError("Cannot get the instrument name: %s."
-                              % instName)
+            raise ValueError("Cannot get the instrument name: %s." % instName)
         instName = m.groups()[0]
 
         # Decide the defocal distance offset in mm
@@ -195,12 +195,12 @@ class TeleFacade(object):
 
     def accDofInUm(self, dofInUm):
         """Accumulate the aggregated degree of freedom (DOF) in um.
-        
+
         idx 0-4: M2 dz, dx, dy, rx, ry
         idx 5-9: Cam dz, dx, dy, rx, ry
         idx 10-29: M1M3 20 bending modes
         idx 30-49: M2 20 bending modes
-        
+
         Parameters
         ----------
         dofInUm : list or numpy.ndarray
@@ -224,7 +224,10 @@ class TeleFacade(object):
         phosimDir : str, optional
             PhoSim directory. (the default is None.)
         """
-        
+
+        # Get the number of zernike terms used in Zemax
+        numTerms = self.getConfigValue("znPert")
+
         if (camDataDir is not None):
             self.cam = CamSim()
             self.cam.setCamDataDir(camDataDir)
@@ -232,12 +235,12 @@ class TeleFacade(object):
         if (M1M3dataDir is not None):
             self.M1M3 = M1M3Sim()
             self.M1M3.setMirrorDataDir(M1M3dataDir)
-            self.M1M3.config()
+            self.M1M3.config(numTerms=numTerms)
 
         if (M2dataDir is not None):
             self.M2 = M2Sim()
             self.M2.setMirrorDataDir(M2dataDir)
-            self.M2.config()
+            self.M2.config(numTerms=numTerms)
 
         if (phosimDir is not None):
             self.phoSimCommu.setPhoSimDir(phosimDir)
@@ -251,13 +254,13 @@ class TeleFacade(object):
             Output file directory.
         dofFileName : str, optional
             DOF file name. (the default is "pert.mat".)
-        
+
         Returns
         -------
         str
             DOF file path.
         """
-        
+
         dofFilePath = os.path.join(outputFileDir, dofFileName)
         np.savetxt(dofFilePath, self.dofInUm)
 
@@ -302,8 +305,8 @@ class TeleFacade(object):
         return cmdFilePath
 
     def writeStarInstFile(self, instFileDir, skySim, obsId, filterType,
-                          boresight=(0,0), rot=0, mjd=59552.3, simSeed=1000, 
-                          sedName="sed_500.txt", sciSensorOn=False, 
+                          boresight=(0, 0), rot=0, mjd=59552.3, simSeed=1000,
+                          sedName="sed_500.txt", sciSensorOn=False,
                           wfSensorOn=False, guidSensorOn=False,
                           instSettingFile=None, instFileName="star.inst"):
         """Write the star instance file.
@@ -328,7 +331,7 @@ class TeleFacade(object):
         simSeed : int, optional
             Random number seed. (the default is 1000.)
         sedName : str, optional
-            The name of the SED file with a file path that is relative to the 
+            The name of the SED file with a file path that is relative to the
             data directory in PhoSim. (the default is "sed_500.txt".)
         sciSensorOn : bool, optional
             Science sensors are on. (the default is False.)
@@ -340,7 +343,7 @@ class TeleFacade(object):
             Instance setting file. (the default is None.)
         instFileName : str, optional
             Star instance file name. (the default is "star.inst".)
-        
+
         Returns
         -------
         str
@@ -357,7 +360,7 @@ class TeleFacade(object):
         ra = boresight[0]
         dec = boresight[1]
         self.phoSimCommu.getStarInstance(
-                            obsId, aFilterId, ra=ra, dec=dec, rot=rot, 
+                            obsId, aFilterId, ra=ra, dec=dec, rot=rot,
                             mjd=mjd, simSeed=simSeed, filePath=instFilePath)
         if (instFilePath is not None):
             self.phoSimCommu.writeToFile(instFilePath,
@@ -375,7 +378,7 @@ class TeleFacade(object):
         # Write the star source
         for ii in range(len(skySim.starId)):
             content += self.phoSimCommu.generateStar(
-                                            skySim.starId[ii], skySim.ra[ii], 
+                                            skySim.starId[ii], skySim.ra[ii],
                                             skySim.decl[ii], skySim.mag[ii],
                                             sedName)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
@@ -492,21 +495,18 @@ class TeleFacade(object):
         M1M3zcFilePath = os.path.join(pertCmdFileDir, M1M3zcFileName)
         M2zcFilePath = os.path.join(pertCmdFileDir, M2zcFileName)
 
-        # Perturbation command 
+        # Perturbation command
         content = ""
 
         # Get the zenith angle in radian
         zAngleInRad = np.deg2rad(zAngleInDeg)
-
-        # Get the number of zernike terms used in Zemax
-        numTerms = self.getConfigValue("znPert")
 
         # Get the numeber of grid used in Zemax
         surfaceGridN = self.getConfigValue("surfaceGridN")
 
         # Write the camera perturbation command file
         if (self.M1M3 is not None):
-            
+
             # Do the gravity correction
             printthzInM = self.M1M3.getPrintthz(zAngleInRad)
 
@@ -514,7 +514,7 @@ class TeleFacade(object):
             randSurfInM = None
             if (seedNum is not None):
                 randSurfInM = self.M1M3.genMirSurfRandErr(
-                                                zAngleInRad, 
+                                                zAngleInRad,
                                                 M1M3ForceError=M1M3ForceError,
                                                 seedNum=seedNum)
 
@@ -538,7 +538,7 @@ class TeleFacade(object):
 
             resFile = [M1resFilePath, M3resFilePath]
             self.M1M3.writeMirZkAndGridResInZemax(
-                        resFile=resFile, surfaceGridN=surfaceGridN, 
+                        resFile=resFile, surfaceGridN=surfaceGridN,
                         writeZcInMnToFilePath=M1M3zcFilePath)
 
             # Get the Zk in mm
@@ -564,7 +564,7 @@ class TeleFacade(object):
                                                    surfIdList[0])
 
         if (self.M2 is not None):
-            
+
             # Do the gravity correction
             printthzInUm = self.M2.getPrintthz(zAngleInRad)
 
@@ -577,7 +577,7 @@ class TeleFacade(object):
             mirrorSurfInUm = printthzInUm + tempCorrInUm
             self.M2.setSurfAlongZ(mirrorSurfInUm)
             self.M2.writeMirZkAndGridResInZemax(
-                        resFile=M2resFilePath, surfaceGridN=surfaceGridN, 
+                        resFile=M2resFilePath, surfaceGridN=surfaceGridN,
                         writeZcInMnToFilePath=M2zcFilePath)
 
             # Get the Zk in mm
@@ -617,20 +617,20 @@ class TeleFacade(object):
             if (self.M1M3 is not None):
                 resFile = [M1resFilePath, M3resFilePath]
                 writeToResMapFilePath1 = os.path.splitext(M1resFilePath)[0] + \
-                                         ".png"
+                    ".png"
                 writeToResMapFilePath3 = os.path.splitext(M3resFilePath)[0] + \
-                                         ".png"
+                    ".png"
                 writeToResMapFilePath = [writeToResMapFilePath1,
                                          writeToResMapFilePath3]
                 self.M1M3.showMirResMap(
-                                resFile=resFile, 
+                                resFile=resFile,
                                 writeToResMapFilePath=writeToResMapFilePath)
 
             if (self.M2 is not None):
                 writeToResMapFilePath = os.path.splitext(M2resFilePath)[0] + \
                                         ".png"
                 self.M2.showMirResMap(
-                                resFile=M2resFilePath, 
+                                resFile=M2resFilePath,
                                 writeToResMapFilePath=writeToResMapFilePath)
 
         return pertCmdFilePath
@@ -659,7 +659,7 @@ class TeleFacade(object):
         if (m is None):
             raise ValueError("Cannot get the camera surface name: %s."
                              % camSurfName)
-        
+
         # Get the surface name used in PhoSim
         camPhoFaceDict = {"1": "F", "2": "B"}
         surfName = m.groups()[0] + camPhoFaceDict[m.groups()[1]]

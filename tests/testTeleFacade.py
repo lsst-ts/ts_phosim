@@ -15,9 +15,9 @@ class TestTeleFacade(unittest.TestCase):
 
     def setUp(self):
 
-        configFilePath = os.path.join(getModulePath(), "configData",
-                                      "telescopeConfig", "GT.inst")
-        self.tele = TeleFacade(configFilePath=configFilePath)
+        self.configFilePath = os.path.join(getModulePath(), "configData",
+                                           "telescopeConfig", "GT.inst")
+        self.tele = TeleFacade(configFilePath=self.configFilePath)
 
         # Set the subsystem data directory
         camDataDir = os.path.join(getModulePath(), "configData", "camera")
@@ -88,7 +88,7 @@ class TestTeleFacade(unittest.TestCase):
 
     def testSetSubSysConfigDir(self):
 
-        tele = TeleFacade()
+        tele = TeleFacade(configFilePath=self.configFilePath)
         self.assertEqual(tele.cam, None)
         self.assertEqual(tele.M1M3, None)
         self.assertEqual(tele.M2, None)
@@ -100,7 +100,7 @@ class TestTeleFacade(unittest.TestCase):
         tele.setSubSysConfigDir(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir,
                                 M2dataDir=M2dataDir, phosimDir=phosimDir)
 
-        # Check the subsystems are instantiated after setting up the 
+        # Check the subsystems are instantiated after setting up the
         # configuration directory.
         self.assertNotEqual(tele.cam, None)
         self.assertNotEqual(tele.M1M3, None)
@@ -120,20 +120,20 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(len(dof), 50)
 
     def testWritePertBaseOnConfigFile(self):
-        
+
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
 
         numOfLineInFile = self._getNumOfLineInFile(pertCmdFilePath)
         self.assertEqual(numOfLineInFile, 256)
 
     def _writePertBaseOnConfigFile(self, outputDir):
-        
+
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
         iSim = 6
 
         pertCmdFilePath = self.tele.writePertBaseOnConfigFile(
-                                    outputDir, zAngleInDeg=zAngleInDeg, 
+                                    outputDir, zAngleInDeg=zAngleInDeg,
                                     rotAngInDeg=rotAngInDeg, seedNum=iSim,
                                     M1M3ForceError=0.05,
                                     saveResMapFig=True,
@@ -150,16 +150,16 @@ class TestTeleFacade(unittest.TestCase):
 
         starCmdSettingFile = os.path.join(getModulePath(), "configData",
                                           "cmdFile", "starDefault.cmd")
-        
+
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
         cmdFilePath = self.tele.writeCmdFile(
                                 self.outputDir,
-                                cmdSettingFile=starCmdSettingFile, 
+                                cmdSettingFile=starCmdSettingFile,
                                 pertFilePath=pertCmdFilePath,
                                 cmdFileName="star.cmd")
 
         numOfLineInFile = self._getNumOfLineInFile(cmdFilePath)
-        self.assertEqual(numOfLineInFile, 267)        
+        self.assertEqual(numOfLineInFile, 267)
 
     def testGetPhoSimCamSurf(self):
 
