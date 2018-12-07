@@ -1,37 +1,96 @@
 import os, re
 import numpy as np
 
+from lsst.ts.phosim.CamSim import CamSim
+from lsst.ts.phosim.M1M3Sim import M1M3Sim
+from lsst.ts.phosim.M2Sim import M2Sim
+from lsst.ts.phosim.PhosimCommu import PhosimCommu
 from lsst.ts.phosim.Utility import SurfaceType, CamDistType
 
 
 class TeleFacade(object):
     
-    def __init__(self, cam=None, M1M3=None, M2=None, phoSimCommu=None,
-                 configFilePath=None):
+    def __init__(self, configFilePath=None):
+        """Initialization of telescope facade class.
+        
+        This class uses the facade pattern that the high level class telescope
+        helps to write the perturbations of camera, M1M3, and M2 into the
+        PhoSim by the interface to PhoSim. 
+        
+        Parameters
+        ----------
+        configFilePath : str, optional
+            Telescope configuration file path. (the default is None.)
         """
-        
-        Initiate the TeleFacade object. This class uses the facade pattern that the high level
-        class telescope helps to write the perturbations of camera, M1M3, and M2 into the PhoSim 
-        by the interface to PhoSim. 
-        
-        Keyword Arguments:
-            cam {[CamSim]} -- CamSim object. (default: {None})
-            M1M3 {[M1M3Sim]} -- M1M3Sim object. (default: {None})
-            M2 {[M2Sim]} -- M2Sim object. (default: {None})
-            phoSimCommu {[PhosimCommu]} -- PhosimCommu object. (default: {None})
-            configFilePath {[str]} -- Telescope configuration file path. (default: {None})
-        """
-        
-        self.cam = cam
-        self.M1M3 = M1M3
-        self.M2 = M2
-        self.phoSimCommu = phoSimCommu
+
+        self.cam = None
+        self.M1M3 = None
+        self.M2 = None
+        self.phoSimCommu = PhosimCommu()
 
         self.instName = "lsst"
         self.defocalDisInMm = 1.5
         self.dofInUm = np.zeros(50)
 
         self.configFile = configFilePath
+
+    def setConfigFile(self, configFilePath):
+        """Set the telescope configuration file.
+
+        Parameters
+        ----------
+        configFilePath : str
+            Configuration file path.
+        """
+
+        self.configFile = configFilePath
+
+    def getConfigValue(self, varName, index=1):
+        """Get the value of certain variable defined in the configuration file.
+
+        Parameters
+        ----------
+        varName : str
+            Name of variable.
+        index : int, optional
+            Index of value. (the default is 1.)
+        
+        Returns
+        -------
+        float, int, or str
+            Variable value.
+        """
+
+        # Read the file
+        fid = open(self.configFile)
+
+        # Search for the value of certain variable
+        value = None
+        for line in fid:
+
+            # Strip the line
+            line = line.strip()
+
+            # Get the element of line
+            lineArray = line.split()
+
+            # Get the value
+            if (len(lineArray) > 0) and (lineArray[0] == varName):
+                value = lineArray[index]
+                break
+
+        # Close the file
+        fid.close()
+
+        # Change the value type if necessary
+        try:
+            value = float(value)
+            if (value == int(value)):
+                value = int(value)
+        except Exception as ValueError:
+            pass
+
+        return value
 
     def runPhoSim(self, argString):
         """
@@ -153,76 +212,22 @@ class TeleFacade(object):
             phosimDir {[str]} -- PhoSim directory. (default: {None})
         """
         
-        if (self.cam is not None) and (camDataDir is not None):
+        if (camDataDir is not None):
+            self.cam = CamSim()
             self.cam.setCamDataDir(camDataDir)
 
-        if (self.M1M3 is not None) and (M1M3dataDir is not None):
+        if (M1M3dataDir is not None):
+            self.M1M3 = M1M3Sim()
             self.M1M3.setMirrorDataDir(M1M3dataDir)
             self.M1M3.config()
 
-        if (self.M2 is not None) and (M2dataDir is not None):
+        if (M2dataDir is not None):
+            self.M2 = M2Sim()
             self.M2.setMirrorDataDir(M2dataDir)
             self.M2.config()
 
-        if (self.phoSimCommu is not None) and (phosimDir is not None):
+        if (phosimDir is not None):
             self.phoSimCommu.setPhoSimDir(phosimDir)
-
-    def setConfigFile(self, configFilePath):
-        """
-        
-        Set the telescope configuration file.
-        
-        Arguments:
-            configFilePath {[str]} -- Configuration file path.
-        """
-
-        self.configFile = configFilePath
-
-    def getConfigValue(self, varName, index=1):
-        """
-        
-        Get the value of certain variable defined in the configuration file.
-        
-        Arguments:
-            varName {[str]} -- Name of variable.
-        
-        Keyword Arguments:
-            index {int} -- Index of value. (default: {1})
-        
-        Returns:
-            [float/ int/ str] -- Variable value.
-        """
-
-        # Read the file
-        fid = open(self.configFile)
-
-        # Search for the value of certain variable
-        value = None
-        for line in fid:
-
-            # Strip the line
-            line = line.strip()
-
-            # Get the element of line
-            lineArray = line.split()
-
-            # Get the value
-            if (len(lineArray) > 0) and (lineArray[0] == varName):
-                value = lineArray[index]
-                break
-
-        # Close the file
-        fid.close()
-
-        # Change the value type if necessary
-        try:
-            value = float(value)
-            if (value == int(value)):
-                value = int(value)
-        except Exception as ValueError:
-            pass
-
-        return value
 
     def writeAccDofFile(self, outputFileDir, dofFileName="pert.mat"):
         """

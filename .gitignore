@@ -10,3 +10,7 @@ htmlcov/
 
 # Output directory
 /output/*
+
+# Pytest cache
+pytest_session.txt
+.cache/
