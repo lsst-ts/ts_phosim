@@ -5,7 +5,8 @@ from lsst.ts.phosim.CamSim import CamSim
 from lsst.ts.phosim.M1M3Sim import M1M3Sim
 from lsst.ts.phosim.M2Sim import M2Sim
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import SurfaceType, CamDistType, mapSurfNameToEnum
+from lsst.ts.phosim.Utility import SurfaceType, CamDistType, \
+                                   FilterType, mapSurfNameToEnum
 
 
 class TeleFacade(object):
@@ -305,32 +306,45 @@ class TeleFacade(object):
                           sedName="sed_500.txt", sciSensorOn=False, 
                           wfSensorOn=False, guidSensorOn=False,
                           instSettingFile=None, instFileName="star.inst"):
-        """
+        """Write the star instance file.
+
+        Parameters
+        ----------
+        instFileDir : str
+            Directory to instance file.
+        skySim : SkySim
+            SkySim object.
+        obsId : int
+            Observation ID.
+        filterType : FilterType
+            Active filter type.
+        boresight : tuple, optional
+            Telescope boresight in (ra, decl). (the default is (0,0).)
+        rot : float, optional
+            Angle of sky relative to camera coordinates (from North over East)
+            in decimal degrees. (the default is 0.)
+        mjd : float, optional
+            MJD of observation. (the default is 59552.3.)
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        sedName : str, optional
+            The name of the SED file with a file path that is relative to the 
+            data directory in PhoSim. (the default is "sed_500.txt".)
+        sciSensorOn : bool, optional
+            Science sensors are on. (the default is False.)
+        wfSensorOn : bool, optional
+            Wavefront sensors are on. (the default is False.)
+        guidSensorOn : bool, optional
+            Guider sensors are on. (the default is False.)
+        instSettingFile : str optional
+            Instance setting file. (the default is None.)
+        instFileName : str, optional
+            Star instance file name. (the default is "star.inst".)
         
-        Write the star instance file.
-        
-        Arguments:
-            instFileDir {[str]} -- Directory to instance file.
-            skySim {[SkySim]} -- SkySim object.
-            obsId {[int]} -- Observation ID.
-            aFilter {[str]} -- Active filter type ("u", "g", "r", "i", "z", "y").
-        
-        Keyword Arguments:
-            boresight {[tuple]} -- Telescope boresight in (ra, decl). (default: {(0,0)})
-            rot {[float]} -- Angle of sky relative to camera coordinates (from North over East) in 
-                           decimal degrees. (default: {0})
-            mjd {[float]} -- MJD of observation. (default: {59552.3})
-            simSeed {[int]} -- Random number seed. (default: {1000})
-            sedName {[str]} -- The name of the SED file with a file path that is relative to the 
-                             data directory in PhoSim. (default: {"sed_500.txt"})
-            sciSensorOn {[bool]} -- Science sensors are on. (default: {False})
-            wfSensorOn {[bool]} -- Wavefront sensors are on. (default: {False})
-            guidSensorOn {[bool]} -- Guider sensors are on. (default: {False})
-            instSettingFile {[str]} -- Instance setting file. (default: {"None"}) 
-            instFileName {[str]} -- Star instance file name. (default: {"star.inst"})
-        
-        Returns:
-            [str] -- Instance file path.
+        Returns
+        -------
+        str
+            Instance file path.
         """
 
         # Instance file path
@@ -371,25 +385,31 @@ class TeleFacade(object):
     def writeOpdInstFile(self, instFileDir, opdMetr, obsId, filterType,
                          wavelengthInNm, instSettingFile=None,
                          instFileName="opd.inst"):
-        """
-        
-        Write the optical path difference (OPD) instance file.
-        
-        Arguments:
-            instFileDir {[str]} -- Directory to instance file.
-            opdMetr {[OpdMetrology]} -- OpdMetrology object.
-            obsId {[int]} -- Observation ID.
-            aFilter {[str]} -- Active filter type ("u", "g", "r", "i", "z", "y").
-            wavelengthInNm {[float]} -- OPD source wavelength in nm.
+        """Write the optical path difference (OPD) instance file.
 
-        Keyword Arguments:
-            instSettingFile {[str]} -- Instance setting file. (default: {"None"}) 
-            instFileName {[str]} -- OPD instance file name. (default: {"opd.inst"})
-        
-        Returns:
-            [str] -- Instance file path.
+        Parameters
+        ----------
+        instFileDir : str
+            Directory to instance file.
+        opdMetr : OpdMetrology
+            OpdMetrology object.
+        obsId : int
+            Observation ID.
+        filterType : FilterType
+            Active filter type.
+        wavelengthInNm : float
+            OPD source wavelength in nm.
+        instSettingFile : str, optional
+            Instance setting file. (the default is None.)
+        instFileName : str, optional
+            OPD instance file name. (the default is "opd.inst".)
+
+        Returns
+        -------
+        str
+            Instance file path.
         """
-        
+
         # Instance file path
         instFilePath = os.path.join(instFileDir, instFileName)
 
@@ -418,7 +438,7 @@ class TeleFacade(object):
         if os.path.isdir(self.phoSimCommu.phosimDir):
             self.phoSimCommu.writeSedFile(wavelengthInNm)
         else:
-            print("Do not inspect the SED file for no setting of PhoSim directory.")
+            print("Do not inspect the SED file for no PhoSim directory.")
 
         return instFilePath
 

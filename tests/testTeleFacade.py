@@ -31,20 +31,6 @@ class TestTeleFacade(unittest.TestCase):
         self.outputDir = os.path.join(getModulePath(), "output", "temp")
         os.makedirs(self.outputDir)
 
-        # # Set the command setting file
-        # self.starCmdSettingFile = os.path.join(getModulePath(), "configData",
-        #                                        "cmdFile", "starDefault.cmd")
-
-        # # Set the instance setting file
-        # self.starInstSettingFile = os.path.join(getModulePath(), "configData",
-        #                                         "instFile", "starDefault.inst")
-        # self.opdInstSettingFile = os.path.join(getModulePath(), "configData",
-        #                                        "instFile", "opdDefault.inst")
-
-        # # Instantiate the needed objects
-        # self.metr = OpdMetrology()
-        # self.skySim = SkySim()
-
     def tearDown(self):
 
         shutil.rmtree(self.outputDir)
@@ -183,40 +169,43 @@ class TestTeleFacade(unittest.TestCase):
         self.assertRaises(ValueError, self.tele._getPhoSimCamSurf,
                           "L4S2zer")
 
-    # def testFunc(self):
-        
+    def testWriteOpdInstFile(self):
 
-    #     cmdFilePath = tele.writeCmdFile(self.outputDir, cmdSettingFile=self.starCmdSettingFile, 
-    #                                     pertFilePath=pertCmdFilePath, cmdFileName="star.cmd")
+        metr = OpdMetrology()
+        metr.addFieldXYbyDeg(0, 0)
+        obsId = 9006000
+        aFilter = FilterType.G
+        wavelengthInNm = 500
+        opdInstSettingFile = os.path.join(getModulePath(), "configData",
+                                          "instFile", "opdDefault.inst")
 
-    #     starCmdFile = open(cmdFilePath, "r")
-    #     lines = starCmdFile.readlines()
-    #     starCmdFile.close()
-    #     self.assertEqual(len(lines), 267)
+        instFilePath = self.tele.writeOpdInstFile(
+                                    self.outputDir, metr, obsId, aFilter,
+                                    wavelengthInNm,
+                                    instSettingFile=opdInstSettingFile)
 
-    #     metr.addFieldXYbyDeg(0, 0)
-    #     obsId = 9006000
-    #     # aFilter = "g"
-    #     aFilter = FilterType.G
-    #     wavelengthInNm = 500
-    #     instFilePath = tele.writeOpdInstFile(self.outputDir, metr, obsId, aFilter, wavelengthInNm, 
-    #                                             instSettingFile=self.opdInstSettingFile)
-    #     opdInstFile = open(instFilePath, "r")
-    #     lines = opdInstFile.readlines()
-    #     opdInstFile.close()
-    #     self.assertEqual(len(lines), 55)
+        numOfLineInFile = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLineInFile, 55)
 
-    #     skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
-    #     boresight = (0.2, 0.3)
-    #     instFilePath = tele.writeStarInstFile(self.outputDir, skySim, obsId, aFilter, boresight, 
-    #                                             wfSensorOn=True, instSettingFile=self.starInstSettingFile)
+    def testWriteStarInstFile(self):
 
-    #     starInstFile = open(instFilePath, "r")
-    #     lines = starInstFile.readlines()
-    #     starInstFile.close()
-    #     self.assertEqual(len(lines), 62)
+        skySim = SkySim()
+        skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
 
-    #     shutil.rmtree(self.outputDir)
+        obsId = 9006000
+        aFilter = FilterType.G
+        boresight = (0.2, 0.3)
+
+        starInstSettingFile = os.path.join(getModulePath(), "configData",
+                                           "instFile", "starDefault.inst")
+
+        instFilePath = self.tele.writeStarInstFile(
+                                    self.outputDir, skySim, obsId, aFilter,
+                                    boresight, wfSensorOn=True,
+                                    instSettingFile=starInstSettingFile)
+
+        numOfLineInFile = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLineInFile, 62)
 
 
 if __name__ == "__main__":
