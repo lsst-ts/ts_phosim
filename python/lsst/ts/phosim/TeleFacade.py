@@ -1,5 +1,7 @@
-import os, re, shutil, unittest
+import os, re
 import numpy as np
+
+from lsst.ts.phosim.Utility import SurfaceType, CamDistType
 
 
 class TeleFacade(object):
@@ -42,8 +44,9 @@ class TeleFacade(object):
         
         self.phoSimCommu.runPhoSim(argstring=argString)
 
-    def getPhoSimArgs(self, instFilePath, cmdFilePath=None, numPro=1, numThread=1, outputDir=None, 
-                        sensorName=None, e2ADC=1, logFilePath=None):
+    def getPhoSimArgs(self, instFilePath, cmdFilePath=None, numPro=1,
+                      numThread=1, outputDir=None, sensorName=None,
+                      e2ADC=1, logFilePath=None):
         """
         
         Get the arguments needed to run the PhoSim.
@@ -65,10 +68,12 @@ class TeleFacade(object):
             [str] -- Arguments to run the PhoSim.
         """
 
-        argString = self.phoSimCommu.getPhoSimArgs(instFilePath, extraCommand=cmdFilePath, 
-                                numProc=numPro, numThread=numThread, outputDir=outputDir, 
-                                instrument=self.instName, sensorName=sensorName, e2ADC=e2ADC, 
-                                logFilePath=logFilePath)
+        argString = self.phoSimCommu.getPhoSimArgs(
+                            instFilePath, extraCommandFile=cmdFilePath, 
+                            numProc=numPro, numThread=numThread,
+                            outputDir=outputDir, instrument=self.instName,
+                            sensorName=sensorName, e2ADC=e2ADC, 
+                            logFilePath=logFilePath)
 
         return argString
 
@@ -135,7 +140,8 @@ class TeleFacade(object):
 
         self.dofInUm += dofInUm
 
-    def setSubSysConfigFile(self, camDataDir=None, M1M3dataDir=None, M2dataDir=None, phosimDir=None):
+    def setSubSysConfigFile(self, camDataDir=None, M1M3dataDir=None,
+                            M2dataDir=None, phosimDir=None):
         """
         
         Set the subsystem data directory.
@@ -152,9 +158,11 @@ class TeleFacade(object):
 
         if (self.M1M3 is not None) and (M1M3dataDir is not None):
             self.M1M3.setMirrorDataDir(M1M3dataDir)
+            self.M1M3.config()
 
         if (self.M2 is not None) and (M2dataDir is not None):
             self.M2.setMirrorDataDir(M2dataDir)
+            self.M2.config()
 
         if (self.phoSimCommu is not None) and (phosimDir is not None):
             self.phoSimCommu.setPhoSimDir(phosimDir)
@@ -236,7 +244,8 @@ class TeleFacade(object):
 
         return dofFilePath
 
-    def writeCmdFile(self, cmdFileDir, cmdSettingFile=None, pertFilePath=None, cmdFileName="taskPert.cmd"):
+    def writeCmdFile(self, cmdFileDir, cmdSettingFile=None, pertFilePath=None,
+                     cmdFileName="taskPert.cmd"):
         """
         
         Write the physical command file.
@@ -259,7 +268,8 @@ class TeleFacade(object):
 
         # Write the physical setting
         if (cmdSettingFile is not None):
-            self.phoSimCommu.writeToFile(cmdFilePath, sourceFile=cmdSettingFile)
+            self.phoSimCommu.writeToFile(cmdFilePath,
+                                         sourceFile=cmdSettingFile)
 
         # Add the subsystem perturbation
         if (pertFilePath is not None):
@@ -267,10 +277,11 @@ class TeleFacade(object):
 
         return cmdFilePath
 
-    def writeStarInstFile(self, instFileDir, skySim, obsId, aFilter, boresight=(0,0), rot=0, 
-                            mjd=59552.3, simSeed=1000, sedName="sed_500.txt", sciSensorOn=False, 
-                            wfSensorOn=False, guidSensorOn=False, instSettingFile=None, 
-                            instFileName="star.inst"):
+    def writeStarInstFile(self, instFileDir, skySim, obsId, filterType,
+                          boresight=(0,0), rot=0, mjd=59552.3, simSeed=1000, 
+                          sedName="sed_500.txt", sciSensorOn=False, 
+                          wfSensorOn=False, guidSensorOn=False,
+                          instSettingFile=None, instFileName="star.inst"):
         """
         
         Write the star instance file.
@@ -303,33 +314,40 @@ class TeleFacade(object):
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the filter ID in PhoSim
-        aFilterId = self.phoSimCommu.getFilterId(aFilter)
+        aFilterId = self.phoSimCommu.getFilterId(filterType)
 
         # Write the default instance setting
         ra = boresight[0]
         dec = boresight[1]
-        self.phoSimCommu.getStarInstance(obsId, aFilterId, ra=ra, dec=dec, rot=rot, 
-                                            mjd=mjd, simSeed=simSeed, filePath=instFilePath)
+        self.phoSimCommu.getStarInstance(
+                            obsId, aFilterId, ra=ra, dec=dec, rot=rot, 
+                            mjd=mjd, simSeed=simSeed, filePath=instFilePath)
         if (instFilePath is not None):
-            self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
+            self.phoSimCommu.writeToFile(instFilePath,
+                                         sourceFile=instSettingFile)
 
         # Write the telescope accumulated degree of freedom (DOF)
         content = self.phoSimCommu.doDofPert(self.dofInUm)
 
         # Set the camera configuration
-        content += self.phoSimCommu.doCameraConfig(sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn, 
-                                                    guidSensorOn=guidSensorOn)
+        content += self.phoSimCommu.doCameraConfig(
+                                        sciSensorOn=sciSensorOn,
+                                        wfSensorOn=wfSensorOn,
+                                        guidSensorOn=guidSensorOn)
 
         # Write the star source
         for ii in range(len(skySim.starId)):
-            content += self.phoSimCommu.generateStar(skySim.starId[ii], skySim.ra[ii], 
-                                                skySim.decl[ii], skySim.mag[ii], sedName)
+            content += self.phoSimCommu.generateStar(
+                                            skySim.starId[ii], skySim.ra[ii], 
+                                            skySim.decl[ii], skySim.mag[ii],
+                                            sedName)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         return instFilePath
 
-    def writeOpdInstFile(self, instFileDir, opdMetr, obsId, aFilter, wavelengthInNm, 
-                            instSettingFile=None, instFileName="opd.inst"):
+    def writeOpdInstFile(self, instFileDir, opdMetr, obsId, filterType,
+                         wavelengthInNm, instSettingFile=None,
+                         instFileName="opd.inst"):
         """
         
         Write the optical path difference (OPD) instance file.
@@ -353,31 +371,38 @@ class TeleFacade(object):
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the filter ID in PhoSim
-        aFilterId = self.phoSimCommu.getFilterId(aFilter)
+        aFilterId = self.phoSimCommu.getFilterId(filterType)
 
         # Write the default instance setting
-        self.phoSimCommu.getOpdInstance(obsId, aFilterId, filePath=instFilePath)
+        self.phoSimCommu.getOpdInstance(obsId, aFilterId,
+                                        filePath=instFilePath)
         if (instSettingFile is not None):
-            self.phoSimCommu.writeToFile(instFilePath, sourceFile=instSettingFile)
+            self.phoSimCommu.writeToFile(instFilePath,
+                                         sourceFile=instSettingFile)
 
         # Write the telescope accumulated degree of freedom (DOF)
         content = self.phoSimCommu.doDofPert(self.dofInUm)
 
         # Write the OPD source
         for ii in range(len(opdMetr.fieldX)):
-            content += self.phoSimCommu.generateOpd(ii, opdMetr.fieldX[ii], opdMetr.fieldY[ii], wavelengthInNm)
+            content += self.phoSimCommu.generateOpd(
+                                            ii, opdMetr.fieldX[ii],
+                                            opdMetr.fieldY[ii],
+                                            wavelengthInNm)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary
-        if (self.phoSimCommu.phosimDir is not None):
+        if os.path.isdir(self.phoSimCommu.phosimDir):
             self.phoSimCommu.writeSedFile(wavelengthInNm)
         else:
             print("Do not inspect the SED file for no setting of PhoSim directory.")
 
         return instFilePath
 
-    def writePertBaseOnConfigFile(self, pertCmdFileDir, zAngleInDeg=0, rotAngInDeg=0, seedNum=None, 
-                                    saveResMapFig=False, pertCmdFileName="pert.cmd"):
+    def writePertBaseOnConfigFile(self, pertCmdFileDir, zAngleInDeg=0,
+                                  rotAngInDeg=0, seedNum=None, 
+                                  saveResMapFig=False,
+                                  pertCmdFileName="pert.cmd"):
         """
         
         Write the perturbation command file based on the telescope configuration file.
@@ -435,7 +460,8 @@ class TeleFacade(object):
             # Add the surface error if necessary
             randSurfInM = None
             if (seedNum is not None):
-                randSurfInM = self.M1M3.genMirSurfRandErr(zAngleInRad, seedNum=seedNum)
+                randSurfInM = self.M1M3.genMirSurfRandErr(zAngleInRad,
+                                                          seedNum=seedNum)
 
             # Do the temperature correction
             M1M3TBulk = self.getConfigValue("M1M3TBulk")
@@ -443,23 +469,28 @@ class TeleFacade(object):
             M1M3TyGrad = self.getConfigValue("M1M3TyGrad")
             M1M3TzGrad = self.getConfigValue("M1M3TzGrad")
             M1M3TrGrad = self.getConfigValue("M1M3TrGrad")
-            tempCorrInUm = self.M1M3.getTempCorr(M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad, M1M3TrGrad)
+            tempCorrInUm = self.M1M3.getTempCorr(M1M3TBulk, M1M3TxGrad,
+                                                 M1M3TyGrad, M1M3TzGrad,
+                                                 M1M3TrGrad)
 
             # Set the mirror surface in mm
             if (randSurfInM is not None):
-                mirrorSurfInUm = (printthzInM + randSurfInM)*1e6 + tempCorrInUm
+                mirrorSurfInUm = (printthzInM + randSurfInM)*1e6 + \
+                                 tempCorrInUm
             else:
                 mirrorSurfInUm = printthzInM*1e6 + tempCorrInUm
             self.M1M3.setSurfAlongZ(mirrorSurfInUm)
 
             resFile = [M1resFilePath, M3resFilePath]
-            self.M1M3.writeMirZkAndGridResInZemax(resFile=resFile, numTerms=numTerms, writeZcInMnToFilePath=M1M3zcFilePath)
+            self.M1M3.writeMirZkAndGridResInZemax(
+                        resFile=resFile, surfaceGridN=surfaceGridN, 
+                        writeZcInMnToFilePath=M1M3zcFilePath)
 
             # Get the Zk in mm
             zkInMm = np.loadtxt(M1M3zcFilePath)
 
             # Do the surface perturbation
-            surfList = ["M1", "M3"]
+            surfList = [SurfaceType.M1, SurfaceType.M3]
             surfIdList = []
             for ii in range(2):
                 surf = surfList[ii]
@@ -470,10 +501,12 @@ class TeleFacade(object):
                 surfIdList.append(surfId)
 
                 # Do the surface residue map perturbation
-                content += self.phoSimCommu.doSurfMapPert(surfId, resFile[ii], 1)
+                content += self.phoSimCommu.doSurfMapPert(surfId,
+                                                          resFile[ii], 1)
 
             # Do the surface linkage
-            content += self.phoSimCommu.doSurfLink(surfIdList[1], surfIdList[0])
+            content += self.phoSimCommu.doSurfLink(surfIdList[1],
+                                                   surfIdList[0])
 
         if (self.M2 is not None):
             
@@ -488,14 +521,15 @@ class TeleFacade(object):
             # Set the mirror surface in mm
             mirrorSurfInUm = printthzInUm + tempCorrInUm
             self.M2.setSurfAlongZ(mirrorSurfInUm)
-            self.M2.writeMirZkAndGridResInZemax(resFile=M2resFilePath, surfaceGridN=surfaceGridN, 
-                                            numTerms=numTerms, writeZcInMnToFilePath=M2zcFilePath)
+            self.M2.writeMirZkAndGridResInZemax(
+                        resFile=M2resFilePath, surfaceGridN=surfaceGridN, 
+                        writeZcInMnToFilePath=M2zcFilePath)
 
             # Get the Zk in mm
             zkInMm = np.loadtxt(M2zcFilePath)
 
             # Do the surface perturbation
-            surfId = self.phoSimCommu.getSurfaceId("M2")
+            surfId = self.phoSimCommu.getSurfaceId(SurfaceType.M2)
             content += self.phoSimCommu.doSurfPert(surfId, zkInMm)
 
             # Do the surface residue map perturbation
@@ -510,20 +544,21 @@ class TeleFacade(object):
             self.cam.setBodyTempInDegC(tempInDegC)
 
             # Get the camera distortion
-            distTypeList = ["L1S1zer", "L1S2zer", "L2S1zer", "L2S2zer", "L3S1zer", "L3S2zer"]
+            # distTypeList = ["L1S1zer", "L1S2zer", "L2S1zer", "L2S2zer", "L3S1zer", "L3S2zer"]
 
             # Write the perturbation file
-            for distType in distTypeList:
+            for distType in CamDistType:
                 # Get the surface ID
-                surfName = self.__getPhoSimCamSurfName(distType)
-                surfId = self.phoSimCommu.getSurfaceId(surfName)
+                surfaceType = self._getPhoSimCamSurf(distType.name)
+                surfId = self.phoSimCommu.getSurfaceId(surfaceType)
 
                 # Do the perturbation
                 zkInMm = self.cam.getCamDistortionInMm(zAngleInRad, distType)
                 content += self.phoSimCommu.doSurfPert(surfId, zkInMm)
 
         # Write the perturbation command to file
-        self.phoSimCommu.writeToFile(pertCmdFilePath, content=content, mode="w")
+        self.phoSimCommu.writeToFile(pertCmdFilePath, content=content,
+                                     mode="w")
 
         # Save the mirror residue map if necessary
         if (saveResMapFig):
@@ -532,17 +567,19 @@ class TeleFacade(object):
                 writeToResMapFilePath1 = os.path.splitext(M1resFilePath)[0] + ".png"
                 writeToResMapFilePath3 = os.path.splitext(M3resFilePath)[0] + ".png"
                 writeToResMapFilePath = [writeToResMapFilePath1, writeToResMapFilePath3]
-                self.M1M3.showMirResMap(numTerms=numTerms, resFile=resFile, 
-                                        writeToResMapFilePath=writeToResMapFilePath)
+                self.M1M3.showMirResMap(
+                                resFile=resFile, 
+                                writeToResMapFilePath=writeToResMapFilePath)
 
             if (self.M2 is not None):
                 writeToResMapFilePath = os.path.splitext(M2resFilePath)[0] + ".png"
-                self.M2.showMirResMap(numTerms=numTerms, resFile=M2resFilePath, 
-                                      writeToResMapFilePath=writeToResMapFilePath)
+                self.M2.showMirResMap(
+                                resFile=M2resFilePath, 
+                                writeToResMapFilePath=writeToResMapFilePath)
 
         return pertCmdFilePath
                 
-    def __getPhoSimCamSurfName(self, camSurfName):
+    def _getPhoSimCamSurf(self, camSurfName):
         """
         
         Get the camera surface name used in PhoSim.
@@ -566,7 +603,21 @@ class TeleFacade(object):
         camPhoFaceDict = {"1": "F", "2": "B"}
         surfName = m.groups()[0] + camPhoFaceDict[m.groups()[1]]
 
-        return surfName
+        # Modify this to get the surface type
+        if (surfName == "L1F"):
+            surfaceType = SurfaceType.L1F
+        if (surfName == "L1B"):
+            surfaceType = SurfaceType.L1B
+        if (surfName == "L2F"):
+            surfaceType = SurfaceType.L2F
+        if (surfName == "L2B"):
+            surfaceType = SurfaceType.L2B
+        if (surfName == "L3F"):
+            surfaceType = SurfaceType.L3F
+        if (surfName == "L3B"):
+            surfaceType = SurfaceType.L3B
+
+        return surfaceType
 
 
 if __name__ == "__main__":

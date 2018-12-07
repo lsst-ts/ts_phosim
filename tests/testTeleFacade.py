@@ -1,4 +1,5 @@
 import os
+import shutil
 import numpy as np
 import unittest
 
@@ -10,7 +11,7 @@ from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.SkySim import SkySim
 
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, FilterType
 
 
 class TestTeleFacade(unittest.TestCase):
@@ -19,23 +20,27 @@ class TestTeleFacade(unittest.TestCase):
     def setUp(self):
 
         # Set the configuration file path
-        self.configFilePath = os.path.join("..", "data", "telescopeConfig", "GT.inst")
+        self.configFilePath = os.path.join(getModulePath(), "configData",
+                                           "telescopeConfig", "GT.inst")
 
         # Set the subsystem data directory
-        self.camDataDir = os.path.join("..", "data", "camera")
-        self.M1M3dataDir = os.path.join("..", "data", "M1M3")
-        self.M2dataDir = os.path.join("..", "data", "M2")
+        self.camDataDir = os.path.join(getModulePath(), "configData", "camera")
+        self.M1M3dataDir = os.path.join(getModulePath(), "configData", "M1M3")
+        self.M2dataDir = os.path.join(getModulePath(), "configData", "M2")
 
         # Set the output dir
-        self.outputDir = os.path.join("..", "output", "temp")
+        self.outputDir = os.path.join(getModulePath(), "output", "temp")
         os.makedirs(self.outputDir)
 
         # Set the command setting file
-        self.starCmdSettingFile = os.path.join("..", "data", "cmdFile", "starDefault.cmd")
+        self.starCmdSettingFile = os.path.join(getModulePath(), "configData",
+                                               "cmdFile", "starDefault.cmd")
 
         # Set the instance setting file
-        self.starInstSettingFile = os.path.join("..", "data", "instFile", "starDefault.inst")
-        self.opdInstSettingFile = os.path.join("..", "data", "instFile", "opdDefault.inst")
+        self.starInstSettingFile = os.path.join(getModulePath(), "configData",
+                                                "instFile", "starDefault.inst")
+        self.opdInstSettingFile = os.path.join(getModulePath(), "configData",
+                                               "instFile", "opdDefault.inst")
 
     def testFunc(self):
         
@@ -72,10 +77,11 @@ class TestTeleFacade(unittest.TestCase):
         tele.accDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(tele.dofInUm-dofInUm)), 0)
 
-        tele.setSubSysConfigFile(camDataDir=self.camDataDir, M1M3dataDir=self.M1M3dataDir, 
+        tele.setSubSysConfigFile(camDataDir=self.camDataDir,
+                                 M1M3dataDir=self.M1M3dataDir, 
                                  M2dataDir=self.M2dataDir)
         self.assertEqual(tele.cam.camDataDir, self.camDataDir)
-        self.assertEqual(tele.phoSimCommu.phosimDir, None)
+        self.assertEqual(tele.phoSimCommu.phosimDir, "")
 
         varName = "M1M3TxGrad"
         value = tele.getConfigValue(varName)
@@ -105,7 +111,8 @@ class TestTeleFacade(unittest.TestCase):
 
         metr.addFieldXYbyDeg(0, 0)
         obsId = 9006000
-        aFilter = "g"
+        # aFilter = "g"
+        aFilter = FilterType.G
         wavelengthInNm = 500
         instFilePath = tele.writeOpdInstFile(self.outputDir, metr, obsId, aFilter, wavelengthInNm, 
                                                 instSettingFile=self.opdInstSettingFile)
