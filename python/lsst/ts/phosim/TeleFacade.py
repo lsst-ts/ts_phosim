@@ -43,11 +43,97 @@ class TeleFacade(object):
                             "zAngleInDeg": 0,
                             "rotAngInDeg": 0,
                             "mjd": 59552.3}
-        self.sensorInfo = {"sciSensorOn": True,
-                           "wfSensorOn": True,
-                           "guidSensorOn": False}
+        self.sensorOn = {"sciSensorOn": True,
+                         "wfSensorOn": True,
+                         "guidSensorOn": False}
 
         self.configFile = configFilePath
+
+    def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
+                       zAngleInDeg=None, rotAngInDeg=None, mjd=None):
+        """Set the survey parameters.
+
+        Parameters
+        ----------
+        obsId : int, optional
+            Observation Id. (the default is None.)
+        filterType : FilterType, optional
+            Active filter type. (the default is None.)
+        boresight : tuple, optional
+            Telescope boresight in (ra, decl). (the default is None.)
+        zAngleInDeg : float, optional
+            Zenith angle in degree. (the default is None.)
+        rotAngInDeg : float, optional
+            Camera rotation angle in degree between -90 and 90 degrees. (the
+            default is None.)
+        mjd : float, optional
+            MJD of observation. (the default is None.)
+        """
+
+        self._setSurveyParamItem("obsId", obsId, int)
+        self._setSurveyParamItem("filterType", filterType, FilterType)
+        self._setSurveyParamItem("boresight", boresight, tuple)
+        self._setSurveyParamItem("zAngleInDeg", zAngleInDeg, (int, float))
+        self._setSurveyParamItem("rotAngInDeg", rotAngInDeg, (int, float))
+        self._setSurveyParamItem("mjd", mjd, (int, float))
+
+    def _setSurveyParamItem(self, dictKeyName, varValue, varType):
+        """Set the item in the dictionary of survey parameters.
+
+        Parameters
+        ----------
+        dictKeyName : str
+            Name of dictionary key.
+        varValue : int, tuple, float, or FilterType
+            Variable value.
+        varType: int, tuple, float, or FilterType
+            Variable type.
+        """
+
+        if (isinstance(varValue, varType)):
+            self.surveyParam[dictKeyName] = varValue
+
+    def setSensorOn(self, sciSensorOn=True, wfSensorOn=True,
+                    guidSensorOn=False):
+        """Set the sensor on.
+
+        Parameters
+        ----------
+        sciSensorOn : bool, optional
+            Scientific sensors are on. (the default is True.)
+        wfSensorOn : bool, optional
+            Wavefront sensors are on. (the default is True.)
+        guidSensorOn : bool, optional
+            Guider sensors are on. (the default is False.)
+        """
+
+        if (self._isBool(sciSensorOn)):
+            self.sensorOn["sciSensorOn"] = sciSensorOn
+
+        if (self._isBool(wfSensorOn)):
+            self.sensorOn["wfSensorOn"] = wfSensorOn
+
+        if (self._isBool(guidSensorOn)):
+            self.sensorOn["guidSensorOn"] = guidSensorOn
+
+    def _isBool(self, input):
+        """Check the input is boolean type or not.
+
+        Parameters
+        ----------
+        input : bool
+            Input.
+
+        Returns
+        -------
+        bool
+            True if the type of input is boolean.
+        """
+
+        if isinstance(input, bool):
+            return True
+        else:
+            return False
 
     def setConfigFile(self, configFilePath):
         """Set the telescope configuration file.
