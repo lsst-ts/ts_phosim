@@ -20,6 +20,7 @@ class FilterType(Enum):
     I = 4
     Z = 5
     Y = 6
+    REF = 7
 
 
 class SurfaceType(Enum):

@@ -14,3 +14,4 @@ htmlcov/
 # Pytest cache
 pytest_session.txt
 .cache/
+.pytest_cache/

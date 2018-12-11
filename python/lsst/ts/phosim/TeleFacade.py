@@ -12,6 +12,9 @@ from lsst.ts.phosim.Utility import SurfaceType, CamDistType, \
 
 class TeleFacade(object):
 
+    # Reference wavelength of reference filter (FilterType.REF)
+    WAVELENGTH_IN_NM = 500
+
     def __init__(self, configFilePath=None):
         """Initialization of telescope facade class.
 
@@ -30,9 +33,19 @@ class TeleFacade(object):
         self.M2 = None
         self.phoSimCommu = PhosimCommu()
 
-        self.instName = "lsst"
-        self.defocalDisInMm = 1.5
         self.dofInUm = np.zeros(50)
+
+        self.surveyParam = {"instName": "lsst",
+                            "defocalDisInMm": 1.5,
+                            "obsId": 9999,
+                            "filterType": FilterType.REF,
+                            "boresight": (0, 0),
+                            "zAngleInDeg": 0,
+                            "rotAngInDeg": 0,
+                            "mjd": 59552.3}
+        self.sensorInfo = {"sciSensorOn": True,
+                           "wfSensorOn": True,
+                           "guidSensorOn": False}
 
         self.configFile = configFilePath
 
@@ -137,10 +150,11 @@ class TeleFacade(object):
             Arguments to run the PhoSim.
         """
 
+        instName = self.surveyParam["instName"]
         argString = self.phoSimCommu.getPhoSimArgs(
                             instFilePath, extraCommandFile=extraCommandFile,
                             numProc=numPro, numThread=numThread,
-                            outputDir=outputDir, instrument=self.instName,
+                            outputDir=outputDir, instrument=instName,
                             sensorName=sensorName, e2ADC=e2ADC,
                             logFilePath=logFilePath)
 
@@ -174,8 +188,8 @@ class TeleFacade(object):
             # Default defocal distance is 1.5 mm
             defocalOffset = 1.5
 
-        self.instName = instName
-        self.defocalDisInMm = defocalOffset
+        self.surveyParam["instName"] = instName
+        self.surveyParam["defocalDisInMm"] = defocalOffset
 
     def setDofInUm(self, dofInUm):
         """Set the accumulated degree of freedom (DOF) in um.

@@ -63,14 +63,14 @@ class TestTeleFacade(unittest.TestCase):
         instName = "comcam10"
         self.tele.setInstName(instName)
 
-        self.assertEqual(self.tele.instName, "comcam")
-        self.assertEqual(self.tele.defocalDisInMm, 1.0)
+        self.assertEqual(self.tele.surveyParam["instName"], "comcam")
+        self.assertEqual(self.tele.surveyParam["defocalDisInMm"], 1.0)
 
         instName = "temp"
         self.tele.setInstName(instName)
 
-        self.assertEqual(self.tele.instName, "temp")
-        self.assertEqual(self.tele.defocalDisInMm, 1.5)
+        self.assertEqual(self.tele.surveyParam["instName"], "temp")
+        self.assertEqual(self.tele.surveyParam["defocalDisInMm"], 1.5)
 
         self.assertRaises(ValueError, self.tele.setInstName, "a10a")
 
