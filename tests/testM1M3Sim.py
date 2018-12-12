@@ -49,7 +49,7 @@ class TestM1M3Sim(unittest.TestCase):
         ansFilePath = os.path.join(getModulePath(), "tests", "testData",
                                    "testM1M3Func", "M1M3tempCorr.txt")
         ansTempCorrInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 6*1e-9)
+        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 2*1e-8)
 
     def _getTempCorrInUm(self):
 
