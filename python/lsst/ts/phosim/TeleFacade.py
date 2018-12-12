@@ -404,11 +404,9 @@ class TeleFacade(object):
 
         return cmdFilePath
 
-    def writeStarInstFile(self, instFileDir, skySim, obsId, filterType,
-                          boresight=(0, 0), rot=0, mjd=59552.3, simSeed=1000,
-                          sedName="sed_500.txt", sciSensorOn=False,
-                          wfSensorOn=False, guidSensorOn=False,
-                          instSettingFile=None, instFileName="star.inst"):
+    def writeStarInstFile(self, instFileDir, skySim, simSeed=1000,
+                          sedName="sed_500.txt", instSettingFile=None,
+                          instFileName="star.inst"):
         """Write the star instance file.
 
         Parameters
@@ -417,28 +415,11 @@ class TeleFacade(object):
             Directory to instance file.
         skySim : SkySim
             SkySim object.
-        obsId : int
-            Observation ID.
-        filterType : FilterType
-            Active filter type.
-        boresight : tuple, optional
-            Telescope boresight in (ra, decl). (the default is (0,0).)
-        rot : float, optional
-            Angle of sky relative to camera coordinates (from North over East)
-            in decimal degrees. (the default is 0.)
-        mjd : float, optional
-            MJD of observation. (the default is 59552.3.)
         simSeed : int, optional
             Random number seed. (the default is 1000.)
         sedName : str, optional
             The name of the SED file with a file path that is relative to the
             data directory in PhoSim. (the default is "sed_500.txt".)
-        sciSensorOn : bool, optional
-            Science sensors are on. (the default is False.)
-        wfSensorOn : bool, optional
-            Wavefront sensors are on. (the default is False.)
-        guidSensorOn : bool, optional
-            Guider sensors are on. (the default is False.)
         instSettingFile : str optional
             Instance setting file. (the default is None.)
         instFileName : str, optional
@@ -454,11 +435,19 @@ class TeleFacade(object):
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the filter ID in PhoSim
+        filterType = self.surveyParam["filterType"]
         aFilterId = self.phoSimCommu.getFilterId(filterType)
 
         # Write the default instance setting
+        obsId = self.surveyParam["obsId"]
+
+        boresight = self.surveyParam["boresight"]
         ra = boresight[0]
         dec = boresight[1]
+
+        rot = self.surveyParam["rotAngInDeg"]
+        mjd = self.surveyParam["mjd"]
+
         self.phoSimCommu.getStarInstance(
                             obsId, aFilterId, ra=ra, dec=dec, rot=rot,
                             mjd=mjd, simSeed=simSeed, filePath=instFilePath)
@@ -470,6 +459,9 @@ class TeleFacade(object):
         content = self.phoSimCommu.doDofPert(self.dofInUm)
 
         # Set the camera configuration
+        sciSensorOn = self.sensorOn["sciSensorOn"]
+        wfSensorOn = self.sensorOn["wfSensorOn"]
+        guidSensorOn = self.sensorOn["guidSensorOn"]
         content += self.phoSimCommu.doCameraConfig(
                                         sciSensorOn=sciSensorOn,
                                         wfSensorOn=wfSensorOn,
@@ -485,8 +477,7 @@ class TeleFacade(object):
 
         return instFilePath
 
-    def writeOpdInstFile(self, instFileDir, opdMetr, obsId, filterType,
-                         wavelengthInNm, instSettingFile=None,
+    def writeOpdInstFile(self, instFileDir, opdMetr, instSettingFile=None,
                          instFileName="opd.inst"):
         """Write the optical path difference (OPD) instance file.
 
@@ -496,12 +487,6 @@ class TeleFacade(object):
             Directory to instance file.
         opdMetr : OpdMetrology
             OpdMetrology object.
-        obsId : int
-            Observation ID.
-        filterType : FilterType
-            Active filter type.
-        wavelengthInNm : float
-            OPD source wavelength in nm.
         instSettingFile : str, optional
             Instance setting file. (the default is None.)
         instFileName : str, optional
@@ -517,9 +502,11 @@ class TeleFacade(object):
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the filter ID in PhoSim
+        filterType = self.surveyParam["filterType"]
         aFilterId = self.phoSimCommu.getFilterId(filterType)
 
         # Write the default instance setting
+        obsId = self.surveyParam["obsId"]
         self.phoSimCommu.getOpdInstance(obsId, aFilterId,
                                         filePath=instFilePath)
         if (instSettingFile is not None):
@@ -534,21 +521,19 @@ class TeleFacade(object):
             content += self.phoSimCommu.generateOpd(
                                             ii, opdMetr.fieldX[ii],
                                             opdMetr.fieldY[ii],
-                                            wavelengthInNm)
+                                            self.WAVELENGTH_IN_NM)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary
         if os.path.isdir(self.phoSimCommu.phosimDir):
-            self.phoSimCommu.writeSedFile(wavelengthInNm)
+            self.phoSimCommu.writeSedFile(self.WAVELENGTH_IN_NM)
         else:
             print("Do not inspect the SED file for no PhoSim directory.")
 
         return instFilePath
 
-    def writePertBaseOnConfigFile(self, pertCmdFileDir, zAngleInDeg=0,
-                                  rotAngInDeg=0, seedNum=None,
-                                  M1M3ForceError=0.05,
-                                  saveResMapFig=False,
+    def writePertBaseOnConfigFile(self, pertCmdFileDir, seedNum=None,
+                                  M1M3ForceError=0.05, saveResMapFig=False,
                                   pertCmdFileName="pert.cmd"):
         """Write the perturbation command file based on the telescope
         configuration file.
@@ -557,11 +542,6 @@ class TeleFacade(object):
         ----------
         pertCmdFileDir : str
             Directory to the pertubation command file.
-        zAngleInDeg : float, optional
-            Zenith angle in degree. (the default is 0.
-        rotAngInDeg : float, optional
-            Camera rotation angle in degree between -90 and 90 degrees. (the
-            default is 0.)
         seedNum : int, optional
             Random seed number. If the value is not None, the M1M3 mirror
             will generate a random surface error. (the default is None.)
@@ -599,6 +579,7 @@ class TeleFacade(object):
         content = ""
 
         # Get the zenith angle in radian
+        zAngleInDeg = self.surveyParam["zAngleInDeg"]
         zAngleInRad = np.deg2rad(zAngleInDeg)
 
         # Get the numeber of grid used in Zemax
@@ -692,6 +673,7 @@ class TeleFacade(object):
 
         if (self.cam is not None):
             # Set the camera rotation angle
+            rotAngInDeg = self.surveyParam["rotAngInDeg"]
             self.cam.setRotAngInDeg(rotAngInDeg)
 
             # Set the temperature information

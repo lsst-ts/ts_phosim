@@ -27,6 +27,17 @@ class TestTeleFacade(unittest.TestCase):
                                      M1M3dataDir=M1M3dataDir,
                                      M2dataDir=M2dataDir)
 
+        # Set the survey parameters
+        obsId = 9006000
+        filterType = FilterType.G
+        boresight = (0.2, 0.3)
+        zAngleInDeg = 27.0912
+        rotAngInDeg = np.rad2deg(-1.2323)
+        mjd = 59552.3
+        self.tele.setSurveyParam(obsId=obsId, filterType=filterType,
+                                 boresight=boresight, zAngleInDeg=zAngleInDeg,
+                                 rotAngInDeg=rotAngInDeg, mjd=mjd)
+
         # Set the output dir
         self.outputDir = os.path.join(getModulePath(), "output", "temp")
         os.makedirs(self.outputDir)
@@ -63,7 +74,7 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSurveyParam(obsId=obsId)
 
         self.assertEqual(self.tele.surveyParam["obsId"], defaultObsId)
-        self.assertEqual(self.tele.surveyParam["filterType"], FilterType.REF)
+        self.assertEqual(self.tele.surveyParam["filterType"], FilterType.G)
 
     def testSetSensorOnWithCorrectInput(self):
 
@@ -167,7 +178,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(np.sum(dof), 0)
         self.assertEqual(len(dof), 50)
 
-    @unittest.skip
     def testWritePertBaseOnConfigFile(self):
 
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
@@ -177,16 +187,12 @@ class TestTeleFacade(unittest.TestCase):
 
     def _writePertBaseOnConfigFile(self, outputDir):
 
-        zAngleInDeg = 27.0912
-        rotAngInDeg = np.rad2deg(-1.2323)
         iSim = 6
-
         pertCmdFilePath = self.tele.writePertBaseOnConfigFile(
-                                    outputDir, zAngleInDeg=zAngleInDeg,
-                                    rotAngInDeg=rotAngInDeg, seedNum=iSim,
-                                    M1M3ForceError=0.05,
-                                    saveResMapFig=True,
-                                    pertCmdFileName="pert.cmd")
+                                            outputDir, seedNum=iSim,
+                                            M1M3ForceError=0.05,
+                                            saveResMapFig=True,
+                                            pertCmdFileName="pert.cmd")
 
         return pertCmdFilePath
 
@@ -195,7 +201,6 @@ class TestTeleFacade(unittest.TestCase):
         with open(filePath, "r") as file:
             return sum(1 for line in file.readlines())
 
-    @unittest.skip
     def testWriteCmdFile(self):
 
         starCmdSettingFile = os.path.join(getModulePath(), "configData",
@@ -219,41 +224,30 @@ class TestTeleFacade(unittest.TestCase):
         self.assertRaises(ValueError, self.tele._getPhoSimCamSurf,
                           "L4S2zer")
 
-    @unittest.skip
     def testWriteOpdInstFile(self):
 
         metr = OpdMetrology()
         metr.addFieldXYbyDeg(0, 0)
-        obsId = 9006000
-        aFilter = FilterType.G
-        wavelengthInNm = 500
         opdInstSettingFile = os.path.join(getModulePath(), "configData",
                                           "instFile", "opdDefault.inst")
 
         instFilePath = self.tele.writeOpdInstFile(
-                                    self.outputDir, metr, obsId, aFilter,
-                                    wavelengthInNm,
+                                    self.outputDir, metr,
                                     instSettingFile=opdInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 55)
 
-    @unittest.skip
     def testWriteStarInstFile(self):
 
         skySim = SkySim()
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
 
-        obsId = 9006000
-        aFilter = FilterType.G
-        boresight = (0.2, 0.3)
-
         starInstSettingFile = os.path.join(getModulePath(), "configData",
                                            "instFile", "starDefault.inst")
 
         instFilePath = self.tele.writeStarInstFile(
-                                    self.outputDir, skySim, obsId, aFilter,
-                                    boresight, wfSensorOn=True,
+                                    self.outputDir, skySim,
                                     instSettingFile=starInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
