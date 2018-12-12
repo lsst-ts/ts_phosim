@@ -9,18 +9,24 @@
 <br/>
 *Initially integrate WEP and PhoSim.*
 <br/>
+<br/>
 *Version 1.0*
 <br/>
 *Update the information and add the example scripts.*
+<br/>
+<br/>
+*Version 1.1*
+<br/>
+*Refactor the code to decrease the number of function inputs.*
 
 *Author: Te-Wei Tsai*
 <br/>
-*Date: 4-4-2018*
+*Date: 12-12-2018*
 
 ## 2. Platform
 
 - *python: 3.6.2*
-- *scientific pipeline: v14*
+- *scientific pipeline: v16*
 - *phosim_syseng2*
 
 ## 3. Needed Package
@@ -32,22 +38,22 @@
 
 *1. Setup the DM environment:*
 <br/>
-source $path_of_lsst_scientific_pipeline/loadLSST.bash
+`source $path_of_lsst_scientific_pipeline/loadLSST.bash`
 <br/>
-setup sims_catUtils -t $user_defined_tag -t sims
-(e.g. setup sims_catUtils -t ttsai -t sims)
+`setup sims_catUtils -t $user_defined_tag -t sims`
+(e.g. `setup sims_catUtils -t ttsai -t sims`)
 
 *2. Setup the WEP environment:*
 <br/>
-export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep_python
+`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep/python`
 <br/>
-(e.g. export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep/python)
+(e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep/python`)
 
 *3. Setup the wepPhoSim environment:*
 <br/>
-export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep_phosim
+`export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep_phosim/python`
 <br/>
-(e.g. export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep_phosim)
+(e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep_phosim/python`)
 
 ## 5. Content
 
@@ -61,6 +67,8 @@ export PYTHONPATH=$PYTHONPATH:$path_to_ts_tcs_wep_phosim
 - **CoTransform**: Coordination transformation functions.
 - **TeleFacade**: Telescope facade pattern that intergate the correction of camera and mirror distortion correction to PhoSim.
 - **SkySim**: Sky simulator to add the stars.
+- **PlotUtil**: Plot utility functions.
+- **Utility**: Enums and functions used in this module.
 
 ## 6. Example Script
 

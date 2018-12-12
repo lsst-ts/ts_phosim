@@ -55,16 +55,17 @@ class TestTeleFacade(unittest.TestCase):
         rotAngInDeg = 11.0
         mjd = 4000.0
 
-        self.tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                                 boresight=boresight, zAngleInDeg=zAngleInDeg,
-                                 rotAngInDeg=rotAngInDeg, mjd=mjd)
+        tele = TeleFacade()
+        tele.setSurveyParam(obsId=obsId, filterType=filterType,
+                            boresight=boresight, zAngleInDeg=zAngleInDeg,
+                            rotAngInDeg=rotAngInDeg, mjd=mjd)
 
-        self.assertEqual(self.tele.surveyParam["obsId"], obsId)
-        self.assertEqual(self.tele.surveyParam["filterType"], filterType)
-        self.assertEqual(self.tele.surveyParam["boresight"], boresight)
-        self.assertEqual(self.tele.surveyParam["zAngleInDeg"], zAngleInDeg)
-        self.assertEqual(self.tele.surveyParam["rotAngInDeg"], rotAngInDeg)
-        self.assertEqual(self.tele.surveyParam["mjd"], mjd)
+        self.assertEqual(tele.surveyParam["obsId"], obsId)
+        self.assertEqual(tele.surveyParam["filterType"], filterType)
+        self.assertEqual(tele.surveyParam["boresight"], boresight)
+        self.assertEqual(tele.surveyParam["zAngleInDeg"], zAngleInDeg)
+        self.assertEqual(tele.surveyParam["rotAngInDeg"], rotAngInDeg)
+        self.assertEqual(tele.surveyParam["mjd"], mjd)
 
     def testSetSurveyParamWithWrongInput(self):
 
@@ -137,13 +138,13 @@ class TestTeleFacade(unittest.TestCase):
 
         dofInUm = np.random.rand(50)
         self.tele.setDofInUm(dofInUm)
-        self.assertEqual(np.sum(np.abs(self.tele.dofInUm-dofInUm)), 0)
+        self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
     def testAccDofInUm(self):
 
         dofInUm = np.random.rand(50)
         self.tele.accDofInUm(dofInUm)
-        self.assertEqual(np.sum(np.abs(self.tele.dofInUm-dofInUm)), 0)
+        self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
     def testSetSubSysConfigDir(self):
 
@@ -189,10 +190,8 @@ class TestTeleFacade(unittest.TestCase):
 
         iSim = 6
         pertCmdFilePath = self.tele.writePertBaseOnConfigFile(
-                                            outputDir, seedNum=iSim,
-                                            M1M3ForceError=0.05,
-                                            saveResMapFig=True,
-                                            pertCmdFileName="pert.cmd")
+            outputDir, seedNum=iSim, M1M3ForceError=0.05, saveResMapFig=True,
+            pertCmdFileName="pert.cmd")
 
         return pertCmdFilePath
 
@@ -208,10 +207,8 @@ class TestTeleFacade(unittest.TestCase):
 
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
         cmdFilePath = self.tele.writeCmdFile(
-                                self.outputDir,
-                                cmdSettingFile=starCmdSettingFile,
-                                pertFilePath=pertCmdFilePath,
-                                cmdFileName="star.cmd")
+            self.outputDir, cmdSettingFile=starCmdSettingFile,
+            pertFilePath=pertCmdFilePath, cmdFileName="star.cmd")
 
         numOfLineInFile = self._getNumOfLineInFile(cmdFilePath)
         self.assertEqual(numOfLineInFile, 267)
@@ -232,8 +229,7 @@ class TestTeleFacade(unittest.TestCase):
                                           "instFile", "opdDefault.inst")
 
         instFilePath = self.tele.writeOpdInstFile(
-                                    self.outputDir, metr,
-                                    instSettingFile=opdInstSettingFile)
+            self.outputDir, metr, instSettingFile=opdInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 55)
@@ -247,8 +243,7 @@ class TestTeleFacade(unittest.TestCase):
                                            "instFile", "starDefault.inst")
 
         instFilePath = self.tele.writeStarInstFile(
-                                    self.outputDir, skySim,
-                                    instSettingFile=starInstSettingFile)
+            self.outputDir, skySim, instSettingFile=starInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 62)

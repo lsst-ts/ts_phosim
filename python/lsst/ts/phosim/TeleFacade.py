@@ -6,8 +6,8 @@ from lsst.ts.phosim.CamSim import CamSim
 from lsst.ts.phosim.M1M3Sim import M1M3Sim
 from lsst.ts.phosim.M2Sim import M2Sim
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import SurfaceType, CamDistType, \
-                                   FilterType, mapSurfNameToEnum
+from lsst.ts.phosim.Utility import SurfaceType, CamDistType, FilterType, \
+    mapSurfNameToEnum
 
 
 class TeleFacade(object):
@@ -238,11 +238,9 @@ class TeleFacade(object):
 
         instName = self.surveyParam["instName"]
         argString = self.phoSimCommu.getPhoSimArgs(
-                            instFilePath, extraCommandFile=extraCommandFile,
-                            numProc=numPro, numThread=numThread,
-                            outputDir=outputDir, instrument=instName,
-                            sensorName=sensorName, e2ADC=e2ADC,
-                            logFilePath=logFilePath)
+            instFilePath, extraCommandFile=extraCommandFile, numProc=numPro,
+            numThread=numThread, outputDir=outputDir, instrument=instName,
+            sensorName=sensorName, e2ADC=e2ADC, logFilePath=logFilePath)
 
         return argString
 
@@ -269,7 +267,7 @@ class TeleFacade(object):
         # Decide the defocal distance offset in mm
         defocalOffset = m.groups()[1]
         if (defocalOffset is not None):
-            defocalOffset = float(defocalOffset)/10
+            defocalOffset = float(defocalOffset) / 10
         else:
             # Default defocal distance is 1.5 mm
             defocalOffset = 1.5
@@ -449,8 +447,9 @@ class TeleFacade(object):
         mjd = self.surveyParam["mjd"]
 
         self.phoSimCommu.getStarInstance(
-                            obsId, aFilterId, ra=ra, dec=dec, rot=rot,
-                            mjd=mjd, simSeed=simSeed, filePath=instFilePath)
+            obsId, aFilterId, ra=ra, dec=dec, rot=rot, mjd=mjd,
+            simSeed=simSeed, filePath=instFilePath)
+
         if (instFilePath is not None):
             self.phoSimCommu.writeToFile(instFilePath,
                                          sourceFile=instSettingFile)
@@ -463,16 +462,14 @@ class TeleFacade(object):
         wfSensorOn = self.sensorOn["wfSensorOn"]
         guidSensorOn = self.sensorOn["guidSensorOn"]
         content += self.phoSimCommu.doCameraConfig(
-                                        sciSensorOn=sciSensorOn,
-                                        wfSensorOn=wfSensorOn,
-                                        guidSensorOn=guidSensorOn)
+            sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn,
+            guidSensorOn=guidSensorOn)
 
         # Write the star source
         for ii in range(len(skySim.starId)):
             content += self.phoSimCommu.generateStar(
-                                            skySim.starId[ii], skySim.ra[ii],
-                                            skySim.decl[ii], skySim.mag[ii],
-                                            sedName)
+                skySim.starId[ii], skySim.ra[ii], skySim.decl[ii],
+                skySim.mag[ii], sedName)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         return instFilePath
@@ -519,9 +516,8 @@ class TeleFacade(object):
         # Write the OPD source
         for ii in range(len(opdMetr.fieldX)):
             content += self.phoSimCommu.generateOpd(
-                                            ii, opdMetr.fieldX[ii],
-                                            opdMetr.fieldY[ii],
-                                            self.WAVELENGTH_IN_NM)
+                ii, opdMetr.fieldX[ii], opdMetr.fieldY[ii],
+                self.WAVELENGTH_IN_NM)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary
@@ -595,9 +591,8 @@ class TeleFacade(object):
             randSurfInM = None
             if (seedNum is not None):
                 randSurfInM = self.M1M3.genMirSurfRandErr(
-                                                zAngleInRad,
-                                                M1M3ForceError=M1M3ForceError,
-                                                seedNum=seedNum)
+                    zAngleInRad, M1M3ForceError=M1M3ForceError,
+                    seedNum=seedNum)
 
             # Do the temperature correction
             M1M3TBulk = self.getConfigValue("M1M3TBulk")
@@ -611,16 +606,16 @@ class TeleFacade(object):
 
             # Set the mirror surface in mm
             if (randSurfInM is not None):
-                mirrorSurfInUm = (printthzInM + randSurfInM)*1e6 + \
-                                 tempCorrInUm
+                mirrorSurfInUm = (printthzInM + randSurfInM) * 1e6 + \
+                    tempCorrInUm
             else:
-                mirrorSurfInUm = printthzInM*1e6 + tempCorrInUm
+                mirrorSurfInUm = printthzInM * 1e6 + tempCorrInUm
             self.M1M3.setSurfAlongZ(mirrorSurfInUm)
 
             resFile = [M1resFilePath, M3resFilePath]
             self.M1M3.writeMirZkAndGridResInZemax(
-                        resFile=resFile, surfaceGridN=surfaceGridN,
-                        writeZcInMnToFilePath=M1M3zcFilePath)
+                resFile=resFile, surfaceGridN=surfaceGridN,
+                writeZcInMnToFilePath=M1M3zcFilePath)
 
             # Get the Zk in mm
             zkInMm = np.loadtxt(M1M3zcFilePath)
@@ -658,8 +653,8 @@ class TeleFacade(object):
             mirrorSurfInUm = printthzInUm + tempCorrInUm
             self.M2.setSurfAlongZ(mirrorSurfInUm)
             self.M2.writeMirZkAndGridResInZemax(
-                        resFile=M2resFilePath, surfaceGridN=surfaceGridN,
-                        writeZcInMnToFilePath=M2zcFilePath)
+                resFile=M2resFilePath, surfaceGridN=surfaceGridN,
+                writeZcInMnToFilePath=M2zcFilePath)
 
             # Get the Zk in mm
             zkInMm = np.loadtxt(M2zcFilePath)
@@ -705,15 +700,15 @@ class TeleFacade(object):
                 writeToResMapFilePath = [writeToResMapFilePath1,
                                          writeToResMapFilePath3]
                 self.M1M3.showMirResMap(
-                                resFile=resFile,
-                                writeToResMapFilePath=writeToResMapFilePath)
+                    resFile=resFile,
+                    writeToResMapFilePath=writeToResMapFilePath)
 
             if (self.M2 is not None):
                 writeToResMapFilePath = os.path.splitext(M2resFilePath)[0] + \
-                                        ".png"
+                    ".png"
                 self.M2.showMirResMap(
-                                resFile=M2resFilePath,
-                                writeToResMapFilePath=writeToResMapFilePath)
+                    resFile=M2resFilePath,
+                    writeToResMapFilePath=writeToResMapFilePath)
 
         return pertCmdFilePath
 
