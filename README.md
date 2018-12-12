@@ -25,13 +25,13 @@
 
 ## 2. Platform
 
-- *python: 3.6.2*
+- *python: 3.6.6*
 - *scientific pipeline: v16*
 - *phosim_syseng2*
 
 ## 3. Needed Package
 
-- *lsst_sims*
+- *lsst_sims (-t sims_w_2018_47)*
 - *ts_tcs_wep*
 
 ## 4. Use of Module
@@ -40,8 +40,8 @@
 <br/>
 `source $path_of_lsst_scientific_pipeline/loadLSST.bash`
 <br/>
-`setup sims_catUtils -t $user_defined_tag -t sims`
-(e.g. `setup sims_catUtils -t ttsai -t sims`)
+`setup sims_catUtils -t $user_defined_tag -t sims_w_2018_47`
+(e.g. `setup sims_catUtils -t ttsai -t sims_w_2018_47`)
 
 *2. Setup the WEP environment:*
 <br/>
