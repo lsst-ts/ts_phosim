@@ -36,7 +36,7 @@ def main(phosimDir):
     dofInUm = np.zeros(50)
 
     # Camera dx
-    dofInUm[6] = 1000
+    dofInUm[6] = 0
     tele.accDofInUm(dofInUm)
 
     # Write the physical command file

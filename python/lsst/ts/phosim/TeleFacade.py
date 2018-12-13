@@ -498,14 +498,24 @@ class TeleFacade(object):
         # Instance file path
         instFilePath = os.path.join(instFileDir, instFileName)
 
+        # Get the observation ID
+        obsId = self.surveyParam["obsId"]
+
         # Get the filter ID in PhoSim
         filterType = self.surveyParam["filterType"]
         aFilterId = self.phoSimCommu.getFilterId(filterType)
 
+
+        # Add the sky information
+        boresight = self.surveyParam["boresight"]
+        ra = boresight[0]
+        dec = boresight[1]
+
+        rot = self.surveyParam["rotAngInDeg"]
+
         # Write the default instance setting
-        obsId = self.surveyParam["obsId"]
-        self.phoSimCommu.getOpdInstance(obsId, aFilterId,
-                                        filePath=instFilePath)
+        self.phoSimCommu.getOpdInstance(obsId, aFilterId, ra=ra, dec=dec, 
+                                        rot=rot, filePath=instFilePath)
         if (instSettingFile is not None):
             self.phoSimCommu.writeToFile(instFilePath,
                                          sourceFile=instSettingFile)

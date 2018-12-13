@@ -395,10 +395,11 @@ class PhosimCommu(object):
 
         return content
 
-    def getOpdInstance(self, obsId, aFilterId, filePath=None):
+    def getOpdInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0,
+                       filePath=None):
         """Get the default OPD instance catalog.
 
-        There is no sky information for the optical path difference (OPD).
+        OPD: Optical path difference.
 
         Parameters
         ----------
@@ -406,6 +407,13 @@ class PhosimCommu(object):
             Observation Id.
         aFilterId : int
             PhoSim LSST filter Id.
+        ra : float, optional
+            Unrefracted Right Ascension in decimal degrees. (the default is 0.)
+        dec : float, optional
+            Unrefracted Declination in decimal degrees. (the default is 0.)
+        rot : float, optional
+            Angle of sky relative to camera coordinates (from North over East)
+            in decimal degrees. (the default is 0.)
         filePath : str, optional
             File path to save the instance. (the default is None.)
 
@@ -418,6 +426,11 @@ class PhosimCommu(object):
         content = ""
         content += "Opsim_obshistid %d \n" % obsId
         content += "Opsim_filter %d \n" % aFilterId
+
+        # Add the sky information
+        content += "rightascension %.6f \n" % ra
+        content += "declination %.6f \n" % dec
+        content += "rotskypos %.6f \n" % rot
 
         if (filePath is not None):
             self.writeToFile(filePath, content=content, mode="w")

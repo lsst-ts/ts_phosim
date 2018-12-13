@@ -232,7 +232,7 @@ class TestTeleFacade(unittest.TestCase):
             self.outputDir, metr, instSettingFile=opdInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
-        self.assertEqual(numOfLineInFile, 55)
+        self.assertEqual(numOfLineInFile, 59)
 
     def testWriteStarInstFile(self):
 
@@ -246,7 +246,7 @@ class TestTeleFacade(unittest.TestCase):
             self.outputDir, skySim, instSettingFile=starInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
-        self.assertEqual(numOfLineInFile, 62)
+        self.assertEqual(numOfLineInFile, 63)
 
 
 if __name__ == "__main__":

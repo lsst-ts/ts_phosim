@@ -105,7 +105,7 @@ class TestPhosimCommu(unittest.TestCase):
         obsId = 100
         aFilterId = 1
         content = self.phosimCom.getOpdInstance(obsId, aFilterId)
-        self.assertEqual(len(content.split("\n")), 3)
+        self.assertEqual(len(content.split("\n")), 6)
 
     def testWriteToFile(self):
 
