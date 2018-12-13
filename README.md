@@ -27,7 +27,7 @@
 
 - *python: 3.6.6*
 - *scientific pipeline: v16*
-- *phosim_syseng2*
+- *phosim_syseng4 (branch: aos, tag: firstdonuts)*
 
 ## 3. Needed Package
 
@@ -73,7 +73,7 @@
 ## 6. Example Script
 
 - **calcOpd.py**: Test the OPD without the subsystem perturbation.
-- **testOpdAndSubSys.py**: Test the OPD with the subsystem perturbation.
+- **calcOpdAndSubSys.py**: Test the OPD with the subsystem perturbation.
 - **testStarAndSubSysWiComCam.py**: Test the star donut in ComCam with the subsystem perturbation.
 - **testStarAndSubSys.py**: Test the star donut in LSST camera with the subsystem perturbation.
 - **testQueryDbCoor.py**: Test to add the stars by querying the UW BSC and get the images.

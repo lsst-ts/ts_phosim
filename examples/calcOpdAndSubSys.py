@@ -26,11 +26,26 @@ def main(phosimDir):
     configFilePath = os.path.join(getModulePath(), "configData",
                                   "telescopeConfig", "GT.inst")
     tele = TeleFacade(configFilePath=configFilePath)
-    tele.setSubSysConfigDir(phosimDir=phosimDir)
 
-    obsId = 9006050
-    filterType = FilterType.U
-    tele.setSurveyParam(obsId=obsId, filterType=filterType)
+    # Subsystem data direction
+    camDataDir = os.path.join(getModulePath(), "configData", "camera")
+    M1M3dataDir = os.path.join(getModulePath(), "configData", "M1M3")
+    M2dataDir = os.path.join(getModulePath(), "configData", "M2")
+    tele.setSubSysConfigDir(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir,
+                            M2dataDir=M2dataDir, phosimDir=phosimDir)
+
+    # Set the survey parameters
+    obsId = 9006000
+    filterType = FilterType.G
+    zAngleInDeg = 27.0912
+    rotAngInDeg = np.rad2deg(-1.2323)
+    tele.setSurveyParam(obsId=obsId, filterType=filterType,
+                        zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+
+    # Generate the perturbation
+    iSim = 6
+    pertCmdFilePath = tele.writePertBaseOnConfigFile(outputDir, seedNum=iSim,
+                                                     saveResMapFig=True)
 
     # Update the telescope degree of freedom
     dofInUm = np.zeros(50)
@@ -41,6 +56,7 @@ def main(phosimDir):
 
     # Write the physical command file
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, 
+                                    pertFilePath=pertCmdFilePath,
                                     cmdFileName="opd.cmd")
 
     # Write the instance file
@@ -58,7 +74,7 @@ def main(phosimDir):
     tele.runPhoSim(argString)
 
     # Analyze the OPD fits images
-    opdFitsFile = os.path.join(outputImgDir, "opd_9006050_0.fits.gz")
+    opdFitsFile = os.path.join(outputImgDir, "opd_9006000_0.fits.gz")
     zk = metr.getZkFromOpd(opdFitsFile=opdFitsFile)[0]
 
     wavelengthInUm = tele.WAVELENGTH_IN_NM * 1e-3
