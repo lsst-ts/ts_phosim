@@ -72,7 +72,7 @@
 
 ## 6. Example Script
 
-- **testOpd.py**: Test the OPD without the subsystem perturbation.
+- **calcOpd.py**: Test the OPD without the subsystem perturbation.
 - **testOpdAndSubSys.py**: Test the OPD with the subsystem perturbation.
 - **testStarAndSubSysWiComCam.py**: Test the star donut in ComCam with the subsystem perturbation.
 - **testStarAndSubSys.py**: Test the star donut in LSST camera with the subsystem perturbation.
