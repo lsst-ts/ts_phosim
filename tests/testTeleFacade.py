@@ -46,6 +46,13 @@ class TestTeleFacade(unittest.TestCase):
 
         shutil.rmtree(self.outputDir)
 
+    def testGetDefocalDisInMm(self):
+
+        instName = "comcam13"
+        self.tele.setInstName(instName)
+
+        self.assertEqual(self.tele.getDefocalDisInMm(), 1.3)
+
     def testSetSurveyParamWithCorrectInput(self):
 
         obsId = 100
@@ -124,13 +131,13 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setInstName(instName)
 
         self.assertEqual(self.tele.surveyParam["instName"], "comcam")
-        self.assertEqual(self.tele.surveyParam["defocalDisInMm"], 1.0)
+        self.assertEqual(self.tele.getDefocalDisInMm(), 1.0)
 
         instName = "temp"
         self.tele.setInstName(instName)
 
         self.assertEqual(self.tele.surveyParam["instName"], "temp")
-        self.assertEqual(self.tele.surveyParam["defocalDisInMm"], 1.5)
+        self.assertEqual(self.tele.getDefocalDisInMm(), 1.5)
 
         self.assertRaises(ValueError, self.tele.setInstName, "a10a")
 

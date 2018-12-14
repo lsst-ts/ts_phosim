@@ -49,6 +49,17 @@ class TeleFacade(object):
 
         self.configFile = configFilePath
 
+    def getDefocalDisInMm(self):
+        """Get the defocal distance in mm.
+
+        Returns
+        -------
+        float
+            defocal distance in mm.
+        """
+
+        return self.surveyParam["defocalDisInMm"]
+
     def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
                        zAngleInDeg=None, rotAngInDeg=None, mjd=None):
         """Set the survey parameters.
