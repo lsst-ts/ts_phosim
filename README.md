@@ -77,7 +77,7 @@
 - **testStarAndSubSysWiComCam.py**: Test the star donut in ComCam with the subsystem perturbation.
 - **testStarAndSubSys.py**: Test the star donut in LSST camera with the subsystem perturbation.
 - **testQueryDbCoor.py**: Test to add the stars by querying the UW BSC and get the images.
-- **testWfsStarCoor.py**: Test to add the stars on WFS and get the images.
+- **checkWfsStarCoor.py**: Test to add the stars on WFS and get the images.
 - **checkStarCoor.py**: Test to add the star by pixel position and get the image.
 - **testStarCoorWiComCam.py**: Test to add the star by pixel position in ComCam condition and get the images.
 - **testStarCoorWiLsstFAM.py**: Test to add the star by pixel position in LSST FAM condition and get the images.
