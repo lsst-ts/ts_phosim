@@ -52,8 +52,9 @@ def precondition(phosimDir):
 
     return tele, skySim
 
+
 def main(phosimDir):
-    
+
     # Set the output directory
     outputDir = os.path.join(getModulePath(), "output")
     outputImgDir = os.path.join(outputDir, "img")
@@ -66,18 +67,18 @@ def main(phosimDir):
     tele, skySim = precondition(phosimDir)
 
     # Write the star physical command file
-    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, 
+    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
                                     cmdFileName="star.cmd")
 
     # Set the intra- and extra-focal related information
     obsIdList = {"-1": 9005000, "1": 9005001}
     instFileNameList = {"-1": "starExtra.inst", "1": "starIntra.inst"}
     logFileNameList = {"-1": "starExtraPhoSim.log", "1": "starIntraPhoSim.log"}
-    
+
     outputImgDirIntra = os.path.join(outputImgDir, "intra")
     outputImgDirExtra = os.path.join(outputImgDir, "extra")
-    outputImgDirList = {"-1": outputImgDirExtra, "1":outputImgDirIntra}
-    
+    outputImgDirList = {"-1": outputImgDirExtra, "1": outputImgDirIntra}
+
     argStringList = []
     for ii in (-1, 1):
 
@@ -87,7 +88,7 @@ def main(phosimDir):
         dofInUm = np.zeros(50)
 
         # Camera piston (Change the unit from mm to um)
-        dofInUm[5] = ii*tele.getDefocalDisInMm()*1e3
+        dofInUm[5] = ii * tele.getDefocalDisInMm() * 1e3
 
         # Set the degree fo freedom on telescope
         tele.setDofInUm(dofInUm)
@@ -100,10 +101,10 @@ def main(phosimDir):
         # Get the argument to run the phosim
         logFilePath = os.path.join(outputImgDirList[str(ii)],
                                    logFileNameList[str(ii)])
-        argString = tele.getPhoSimArgs(instFilePath,
-                                       extraCommandFile=cmdFilePath,
-                                       numPro=1, outputDir=outputImgDirList[str(ii)],
-                                       e2ADC=0, logFilePath=logFilePath)
+        argString = tele.getPhoSimArgs(
+            instFilePath, extraCommandFile=cmdFilePath, numPro=1,
+            outputDir=outputImgDirList[str(ii)], e2ADC=0,
+            logFilePath=logFilePath)
         argStringList.append(argString)
 
     for ii in range(2):

@@ -7,8 +7,8 @@ from lsst.ts.phosim.Utility import getModulePath, FilterType
 
 
 def main(phosimDir):
-    
-    # Settings 
+
+    # Settings
     outputDir = os.path.join(getModulePath(), "output")
     outputImgDir = os.path.join(outputDir, "img")
 
@@ -40,11 +40,11 @@ def main(phosimDir):
     tele.accDofInUm(dofInUm)
 
     # Write the physical command file
-    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, 
+    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
                                     cmdFileName="opd.cmd")
 
     # Write the instance file
-    instFilePath = tele.writeOpdInstFile(outputDir, metr, 
+    instFilePath = tele.writeOpdInstFile(outputDir, metr,
                                          instSettingFile=instSettingFile,
                                          instFileName="opd.inst")
 
@@ -60,6 +60,7 @@ def main(phosimDir):
     # Analyze the OPD fits images
     opdFitsFile = os.path.join(outputImgDir, "opd_9006050_0.fits.gz")
     zk = metr.getZkFromOpd(opdFitsFile=opdFitsFile)[0]
+    print(zk)
 
     wavelengthInUm = tele.WAVELENGTH_IN_NM * 1e-3
     pssn = metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFitsFile)

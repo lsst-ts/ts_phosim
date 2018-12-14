@@ -7,8 +7,8 @@ from lsst.ts.phosim.Utility import getModulePath, FilterType
 
 
 def main(phosimDir):
-    
-    # Settings 
+
+    # Settings
     outputDir = os.path.join(getModulePath(), "output")
     outputImgDir = os.path.join(outputDir, "img")
 
@@ -82,7 +82,7 @@ def main(phosimDir):
     tele.writeAccDofFile(outputDir)
 
     # Write the star physical command file
-    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile, 
+    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
                                     pertFilePath=pertCmdFilePath,
                                     cmdFileName="star.cmd")
 
