@@ -17,21 +17,6 @@ class TestSkySim(unittest.TestCase):
         self.skySim = SkySim()
         self.skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
-    def testConfigDbInfo(self):
-
-        self._setDbInfo()
-        self.assertEqual(self.skySim.dbInfo["host"], "localhost:51433")
-
-    def _setDbInfo(self):
-
-        databaseHost = "localhost:51433"
-        databaseUser = "LSST-2"
-        databasePassword = "L$$TUser"
-        databaseName = "LSSTCATSIM"
-
-        self.skySim.configDbInfo(databaseHost, databaseUser,
-                                 databasePassword, databaseName)
-
     def testAddStarByRaDecInDeg(self):
 
         self.skySim.addStarByRaDecInDeg(1, 2, 3, 4)
@@ -106,31 +91,6 @@ class TestSkySim(unittest.TestCase):
         rotSkyPos = 0
         mjd = 59580.0
         self.skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
-
-    def testGetCornOfChipOnSky(self):
-
-        self._setObservationMetaData()
-
-        sensorName = "R22_S11"
-        cornerInRaDecList = self.skySim.getCornOfChipOnSky(sensorName)
-        self.assertEqual(len(cornerInRaDecList), 4)
-
-    def testAddStarByQueryDatabase(self):
-
-        self._setDbInfo()
-
-        # Query the database
-        corner1 = [75.998622, -1]
-        corner2 = [75.998622, -2]
-        corner3 = [75.998985, -1]
-        corner4 = [75.998985, -2]
-        try:
-            self.skySim.addStarByQueryDatabase(FilterType.U, corner1,
-                                               corner2, corner3, corner4)
-            # Check the adding of star
-            self.assertEqual(len(self.skySim.starId), 3)
-        except Exception as SystemExit:
-            print("Please connect the UW database for the testing of query.")
 
 
 if __name__ == "__main__":

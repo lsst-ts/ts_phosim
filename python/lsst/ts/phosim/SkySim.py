@@ -18,9 +18,6 @@ class SkySim(object):
         self.decl = np.array([])
         self.mag = np.array([])
 
-        self.dbInfo = {"host": None, "user": None, "password": None,
-                       "dbName": None}
-
         self._camera = LsstSimMapper().camera
         self._obs = ObservationMetaData()
         self._sourProc = SourceProcessor()
@@ -66,26 +63,6 @@ class SkySim(object):
         """
 
         self._sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
-
-    def configDbInfo(self, host, user, password, dbName):
-        """Configure the database information.
-
-        Parameters
-        ----------
-        host : str
-            Database host name.
-        user : str
-            Database user name.
-        password : str
-            Database user password.
-        dbName : str
-            Database name.
-        """
-
-        self.dbInfo["host"] = host
-        self.dbInfo["user"] = user
-        self.dbInfo["password"] = password
-        self.dbInfo["dbName"] = dbName
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
@@ -257,51 +234,6 @@ class SkySim(object):
         # Add the star
         self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
 
-    def getCornOfChipOnSky(self, sensorName, epoch=2000.0,
-                           includeDistortion=True):
-        """Get the corner points of chip on sky position in (ra, dec).
-
-        The direction is counter clockwise from the origin.
-
-        Parameters
-        ----------
-        sensorName : str
-            Abbreviated sensor name (e.g. "R22_S11").
-        epoch : float, optional
-            Epoch is the mean epoch in years of the celestial coordinate
-            system. (the default is 2000.0.)
-        includeDistortion : bool, optional
-            If True (default), then this method will expect the true pixel
-            coordinates with optical distortion included.  If False, this
-            method will expect TAN_PIXEL coordinates, which are the pixel
-            coordinates with estimated optical distortion removed.  See
-            the documentation in afw.cameraGeom for more details. (the
-            default is True.)
-
-        Returns
-        -------
-        list
-            List of corner points in tuple. The unit is in (ra, dec).
-        """
-
-        # Get the sensor dimension
-        dimX, dimY = self._sourProc.sensorDimList[sensorName]
-
-        # Corner in Pixel
-        xInPixel = [0, dimX, dimX, 0]
-        yInPixel = [0, 0, dimY, dimY]
-
-        # Corner in (Ra, Dec)
-        cornerInRaDecList = []
-        for ii in range(4):
-            raInDeg, declInDeg = self._getSkyPosByChipPos(
-                                        sensorName, xInPixel[ii],
-                                        yInPixel[ii], epoch=epoch,
-                                        includeDistortion=includeDistortion)
-            cornerInRaDecList.append((raInDeg, declInDeg))
-
-        return cornerInRaDecList
-
     def _getSkyPosByChipPos(self, sensorName, xInpixelInCam, yInPixelInCam,
                             epoch=2000.0, includeDistortion=True):
         """Get the sky position in (ra, dec) based on the chip pixel positions.
@@ -349,46 +281,6 @@ class SkySim(object):
                                 includeDistortion=includeDistortion)
 
         return raInDeg, declInDeg
-
-    def addStarByQueryDatabase(self, filterType, corner1, corner2, corner3,
-                               corner4, tableName="bright_stars"):
-        """Add the star by querying the database of bright star catalog in UW.
-
-        Parameters
-        ----------
-        filterType : FilterType
-            Active filter type.
-        corner1 : float
-            The first corner of the sensor defined as (RA, Decl).
-        corner2 : float
-            The second corner of the sensor defined as (RA, Decl).
-        corner3 : float
-            The third corner of the sensor defined as (RA, Decl).
-        corner4 : float
-            The fourth corner of the sensor defined as (RA, Decl).
-        tableName : str, optional
-            Table name in database. (the default is "bright_stars".)
-        """
-
-        # Instantiate the BrightStarDatabase
-        bsc = BrightStarDatabase()
-
-        # Connect to the database
-        bsc.connect(self.dbInfo["host"], self.dbInfo["user"],
-                    self.dbInfo["password"], self.dbInfo["dbName"])
-
-        # Query the database
-        aFilter = filterType.name.lower()
-        stars = bsc.query(tableName, aFilter, corner1, corner2, corner3,
-                          corner4)
-
-        # Disconnect from the database
-        bsc.disconnect()
-
-        # Add the star information
-        starId = np.array(stars.SimobjID).astype("int")
-        mag = getattr(stars, "LSSTMag"+aFilter.upper())
-        self.addStarByRaDecInDeg(starId, stars.RA, stars.Decl, mag)
 
 
 if __name__ == "__main__":
