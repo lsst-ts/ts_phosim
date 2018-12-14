@@ -74,7 +74,7 @@
 
 - **calcOpd.py**: Test the OPD without the subsystem perturbation.
 - **calcOpdAndSubSys.py**: Test the OPD with the subsystem perturbation.
-- **testStarAndSubSys.py**: Test the star donut in LSST camera with the subsystem perturbation.
+- **checkStarAndSubSys.py**: Test the star donut in LSST camera with the subsystem perturbation.
 - **testQueryDbCoor.py**: Test to add the stars by querying the UW BSC and get the images.
 - **checkWfsStarCoor.py**: Test to add the stars on WFS and get the images.
 - **checkStarCoor.py**: Test to add the star by pixel position and get the image.
