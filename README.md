@@ -79,4 +79,3 @@
 - **checkWfsStarCoor.py**: Test to add the stars on WFS and get the images.
 - **checkStarCoor.py**: Test to add the star by pixel position and get the image.
 - **testStarCoorWiLsstFAM.py**: Test to add the star by pixel position in LSST FAM condition and get the images.
-- **testWfsStarCoorAll.py**: Test to add the stars by pixel position for all corner WFS and get the images.
