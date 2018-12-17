@@ -56,6 +56,7 @@
 (e.g. `export PYTHONPATH=$PYTHONPATH:/home/ttsai/Document/stash/ts_tcs_wep_phosim/python`)
 
 ## 5. Content
+*This module contains the following classes and functions ([class diagram](./doc/wepPhosimClassDiag.png)):*
 
 - **PhosimCommu**: Interface to PhoSim.
 - **MetroTool**: Metrology related functions contain the atmosphere model.
@@ -64,7 +65,6 @@
 - **MirrorSim**: Parent class of M1M3Sim and M2Sim classes.
 - **M1M3Sim**: M1M3 mirror distortion of gravity and temperature gradient.
 - **M2Sim**: M2 mirror distortion of gravity and temperature gradient.
-- **CoTransform**: Coordination transformation functions.
 - **TeleFacade**: Telescope facade pattern that intergate the correction of camera and mirror distortion correction to PhoSim.
 - **SkySim**: Sky simulator to add the stars.
 - **PlotUtil**: Plot utility functions.
