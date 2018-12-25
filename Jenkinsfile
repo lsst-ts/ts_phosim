@@ -23,6 +23,8 @@ pipeline {
         PYTHONPATH="${env.WORKSPACE}/python:${env.WORKSPACE}/ts_tcs_wep/python"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
+        // Module name used in the pytest coverage analysis
+        MODULE_NAME="lsst.ts.phosim"
     }
 
     stages {
@@ -44,7 +46,7 @@ pipeline {
             }
         }
 
-        stage('Unit Tests') { 
+        stage('Unit Tests and Coverage Analysis') { 
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
                 // installed library.
@@ -56,21 +58,7 @@ pipeline {
                         source /opt/rh/devtoolset-6/enable
                         source /opt/lsst/loadLSST.bash
                         setup sims_catUtils -t sims_w_2018_47
-                        pytest --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
-                    """
-                }
-            }
-        }
-
-        stage('Coverage Analysis') { 
-            steps {
-                // Do the coverage analysis for multiple files.
-                withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh """
-                        source /opt/rh/devtoolset-6/enable
-                        source /opt/lsst/loadLSST.bash
-                        setup sims_catUtils -t sims_w_2018_47
-                        ./coverageAnalysis.sh "${env.WORKSPACE}/tests/test*.py"
+                        pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
                     """
                 }
             }
