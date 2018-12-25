@@ -35,6 +35,7 @@ pipeline {
                     sh """
                         source /opt/rh/devtoolset-6/enable
                         source /opt/lsst/loadLSST.bash
+                        conda install scikit-image
                         git clone --branch feature/newSimsTag https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
                         python builder/setup.py build_ext --build-lib python/lsst/ts/wep/cwfs/lib
