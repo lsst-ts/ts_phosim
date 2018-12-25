@@ -26,13 +26,13 @@
 ## 2. Platform
 
 - *python: 3.6.6*
-- *scientific pipeline: v16*
+- *scientific pipeline (newinstall.sh from master branch)*
 - *phosim_syseng4 (branch: aos, tag: firstdonuts)*
 
 ## 3. Needed Package
 
 - *lsst_sims (-t sims_w_2018_47)*
-- *ts_tcs_wep*
+- *ts_tcs_wep (develop branch)*
 
 ## 4. Use of Module
 
