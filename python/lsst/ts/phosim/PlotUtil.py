@@ -89,7 +89,7 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
 
 
 def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
-                 saveToFilePath=None, dpi=None, pixel2Arcsec=0.2):
+                 saveToFilePath=None, dpi=None):
     """Show the field map in degree.
 
     Parameters
@@ -104,8 +104,6 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
         File path to save the figure. (the default is None.)
     dpi : int, optional
         The resolution in dots per inch. (the default is None.)
-    pixel2Arcsec : float, optional
-        Pixel to arcsec. (the default is 0.2.)
     """
 
     # Declare the figure
@@ -121,8 +119,7 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
 
             # Get the CCD corner field points in degree
             pointXinDeg, pointYinDeg = _getCCDBoundInDeg(
-                                            sourProc, sensorName,
-                                            pixel2Arcsec=pixel2Arcsec)
+                                            sourProc, sensorName)
 
             # Plot the boundary
             pointXinDeg.append(pointXinDeg[0])
@@ -162,7 +159,7 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
         plt.show()
 
 
-def _getCCDBoundInDeg(sourProc, sensorName, pixel2Arcsec=0.2):
+def _getCCDBoundInDeg(sourProc, sensorName):
     """Get the CCD four corners in degree in counter clockwise direction.
 
     Parameters
@@ -171,8 +168,6 @@ def _getCCDBoundInDeg(sourProc, sensorName, pixel2Arcsec=0.2):
         SourceProcessor object.
     sensorName : str
         Sensor name
-    pixel2Arcsec : float, optional
-        Pixel to arcsec. (the default is 0.2.)
 
     Returns
     -------
@@ -183,7 +178,7 @@ def _getCCDBoundInDeg(sourProc, sensorName, pixel2Arcsec=0.2):
     """
 
     # Set the sensor on sourProc
-    sourProc.config(sensorName=sensorName, pixel2Arcsec=pixel2Arcsec)
+    sourProc.config(sensorName=sensorName)
 
     # Get the dimension of CCD
     pixDimX, pixDimY = sourProc.sensorDimList[sensorName]
