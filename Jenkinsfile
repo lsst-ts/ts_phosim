@@ -38,6 +38,7 @@ pipeline {
                         source /opt/rh/devtoolset-6/enable
                         source /opt/lsst/loadLSST.bash
                         conda install scikit-image
+                        conda install -y -c astropy astroquery
                         git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
                         git checkout b5dcb9a
