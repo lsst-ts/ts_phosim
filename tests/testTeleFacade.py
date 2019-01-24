@@ -2,6 +2,7 @@ import os
 import shutil
 import numpy as np
 import unittest
+from copy import deepcopy
 
 from lsst.ts.wep.Utility import FilterType
 
@@ -9,7 +10,7 @@ from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
 
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 class TestTeleFacade(unittest.TestCase):
@@ -29,16 +30,17 @@ class TestTeleFacade(unittest.TestCase):
                                      M1M3dataDir=M1M3dataDir,
                                      M2dataDir=M2dataDir)
 
-        # Set the survey parameters
+        # Set the observation parameters
         obsId = 9006000
         filterType = FilterType.G
         boresight = (0.2, 0.3)
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
         mjd = 59552.3
-        self.tele.setSurveyParam(obsId=obsId, filterType=filterType,
+        obs = createObservation(obsId=obsId, filterType=filterType,
                                  boresight=boresight, zAngleInDeg=zAngleInDeg,
                                  rotAngInDeg=rotAngInDeg, mjd=mjd)
+        self.tele.setObservation(obs)
 
         # Set the output dir
         self.outputDir = os.path.join(getModulePath(), "output", "temp")
@@ -48,43 +50,24 @@ class TestTeleFacade(unittest.TestCase):
 
         shutil.rmtree(self.outputDir)
 
+    def testSetObservation(self):
+        
+        obsId = 99
+        obs = createObservation(obsId=obsId)
+        self.tele.setObservation(obs)
+        self.assertEqual(self.tele.obs.OpsimMetaData['obsHistID'], obsId)
+
+    def testGetObservation(self):
+        
+        retObsId = self.tele.getObservation().OpsimMetaData['obsHistID']
+        self.assertEqual(self.tele.obs.OpsimMetaData['obsHistID'], 9006000)
+
     def testGetDefocalDisInMm(self):
 
         instName = "comcam13"
         self.tele.setInstName(instName)
 
         self.assertEqual(self.tele.getDefocalDisInMm(), 1.3)
-
-    def testSetSurveyParamWithCorrectInput(self):
-
-        obsId = 100
-        filterType = FilterType.U
-        boresight = (10, 20)
-        zAngleInDeg = 10.0
-        rotAngInDeg = 11.0
-        mjd = 4000.0
-
-        tele = TeleFacade()
-        tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                            boresight=boresight, zAngleInDeg=zAngleInDeg,
-                            rotAngInDeg=rotAngInDeg, mjd=mjd)
-
-        self.assertEqual(tele.surveyParam["obsId"], obsId)
-        self.assertEqual(tele.surveyParam["filterType"], filterType)
-        self.assertEqual(tele.surveyParam["boresight"], boresight)
-        self.assertEqual(tele.surveyParam["zAngleInDeg"], zAngleInDeg)
-        self.assertEqual(tele.surveyParam["rotAngInDeg"], rotAngInDeg)
-        self.assertEqual(tele.surveyParam["mjd"], mjd)
-
-    def testSetSurveyParamWithWrongInput(self):
-
-        defaultObsId = self.tele.surveyParam["obsId"]
-
-        obsId = 1.0
-        self.tele.setSurveyParam(obsId=obsId)
-
-        self.assertEqual(self.tele.surveyParam["obsId"], defaultObsId)
-        self.assertEqual(self.tele.surveyParam["filterType"], FilterType.G)
 
     def testSetSensorOnWithCorrectInput(self):
 
@@ -132,13 +115,13 @@ class TestTeleFacade(unittest.TestCase):
         instName = "comcam10"
         self.tele.setInstName(instName)
 
-        self.assertEqual(self.tele.surveyParam["instName"], "comcam")
+        self.assertEqual(self.tele.instName, "comcam")
         self.assertEqual(self.tele.getDefocalDisInMm(), 1.0)
 
         instName = "temp"
         self.tele.setInstName(instName)
 
-        self.assertEqual(self.tele.surveyParam["instName"], "temp")
+        self.assertEqual(self.tele.instName, "temp")
         self.assertEqual(self.tele.getDefocalDisInMm(), 1.5)
 
         self.assertRaises(ValueError, self.tele.setInstName, "a10a")
@@ -242,7 +225,9 @@ class TestTeleFacade(unittest.TestCase):
 
     def testWriteOpdInstFileWithFilterRef(self):
 
-        self.tele.setSurveyParam(filterType=FilterType.REF)
+        obs = deepcopy(self.tele.obs)
+        obs.bandpass = FilterType.Ref.toString()
+        self.tele.setObservation(obs)
 
         metr, opdInstSettingFile = self._generateOpd()
         instFilePath = self.tele.writeOpdInstFile(
@@ -255,41 +240,43 @@ class TestTeleFacade(unittest.TestCase):
 
         metr = OpdMetrology()
         metr.addFieldXYbyDeg(0, 0)
-        opdInstSettingFile = os.path.join(getModulePath(), "configData",
+        opdInstOverrideFile = os.path.join(getModulePath(), "configData",
                                           "instFile", "opdDefault.inst")
 
-        return metr, opdInstSettingFile
+        return metr, opdInstOverrideFile
 
     def testWriteStarInstFile(self):
 
-        skySim, starInstSettingFile = self._generateFakeSky()
+        skySim, starInstOverrideFile = self._generateFakeSky()
 
         instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, instSettingFile=starInstSettingFile)
+            self.outputDir, skySim, instOverrideFile=starInstOverrideFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
-        self.assertEqual(numOfLineInFile, 63)
+        self.assertEqual(numOfLineInFile, 66)
 
     def testWriteStarInstFileWithFilterRef(self):
 
-        self.tele.setSurveyParam(filterType=FilterType.REF)
+        obs = deepcopy(self.tele.obs)
+        obs.bandpass = FilterType.Ref.toString()
+        self.tele.setObservation(obs)
 
-        skySim, starInstSettingFile = self._generateFakeSky()
+        skySim, starInstOverrideFile = self._generateFakeSky()
         instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, instSettingFile=starInstSettingFile)
+            self.outputDir, skySim, instOverrideFile=starInstOverrideFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
-        self.assertEqual(numOfLineInFile, 63)
+        self.assertEqual(numOfLineInFile, 66)
 
     def _generateFakeSky(self):
 
         skySim = SkySim()
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
 
-        starInstSettingFile = os.path.join(getModulePath(), "configData",
+        starInstOverrideFile = os.path.join(getModulePath(), "configData",
                                            "instFile", "starDefault.inst")
 
-        return skySim, starInstSettingFile
+        return skySim, starInstOverrideFile
 
 
 if __name__ == "__main__":
