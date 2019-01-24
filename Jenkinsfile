@@ -40,7 +40,7 @@ pipeline {
                         conda install scikit-image
                         git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
-                        git checkout b5dcb9a
+                        git checkout d59002a
                         python builder/setup.py build_ext --build-lib python/lsst/ts/wep/cwfs/lib
                     """
                 }
@@ -58,7 +58,7 @@ pipeline {
                     sh """
                         source /opt/rh/devtoolset-6/enable
                         source /opt/lsst/loadLSST.bash
-                        setup sims_catUtils -t sims_w_2018_47
+                        setup sims_catUtils -t sims_w_2019_02
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.WORKSPACE}/${env.XML_REPORT} ${env.WORKSPACE}/tests/*.py
                     """
                 }
