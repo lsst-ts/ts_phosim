@@ -52,6 +52,11 @@ class TestUtility(unittest.TestCase):
         with self.assertRaises(ValueError):
             createObservation(zAngleInDeg=badZenith)
 
+    def testGetOpsimObservation(self):
+
+        obs = getOpsimObservation(0, 0)
+        self.assertEqual(obs.bandpass, 'y')
+
     def testPhosim2ZemaxCoorTrans(self):
 
         xInPhosim, yInPhosim, zInPhosim = 1, 2, 3

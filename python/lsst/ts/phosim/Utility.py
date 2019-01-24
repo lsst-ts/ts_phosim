@@ -1,5 +1,6 @@
 import os
 from enum import Enum
+import pickle
 
 from lsst.sims.utils import ObservationMetaData
 
