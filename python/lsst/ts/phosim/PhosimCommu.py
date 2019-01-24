@@ -1,8 +1,11 @@
 import os
 import subprocess
+from copy import deepcopy
+
+from lsst.sims.catUtils.exampleCatalogDefinitions import \
+    DefaultPhoSimHeaderMap, write_phoSim_header
 
 from lsst.ts.wep.Utility import FilterType
-
 from lsst.ts.phosim.Utility import SurfaceType
 
 
@@ -358,53 +361,6 @@ class PhosimCommu(object):
 
         return content
 
-    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0,
-                        mjd=49552.3, simSeed=1000, filePath=None):
-        """Get the star instance catalog.
-
-        Parameters
-        ----------
-        obsId : int
-            Observation Id.
-        aFilterId : int
-            PhoSim lsst filter ID.
-        ra : float, optional
-            Unrefracted Right Ascension in decimal degrees. (the default is 0.)
-        dec : float, optional
-            Unrefracted Declination in decimal degrees. (the default is 0.)
-        rot : float, optional
-            Angle of sky relative to camera coordinates (from North over East)
-            in decimal degrees. (the default is 0.)
-        mjd : float, optional
-            MJD of observation. (the default is 49552.3.)
-        simSeed : int, optional
-            Random number seed. (the default is 1000.)
-        filePath : str, optional
-            File path to save the instance. (the default is None.)
-
-        Returns
-        -------
-        str
-            Instance command used in PhoSim.
-        """
-
-        # Observation Parameters
-        content = ""
-        content += "Opsim_obshistid %d \n" % obsId
-        content += "Opsim_filter %d \n" % aFilterId
-        content += "mjd %.10f \n" % mjd
-        content += "SIM_SEED %d \n" % simSeed
-
-        # Add the sky information
-        content += "rightascension %.6f \n" % ra
-        content += "declination %.6f \n" % dec
-        content += "rotskypos %.6f \n" % rot
-
-        if (filePath is not None):
-            self.writeToFile(filePath, content=content, mode="w")
-
-        return content
-
     def getOpdInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0,
                        filePath=None):
         """Get the default OPD instance catalog.
@@ -446,6 +402,32 @@ class PhosimCommu(object):
             self.writeToFile(filePath, content=content, mode="w")
 
         return content
+
+    def writeObsHeader(self, filePath, obs, mode="a"):
+        """Write the header of an instance file based on the corresponding
+        ObservationMetaData.
+
+        Parameters
+        ----------
+        filePath : str
+            File path to write.
+        obs : ObservationMetaData
+            Observation to use for header.
+        mode: str, optional
+            Overwrite ("w") or append ("a") the file. (the default is "a".)
+
+        Raises
+        ------
+        ValueError
+            Mode is not supported.
+        """
+        if mode not in ("w", "a"):
+            raise ValueError("Mode: {} is not supported.".format(mode))
+
+        with open(filePath, mode) as fid:
+            headerMap = deepcopy(DefaultPhoSimHeaderMap)
+            headerMap['nsnap'] = 1
+            write_phoSim_header(obs, fid, headerMap)
 
     def writeToFile(self, filePath, content=None, sourceFile=None, mode="a"):
         """Write the file based on the content to put or the source file to
