@@ -3,11 +3,13 @@ import shutil
 import numpy as np
 import unittest
 
+from lsst.ts.wep.Utility import FilterType
+
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
 
-from lsst.ts.phosim.Utility import getModulePath, FilterType
+from lsst.ts.phosim.Utility import getModulePath
 
 
 class TestTeleFacade(unittest.TestCase):
@@ -230,10 +232,7 @@ class TestTeleFacade(unittest.TestCase):
 
     def testWriteOpdInstFile(self):
 
-        metr = OpdMetrology()
-        metr.addFieldXYbyDeg(0, 0)
-        opdInstSettingFile = os.path.join(getModulePath(), "configData",
-                                          "instFile", "opdDefault.inst")
+        metr, opdInstSettingFile = self._generateOpd()
 
         instFilePath = self.tele.writeOpdInstFile(
             self.outputDir, metr, instSettingFile=opdInstSettingFile)
@@ -241,7 +240,48 @@ class TestTeleFacade(unittest.TestCase):
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
 
+    def testWriteOpdInstFileWithFilterRef(self):
+
+        self.tele.setSurveyParam(filterType=FilterType.REF)
+
+        metr, opdInstSettingFile = self._generateOpd()
+        instFilePath = self.tele.writeOpdInstFile(
+            self.outputDir, metr, instSettingFile=opdInstSettingFile)
+
+        numOfLineInFile = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLineInFile, 59)
+
+    def _generateOpd(self):
+
+        metr = OpdMetrology()
+        metr.addFieldXYbyDeg(0, 0)
+        opdInstSettingFile = os.path.join(getModulePath(), "configData",
+                                          "instFile", "opdDefault.inst")
+
+        return metr, opdInstSettingFile
+
     def testWriteStarInstFile(self):
+
+        skySim, starInstSettingFile = self._generateFakeSky()
+
+        instFilePath = self.tele.writeStarInstFile(
+            self.outputDir, skySim, instSettingFile=starInstSettingFile)
+
+        numOfLineInFile = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLineInFile, 63)
+
+    def testWriteStarInstFileWithFilterRef(self):
+
+        self.tele.setSurveyParam(filterType=FilterType.REF)
+
+        skySim, starInstSettingFile = self._generateFakeSky()
+        instFilePath = self.tele.writeStarInstFile(
+            self.outputDir, skySim, instSettingFile=starInstSettingFile)
+
+        numOfLineInFile = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLineInFile, 63)
+
+    def _generateFakeSky(self):
 
         skySim = SkySim()
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
@@ -249,11 +289,7 @@ class TestTeleFacade(unittest.TestCase):
         starInstSettingFile = os.path.join(getModulePath(), "configData",
                                            "instFile", "starDefault.inst")
 
-        instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, instSettingFile=starInstSettingFile)
-
-        numOfLineInFile = self._getNumOfLineInFile(instFilePath)
-        self.assertEqual(numOfLineInFile, 63)
+        return skySim, starInstSettingFile
 
 
 if __name__ == "__main__":

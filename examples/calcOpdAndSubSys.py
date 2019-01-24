@@ -1,9 +1,11 @@
 import os
 import numpy as np
 
+from lsst.ts.wep.Utility import FilterType
+
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath, FilterType
+from lsst.ts.phosim.Utility import getModulePath
 
 
 def main(phosimDir):
@@ -36,7 +38,7 @@ def main(phosimDir):
 
     # Set the survey parameters
     obsId = 9006000
-    filterType = FilterType.G
+    filterType = FilterType.REF
     zAngleInDeg = 27.0912
     rotAngInDeg = np.rad2deg(-1.2323)
     tele.setSurveyParam(obsId=obsId, filterType=filterType,

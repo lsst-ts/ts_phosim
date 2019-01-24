@@ -2,12 +2,13 @@ import os
 import re
 import numpy as np
 
+from lsst.ts.wep.Utility import FilterType, mapFilterRefToG
+
 from lsst.ts.phosim.CamSim import CamSim
 from lsst.ts.phosim.M1M3Sim import M1M3Sim
 from lsst.ts.phosim.M2Sim import M2Sim
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import SurfaceType, CamDistType, FilterType, \
-    mapSurfNameToEnum
+from lsst.ts.phosim.Utility import SurfaceType, CamDistType, mapSurfNameToEnum
 
 
 class TeleFacade(object):
@@ -414,7 +415,7 @@ class TeleFacade(object):
         return cmdFilePath
 
     def writeStarInstFile(self, instFileDir, skySim, simSeed=1000,
-                          sedName="sed_500.txt", instSettingFile=None,
+                          sedName="sed_flat.txt", instSettingFile=None,
                           instFileName="star.inst"):
         """Write the star instance file.
 
@@ -428,7 +429,7 @@ class TeleFacade(object):
             Random number seed. (the default is 1000.)
         sedName : str, optional
             The name of the SED file with a file path that is relative to the
-            data directory in PhoSim. (the default is "sed_500.txt".)
+            data directory in PhoSim. (the default is "sed_flat.txt".)
         instSettingFile : str optional
             Instance setting file. (the default is None.)
         instFileName : str, optional
@@ -444,8 +445,7 @@ class TeleFacade(object):
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the filter ID in PhoSim
-        filterType = self.surveyParam["filterType"]
-        aFilterId = self.phoSimCommu.getFilterId(filterType)
+        aFilterId = self._getFilterIdInPhoSim()
 
         # Write the default instance setting
         obsId = self.surveyParam["obsId"]
@@ -476,6 +476,12 @@ class TeleFacade(object):
             sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn,
             guidSensorOn=guidSensorOn)
 
+        # Use the SED file of single wavelendth if the reference filter is used.
+        filterType = self.surveyParam["filterType"]
+        if (filterType == FilterType.REF):
+            self._writeSedFileIfPhoSimDirSet()
+            sedName = "sed_%s.txt" % int(self.WAVELENGTH_IN_NM)
+
         # Write the star source
         for ii in range(len(skySim.starId)):
             content += self.phoSimCommu.generateStar(
@@ -484,6 +490,20 @@ class TeleFacade(object):
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         return instFilePath
+
+    def _getFilterIdInPhoSim(self):
+        """Get the active filter Id used in PhoSim.
+
+        Returns
+        -------
+        int
+            Active filter ID in PhoSim.
+        """
+
+        filterType = self.surveyParam["filterType"]
+        mappedFilterType = mapFilterRefToG(filterType)
+
+        return self.phoSimCommu.getFilterId(mappedFilterType)
 
     def writeOpdInstFile(self, instFileDir, opdMetr, instSettingFile=None,
                          instFileName="opd.inst"):
@@ -513,9 +533,7 @@ class TeleFacade(object):
         obsId = self.surveyParam["obsId"]
 
         # Get the filter ID in PhoSim
-        filterType = self.surveyParam["filterType"]
-        aFilterId = self.phoSimCommu.getFilterId(filterType)
-
+        aFilterId = self._getFilterIdInPhoSim()
 
         # Add the sky information
         boresight = self.surveyParam["boresight"]
@@ -542,12 +560,20 @@ class TeleFacade(object):
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary
+        self._writeSedFileIfPhoSimDirSet()
+
+        return instFilePath
+
+    def _writeSedFileIfPhoSimDirSet(self):
+        """Write the SED file if the PhoSim directory is set.
+
+        SED: Spectral energy distribution.
+        """
+
         if os.path.isdir(self.phoSimCommu.phosimDir):
             self.phoSimCommu.writeSedFile(self.WAVELENGTH_IN_NM)
         else:
             print("Do not inspect the SED file for no PhoSim directory.")
-
-        return instFilePath
 
     def writePertBaseOnConfigFile(self, pertCmdFileDir, seedNum=None,
                                   M1M3ForceError=0.05, saveResMapFig=False,

@@ -1,9 +1,11 @@
 import os
 import numpy as np
 
+from lsst.ts.wep.Utility import FilterType
+
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath, FilterType
+from lsst.ts.phosim.Utility import getModulePath
 
 
 def main(phosimDir):
@@ -20,7 +22,7 @@ def main(phosimDir):
     # Survey information
     obsId = 9006000
     instName = "lsst"
-    filterType = FilterType.G
+    filterType = FilterType.REF
     ra = 20
     decl = 30
     rotSkyPos = 10

@@ -3,7 +3,7 @@ import numpy as np
 import unittest
 
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath, FilterType
+from lsst.ts.phosim.Utility import getModulePath
 
 
 class TestSkySim(unittest.TestCase):

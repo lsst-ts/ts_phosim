@@ -15,24 +15,31 @@
 *Update the information and add the example scripts.*
 <br/>
 <br/>
-*Version 1.1*
+*Version 1.1.0*
 <br/>
 *Refactor the code to decrease the number of function inputs.*
+<br/>
+<br/>
+*Version 1.1.1*
+<br/>
+*Updated to use the scientific pipeline of sims_w_2019_02. Reuse the FilterType Enum from ts_tcs_wep.*
+<br/>
 
 *Author: Te-Wei Tsai*
 <br/>
-*Date: 12-12-2018*
+*Date: 01-24-2019*
 
 ## 2. Platform
 
+- *CentOS 7*
 - *python: 3.6.6*
 - *scientific pipeline (newinstall.sh from master branch)*
 - *phosim_syseng4 (branch: aos, tag: firstdonuts)*
 
 ## 3. Needed Package
 
-- *lsst_sims (-t sims_w_2018_47)*
-- *ts_tcs_wep (develop branch)*
+- *lsst_sims (-t sims_w_2019_02)*
+- *ts_tcs_wep - develop branch (commit: b5dcb9a)*
 
 ## 4. Use of Module
 
@@ -40,8 +47,8 @@
 <br/>
 `source $path_of_lsst_scientific_pipeline/loadLSST.bash`
 <br/>
-`setup sims_catUtils -t $user_defined_tag -t sims_w_2018_47`
-(e.g. `setup sims_catUtils -t ttsai -t sims_w_2018_47`)
+`setup sims_catUtils -t $user_defined_tag -t sims_w_2019_02`
+(e.g. `setup sims_catUtils -t ttsai -t sims_w_2019_02`)
 
 *2. Setup the WEP environment:*
 <br/>

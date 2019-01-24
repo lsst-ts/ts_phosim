@@ -1,7 +1,9 @@
 import os
 import subprocess
 
-from lsst.ts.phosim.Utility import FilterType, SurfaceType
+from lsst.ts.wep.Utility import FilterType
+
+from lsst.ts.phosim.Utility import SurfaceType
 
 
 class PhosimCommu(object):
@@ -54,6 +56,11 @@ class PhosimCommu(object):
         -------
         int
             Active filter ID in PhoSim.
+
+        Raises
+        ------
+        ValueError
+            The filter type is not defined in PhoSim.
         """
 
         filterId = -1
@@ -69,6 +76,9 @@ class PhosimCommu(object):
             filterId = 4
         elif (filterType == FilterType.Y):
             filterId = 5
+        else:
+            raise ValueError("The filter type (%s) is not defined in PhoSim."
+                             % filterType)
 
         return filterId
 

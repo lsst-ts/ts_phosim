@@ -2,8 +2,9 @@ import os
 import numpy as np
 import unittest
 
+from lsst.ts.wep.Utility import FilterType
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import getModulePath, FilterType, SurfaceType
+from lsst.ts.phosim.Utility import getModulePath, SurfaceType
 
 
 class TestPhosimCommu(unittest.TestCase):
@@ -23,6 +24,11 @@ class TestPhosimCommu(unittest.TestCase):
 
         phosimFilterID = self.phosimCom.getFilterId(FilterType.R)
         self.assertEqual(phosimFilterID, 2)
+
+    def testGetFilterIdWithFilterRef(self):
+
+        self.assertRaises(ValueError, self.phosimCom.getFilterId,
+                          FilterType.REF)
 
     def testGetSurfaceId(self):
 

@@ -13,16 +13,6 @@ class CamDistType(Enum):
     L3S2zer = 6
 
 
-class FilterType(Enum):
-    U = 1
-    G = 2
-    R = 3
-    I = 4
-    Z = 5
-    Y = 6
-    REF = 7
-
-
 class SurfaceType(Enum):
     M1 = 1
     M2 = 2

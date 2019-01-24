@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'lsstts/aos:w_2018_47'
+            image 'lsstts/aos:w_2019_02'
             args '-u root'
         }
     }
@@ -40,6 +40,7 @@ pipeline {
                         conda install scikit-image
                         git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
+                        git checkout b5dcb9a
                         python builder/setup.py build_ext --build-lib python/lsst/ts/wep/cwfs/lib
                     """
                 }
