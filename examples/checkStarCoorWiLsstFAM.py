@@ -48,8 +48,9 @@ def precondition(phosimDir):
                                   "telescopeConfig", "GT.inst")
     tele = TeleFacade(configFilePath=configFilePath)
     tele.setSubSysConfigDir(phosimDir=phosimDir)
-    tele.setSurveyParam(filterType=filterType, boresight=(ra, decl),
+    obs = createObservation(filterType=filterType, boresight=(ra, decl),
                         rotAngInDeg=rotSkyPos, mjd=mjd)
+    tele.setObservation(obs)
     tele.setInstName(instName)
 
     return tele, skySim
@@ -62,7 +63,7 @@ def main(phosimDir):
     outputImgDir = os.path.join(outputDir, "img")
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "starDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
+    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "starSingleExp.inst")
 
     # Get the objects of TeleFacade and SkySim classes
@@ -97,7 +98,7 @@ def main(phosimDir):
 
         # Write the star instance file
         instFilePath = tele.writeStarInstFile(
-            outputDir, skySim, instSettingFile=instSettingFile,
+            outputDir, skySim, instOverrideFile=instOverrideFile,
             instFileName=instFileNameList[str(ii)])
 
         # Get the argument to run the phosim

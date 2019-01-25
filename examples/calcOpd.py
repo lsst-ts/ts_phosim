@@ -16,7 +16,7 @@ def main(phosimDir):
 
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "opdDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
+    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "opdDefault.inst")
 
     # Declare the opd metrology and add the interested field points
@@ -32,7 +32,8 @@ def main(phosimDir):
 
     obsId = 9006050
     filterType = FilterType.REF
-    tele.setSurveyParam(obsId=obsId, filterType=filterType)
+    obs = createObservation(obsId=obsId, filterType=filterType)
+    tele.setObservation(obs)
 
     # Update the telescope degree of freedom
     dofInUm = np.zeros(50)
@@ -47,7 +48,7 @@ def main(phosimDir):
 
     # Write the instance file
     instFilePath = tele.writeOpdInstFile(outputDir, metr,
-                                         instSettingFile=instSettingFile,
+                                         instOverrideFile=instOverrideFile,
                                          instFileName="opd.inst")
 
     # Get the argument to run the PhoSim

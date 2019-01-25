@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def main(phosimDir):
@@ -16,7 +16,7 @@ def main(phosimDir):
 
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "opdDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
+    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "opdDefault.inst")
 
     # Declare the opd metrology and add the interested field points
@@ -41,8 +41,9 @@ def main(phosimDir):
     filterType = FilterType.REF
     zAngleInDeg = 27.0912
     rotAngInDeg = np.rad2deg(-1.2323)
-    tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                        zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+    obs = createObservation(obsId=obsId, filterType=filterType,
+                    zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+    tele.setObservation(obs)
 
     # Generate the perturbation
     iSim = 6
@@ -63,7 +64,7 @@ def main(phosimDir):
 
     # Write the instance file
     instFilePath = tele.writeOpdInstFile(outputDir, metr,
-                                         instSettingFile=instSettingFile,
+                                         instOverrideFile=instOverrideFile,
                                          instFileName="opd.inst")
 
     # Get the argument to run the PhoSim
