@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def main(phosimDir):
@@ -16,7 +16,7 @@ def main(phosimDir):
 
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "opdDefault.cmd")
-    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
+    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "opdDefault.inst")
 
     # Declare the opd metrology and add the interested field points
@@ -48,7 +48,7 @@ def main(phosimDir):
 
     # Write the instance file
     instFilePath = tele.writeOpdInstFile(outputDir, metr,
-                                         instOverrideFile=instOverrideFile,
+                                         instSettingFile=instSettingFile,
                                          instFileName="opd.inst")
 
     # Get the argument to run the PhoSim

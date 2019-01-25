@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def precondition(phosimDir):

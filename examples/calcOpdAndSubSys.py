@@ -16,7 +16,7 @@ def main(phosimDir):
 
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "opdDefault.cmd")
-    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
+    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "opdDefault.inst")
 
     # Declare the opd metrology and add the interested field points
@@ -64,7 +64,7 @@ def main(phosimDir):
 
     # Write the instance file
     instFilePath = tele.writeOpdInstFile(outputDir, metr,
-                                         instOverrideFile=instOverrideFile,
+                                         instSettingFile=instSettingFile,
                                          instFileName="opd.inst")
 
     # Get the argument to run the PhoSim
