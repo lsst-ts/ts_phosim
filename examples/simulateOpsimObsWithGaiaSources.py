@@ -4,7 +4,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath, createObservation
+from lsst.ts.phosim.Utility import getModulePath, getOpsimObservation
 
 
 def main(phosimDir):
@@ -25,6 +25,7 @@ def main(phosimDir):
     skySim = SkySim.fromObservationWithGaiaSources(obs)
 
     # Set the focal plane information
+    instName = "lsst"
     folderPath2FocalPlane = os.path.join(phosimDir, "data", instName)
     skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
