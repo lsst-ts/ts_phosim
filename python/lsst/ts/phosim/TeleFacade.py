@@ -42,12 +42,7 @@ class TeleFacade(object):
         self.defocalDisInMm = 1.5
 
         # Default Observation
-        self.obs = createObservation(obsId=9999,
-            filterType=FilterType.REF,
-            boresight=(0,0),
-            zAngleInDeg=0,
-            rotAngInDeg=0,
-            mjd=59552.3)
+        self.obs = createObservation()
 
         self.sensorOn = {"sciSensorOn": True,
                          "wfSensorOn": True,
@@ -433,6 +428,10 @@ class TeleFacade(object):
 
         rot = self.obs.rotSkyPos
         mjd = self.obs.mjd.TAI
+
+        # Handle with FilterType.REF
+        filt = mapFilterRefToG(FilterType.fromString(self.obs.bandpass))
+        self.obs.setBandpassM5andSeeing(filt.toString())
 
         self.phoSimCommu.writeObsHeader(instFilePath, self.obs, mode="w")
 

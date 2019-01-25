@@ -42,9 +42,7 @@ class TestUtility(unittest.TestCase):
         obs = createObservation(obsId=obsId)
 
         self.assertEqual(obs.OpsimMetaData['obsHistID'], obsId)
-        self.assertIsNone(obs.bandpass)
-        self.assertIsNone(obs.rotSkyPos)
-        self.assertIsNone(obs.mjd)
+        self.assertEqual(obs.rotSkyPos, 0)
 
     def testCreateObservationBadZenith(self):
 

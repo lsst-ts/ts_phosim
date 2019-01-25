@@ -3,6 +3,7 @@ from enum import Enum
 import pickle
 
 from lsst.sims.utils import ObservationMetaData
+from lsst.ts.wep.Utility import FilterType
 
 import lsst.ts.phosim
 
@@ -73,32 +74,44 @@ def createObservation(obsId=None, filterType=None, boresight=None,
     ObservationMetaData
         An observation with the set parameters.
     """
-    altitude = None
+    _altitude = 90
     if zAngleInDeg is not None:
         if not (0 <= zAngleInDeg <= 90):
             raise ValueError("zAngleInDeg must be between 0 and 90 degrees.")
-        altitude = 90 - zAngleInDeg
+        _altitude = 90 - zAngleInDeg
     
-    ra = None
-    dec = None
+    _ra = 0
+    _dec = 0
     if boresight is not None:
-        ra = boresight[0]
-        dec = boresight[1]
+        _ra = boresight[0]
+        _dec = boresight[1]
 
-    filterString = None
+    _filterString = FilterType.REF.toString()
     if filterType is not None:
-        filterString = filterType.toString()
+        _filterString = filterType.toString()
+
+    _rotAngInDeg = 0
+    if rotAngInDeg is not None:
+        _rotAngInDeg = rotAngInDeg
+
+    _obsId = 9999
+    if obsId is not None:
+        _obsId = obsId
+
+    _mjd = 59552.3
+    if mjd is not None:
+        _mjd = mjd
 
     obs = ObservationMetaData(
-            mjd=mjd, 
-            pointingRA=ra,
-            pointingDec=dec,
-            rotSkyPos=rotAngInDeg,
-            bandpassName=filterString
+            mjd=_mjd, 
+            pointingRA=_ra,
+            pointingDec=_dec,
+            rotSkyPos=_rotAngInDeg,
+            bandpassName=_filterString
         )
     obs.OpsimMetaData = {
-        "obsHistID": obsId,
-        "altitude": altitude
+        "obsHistID": _obsId,
+        "altitude": _altitude
     }
     return obs
 
