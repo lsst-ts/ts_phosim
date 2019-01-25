@@ -28,6 +28,9 @@ def main(phosimDir):
     rotSkyPos = 10
     mjd = 59580.0
 
+    obs = createObservation(obsId=obsId, filterType=filterType,
+                    boresight=(ra, decl), rotAngInDeg=rotSkyPos, mjd=mjd)
+
     # Declare the SkySim()
     skySim = SkySim()
 
@@ -36,7 +39,7 @@ def main(phosimDir):
     skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
     # Set the observation information
-    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+    skySim.setObservationMetaData(obs)
 
     # Add the interested stars
     sensorName = "R22_S11"
@@ -53,8 +56,7 @@ def main(phosimDir):
                                   "telescopeConfig", "GT.inst")
     tele = TeleFacade(configFilePath=configFilePath)
     tele.setSubSysConfigDir(phosimDir=phosimDir)
-    obs = createObservation(obsId=obsId, filterType=filterType,
-                        boresight=(ra, decl), rotAngInDeg=rotSkyPos, mjd=mjd)
+
     tele.setObservation(obs)
     tele.setInstName(instName)
 
