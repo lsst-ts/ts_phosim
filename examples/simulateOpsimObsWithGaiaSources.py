@@ -62,5 +62,5 @@ def main(phosimDir):
 
 if __name__ == "__main__":
 
-    phosimDir = "/home/dthomas5/Code/phosim_syseng4/"
+    phosimDir = "/project/activeoptics/firstdonuts/phosim_syseng4"
     main(phosimDir)
