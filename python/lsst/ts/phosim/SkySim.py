@@ -32,7 +32,7 @@ class SkySim(object):
         self._sourProc = SourceProcessor()
 
     @staticmethod
-    def fromObservation(obs):
+    def fromObservationWithGaiaSources(obs):
         """Instantiate a SkySim object from an Observation.
         Queries Gaia catalog to populate with sources.
 

@@ -19,10 +19,10 @@ class TestSkySim(unittest.TestCase):
         self.skySim = SkySim()
         self.skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
-    def testFromObservation(self):
+    def testFromObservationWithGaiaSources(self):
         
         obs = getOpsimObservation()
-        sky = SkySim.fromObservation(obs)
+        sky = SkySim.fromObservationWithGaiaSources(obs)
 
         self.assertEqual(len(sky.starId), 9750)
         self.assertEqual(sky.starId[0], 5481441669240026752)
@@ -30,9 +30,6 @@ class TestSkySim(unittest.TestCase):
     def testGetOpsimObservation(self):
         
         obs = getOpsimObservation()
-        sky = SkySim.fromObservation(obs)
-        obs = sky.getObservationMetaData()
-
         self.assertAlmostEqual(obs.pointingRA, 96.0554, places=4)
 
     def testAddStarByRaDecInDeg(self):
