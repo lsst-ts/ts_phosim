@@ -86,7 +86,7 @@ class SkySim(object):
             width = u.Quantity(widthRA * SkySim.QUERY_BUFFER, u.deg)
             height = u.Quantity(heightDecl * SkySim.QUERY_BUFFER, u.deg)
             stars = Gaia.query_object_async(coordinate=target, width=width,
-                height=height)
+                height=height, verbose=False)
 
             # add stars to sky
             sky.addStarByRaDecInDeg(
