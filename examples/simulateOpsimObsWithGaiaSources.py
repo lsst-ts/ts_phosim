@@ -53,7 +53,7 @@ def main(phosimDir):
     # Get the argument to run the PhoSim
     logFilePath = os.path.join(outputImgDir, "phosimStar.log")
     argString = tele.getPhoSimArgs(instFilePath, extraCommandFile=cmdFilePath,
-                                   numPro=8, outputDir=outputImgDir, e2ADC=0,
+                                   numPro=8, outputDir=outputImgDir, e2ADC=1,
                                    logFilePath=logFilePath)
 
     # Run the PhoSim
