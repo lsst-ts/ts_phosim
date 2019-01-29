@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def main(phosimDir):
@@ -16,7 +16,7 @@ def main(phosimDir):
 
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "starDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
+    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "starSingleExp.inst")
 
     # Survey information
@@ -30,6 +30,10 @@ def main(phosimDir):
     rotSkyPos = np.rad2deg(-1.2323)
     mjd = 59580.0
 
+    obs = createObservation(obsId=obsId, filterType=filterType,
+                        boresight=(ra, decl), zAngleInDeg=zAngleInDeg,
+                        rotAngInDeg=rotSkyPos, mjd=mjd)
+
     # Declare the SkySim()
     skySim = SkySim()
 
@@ -38,7 +42,7 @@ def main(phosimDir):
     skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
     # Set the observation information
-    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+    skySim.setObservationMetaData(obs)
 
     # Add the interested stars
     sensorName = "R22_S11"
@@ -62,9 +66,7 @@ def main(phosimDir):
     tele.setSubSysConfigDir(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir,
                             M2dataDir=M2dataDir, phosimDir=phosimDir)
 
-    tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                        boresight=(ra, decl), zAngleInDeg=zAngleInDeg,
-                        rotAngInDeg=rotSkyPos, mjd=mjd)
+    tele.setObservation(obs)
     tele.setInstName(instName)
 
     # Generate the perturbation
@@ -90,7 +92,7 @@ def main(phosimDir):
 
     # Write the instance file
     instFilePath = tele.writeStarInstFile(outputDir, skySim,
-                                          instSettingFile=instSettingFile,
+                                          instOverrideFile=instOverrideFile,
                                           instFileName="star.inst")
 
     # Get the argument to run the PhoSim

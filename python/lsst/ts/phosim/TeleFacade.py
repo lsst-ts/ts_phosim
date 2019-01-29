@@ -2,13 +2,15 @@ import os
 import re
 import numpy as np
 
+from lsst.sims.utils import ObservationMetaData
 from lsst.ts.wep.Utility import FilterType, mapFilterRefToG
 
 from lsst.ts.phosim.CamSim import CamSim
 from lsst.ts.phosim.M1M3Sim import M1M3Sim
 from lsst.ts.phosim.M2Sim import M2Sim
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import SurfaceType, CamDistType, mapSurfNameToEnum
+from lsst.ts.phosim.Utility import SurfaceType, CamDistType, mapSurfNameToEnum, \
+    createObservation
 
 
 class TeleFacade(object):
@@ -36,14 +38,12 @@ class TeleFacade(object):
 
         self.dofInUm = np.zeros(50)
 
-        self.surveyParam = {"instName": "lsst",
-                            "defocalDisInMm": 1.5,
-                            "obsId": 9999,
-                            "filterType": FilterType.REF,
-                            "boresight": (0, 0),
-                            "zAngleInDeg": 0,
-                            "rotAngInDeg": 0,
-                            "mjd": 59552.3}
+        self.instName = "lsst"
+        self.defocalDisInMm = 1.5
+
+        # Default Observation
+        self.obs = createObservation()
+
         self.sensorOn = {"sciSensorOn": True,
                          "wfSensorOn": True,
                          "guidSensorOn": False}
@@ -59,51 +59,27 @@ class TeleFacade(object):
             defocal distance in mm.
         """
 
-        return self.surveyParam["defocalDisInMm"]
+        return self.defocalDisInMm
 
-    def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
-                       zAngleInDeg=None, rotAngInDeg=None, mjd=None):
-        """Set the survey parameters.
-
-        Parameters
-        ----------
-        obsId : int, optional
-            Observation Id. (the default is None.)
-        filterType : FilterType, optional
-            Active filter type. (the default is None.)
-        boresight : tuple, optional
-            Telescope boresight in (ra, decl). (the default is None.)
-        zAngleInDeg : float, optional
-            Zenith angle in degree. (the default is None.)
-        rotAngInDeg : float, optional
-            Camera rotation angle in degree between -90 and 90 degrees. (the
-            default is None.)
-        mjd : float, optional
-            MJD of observation. (the default is None.)
-        """
-
-        self._setSurveyParamItem("obsId", obsId, int)
-        self._setSurveyParamItem("filterType", filterType, FilterType)
-        self._setSurveyParamItem("boresight", boresight, tuple)
-        self._setSurveyParamItem("zAngleInDeg", zAngleInDeg, (int, float))
-        self._setSurveyParamItem("rotAngInDeg", rotAngInDeg, (int, float))
-        self._setSurveyParamItem("mjd", mjd, (int, float))
-
-    def _setSurveyParamItem(self, dictKeyName, varValue, varType):
-        """Set the item in the dictionary of survey parameters.
+    def setObservation(self, obs):
+        """Set the survey parameters from an observation.
 
         Parameters
         ----------
-        dictKeyName : str
-            Name of dictionary key.
-        varValue : int, tuple, float, or FilterType
-            Variable value.
-        varType: int, tuple, float, or FilterType
-            Variable type.
+        obs : ObservationMetaData
+            The observation parameters.
         """
+        self.obs = obs
 
-        if (isinstance(varValue, varType)):
-            self.surveyParam[dictKeyName] = varValue
+    def getObservation(self):
+        """Get the observation.
+
+        Returns
+        -------
+        ObservationMetaData
+            The observation parameters.
+        """
+        return self.obs
 
     def setSensorOn(self, sciSensorOn=True, wfSensorOn=True,
                     guidSensorOn=False):
@@ -248,10 +224,9 @@ class TeleFacade(object):
             Arguments to run the PhoSim.
         """
 
-        instName = self.surveyParam["instName"]
         argString = self.phoSimCommu.getPhoSimArgs(
             instFilePath, extraCommandFile=extraCommandFile, numProc=numPro,
-            numThread=numThread, outputDir=outputDir, instrument=instName,
+            numThread=numThread, outputDir=outputDir, instrument=self.instName,
             sensorName=sensorName, e2ADC=e2ADC, logFilePath=logFilePath)
 
         return argString
@@ -284,8 +259,8 @@ class TeleFacade(object):
             # Default defocal distance is 1.5 mm
             defocalOffset = 1.5
 
-        self.surveyParam["instName"] = instName
-        self.surveyParam["defocalDisInMm"] = defocalOffset
+        self.instName = instName
+        self.defocalDisInMm = defocalOffset
 
     def setDofInUm(self, dofInUm):
         """Set the accumulated degree of freedom (DOF) in um.
@@ -415,7 +390,7 @@ class TeleFacade(object):
         return cmdFilePath
 
     def writeStarInstFile(self, instFileDir, skySim, simSeed=1000,
-                          sedName="sed_flat.txt", instSettingFile=None,
+                          sedName="sed_flat.txt", instOverrideFile=None,
                           instFileName="star.inst"):
         """Write the star instance file.
 
@@ -430,8 +405,9 @@ class TeleFacade(object):
         sedName : str, optional
             The name of the SED file with a file path that is relative to the
             data directory in PhoSim. (the default is "sed_flat.txt".)
-        instSettingFile : str optional
-            Instance setting file. (the default is None.)
+        instOverrideFile : str optional
+            Instance setting file to with PhoSim arguments to override observation.
+            (the default is None.)
         instFileName : str, optional
             Star instance file name. (the default is "star.inst".)
 
@@ -444,26 +420,24 @@ class TeleFacade(object):
         # Instance file path
         instFilePath = os.path.join(instFileDir, instFileName)
 
-        # Get the filter ID in PhoSim
-        aFilterId = self._getFilterIdInPhoSim()
-
         # Write the default instance setting
-        obsId = self.surveyParam["obsId"]
+        obsId = self.obs.OpsimMetaData["obsHistID"]
 
-        boresight = self.surveyParam["boresight"]
-        ra = boresight[0]
-        dec = boresight[1]
+        ra = self.obs.pointingRA
+        dec = self.obs.pointingDec
 
-        rot = self.surveyParam["rotAngInDeg"]
-        mjd = self.surveyParam["mjd"]
+        rot = self.obs.rotSkyPos
+        mjd = self.obs.mjd.TAI
 
-        self.phoSimCommu.getStarInstance(
-            obsId, aFilterId, ra=ra, dec=dec, rot=rot, mjd=mjd,
-            simSeed=simSeed, filePath=instFilePath)
+        # Handle with FilterType.REF
+        filt = mapFilterRefToG(FilterType.fromString(self.obs.bandpass))
+        self.obs.setBandpassM5andSeeing(filt.toString())
+
+        self.phoSimCommu.writeObsHeader(instFilePath, self.obs, mode="w")
 
         if (instFilePath is not None):
             self.phoSimCommu.writeToFile(instFilePath,
-                                         sourceFile=instSettingFile)
+                                         sourceFile=instOverrideFile)
 
         # Write the telescope accumulated degree of freedom (DOF)
         content = self.phoSimCommu.doDofPert(self.dofInUm)
@@ -477,7 +451,7 @@ class TeleFacade(object):
             guidSensorOn=guidSensorOn)
 
         # Use the SED file of single wavelendth if the reference filter is used.
-        filterType = self.surveyParam["filterType"]
+        filterType = FilterType.fromString(self.obs.bandpass)
         if (filterType == FilterType.REF):
             self._writeSedFileIfPhoSimDirSet()
             sedName = "sed_%s.txt" % int(self.WAVELENGTH_IN_NM)
@@ -500,7 +474,7 @@ class TeleFacade(object):
             Active filter ID in PhoSim.
         """
 
-        filterType = self.surveyParam["filterType"]
+        filterType = FilterType.fromString(self.obs.bandpass)
         mappedFilterType = mapFilterRefToG(filterType)
 
         return self.phoSimCommu.getFilterId(mappedFilterType)
@@ -530,17 +504,16 @@ class TeleFacade(object):
         instFilePath = os.path.join(instFileDir, instFileName)
 
         # Get the observation ID
-        obsId = self.surveyParam["obsId"]
+        obsId = self.obs.OpsimMetaData["obsHistID"]
 
         # Get the filter ID in PhoSim
         aFilterId = self._getFilterIdInPhoSim()
 
         # Add the sky information
-        boresight = self.surveyParam["boresight"]
-        ra = boresight[0]
-        dec = boresight[1]
+        ra = self.obs.pointingRA
+        dec = self.obs.pointingDec
 
-        rot = self.surveyParam["rotAngInDeg"]
+        rot = self.obs.rotSkyPos
 
         # Write the default instance setting
         self.phoSimCommu.getOpdInstance(obsId, aFilterId, ra=ra, dec=dec, 
@@ -622,7 +595,7 @@ class TeleFacade(object):
         content = ""
 
         # Get the zenith angle in radian
-        zAngleInDeg = self.surveyParam["zAngleInDeg"]
+        zAngleInDeg = 90 - self.obs.OpsimMetaData["altitude"]
         zAngleInRad = np.deg2rad(zAngleInDeg)
 
         # Get the numeber of grid used in Zemax
@@ -715,7 +688,7 @@ class TeleFacade(object):
 
         if (self.cam is not None):
             # Set the camera rotation angle
-            rotAngInDeg = self.surveyParam["rotAngInDeg"]
+            rotAngInDeg = self.obs.rotSkyPos
             self.cam.setRotAngInDeg(rotAngInDeg)
 
             # Set the temperature information

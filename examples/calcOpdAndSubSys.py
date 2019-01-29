@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def main(phosimDir):
@@ -41,8 +41,9 @@ def main(phosimDir):
     filterType = FilterType.REF
     zAngleInDeg = 27.0912
     rotAngInDeg = np.rad2deg(-1.2323)
-    tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                        zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+    obs = createObservation(obsId=obsId, filterType=filterType,
+                    zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+    tele.setObservation(obs)
 
     # Generate the perturbation
     iSim = 6

@@ -1,11 +1,73 @@
 import unittest
 
+from lsst.ts.wep.Utility import FilterType
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans, \
-                                   mapSurfNameToEnum, SurfaceType
+                                   mapSurfNameToEnum, SurfaceType, getWfChips, \
+                                   createObservation, getOpsimObservation
 
 
 class TestUtility(unittest.TestCase):
     """Test the Utility functions."""
+
+    def testGetWfChips(self):
+
+        wfChips = getWfChips()
+        self.assertEqual(len(wfChips), 4)
+        self.assertEqual(len(wfChips[0]), 2)
+
+    def testCreateObservationFullParameters(self):
+
+        obsId = 100
+        filterType = FilterType.U
+        boresight = (10, 20)
+        zAngleInDeg = 10.0
+        rotAngInDeg = 11.0
+        mjd = 4000.0
+
+        obs = createObservation(obsId=obsId, filterType=filterType,
+                            boresight=boresight, zAngleInDeg=zAngleInDeg,
+                            rotAngInDeg=rotAngInDeg, mjd=mjd)
+
+        self.assertEqual(obs.OpsimMetaData["obsHistID"], obsId)
+        self.assertEqual(obs.bandpass, filterType.toString())
+        self.assertEqual(obs.pointingRA, boresight[0])
+        self.assertEqual(obs.pointingDec, boresight[1])
+        self.assertEqual(90 - obs.OpsimMetaData["altitude"], zAngleInDeg)
+        self.assertEqual(obs.rotSkyPos, rotAngInDeg)
+        self.assertAlmostEqual(obs.mjd.TAI, mjd)
+
+    def testCreateObservationMissingParameters(self):
+
+        obsId = 100
+        obs = createObservation(obsId=obsId)
+
+        self.assertEqual(obs.OpsimMetaData["obsHistID"], obsId)
+        self.assertEqual(obs.rotSkyPos, 0)
+
+    def testCreateObservationBadZenith(self):
+
+        badZenith = -45
+        with self.assertRaises(ValueError):
+            createObservation(zAngleInDeg=badZenith)
+
+    def testGetOpsimObservation(self):
+
+        obs = getOpsimObservation(0, 0)
+        self.assertEqual(obs.bandpass, 'y')
+
+    def testGetOpsimObservationBadTract(self):
+
+        badTract = -1
+        goodTarget = 10
+        with self.assertRaises(ValueError):
+            getOpsimObservation(badTract, goodTarget)
+
+    def testGetOpsimObservationBadTarget(self):
+
+        goodTract = 0
+        badTarget = 50
+        with self.assertRaises(ValueError):
+            getOpsimObservation(goodTract, badTarget)
 
     def testPhosim2ZemaxCoorTrans(self):
 

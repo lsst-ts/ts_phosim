@@ -1,5 +1,9 @@
 import os
 from enum import Enum
+import pickle
+
+from lsst.sims.utils import ObservationMetaData
+from lsst.ts.wep.Utility import FilterType
 
 import lsst.ts.phosim
 
@@ -27,6 +31,130 @@ class SurfaceType(Enum):
     L3B = 11
     FP = 12
     Chip = 13
+
+
+def getWfChips():
+    """Get the wavefront sensors on the focal plane.
+
+    Returns
+    -------
+    list or str
+        The wavefront sensor names.
+    """
+    return [
+        ("R:0,0 S:2,2,A", "R:0,0 S:2,2,B"),
+        ("R:0,4 S:2,0,A", "R:0,4 S:2,0,B"),
+        ("R:4,0 S:0,2,A", "R:4,0 S:0,2,B"),
+        ("R:4,4 S:0,0,A", "R:4,4 S:0,0,B")
+        ]
+
+
+def createObservation(obsId=None, filterType=None, boresight=None,
+                       zAngleInDeg=None, rotAngInDeg=None, mjd=None):
+    """Create a new Observation based on the provided parameters.
+
+    Parameters
+    ----------
+    obsId : int, optional
+        Observation Id. (the default is None.)
+    filterType : FilterType, optional
+        Active filter type. (the default is None.)
+    boresight : tuple, optional
+        Telescope boresight in (ra, decl). (the default is None.)
+    zAngleInDeg : float, optional
+        Zenith angle in degree. (the default is None.)
+    rotAngInDeg : float, optional
+        Camera rotation angle in degree between -90 and 90 degrees. (the
+        default is None.)
+    mjd : float, optional
+        MJD of observation. (the default is None.)
+
+    Returns
+    _______
+    ObservationMetaData
+        An observation with the set parameters.
+
+    Raises
+    ------
+    ValueError
+        zAngleInDeg must be between 0 and 90 degrees.
+    """
+    _altitude = 90
+    if zAngleInDeg is not None:
+        if not (0 <= zAngleInDeg <= 90):
+            raise ValueError("zAngleInDeg must be between 0 and 90 degrees.")
+        _altitude = 90 - zAngleInDeg
+    
+    _ra = 0
+    _dec = 0
+    if boresight is not None:
+        _ra = boresight[0]
+        _dec = boresight[1]
+
+    _filterString = FilterType.REF.toString()
+    if filterType is not None:
+        _filterString = filterType.toString()
+
+    _rotAngInDeg = 0
+    if rotAngInDeg is not None:
+        _rotAngInDeg = rotAngInDeg
+
+    _obsId = 9999
+    if obsId is not None:
+        _obsId = obsId
+
+    _mjd = 59552.3
+    if mjd is not None:
+        _mjd = mjd
+
+    obs = ObservationMetaData(
+            mjd=_mjd, 
+            pointingRA=_ra,
+            pointingDec=_dec,
+            rotSkyPos=_rotAngInDeg,
+            bandpassName=_filterString
+        )
+    obs.OpsimMetaData = {
+        "obsHistID": _obsId,
+        "altitude": _altitude
+    }
+    return obs
+
+
+def getOpsimObservation(tract=0, target=0):
+    """Get the Opsim Observation corresponding to the tract and target.
+    The tracts are shown in doc/tracts.png.
+
+    Parameters
+    ----------
+    tract : int, optional
+        The tract to get the catalog from. Ranges from 0-9 inclusive.
+        doc/tracts.png shows the different tracts and their relative
+        positions. The default is 0.
+    target : int, optional
+        The target within a tract to get the catalog from. Ranges from 0-29
+        inclusive. doc/tracts.png shows the different targets and their 
+        relative positions.The default is 0.
+
+    Returns
+    -------
+    ObservationMetaData
+        The selected observation.
+
+    Raises
+    ______
+    Value Error
+        The tract, target combination must be such that 0 <= tract < 10, 0 <= target < 30.
+    """
+    badTract = (tract < 0) or (tract >= 10)
+    badTarget = (target < 0) or (target >= 30)
+    if badTarget or badTract:
+        raise ValueError("The tract, target combination is out of bounds.")
+
+    tractFile = os.path.join(getModulePath(), "configData", "tract", str(tract))
+    with open(tractFile, "rb") as r:
+        tract = pickle.load(r, encoding="latin1")
+    return tract[target]
 
 
 def getModulePath(module=lsst.ts.phosim, startIdx=1, endIdx=-4):

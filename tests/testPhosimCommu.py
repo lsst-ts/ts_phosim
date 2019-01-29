@@ -4,7 +4,8 @@ import unittest
 
 from lsst.ts.wep.Utility import FilterType
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import getModulePath, SurfaceType
+from lsst.ts.phosim.Utility import getModulePath, SurfaceType, \
+    getOpsimObservation
 
 
 class TestPhosimCommu(unittest.TestCase):
@@ -99,12 +100,19 @@ class TestPhosimCommu(unittest.TestCase):
         ansContent += "none none \n"
         self.assertEqual(content, ansContent)
 
-    def testGetStarInstance(self):
+    def testWriteObsHeader(self):
 
-        obsId = 100
-        aFilterId = 1
-        content = self.phosimCom.getStarInstance(obsId, aFilterId)
-        self.assertEqual(len(content.split("\n")), 8)
+        path = os.path.join(getModulePath(), "tests", "temp.inst")
+        obs = getOpsimObservation()
+        self.phosimCom.writeObsHeader(path, obs)
+        found = False
+        with open(path, "r") as r:
+            for line in r:
+                if 'nsnap' in line:
+                    found = True
+                    self.assertEqual(int(line.split()[-1]), 1)
+        self.assertTrue(found, "'nsnap' missing from file.")
+        os.remove(path)
 
     def testGetOpdInstance(self):
 

@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def precondition(phosimDir):
@@ -18,6 +18,9 @@ def precondition(phosimDir):
     rotSkyPos = 10
     mjd = 59580.0
 
+    obs = createObservation(filterType=filterType, boresight=(ra, decl),
+                        rotAngInDeg=rotSkyPos, mjd=mjd)
+
     # Declare the SkySim()
     skySim = SkySim()
 
@@ -26,7 +29,7 @@ def precondition(phosimDir):
     skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
     # Set the observation information
-    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+    skySim.setObservationMetaData(obs)
 
     # Add the interested stars
     sensorName = "R22_S11"
@@ -48,8 +51,8 @@ def precondition(phosimDir):
                                   "telescopeConfig", "GT.inst")
     tele = TeleFacade(configFilePath=configFilePath)
     tele.setSubSysConfigDir(phosimDir=phosimDir)
-    tele.setSurveyParam(filterType=filterType, boresight=(ra, decl),
-                        rotAngInDeg=rotSkyPos, mjd=mjd)
+    
+    tele.setObservation(obs)
     tele.setInstName(instName)
 
     return tele, skySim
@@ -62,7 +65,7 @@ def main(phosimDir):
     outputImgDir = os.path.join(outputDir, "img")
     cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
                                   "starDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
+    instOverrideFile = os.path.join(getModulePath(), "configData", "instFile",
                                    "starSingleExp.inst")
 
     # Get the objects of TeleFacade and SkySim classes
@@ -97,7 +100,7 @@ def main(phosimDir):
 
         # Write the star instance file
         instFilePath = tele.writeStarInstFile(
-            outputDir, skySim, instSettingFile=instSettingFile,
+            outputDir, skySim, instOverrideFile=instOverrideFile,
             instFileName=instFileNameList[str(ii)])
 
         # Get the argument to run the phosim

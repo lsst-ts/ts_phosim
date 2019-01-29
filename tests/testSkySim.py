@@ -3,7 +3,9 @@ import numpy as np
 import unittest
 
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, getOpsimObservation, \
+    createObservation
+from lsst.ts.wep.Utility import FilterType
 
 
 class TestSkySim(unittest.TestCase):
@@ -16,6 +18,19 @@ class TestSkySim(unittest.TestCase):
                                              "testData", "testOpdFunc")
         self.skySim = SkySim()
         self.skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
+
+    def testFromObservationWithGaiaSources(self):
+        
+        obs = getOpsimObservation()
+        sky = SkySim.fromObservationWithGaiaSources(obs)
+
+        self.assertEqual(len(sky.starId), 9750)
+        self.assertEqual(sky.starId[0], 5481441669240026752)
+
+    def testGetOpsimObservation(self):
+        
+        obs = getOpsimObservation()
+        self.assertAlmostEqual(obs.pointingRA, 96.0554, places=4)
 
     def testAddStarByRaDecInDeg(self):
 
@@ -85,12 +100,16 @@ class TestSkySim(unittest.TestCase):
         self.assertAlmostEqual(self.skySim.decl[0], 0.0001889)
 
     def _setObservationMetaData(self):
-
         ra = 0
         decl = 0
         rotSkyPos = 0
         mjd = 59580.0
-        self.skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+
+        obs = createObservation(
+            boresight=(ra, decl), 
+            rotAngInDeg=rotSkyPos,
+            mjd=mjd)
+        self.skySim.setObservationMetaData(obs)
 
 
 if __name__ == "__main__":

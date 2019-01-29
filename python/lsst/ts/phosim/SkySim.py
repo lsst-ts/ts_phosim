@@ -1,14 +1,23 @@
 import numpy as np
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astroquery.gaia import Gaia
 
 from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.utils import ObservationMetaData
-from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords
+from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords, \
+    getCornerRaDec
 
+from lsst.ts.phosim.Utility import getWfChips
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 from lsst.ts.wep.Utility import expandDetectorName
 
 
 class SkySim(object):
+
+    # how much larger the radius of the query region should be 
+    # for the corner wavefront sensors.
+    QUERY_BUFFER = np.sqrt(2) * 1.1
 
     def __init__(self):
         """Initialization of sky simulator class."""
@@ -22,6 +31,72 @@ class SkySim(object):
         self._obs = ObservationMetaData()
         self._sourProc = SourceProcessor()
 
+    @staticmethod
+    def fromObservationWithGaiaSources(obs):
+        """Instantiate a SkySim object from an Observation.
+        Queries Gaia catalog to populate with sources.
+
+        Parameters
+        ----------
+        obs : ObservationMetaData
+
+        Returns
+        -------
+        SkySim
+            The Sky corresponding to the observation
+
+        Raises
+        ______
+        ValueError
+            If the wf sensor ra straddles 360' divide.
+
+        """
+        sky = SkySim()
+        sky._obs = obs
+
+        for pair in getWfChips():
+
+            # find target center and width for query
+            chipA = pair[0]
+            chipB = pair[1]
+            cornersA = getCornerRaDec(chipA, sky._camera, sky._obs, 
+                epoch=sky._obs.mjd.TAI, includeDistortion=True)
+            cornersB = getCornerRaDec(chipB, sky._camera, sky._obs, 
+                epoch=sky._obs.mjd.TAI, includeDistortion=True)
+            corners = cornersA + cornersB
+            cornersRA = np.array([x[0] for x in corners])
+            cornersDecl = np.array([x[1] for x in corners])
+            minRA = cornersRA.min()
+            maxRA = cornersRA.max()
+            minDecl = cornersDecl.min()
+            maxDecl = cornersDecl.max()
+
+            if (maxRA - minRA) > 180:
+                raise ValueError("Do not handle the degree wrap-around\
+                    case yet (ra ~ 360').")
+
+            midRA = (minRA + maxRA) / 2
+            midDecl = (minDecl + maxDecl) / 2 
+            widthRA = maxRA - minRA
+            heightDecl = maxDecl - minDecl
+
+            # make query
+            target = SkyCoord(ra=midRA, dec=midDecl, unit=(u.degree, u.degree),
+                frame='icrs')
+            width = u.Quantity(widthRA * SkySim.QUERY_BUFFER, u.deg)
+            height = u.Quantity(heightDecl * SkySim.QUERY_BUFFER, u.deg)
+            stars = Gaia.query_object_async(coordinate=target, width=width,
+                height=height, verbose=False)
+
+            # add stars to sky
+            sky.addStarByRaDecInDeg(
+                stars['source_id'],
+                stars['ra'],
+                stars['dec'],
+                stars['phot_g_mean_mag'])
+
+        return sky
+
     def setCamera(self, camera):
         """Set the camera object.
 
@@ -34,24 +109,26 @@ class SkySim(object):
 
         self._camera = camera
 
-    def setObservationMetaData(self, ra, decl, rotSkyPos, mjd):
+    def setObservationMetaData(self, obs):
         """Set the observation meta data.
 
         Parameters
         ----------
-        ra : float
-            Pointing ra in degree.
-        decl : float
-            Pointing decl in degree.
-        rotSkyPos : float
-            The orientation of the telescope in degrees.
-        mjd : float
-            Camera MJD.
+        obs : ObservationMetaData
+            The observation.
         """
 
-        self._obs = ObservationMetaData(pointingRA=ra, pointingDec=decl,
-                                        rotSkyPos=rotSkyPos,
-                                        mjd=mjd)
+        self._obs = obs
+
+    def getObservationMetaData(self):
+        """Get the observation.
+
+        Returns
+        -------
+        ObservationMetaData
+            The observation.
+        """
+        return self._obs
 
     def setFolderPath2FocalPlane(self, folderPath2FocalPlane):
         """Set the folder path to focal plane data.

@@ -5,7 +5,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.TeleFacade import TeleFacade
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, createObservation
 
 
 def main(phosimDir):
@@ -32,7 +32,8 @@ def main(phosimDir):
 
     obsId = 9006050
     filterType = FilterType.REF
-    tele.setSurveyParam(obsId=obsId, filterType=filterType)
+    obs = createObservation(obsId=obsId, filterType=filterType)
+    tele.setObservation(obs)
 
     # Update the telescope degree of freedom
     dofInUm = np.zeros(50)
