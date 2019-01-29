@@ -28,7 +28,7 @@ class TestUtility(unittest.TestCase):
                             boresight=boresight, zAngleInDeg=zAngleInDeg,
                             rotAngInDeg=rotAngInDeg, mjd=mjd)
 
-        self.assertEqual(obs.OpsimMetaData['obsHistID'], obsId)
+        self.assertEqual(obs.OpsimMetaData["obsHistID"], obsId)
         self.assertEqual(obs.bandpass, filterType.toString())
         self.assertEqual(obs.pointingRA, boresight[0])
         self.assertEqual(obs.pointingDec, boresight[1])
@@ -41,7 +41,7 @@ class TestUtility(unittest.TestCase):
         obsId = 100
         obs = createObservation(obsId=obsId)
 
-        self.assertEqual(obs.OpsimMetaData['obsHistID'], obsId)
+        self.assertEqual(obs.OpsimMetaData["obsHistID"], obsId)
         self.assertEqual(obs.rotSkyPos, 0)
 
     def testCreateObservationBadZenith(self):
@@ -54,6 +54,20 @@ class TestUtility(unittest.TestCase):
 
         obs = getOpsimObservation(0, 0)
         self.assertEqual(obs.bandpass, 'y')
+
+    def testGetOpsimObservationBadTract(self):
+
+        badTract = -1
+        goodTarget = 10
+        with self.assertRaises(ValueError):
+            getOpsimObservation(badTract, goodTarget)
+
+    def testGetOpsimObservationBadTarget(self):
+
+        goodTract = 0
+        badTarget = 50
+        with self.assertRaises(ValueError):
+            getOpsimObservation(goodTract, badTarget)
 
     def testPhosim2ZemaxCoorTrans(self):
 

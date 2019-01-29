@@ -73,6 +73,11 @@ def createObservation(obsId=None, filterType=None, boresight=None,
     _______
     ObservationMetaData
         An observation with the set parameters.
+
+    Raises
+    ------
+    ValueError
+        zAngleInDeg must be between 0 and 90 degrees.
     """
     _altitude = 90
     if zAngleInDeg is not None:
@@ -123,18 +128,30 @@ def getOpsimObservation(tract=0, target=0):
     Parameters
     ----------
     tract : int, optional
-        The tract to get the catalog from. 
-        (the default is 0. See doc/tracts.png)
+        The tract to get the catalog from. Ranges from 0-9 inclusive.
+        doc/tracts.png shows the different tracts and their relative
+        positions. The default is 0.
     target : int, optional
-        The target within a tract to get the catalog from. 
-        (the default is 0. See doc/tracts.png)
+        The target within a tract to get the catalog from. Ranges from 0-29
+        inclusive. doc/tracts.png shows the different targets and their 
+        relative positions.The default is 0.
 
     Returns
     -------
     ObservationMetaData
         The selected observation.
+
+    Raises
+    ______
+    Value Error
+        The tract, target combination must be such that 0 <= tract < 10, 0 <= target < 30.
     """
-    tractFile = os.path.join(getModulePath(), "configData/tract/{}".format(tract))
+    badTract = (tract < 0) or (tract >= 10)
+    badTarget = (target < 0) or (target >= 30)
+    if badTarget or badTract:
+        raise ValueError("The tract, target combination is out of bounds.")
+
+    tractFile = os.path.join(getModulePath(), "configData", "tract", str(tract))
     with open(tractFile, "rb") as r:
         tract = pickle.load(r, encoding="latin1")
     return tract[target]

@@ -55,12 +55,12 @@ class TestTeleFacade(unittest.TestCase):
         obsId = 99
         obs = createObservation(obsId=obsId)
         self.tele.setObservation(obs)
-        self.assertEqual(self.tele.obs.OpsimMetaData['obsHistID'], obsId)
+        self.assertEqual(self.tele.obs.OpsimMetaData["obsHistID"], obsId)
 
     def testGetObservation(self):
         
-        retObsId = self.tele.getObservation().OpsimMetaData['obsHistID']
-        self.assertEqual(self.tele.obs.OpsimMetaData['obsHistID'], 9006000)
+        retObsId = self.tele.getObservation().OpsimMetaData["obsHistID"]
+        self.assertEqual(self.tele.obs.OpsimMetaData["obsHistID"], 9006000)
 
     def testGetDefocalDisInMm(self):
 

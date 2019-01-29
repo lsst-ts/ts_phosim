@@ -8,7 +8,7 @@ from lsst.sims.utils import ObservationMetaData
 from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords, \
     getCornerRaDec
 
-from lsst.ts.phosim.Utility import getOpsimObservation, getWfChips
+from lsst.ts.phosim.Utility import getWfChips
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 from lsst.ts.wep.Utility import expandDetectorName
 
