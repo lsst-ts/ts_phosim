@@ -24,6 +24,12 @@
 <br/>
 *Updated to use the scientific pipeline of sims_w_2019_02. Reuse the FilterType Enum from ts_tcs_wep.*
 <br/>
+<br/>
+*Version 1.1.2*
+<br/>
+<br/>
+*Added functionality to use Opsim observations, Gaia catalog queries, and correctly produce PhoSim instance catalogs.*
+<br/>
 
 *Author: Te-Wei Tsai*
 <br/>
