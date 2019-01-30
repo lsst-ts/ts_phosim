@@ -226,7 +226,7 @@ class TestTeleFacade(unittest.TestCase):
     def testWriteOpdInstFileWithFilterRef(self):
 
         obs = deepcopy(self.tele.obs)
-        obs.setBandpassM5andSeeing(FilterType.Ref.toString())
+        obs.setBandpassM5andSeeing(FilterType.REF.toString())
         self.tele.setObservation(obs)
 
         metr, opdInstSettingFile = self._generateOpd()
@@ -258,7 +258,7 @@ class TestTeleFacade(unittest.TestCase):
     def testWriteStarInstFileWithFilterRef(self):
 
         obs = deepcopy(self.tele.obs)
-        obs.setBandpassM5andSeeing(FilterType.Ref.toString())
+        obs.setBandpassM5andSeeing(FilterType.REF.toString())
         self.tele.setObservation(obs)
 
         skySim, starInstOverrideFile = self._generateFakeSky()
