@@ -39,7 +39,7 @@
 ## 3. Needed Package
 
 - *lsst_sims (-t sims_w_2019_02)*
-- *ts_tcs_wep - develop branch (commit: d59002a)*
+- *ts_tcs_wep - develop branch (commit: 973cbc5)*
 
 ## 4. Use of Module
 

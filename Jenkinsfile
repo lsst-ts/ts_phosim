@@ -41,7 +41,7 @@ pipeline {
                         conda install -y -c astropy astroquery
                         git clone --branch develop https://github.com/lsst-ts/ts_tcs_wep.git
                         cd ts_tcs_wep/
-                        git checkout d59002a
+                        git checkout 973cbc5
                         python builder/setup.py build_ext --build-lib python/lsst/ts/wep/cwfs/lib
                     """
                 }
