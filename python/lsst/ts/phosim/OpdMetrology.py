@@ -240,8 +240,7 @@ class OpdMetrology(object):
         # Do the spherical Zernike fitting for the OPD map
         # Only fit the first three terms (z1-z3): piston, x-tilt, y-tilt
         zk, opd, opdx, opdy = self.getZkFromOpd(
-                                    opdFitsFile=opdFitsFile, opdMap=opdMap,
-                                    znTerms=3, obscuration=0)
+            opdFitsFile=opdFitsFile, opdMap=opdMap, znTerms=3, obscuration=0)
 
         # Find the index that the value of OPD is not 0
         idx = (opd != 0)
@@ -273,8 +272,8 @@ class OpdMetrology(object):
                         folderPath2FocalPlane=folderPath2FocalPlane)
 
         # Do the coordinate transformation
-        fieldXInDegree, fieldYInDegree = sourProc.camXYtoFieldXY(
-                                                    xInpixel, yInPixel)
+        fieldXInDegree, fieldYInDegree = sourProc.camXYtoFieldXY(xInpixel,
+                                                                 yInPixel)
 
         # Add to listed field x, y
         self.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)

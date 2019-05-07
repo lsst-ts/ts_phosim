@@ -57,7 +57,7 @@ class TestCamSim(unittest.TestCase):
         zenithAngleInDeg = 27.0912
         zAngleInRad = np.deg2rad(zenithAngleInDeg)
         distortionInMn = self.camSim.getCamDistortionInMm(
-                                        zAngleInRad, CamDistType.L1S1zer)
+            zAngleInRad, CamDistType.L1S1zer)
 
         dataFilePath = os.path.join(getModulePath(), "tests", "testData",
                                     "testOpdFunc", "sim6_iter0_pert.cmd")

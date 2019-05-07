@@ -200,7 +200,7 @@ class TeleFacade(object):
             value = float(value)
             if (value == int(value)):
                 value = int(value)
-        except Exception as ValueError:
+        except ValueError:
             pass
 
         return value
@@ -476,7 +476,8 @@ class TeleFacade(object):
             sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn,
             guidSensorOn=guidSensorOn)
 
-        # Use the SED file of single wavelendth if the reference filter is used.
+        # Use the SED file of single wavelendth if the reference filter is
+        # used.
         filterType = self.surveyParam["filterType"]
         if (filterType == FilterType.REF):
             self._writeSedFileIfPhoSimDirSet()
@@ -543,7 +544,7 @@ class TeleFacade(object):
         rot = self.surveyParam["rotAngInDeg"]
 
         # Write the default instance setting
-        self.phoSimCommu.getOpdInstance(obsId, aFilterId, ra=ra, dec=dec, 
+        self.phoSimCommu.getOpdInstance(obsId, aFilterId, ra=ra, dec=dec,
                                         rot=rot, filePath=instFilePath)
         if (instSettingFile is not None):
             self.phoSimCommu.writeToFile(instFilePath,

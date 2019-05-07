@@ -1,7 +1,7 @@
 import unittest
 
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans, \
-                                   mapSurfNameToEnum, SurfaceType
+    mapSurfNameToEnum, SurfaceType
 
 
 class TestUtility(unittest.TestCase):
@@ -11,7 +11,7 @@ class TestUtility(unittest.TestCase):
 
         xInPhosim, yInPhosim, zInPhosim = 1, 2, 3
         xInZemax, yInZemax, zInZemax = opt2ZemaxCoorTrans(
-                                        xInPhosim, yInPhosim, zInPhosim)
+            xInPhosim, yInPhosim, zInPhosim)
         self.assertEqual((xInZemax, yInZemax, zInZemax),
                          (-xInPhosim, yInPhosim, -zInPhosim))
 
@@ -19,7 +19,7 @@ class TestUtility(unittest.TestCase):
 
         xInZemax, yInZemax, zInZemax = 1, 2, 3
         xInPhosim, yInPhosim, zInPhosim = zemax2optCoorTrans(
-                                            xInZemax, yInZemax, zInZemax)
+            xInZemax, yInZemax, zInZemax)
         self.assertEqual((xInPhosim, yInPhosim, zInPhosim),
                          (-xInZemax, yInZemax, -zInZemax))
 

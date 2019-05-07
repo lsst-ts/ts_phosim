@@ -188,8 +188,7 @@ class SkySim(object):
         # Add the star information
         for ii in range(len(self.starId)):
             content += "%d\t %3.6f\t %3.6f\t %3.6f\n" % (
-                        self.starId[ii], self.ra[ii], self.decl[ii],
-                        self.mag[ii])
+                self.starId[ii], self.ra[ii], self.decl[ii], self.mag[ii])
 
         # Write into file
         fid = open(outputFilePath, "w")
@@ -227,9 +226,8 @@ class SkySim(object):
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = self._getSkyPosByChipPos(
-                                      sensorName, xInpixelInCam,
-                                      yInPixelInCam, epoch=epoch,
-                                      includeDistortion=includeDistortion)
+            sensorName, xInpixelInCam, yInPixelInCam, epoch=epoch,
+            includeDistortion=includeDistortion)
 
         # Add the star
         self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
@@ -275,10 +273,9 @@ class SkySim(object):
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = raDecFromPixelCoords(
-                                pixelDmX, pixelDmY, expendedSensorName,
-                                camera=self._camera, obs_metadata=self._obs,
-                                epoch=epoch,
-                                includeDistortion=includeDistortion)
+            pixelDmX, pixelDmY, expendedSensorName, camera=self._camera,
+            obs_metadata=self._obs, epoch=epoch,
+            includeDistortion=includeDistortion)
 
         return raInDeg, declInDeg
 

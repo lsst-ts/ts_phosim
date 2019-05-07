@@ -49,7 +49,7 @@ def getModulePath(module=lsst.ts.phosim, startIdx=1, endIdx=-4):
 
     # Get the path of module
     modulePathList = os.path.dirname(module.__file__).split(
-                                os.sep)[int(startIdx):int(endIdx)]
+        os.sep)[int(startIdx):int(endIdx)]
     modulePath = os.path.join(os.sep, *modulePathList)
 
     return modulePath
@@ -106,7 +106,7 @@ def zemax2optCoorTrans(x, y, z):
 
 
 def mapSurfNameToEnum(surfName):
-    """Map the surface name to Enum: SurfaceType. 
+    """Map the surface name to Enum: SurfaceType.
 
     Parameters
     ----------
@@ -129,7 +129,7 @@ def mapSurfNameToEnum(surfName):
         idx = nameList.index(surfName.strip())
         return SurfaceType(idx + 1)
     except ValueError:
-        raise ValueError ("No surface type is found.")
+        raise ValueError("No surface type is found.")
 
 
 if __name__ == "__main__":

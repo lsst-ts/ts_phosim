@@ -712,7 +712,7 @@ def otf2psf(otf):
     """
 
     psf = np.absolute(np.fft.fftshift(np.fft.ifft2(
-                                        np.fft.fftshift(otf), s=otf.shape)))
+        np.fft.fftshift(otf), s=otf.shape)))
 
     return psf
 

@@ -162,12 +162,12 @@ class M2Sim(MirrorSim):
 
         # Transform the M2 coordinate to Zemax coordinate
         bxInZemax, byInZemax, surfInZemax = opt2ZemaxCoorTrans(
-                                                bx, by, self.getSurfAlongZ())
+            bx, by, self.getSurfAlongZ())
 
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()
         resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
-                                surfInZemax, bxInZemax/RinM, byInZemax/RinM)
+            surfInZemax, bxInZemax/RinM, byInZemax/RinM)
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -205,7 +205,7 @@ class M2Sim(MirrorSim):
         # Get the residure map
         resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
             self.getMirrorResInMmInZemax(
-                        writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
+                writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
 
         # Change the unit from m to mm
         innerRinMm = self.getInnerRinM() * 1e3
@@ -215,9 +215,8 @@ class M2Sim(MirrorSim):
         # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
         # Content: (z, dx, dy, dxdy)
         content = self._gridSampInMnInZemax(
-                            resInMmInZemax, bxInMmInZemax, byInMmInZemax,
-                            innerRinMm, outerRinMm, surfaceGridN, surfaceGridN,
-                            resFile=resFile)
+            resInMmInZemax, bxInMmInZemax, byInMmInZemax, innerRinMm,
+            outerRinMm, surfaceGridN, surfaceGridN, resFile=resFile)
 
         return content
 

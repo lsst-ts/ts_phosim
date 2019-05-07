@@ -438,12 +438,12 @@ class M1M3Sim(MirrorSim):
 
         # Transform the M1M3 coordinate to Zemax coordinate
         bxInZemax, byInZemax, surfInZemax = opt2ZemaxCoorTrans(
-                                                bx, by, self.getSurfAlongZ())
+            bx, by, self.getSurfAlongZ())
 
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()[0]
         resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
-                                surfInZemax, bxInZemax/RinM, byInZemax/RinM)
+            surfInZemax, bxInZemax/RinM, byInZemax/RinM)
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -483,7 +483,7 @@ class M1M3Sim(MirrorSim):
         # Get the residure map
         resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
             self.getMirrorResInMmInZemax(
-                        writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
+                writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
 
         # Get the mirror node
         idx1, idx3 = self._getMirCoor()[0:2]
@@ -499,10 +499,9 @@ class M1M3Sim(MirrorSim):
             # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
             # Content: (z, dx, dy, dxdy)
             content = self._gridSampInMnInZemax(
-                                resInMmInZemax[idx], bxInMmInZemax[idx],
-                                byInMmInZemax[idx], innerRinMm, outerRinMm,
-                                surfaceGridN, surfaceGridN,
-                                resFile=resFile[ii])
+                resInMmInZemax[idx], bxInMmInZemax[idx], byInMmInZemax[idx],
+                innerRinMm, outerRinMm, surfaceGridN, surfaceGridN,
+                resFile=resFile[ii])
             if (ii == 0):
                 contentM1 = content
             elif (ii == 1):
@@ -563,7 +562,7 @@ class M1M3Sim(MirrorSim):
         LUTforce = self.getLUTforce(zangleInDeg)
 
         # Assume the M1M3ForceError=0.05
-        # Add 5% force error to the original actuator forces 
+        # Add 5% force error to the original actuator forces
         # This means from -5% to +5% of original actuator's force.
         np.random.seed(int(seedNum))
         nActuator = len(LUTforce)

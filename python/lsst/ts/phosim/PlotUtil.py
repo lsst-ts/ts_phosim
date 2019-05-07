@@ -1,10 +1,8 @@
 import numpy as np
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 
-import matplotlib
-# Must be before importing matplotlib.pyplot or pylab!
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.switch_backend('Agg')
 
 
 def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
@@ -118,8 +116,7 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
         for sensorName in sourProc.sensorDimList.keys():
 
             # Get the CCD corner field points in degree
-            pointXinDeg, pointYinDeg = _getCCDBoundInDeg(
-                                            sourProc, sensorName)
+            pointXinDeg, pointYinDeg = _getCCDBoundInDeg(sourProc, sensorName)
 
             # Plot the boundary
             pointXinDeg.append(pointXinDeg[0])
