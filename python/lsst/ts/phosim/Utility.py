@@ -1,7 +1,7 @@
 import os
 from enum import Enum
 
-import lsst.ts.phosim
+from lsst.utils import getPackageDir
 
 
 class CamDistType(Enum):
@@ -29,30 +29,28 @@ class SurfaceType(Enum):
     Chip = 13
 
 
-def getModulePath(module=lsst.ts.phosim, startIdx=1, endIdx=-4):
+def getModulePath():
     """Get the path of module.
-
-    Parameters
-    ----------
-    module : str, optional
-        Module name. (the default is lsst.ts.ofc.)
-    startIdx : int, optional
-        Start index. (the default is 1.)
-    endIdx : int, optional
-        End index. (the default is -4.)
 
     Returns
     -------
     str
-        Directory path of module based on the start and end indexes.
+        Directory path of module.
     """
 
-    # Get the path of module
-    modulePathList = os.path.dirname(module.__file__).split(
-        os.sep)[int(startIdx):int(endIdx)]
-    modulePath = os.path.join(os.sep, *modulePathList)
+    return getPackageDir("ts_phosim")
 
-    return modulePath
+
+def getConfigDir():
+    """Get the directory of configuration files.
+
+    Returns
+    -------
+    str
+        Directory of configuration files.
+    """
+
+    return os.path.join(getModulePath(), "policy")
 
 
 def opt2ZemaxCoorTrans(x, y, z):
