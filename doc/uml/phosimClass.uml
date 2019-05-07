@@ -1,0 +1,10 @@
+@startuml
+MirrorSim <|-- M1M3Sim
+MirrorSim <|-- M2Sim
+TeleFacade ..> SkySim
+TeleFacade ..> OpdMetrology
+TeleFacade o-- PhoSimCommu
+TeleFacade "1" o-- "0..1" CamSim 
+TeleFacade "1" o-- "0..1" M1M3Sim
+TeleFacade "1" o-- "0..1" M2Sim
+@enduml
