@@ -11,28 +11,28 @@ class TestM2Sim(unittest.TestCase):
 
     def setUp(self):
 
-        mirrorDataDir = os.path.join(getModulePath(), "configData", "M2")
-        self.M2 = M2Sim(mirrorDataDir=mirrorDataDir)
-        self.M2.config()
+        self.m2 = M2Sim()
+        self.testM2Data = os.path.join(getModulePath(), "tests", "testData",
+                                       "testM2Func")
+        self.outputDir = os.path.join(getModulePath(), "output")
 
     def testInit(self):
 
-        self.assertEqual(self.M2.getInnerRinM(), 0.9)
-        self.assertEqual(self.M2.getOuterRinM(), 1.71)
+        self.assertEqual(self.m2.getInnerRinM(), 0.9)
+        self.assertEqual(self.m2.getOuterRinM(), 1.71)
 
     def testGetActForce(self):
 
-        forceInN = self.M2.getActForce()
+        forceInN = self.m2.getActForce()
         self.assertEqual(forceInN.shape, (156, 156))
 
     def testGetPrintthz(self):
 
         zAngleInDeg = 27.0912
         zAngleInRadian = np.deg2rad(zAngleInDeg)
-        printthzInUm = self.M2.getPrintthz(zAngleInRadian)
+        printthzInUm = self.m2.getPrintthz(zAngleInRadian)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM2Func", "M2printthz.txt")
+        ansFilePath = os.path.join(self.testM2Data, "M2printthz.txt")
         ansPrintthzInUm = np.loadtxt(ansFilePath)
         self.assertLess(np.sum(np.abs(printthzInUm-ansPrintthzInUm)), 1e-10)
 
@@ -40,10 +40,9 @@ class TestM2Sim(unittest.TestCase):
 
         M2TzGrad = -0.0675
         M2TrGrad = -0.1416
-        tempCorrInUm = self.M2.getTempCorr(M2TzGrad, M2TrGrad)
+        tempCorrInUm = self.m2.getTempCorr(M2TzGrad, M2TrGrad)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM2Func", "M2tempCorr.txt")
+        ansFilePath = os.path.join(self.testM2Data, "M2tempCorr.txt")
         ansTempCorrInUm = np.loadtxt(ansFilePath)
         self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 1e-10)
 
@@ -51,10 +50,9 @@ class TestM2Sim(unittest.TestCase):
 
         numTerms = 28
         self._setSurfAlongZ()
-        zcInMmInZemax = self.M2.getMirrorResInMmInZemax()[3]
+        zcInMmInZemax = self.m2.getMirrorResInMmInZemax()[3]
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM2Func", "sim6_M2zlist.txt")
+        ansFilePath = os.path.join(self.testM2Data, "sim6_M2zlist.txt")
         ansZcInUmInZemax = np.loadtxt(ansFilePath)
         ansZcInMmInZemax = ansZcInUmInZemax*1e-3
 
@@ -66,22 +64,21 @@ class TestM2Sim(unittest.TestCase):
 
         zAngleInDeg = 27.0912
         zAngleInRadian = np.deg2rad(zAngleInDeg)
-        printthzInUm = self.M2.getPrintthz(zAngleInRadian)
+        printthzInUm = self.m2.getPrintthz(zAngleInRadian)
 
         M2TzGrad = -0.0675
         M2TrGrad = -0.1416
-        tempCorrInUm = self.M2.getTempCorr(M2TzGrad, M2TrGrad)
+        tempCorrInUm = self.m2.getTempCorr(M2TzGrad, M2TrGrad)
 
         mirrorSurfInUm = printthzInUm + tempCorrInUm
-        self.M2.setSurfAlongZ(mirrorSurfInUm)
+        self.m2.setSurfAlongZ(mirrorSurfInUm)
 
     def testWriteMirZkAndGridResInZemax(self):
 
         resFile = self._writeMirZkAndGridResInZemax()
         content = np.loadtxt(resFile)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM2Func", "sim6_M2res.txt")
+        ansFilePath = os.path.join(self.testM2Data, "sim6_M2res.txt")
         ansContent = np.loadtxt(ansFilePath)
 
         self.assertLess(np.sum(np.abs(content[0, :]-ansContent[0, :])), 1e-9)
@@ -92,18 +89,17 @@ class TestM2Sim(unittest.TestCase):
     def _writeMirZkAndGridResInZemax(self):
 
         self._setSurfAlongZ()
-        resFile = os.path.join(getModulePath(), "output", "M2res.txt")
-        self.M2.writeMirZkAndGridResInZemax(resFile=resFile)
+        resFile = os.path.join(self.outputDir, "M2res.txt")
+        self.m2.writeMirZkAndGridResInZemax(resFile=resFile)
 
         return resFile
 
     def testShowMirResMap(self):
 
         resFile = self._writeMirZkAndGridResInZemax()
-        writeToResMapFilePath = os.path.join(getModulePath(), "output",
-                                             "M2resMap.png")
+        writeToResMapFilePath = os.path.join(self.outputDir, "M2resMap.png")
 
-        self.M2.showMirResMap(resFile,
+        self.m2.showMirResMap(resFile,
                               writeToResMapFilePath=writeToResMapFilePath)
         self.assertTrue(os.path.isfile(writeToResMapFilePath))
 

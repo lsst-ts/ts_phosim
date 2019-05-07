@@ -11,14 +11,7 @@ class TestCamSim(unittest.TestCase):
 
     def setUp(self):
 
-        camDataDir = os.path.join(getModulePath(), "configData", "camera")
-        self.camSim = CamSim(camDataDir=camDataDir)
-
-    def testSetAndGetCamDataDir(self):
-
-        camDataDir = "NotCamDataDir"
-        self.camSim.setCamDataDir(camDataDir)
-        self.assertEqual(self.camSim.getCamDataDir(), camDataDir)
+        self.camSim = CamSim()
 
     def testSetRotAngInRad(self):
 
@@ -44,10 +37,8 @@ class TestCamSim(unittest.TestCase):
         self.camSim.setBodyTempInDegC(tempInDegC)
         self.assertEqual(self.camSim.camTBinDegC, tempInDegC)
 
-        self.assertRaises(ValueError, self.camSim.setBodyTempInDegC,
-                          self.camSim.MIN_TEMP_IN_DEG_C-0.1)
-        self.assertRaises(ValueError, self.camSim.setBodyTempInDegC,
-                          self.camSim.MAX_TEMP_IN_DEG_C+0.1)
+        self.assertRaises(ValueError, self.camSim.setBodyTempInDegC, 1.9)
+        self.assertRaises(ValueError, self.camSim.setBodyTempInDegC, 16.1)
 
     def testGetCamDistortionInMm(self):
 

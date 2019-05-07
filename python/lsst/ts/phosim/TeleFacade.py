@@ -335,22 +335,17 @@ class TeleFacade(object):
             PhoSim directory. (the default is None.)
         """
 
-        # Get the number of zernike terms used in Zemax
-        numTerms = self.getConfigValue("znPert")
+        # Change here in a latter time since there is no config dir needed
+        # anymore.
 
         if (camDataDir is not None):
             self.cam = CamSim()
-            self.cam.setCamDataDir(camDataDir)
 
         if (M1M3dataDir is not None):
             self.M1M3 = M1M3Sim()
-            self.M1M3.setMirrorDataDir(M1M3dataDir)
-            self.M1M3.config(numTerms=numTerms)
 
         if (M2dataDir is not None):
             self.M2 = M2Sim()
-            self.M2.setMirrorDataDir(M2dataDir)
-            self.M2.config(numTerms=numTerms)
 
         if (phosimDir is not None):
             self.phoSimCommu.setPhoSimDir(phosimDir)

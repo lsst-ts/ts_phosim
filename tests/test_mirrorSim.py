@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from lsst.ts.phosim.MirrorSim import MirrorSim
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getConfigDir
 
 
 class TestMirrorSim(unittest.TestCase):
@@ -13,8 +13,12 @@ class TestMirrorSim(unittest.TestCase):
 
         self.innerRinM = 0.9
         self.outerRinM = 1.710
-        self.mirror = MirrorSim(self.innerRinM, self.outerRinM)
-        self.mirror.config()
+
+        configDir = os.path.join(getConfigDir(), "M2")
+        self.mirror = MirrorSim(self.innerRinM, self.outerRinM, configDir)
+        self.mirror.config(numTerms=28,
+                           actForceFileName="M2_1um_force.yaml",
+                           lutFileName="")
 
     def testInit(self):
 
@@ -24,21 +28,6 @@ class TestMirrorSim(unittest.TestCase):
     def testGetNumTerms(self):
 
         self.assertEqual(self.mirror.getNumTerms(), 28)
-
-    def testSetMirrorDataDir(self):
-
-        mirrorDataDir = "MirrorDataDir"
-        self.mirror.setMirrorDataDir(mirrorDataDir)
-        self.assertEqual(self.mirror.mirrorDataDir, mirrorDataDir)
-
-    def testGetMirrorData(self):
-
-        M2DataDir = os.path.join(getModulePath(), "configData", "M2")
-        self.mirror.setMirrorDataDir(M2DataDir)
-
-        dataFileName = "M2_GT_FEA.txt"
-        data = self.mirror.getMirrorData(dataFileName, skiprows=1)
-        self.assertEqual(data.shape, (9084, 6))
 
     def testSetAndGetSurfAlongZ(self):
 
@@ -50,18 +39,18 @@ class TestMirrorSim(unittest.TestCase):
 
     def testGetLUTforce(self):
 
-        M1M3DataDir = os.path.join(getModulePath(), "configData", "M1M3")
+        m1m3DataDir = os.path.join(getConfigDir(), "M1M3")
+        mirror = MirrorSim(self.innerRinM, self.outerRinM, m1m3DataDir)
+        mirror.config(numTerms=28, lutFileName="M1M3_LUT.yaml")
 
         zangleInDeg = 1.5
-        LUTfileName = "M1M3_LUT.txt"
+        lutForce = mirror.getLUTforce(zangleInDeg)
 
-        self.mirror.setMirrorDataDir(M1M3DataDir)
-        self.mirror.config(LUTfileName=LUTfileName)
-        LUTforce = self.mirror.getLUTforce(zangleInDeg)
-
-        oriLutForce = self.mirror.getMirrorData(LUTfileName, skiprows=1)
+        # Skip the row 1 as the ruler
+        oriLutForce = mirror._lutFile.getMatContent()[1:, :]
         ansLutForce = (oriLutForce[:, 1]+oriLutForce[:, 2])/2
-        self.assertLess(np.sum(np.abs(LUTforce-ansLutForce)), 1e-10)
+
+        self.assertLess(np.sum(np.abs(lutForce-ansLutForce)), 1e-10)
 
     def testGetPrintthz(self):
 

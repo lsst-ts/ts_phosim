@@ -1,14 +1,13 @@
 import os
 import numpy as np
 
+from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.phosim.Utility import getConfigDir
+
 
 class CamSim(object):
 
-    # Bound of camera body temperature in degree C.
-    MIN_TEMP_IN_DEG_C = 2
-    MAX_TEMP_IN_DEG_C = 16
-
-    def __init__(self, camTBinDegC=6.5650, camRotInRad=0, camDataDir=""):
+    def __init__(self, camTBinDegC=6.5650, camRotInRad=0):
         """Initialization of camera simulator class.
 
         This class is used to correct the camera distortion.
@@ -19,35 +18,15 @@ class CamSim(object):
             Camera body temperature in degree C. (the default is 6.5650.)
         camRotInRad : float, optional
             Camera rotation angle in radian. (the default is 0.)
-        camDataDir : str, optional
-            Directory of camera distortion data. (the default is "".)
         """
+
+        self.configDir = os.path.join(getConfigDir(), "camera")
+
+        settingFilePath = os.path.join(self.configDir, "camSetting.yaml")
+        self._camSettingFile = ParamReader(filePath=settingFilePath)
 
         self.camTBinDegC = self.setBodyTempInDegC(camTBinDegC)
         self.camRotInRad = self.setRotAngInRad(camRotInRad)
-        self.camDataDir = camDataDir
-
-    def setCamDataDir(self, camDataDir):
-        """Set the camera distortion data directory.
-
-        Parameters
-        ----------
-        camDataDir : str
-            Camera distortion data directory.
-        """
-
-        self.camDataDir = camDataDir
-
-    def getCamDataDir(self):
-        """Get the camera distortion data directory.
-
-        Returns
-        -------
-        str
-            Camera distortion data directory.
-        """
-
-        return self.camDataDir
 
     def setRotAngInRad(self, rotAngInRad):
         """Set the camera rotation angle in radian.
@@ -86,8 +65,9 @@ class CamSim(object):
             Temperature in degree C.
         """
 
-        if self._valueInRange(tempInDegC, self.MIN_TEMP_IN_DEG_C,
-                              self.MAX_TEMP_IN_DEG_C):
+        minBodyTempInDegC = self._camSettingFile.getSetting("minBodyTemp")
+        maxBodyTempInDegC = self._camSettingFile.getSetting("maxBodyTemp")
+        if self._valueInRange(tempInDegC, minBodyTempInDegC, maxBodyTempInDegC):
             self.camTBinDegC = tempInDegC
 
     def _valueInRange(self, value, lowerBound, upperBound):
@@ -128,7 +108,7 @@ class CamSim(object):
         ----------
         zAngleInRad : float
             Zenith angle in radian.
-        camDistType : CamDistType
+        camDistType : enum 'CamDistType'
             Camera distortion type.
 
         Returns
@@ -139,20 +119,20 @@ class CamSim(object):
 
         # Get the distortion data
         distType = camDistType.name
-        dataFile = os.path.join(self.camDataDir, (distType + ".txt"))
-        data = np.loadtxt(dataFile, skiprows=1)
+        dataFilePath = os.path.join(self.configDir, (distType + ".yaml"))
+        paramReader = ParamReader(filePath=dataFilePath)
+
+        data = paramReader.getMatContent()
 
         # Calculate the gravity and temperature distortions
         distortion = self._calcGravityDist(data, zAngleInRad) + \
             self._calcTempDist(data)
 
-        # The order/ index of Zernike corrections by Andy in file is different
-        # from PhoSim use. Reorder the correction here for PhoSim to use.
-        zidx = [1, 3, 2, 5, 4, 6, 8, 9, 7, 10, 13, 14, 12, 15, 11, 19,
-                18, 20, 17, 21, 16, 25, 24, 26, 23, 27, 22, 28]
+        # Reorder the index of Zernike corrections to match the PhoSim use
+        zIdx = self._camSettingFile.getSetting("zIdxMapping")
 
         # The index of python begins from 0.
-        distortion = distortion[[x - 1 for x in zidx]]
+        distortion = distortion[[x - 1 for x in zIdx]]
 
         return distortion
 

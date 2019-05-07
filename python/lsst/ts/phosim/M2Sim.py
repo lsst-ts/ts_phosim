@@ -1,34 +1,40 @@
+import os
 import numpy as np
 
 from lsst.ts.phosim.MirrorSim import MirrorSim
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans
 from lsst.ts.phosim.PlotUtil import plotResMap
+from lsst.ts.phosim.Utility import getConfigDir
+
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class M2Sim(MirrorSim):
 
-    def __init__(self, mirrorDataDir=""):
-        """Initiate the M2 simulator class.
+    def __init__(self):
+        """Initiate the M2 simulator class."""
 
-        Parameters
-        ----------
-        mirrorDataDir : str, optional
-            Mirror data directory. (the default is "".)
-        """
+        # M2 setting file
+        configDir = os.path.join(getConfigDir(), "M2")
+        settingFilePath = os.path.join(configDir, "m2Setting.yaml")
+        self._m2SettingFile = ParamReader(filePath=settingFilePath)
 
         # Inner and outer radius of M2 mirror in m
-        Ri = 0.9
-        R = 1.710
+        radiusInner = self._m2SettingFile.getSetting("radiusInner")
+        radiusOuter = self._m2SettingFile.getSetting("radiusOuter")
 
-        super(M2Sim, self).__init__(Ri, R, mirrorDataDir=mirrorDataDir)
-        self.gridFileName = ""
-        self.FEAfileName = ""
+        super(M2Sim, self).__init__(radiusInner, radiusOuter, configDir)
 
-    def config(self, numTerms=28,
-               actForceFileName="M2_1um_force.DAT",
-               LUTfileName="",
-               gridFileName="M2_1um_grid.DAT",
-               FEAfileName="M2_GT_FEA.txt"):
+        # Mirror surface bending mode grid file
+        self._gridFile = ParamReader()
+
+        # Mirror FEA model with gradient temperature data
+        self._feaFile = ParamReader()
+
+        self._config("M2_1um_force.yaml", "", "M2_1um_grid.yaml",
+                     "M2_GT_FEA.yaml")
+
+    def _config(self, actForceFileName, lutFileName, gridFileName, feaFileName):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -36,23 +42,29 @@ class M2Sim(MirrorSim):
 
         Parameters
         ----------
-        numTerms : int, optional
-            Number of Zernike terms to fit. (the default is 28.)
         actForceFileName : str
-            Actuator force file name. (the default is "M2_1um_force.DAT".)
-        LUTfileName : str, optional
-            LUT file name. (the default is "".)
-        gridFileName : str, optional
-            File name of bending mode data. (the default is "M2_1um_grid.DAT".)
-        FEAfileName : str, optional
-            FEA model data file name. (the default is "M2_GT_FEA.txt".)
+            Actuator force file name.
+        lutFileName : str
+            LUT file name.
+        gridFileName : str
+            File name of bending mode data.
+        feaFileName : str
+            FEA model data file name.
         """
+
+        numTerms = self._m2SettingFile.getSetting("numTerms")
 
         super(M2Sim, self).config(numTerms=numTerms,
                                   actForceFileName=actForceFileName,
-                                  LUTfileName=LUTfileName)
-        self._setAttr("gridFileName", gridFileName)
-        self._setAttr("FEAfileName", FEAfileName)
+                                  lutFileName=lutFileName)
+
+        mirrorDataDir = self.getMirrorDataDir()
+
+        gridFilePath = os.path.join(mirrorDataDir, gridFileName)
+        self._gridFile.setFilePath(gridFilePath)
+
+        feaFilePath = os.path.join(mirrorDataDir, feaFileName)
+        self._feaFile.setFilePath(feaFilePath)
 
     def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0):
         """Get the mirror print in um along z direction in specific zenith
@@ -74,7 +86,7 @@ class M2Sim(MirrorSim):
         """
 
         # Read the FEA file
-        data = self.getMirrorData(self.FEAfileName, skiprows=1)
+        data = self._feaFile.getMatContent()
 
         # Zenith direction in um
         zdz = data[:, 2]
@@ -115,7 +127,7 @@ class M2Sim(MirrorSim):
         """
 
         # Read the FEA file
-        data = self.getMirrorData(self.FEAfileName, skiprows=1)
+        data = self._feaFile.getMatContent()
 
         # Z-gradient in um
         tzdz = data[:, 4]
@@ -154,7 +166,7 @@ class M2Sim(MirrorSim):
         """
 
         # Get the bending mode information
-        data = self.getMirrorData(self.gridFileName)
+        data = self._gridFile.getMatContent()
 
         # Get the x, y coordinate
         bx = data[:, 0]

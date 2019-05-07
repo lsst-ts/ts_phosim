@@ -1,0 +1,21 @@
+---
+
+# M1M3 setting
+
+# Inner radius of M1 mirror in m
+radiusM1Inner: 2.558
+
+# Outer radius of M1 mirror in m
+radiusM1Outer: 4.180
+
+# Inner radius of M3 mirror in m
+radiusM3Inner: 0.550
+
+# Outer radius of M3 mirror in m
+radiusM3Outer: 2.508
+
+# Number of actuator in z direction
+numActuatorInZ: 156
+
+# Number of Zernike terms to fit
+numTerms: 28

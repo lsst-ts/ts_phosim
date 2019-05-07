@@ -3,34 +3,46 @@ import numpy as np
 from scipy.interpolate import Rbf
 
 from lsst.ts.wep.cwfs.Tool import ZernikeFit, ZernikeEval
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class MirrorSim(object):
 
-    def __init__(self, innerRinM, outerRinM, mirrorDataDir=""):
+    def __init__(self, innerRinM, outerRinM, mirrorDataDir):
         """Initiate the mirror simulator class.
 
         Parameters
         ----------
-        innerRinM : float
+        innerRinM : float or tuple
             Mirror inner radius in m.
-        outerRinM : float
+        outerRinM : float or tuple
             Mirror outer radius in m.
-        mirrorDataDir : str, optional
-            Mirror data directory. (the default is "".)
+        mirrorDataDir : str
+            Mirror data directory.
         """
 
-        self.RiInM = innerRinM
-        self.RinM = outerRinM
+        # Mirror inner radius
+        self.radiusInner = innerRinM
+
+        # Mirror outer radius
+        self.radiusOuter = outerRinM
+
+        # Configuration data directory
         self.mirrorDataDir = mirrorDataDir
 
-        self.actForceFileName = ""
-        self.LUTfileName = ""
+        # Mirror actuator force
+        self._actForceFile = ParamReader()
 
+        # Look-up table (LUT) file
+        self._lutFile = ParamReader()
+
+        # Mirror surface
         self._surf = np.array([])
+
+        # Number of Zernike terms to fit.
         self._numTerms = 0
 
-    def config(self, numTerms=28, actForceFileName="", LUTfileName=""):
+    def config(self, numTerms=28, actForceFileName="", lutFileName=""):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -41,27 +53,20 @@ class MirrorSim(object):
             Number of Zernike terms to fit. (the default is 28.)
         actForceFileName : str
             Actuator force file name. (the default is "".)
-        LUTfileName : str, optional
+        lutFileName : str, optional
             LUT file name. (the default is "".)
         """
 
         self._numTerms = int(numTerms)
-        self._setAttr("actForceFileName", actForceFileName)
-        self._setAttr("LUTfileName", LUTfileName)
 
-    def _setAttr(self, attrName, value):
-        """Set the attribute value.
+        if (actForceFileName != ""):
+            actForceFilePath = os.path.join(self.mirrorDataDir,
+                                            actForceFileName)
+            self._actForceFile.setFilePath(actForceFilePath)
 
-        Parameters
-        ----------
-        attrName : str
-            Attribute name.
-        value : float, int, str
-            Attribute value.
-        """
-
-        if (value not in (None, "")):
-            setattr(self, attrName, value)
+        if (lutFileName != ""):
+            lutFilePath = os.path.join(self.mirrorDataDir, lutFileName)
+            self._lutFile.setFilePath(lutFilePath)
 
     def getNumTerms(self):
         """Get the number of Zernike terms to fit.
@@ -83,7 +88,7 @@ class MirrorSim(object):
             Inner radius of mirror in meter.
         """
 
-        return self.RiInM
+        return self.radiusInner
 
     def getOuterRinM(self):
         """Get the outer radius of mirror in meter.
@@ -94,39 +99,18 @@ class MirrorSim(object):
             Outer radius of mirror in meter.
         """
 
-        return self.RinM
+        return self.radiusOuter
 
-    def setMirrorDataDir(self, mirrorDataDir):
-        """Set the directory of mirror data.
-
-        Parameters
-        ----------
-        mirrorDataDir : str
-            Directory to mirror data.
-        """
-
-        self.mirrorDataDir = mirrorDataDir
-
-    def getMirrorData(self, dataFileName, skiprows=0):
-        """Get the mirror data.
-
-        Parameters
-        ----------
-        dataFileName : str
-            Data file name.
-        skiprows : int, optional
-            Skip the first 'skiprows' lines (the default is 0.)
+    def getMirrorDataDir(self):
+        """Get the directory of mirror data.
 
         Returns
         -------
-        numpy.ndarray
-            Mirror data.
+        str
+            Directory to mirror data.
         """
 
-        filePath = os.path.join(self.mirrorDataDir, dataFileName)
-        data = np.loadtxt(filePath, skiprows=skiprows)
-
-        return data
+        return self.mirrorDataDir
 
     def setSurfAlongZ(self, surfAlongZinUm):
         """Set the mirror surface along the z direction in um.
@@ -172,7 +156,7 @@ class MirrorSim(object):
         """
 
         # Read the LUT file
-        lut = self.getMirrorData(self.LUTfileName)
+        lut = self._lutFile.getMatContent()
 
         # Get the step. The values of LUT are listed in every step size.
         # The degree range is 0 - 90 degree.
@@ -217,7 +201,7 @@ class MirrorSim(object):
             Actuator forces in N.
         """
 
-        forceInN = self.getMirrorData(self.actForceFileName)
+        forceInN = self._actForceFile.getMatContent()[:, 3:]
 
         return forceInN
 

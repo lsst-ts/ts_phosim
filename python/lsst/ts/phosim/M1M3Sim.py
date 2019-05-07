@@ -1,55 +1,72 @@
+import os
 import numpy as np
 from scipy.interpolate import Rbf
 
 from lsst.ts.phosim.MirrorSim import MirrorSim
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans
 from lsst.ts.phosim.PlotUtil import plotResMap
+from lsst.ts.phosim.Utility import getConfigDir
+
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class M1M3Sim(MirrorSim):
 
-    # Number of actuator in z direction
-    NUM_Z_ACTUATOR = 156
+    def __init__(self):
+        """Initiate the M1M3 simulator class."""
 
-    def __init__(self, mirrorDataDir=""):
-        """Initiate the M1M3 simulator class.
-
-        Parameters
-        ----------
-        mirrorDataDir : {str}, optional
-            Mirror data directory. (the default is "".)
-        """
+        # M2 setting file
+        configDir = os.path.join(getConfigDir(), "M1M3")
+        settingFilePath = os.path.join(configDir, "m1m3Setting.yaml")
+        self._m1m3SettingFile = ParamReader(filePath=settingFilePath)
 
         # Inner and outer radius of M1 mirror in m
-        R1i = 2.558
-        R1 = 4.180
+        radiusM1Inner = self._m1m3SettingFile.getSetting("radiusM1Inner")
+        radiusM1Outer = self._m1m3SettingFile.getSetting("radiusM1Outer")
 
         # Inner and outer radius of M3 mirror in m
-        R3i = 0.550
-        R3 = 2.508
+        radiusM3Inner = self._m1m3SettingFile.getSetting("radiusM3Inner")
+        radiusM3Outer = self._m1m3SettingFile.getSetting("radiusM3Outer")
 
-        super(M1M3Sim, self).__init__((R1i, R3i), (R1, R3),
-                                      mirrorDataDir=mirrorDataDir)
-        self.gridFileName = ""
-        self.FEAfileName = ""
-        self.FEAzenFileName = ""
-        self.FEAhorFileName = ""
+        super(M1M3Sim, self).__init__((radiusM1Inner, radiusM3Inner),
+                                      (radiusM1Outer, radiusM3Outer),
+                                      configDir)
 
-        self.forceZenFileName = ""
-        self.forceHorFileName = ""
-        self.forceInflFileName = ""
+        # Mirror surface bending mode grid file
+        self._gridFile = ParamReader()
 
-    def config(self, numTerms=28,
-               actForceFileName="M1M3_1um_156_force.DAT",
-               LUTfileName="M1M3_LUT.txt",
-               gridFileName="M1M3_1um_156_grid.DAT",
-               FEAfileName="M1M3_thermal_FEA.txt",
-               FEAzenFileName="M1M3_dxdydz_zenith.txt",
-               FEAhorFileName="M1M3_dxdydz_horizon.txt",
-               forceZenFileName="M1M3_force_zenith.txt",
-               forceHorFileName="M1M3_force_horizon.txt",
-               forceInflFileName="M1M3_influence_256.txt"):
+        # FEA model file
+        self._feaFile = ParamReader()
+
+        # FEA model data in zenith angle
+        self._feaZenFile = ParamReader()
+
+        # FEA model data in horizontal angle
+        self._feaHorFile = ParamReader()
+
+        # Actuator forces along zenith direction
+        self._forceZenFile = ParamReader()
+
+        # Actuator forces along horizon direction
+        self._forceHorFile = ParamReader()
+
+        # Influence matrix of actuator forces
+        self._forceInflFile = ParamReader()
+
+        self._config("M1M3_1um_156_force.yaml",
+                     "M1M3_LUT.yaml",
+                     "M1M3_1um_156_grid.yaml",
+                     "M1M3_thermal_FEA.yaml",
+                     "M1M3_dxdydz_zenith.yaml",
+                     "M1M3_dxdydz_horizon.yaml",
+                     "M1M3_force_zenith.yaml",
+                     "M1M3_force_horizon.yaml",
+                     "M1M3_influence_256.yaml")
+
+    def _config(self, actForceFileName, lutFileName, gridFileName, feaFileName,
+                feaZenFileName, feaHorFileName, forceZenFileName,
+                forceHorFileName, forceInflFileName):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -57,46 +74,54 @@ class M1M3Sim(MirrorSim):
 
         Parameters
         ----------
-        numTerms : int, optional
-            Number of Zernike terms to fit. (the default is 28.)
         actForceFileName : str
-            Actuator force file name. (the default is
-            "M1M3_1um_156_force.DAT".)
-        LUTfileName : str, optional
-            LUT file name. (the default is M1M3_LUT.txt".)
-        gridFileName : str, optional
-            File name of bending mode data. (the default is
-            "M1M3_1um_156_grid.DAT".)
-        FEAfileName : str, optional
-            FEA model data file name. (the default is "M1M3_thermal_FEA.txt".)
-        FEAzenFileName : str, optional
-            FEA model data file name in zenith angle. (the default is
-            "M1M3_dxdydz_zenith.txt".)
-        FEAhorFileName : str, optional
-            FEA model data file name in horizontal angle. (the default is
-            "M1M3_dxdydz_horizon.txt".)
-        forceZenFileName : str, optional
-            File name of actuator forces along zenith direction. (the default
-            is "M1M3_force_zenith.txt".)
-        forceHorFileName : str, optional
-            File name of actuator forces along horizon direction. (the default
-            is "M1M3_force_horizon.txt".)
-        forceInflFileName : str, optional
-            Influence matrix of actuator forces. (the default is
-            "M1M3_influence_256.txt".)
+            Actuator force file name.
+        lutFileName : str
+            LUT file name.
+        gridFileName : str
+            File name of bending mode data.
+        feaFileName : str
+            FEA model data file name.
+        feaZenFileName : str
+            FEA model data file name in zenith angle.
+        feaHorFileName : str
+            FEA model data file name in horizontal angle.
+        forceZenFileName : str
+            File name of actuator forces along zenith direction.
+        forceHorFileName : str
+            File name of actuator forces along horizon direction.
+        forceInflFileName : str
+            Influence matrix of actuator forces.
         """
+
+        numTerms = self._m1m3SettingFile.getSetting("numTerms")
 
         super(M1M3Sim, self).config(numTerms=numTerms,
                                     actForceFileName=actForceFileName,
-                                    LUTfileName=LUTfileName)
-        self._setAttr("gridFileName", gridFileName)
-        self._setAttr("FEAfileName", FEAfileName)
-        self._setAttr("FEAzenFileName", FEAzenFileName)
-        self._setAttr("FEAhorFileName", FEAhorFileName)
+                                    lutFileName=lutFileName)
 
-        self._setAttr("forceZenFileName", forceZenFileName)
-        self._setAttr("forceHorFileName", forceHorFileName)
-        self._setAttr("forceInflFileName", forceInflFileName)
+        mirrorDataDir = self.getMirrorDataDir()
+
+        gridFilePath = os.path.join(mirrorDataDir, gridFileName)
+        self._gridFile.setFilePath(gridFilePath)
+
+        feaFilePath = os.path.join(mirrorDataDir, feaFileName)
+        self._feaFile.setFilePath(feaFilePath)
+
+        feaZenFilePath = os.path.join(mirrorDataDir, feaZenFileName)
+        self._feaZenFile.setFilePath(feaZenFilePath)
+
+        feaHorFilePath = os.path.join(mirrorDataDir, feaHorFileName)
+        self._feaHorFile.setFilePath(feaHorFilePath)
+
+        forceZenFilePath = os.path.join(mirrorDataDir, forceZenFileName)
+        self._forceZenFile.setFilePath(forceZenFilePath)
+
+        forceHorFilePath = os.path.join(mirrorDataDir, forceHorFileName)
+        self._forceHorFile.setFilePath(forceHorFilePath)
+
+        forceInflFilePath = os.path.join(mirrorDataDir, forceInflFileName)
+        self._forceInflFile.setFilePath(forceInflFilePath)
 
     def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0):
         """Get the mirror print in m along z direction in specific zenith
@@ -118,12 +143,12 @@ class M1M3Sim(MirrorSim):
         """
 
         # Data needed to determine gravitational print through
-        data = self.getMirrorData(self.FEAzenFileName)
+        data = self._feaZenFile.getMatContent()
         zdx = data[:, 0]
         zdy = data[:, 1]
         zdz = data[:, 2]
 
-        data = self.getMirrorData(self.FEAhorFileName)
+        data = self._feaHorFile.getMatContent()
         hdx = data[:, 0]
         hdy = data[:, 1]
         hdz = data[:, 2]
@@ -188,7 +213,7 @@ class M1M3Sim(MirrorSim):
         """
 
         # Get the bending mode information
-        data = self.getMirrorData(self.gridFileName)
+        data = self._gridFile.getMatContent()
 
         nodeID = data[:, 0].astype("int")
         nodeM1 = (nodeID == 1)
@@ -339,7 +364,7 @@ class M1M3Sim(MirrorSim):
         """
 
         # Data needed to determine thermal deformation
-        data = self.getMirrorData(self.FEAfileName, skiprows=1)
+        data = self._feaFile.getMatContent()
 
         # These are the normalized coordinates
 
@@ -570,7 +595,7 @@ class M1M3Sim(MirrorSim):
 
         # Balance forces along z-axis
         # This statement is intentionally to make the force balance.
-        nzActuator = int(self.NUM_Z_ACTUATOR)
+        nzActuator = int(self._m1m3SettingFile.getSetting("numActuatorInZ"))
         myu[nzActuator-1] = np.sum(LUTforce[:nzActuator]) - \
             np.sum(myu[:nzActuator-1])
 
@@ -580,12 +605,12 @@ class M1M3Sim(MirrorSim):
             np.sum(myu[nzActuator:-1])
 
         # Get the net force along the z-axis
-        zf = self.getMirrorData(self.forceZenFileName)
-        hf = self.getMirrorData(self.forceHorFileName)
+        zf = self._forceZenFile.getMatContent()
+        hf = self._forceHorFile.getMatContent()
         u0 = zf*np.cos(zAngleInRadian) + hf*np.sin(zAngleInRadian)
 
         # Calculate the random surface
-        G = self.getMirrorData(self.forceInflFileName)
+        G = self._forceInflFile.getMatContent()
         randSurfInM = G.dot(myu - u0)
 
         return randSurfInM

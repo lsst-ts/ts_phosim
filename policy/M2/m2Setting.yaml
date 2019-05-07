@@ -1,0 +1,12 @@
+---
+
+# M2 setting
+
+# Inner radius of M2 mirror in m
+radiusInner: 0.9
+
+# Outer radius of M2 mirror in m
+radiusOuter: 1.710
+
+# Number of Zernike terms to fit
+numTerms: 28
