@@ -42,4 +42,4 @@ scons
 
 ## 6. Reference of PhoSim with active optics (AOS)
 
-- The original work was done by Bo Xian and Chuck Claver. The source code can be found in: [IM](https://github.com/bxin/IM).
+- The original work was done by Bo Xin and Chuck Claver. The source code can be found in: [IM](https://github.com/bxin/IM).
