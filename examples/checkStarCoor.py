@@ -31,10 +31,6 @@ def main(phosimDir):
     # Declare the SkySim()
     skySim = SkySim()
 
-    # Set the focal plane information
-    folderPath2FocalPlane = os.path.join(phosimDir, "data", instName)
-    skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
-
     # Set the observation information
     skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
 

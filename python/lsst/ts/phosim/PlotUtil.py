@@ -86,8 +86,7 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
         plt.show()
 
 
-def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
-                 saveToFilePath=None, dpi=None):
+def showFieldMap(fieldX=None, fieldY=None, saveToFilePath=None, dpi=None):
     """Show the field map in degree.
 
     Parameters
@@ -96,8 +95,6 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
         Field x in degree. (the default is None.)
     fieldY : numpy.ndarray, optional
         Field y in degree. (the default is None.)
-    folderPath2FocalPlane : str, optional
-        Folder directory to focal plane file. (the default is None.)
     saveToFilePath : str, optional
         File path to save the figure. (the default is None.)
     dpi : int, optional
@@ -108,20 +105,18 @@ def showFieldMap(fieldX=None, fieldY=None, folderPath2FocalPlane=None,
     plt.figure()
 
     # Get the focal plane information
-    if (folderPath2FocalPlane is not None):
-        sourProc = SourceProcessor()
-        sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
+    sourProc = SourceProcessor()
 
-        # Plot the CCD boundary
-        for sensorName in sourProc.sensorDimList.keys():
+    # Plot the CCD boundary
+    for sensorName in sourProc.sensorDimList.keys():
 
-            # Get the CCD corner field points in degree
-            pointXinDeg, pointYinDeg = _getCCDBoundInDeg(sourProc, sensorName)
+        # Get the CCD corner field points in degree
+        pointXinDeg, pointYinDeg = _getCCDBoundInDeg(sourProc, sensorName)
 
-            # Plot the boundary
-            pointXinDeg.append(pointXinDeg[0])
-            pointYinDeg.append(pointYinDeg[0])
-            plt.plot(pointXinDeg, pointYinDeg, "b")
+        # Plot the boundary
+        pointXinDeg.append(pointXinDeg[0])
+        pointYinDeg.append(pointYinDeg[0])
+        plt.plot(pointXinDeg, pointYinDeg, "b")
 
     # Plot the field X, Y position
     if (fieldX is not None) and (fieldY is not None):

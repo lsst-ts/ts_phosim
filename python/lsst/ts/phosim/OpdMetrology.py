@@ -268,8 +268,7 @@ class OpdMetrology(object):
 
         # Get the focal plane data and set the sensor name
         sourProc = SourceProcessor()
-        sourProc.config(sensorName=sensorName,
-                        folderPath2FocalPlane=folderPath2FocalPlane)
+        sourProc.config(sensorName=sensorName)
 
         # Do the coordinate transformation
         fieldXInDegree, fieldYInDegree = sourProc.camXYtoFieldXY(xInpixel,

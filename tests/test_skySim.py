@@ -11,11 +11,7 @@ class TestSkySim(unittest.TestCase):
 
     def setUp(self):
 
-        # Directory to the focal plane file
-        folderPath2FocalPlane = os.path.join(getModulePath(), "tests",
-                                             "testData", "testOpdFunc")
         self.skySim = SkySim()
-        self.skySim.setFolderPath2FocalPlane(folderPath2FocalPlane)
 
     def testAddStarByRaDecInDeg(self):
 

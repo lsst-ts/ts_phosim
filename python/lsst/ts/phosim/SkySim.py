@@ -53,17 +53,6 @@ class SkySim(object):
                                         rotSkyPos=rotSkyPos,
                                         mjd=mjd)
 
-    def setFolderPath2FocalPlane(self, folderPath2FocalPlane):
-        """Set the folder path to focal plane data.
-
-        Parameters
-        ----------
-        folderPath2FocalPlane : str
-            Folder path to focal plane data.
-        """
-
-        self._sourProc.config(folderPath2FocalPlane=folderPath2FocalPlane)
-
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
 
