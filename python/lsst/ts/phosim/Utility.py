@@ -113,8 +113,8 @@ def mapSurfNameToEnum(surfName):
 
     Returns
     -------
-    SurfaceType
-        SurfaceType enum.
+    enum 'SurfaceType'
+        SurfaceType.
 
     Raises
     ------

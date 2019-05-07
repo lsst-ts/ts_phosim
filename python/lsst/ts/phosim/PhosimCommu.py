@@ -49,7 +49,7 @@ class PhosimCommu(object):
 
         Parameters
         ----------
-        filterType : FilterType
+        filterType : enum 'FilterType'
             Active filter.
 
         Returns
@@ -87,7 +87,7 @@ class PhosimCommu(object):
 
         Parameters
         ----------
-        surfaceType : SurfaceType
+        surfaceType : enum 'SurfaceType'
             Surface type.
 
         Returns

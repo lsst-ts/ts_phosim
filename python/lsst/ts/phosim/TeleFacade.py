@@ -69,7 +69,7 @@ class TeleFacade(object):
         ----------
         obsId : int, optional
             Observation Id. (the default is None.)
-        filterType : FilterType, optional
+        filterType : enum 'FilterType', optional
             Active filter type. (the default is None.)
         boresight : tuple, optional
             Telescope boresight in (ra, decl). (the default is None.)
@@ -96,9 +96,9 @@ class TeleFacade(object):
         ----------
         dictKeyName : str
             Name of dictionary key.
-        varValue : int, tuple, float, or FilterType
+        varValue : int, tuple, float, or enum 'FilterType'
             Variable value.
-        varType: int, tuple, float, or FilterType
+        varType: int, tuple, float, or enum 'FilterType'
             Variable type.
         """
 
