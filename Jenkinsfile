@@ -77,6 +77,7 @@ pipeline {
                         cd ../ts_ofc/
                         setup -k -r .
                         cd ..
+                        setup -k -r .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/
                     """
                 }
