@@ -12,7 +12,7 @@ Version History
 1.1.2
 -------------
 
-Use the eups, documenteer, and plantUML. Use the ts_wep and ts_ofc modules. Use the scientific pipeline of sims_w_2019_18.
+Use the eups, documenteer, and plantUML. Use the ts_wep module. Use the scientific pipeline of sims_w_2019_18.
 
 .. _lsst.ts.phosim-1.1.1:
 

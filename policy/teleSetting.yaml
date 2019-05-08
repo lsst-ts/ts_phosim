@@ -1,0 +1,40 @@
+---
+
+# Telescope setting
+
+# Camera body temperature in degree Celsius
+# Temperature in (2, 16), make these two sigma bounds for Gaussian.
+camTB: 6.5650
+
+# Camera rotation angle in radian (uniform between (-pi/2, pi/2))
+camRotation: -1.2323
+
+# M1M3 temperature gradient in degree Celsius in x direction
+# (+/-2sigma spans 0.4C)
+m1m3TxGrad: -0.0894
+
+# M1M3 temperature gradient in degree Celsius in y direction
+# (+/-2sigma spans 0.4C)
+m1m3TyGrad: -0.1973
+
+# M1M3 temperature gradient in degree Celsius in z direction
+# (+/-2sigma spans 0.1C)
+m1m3TzGrad: -0.0316
+
+# M1M3 temperature gradient in degree Celsius in r direction
+# (+/-2sigma spans 0.1C)
+m1m3TrGrad: 0.0187
+
+# M1M3 bulk temperature in degree Celsius
+# (+/-2sigma spans +/-0.8C)
+m1m3TBulk: 0.0902
+
+# M2 temperature gradient in degree Celsius in z direction (+/-2sigma spans 1C)
+m2TzGrad: -0.0675
+
+# M2 temperature gradient in degree Celsius in r direction (+/-2sigma spans 1C)
+m2TrGrad: -0.1416
+
+# Number of grid of surface. This is the ZEMAX used in pert file to define
+# surfaces
+surfaceGridN: 200

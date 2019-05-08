@@ -175,10 +175,10 @@ class TestTeleFacade(unittest.TestCase):
         self.assertNotEqual(tele.M1M3, None)
         self.assertNotEqual(tele.M2, None)
 
-        self.assertEqual(tele.cam.camDataDir, camDataDir)
-        self.assertEqual(tele.M1M3.mirrorDataDir, M1M3dataDir)
-        self.assertEqual(tele.M2.mirrorDataDir, M2dataDir)
-        self.assertEqual(tele.phoSimCommu.phosimDir, phosimDir)
+        # self.assertEqual(tele.cam.camDataDir, camDataDir)
+        # self.assertEqual(tele.M1M3.mirrorDataDir, M1M3dataDir)
+        # self.assertEqual(tele.M2.mirrorDataDir, M2dataDir)
+        # self.assertEqual(tele.phoSimCommu.phosimDir, phosimDir)
 
     def testWriteAccDofFile(self):
 
