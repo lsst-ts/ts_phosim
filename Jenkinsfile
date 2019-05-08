@@ -48,12 +48,6 @@ pipeline {
                         git checkout b8b331e
                         setup -k -r .
                         scons
-                        cd ..
-                        git clone --branch develop https://github.com/lsst-ts/ts_ofc.git
-                        cd ts_ofc/
-                        git checkout e94edb2
-                        setup -k -r .
-                        scons
                     """
                 }
             }
@@ -73,8 +67,6 @@ pipeline {
                         cd phosim_utils/
                         setup -k -r . -t sims_w_2019_18
                         cd ../ts_wep/
-                        setup -k -r .
-                        cd ../ts_ofc/
                         setup -k -r .
                         cd ..
                         setup -k -r .
