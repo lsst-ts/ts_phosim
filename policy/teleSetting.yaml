@@ -2,6 +2,9 @@
 
 # Telescope setting
 
+# Camera MJD
+mjd: 59552.3
+
 # Camera body temperature in degree Celsius
 # Temperature in (2, 16), make these two sigma bounds for Gaussian.
 camTB: 6.5650
@@ -38,3 +41,6 @@ m2TrGrad: -0.1416
 # Number of grid of surface. This is the ZEMAX used in pert file to define
 # surfaces
 surfaceGridN: 200
+
+# Reference wavelength of reference filter (FilterType.REF)
+wavelengthInNm: 500

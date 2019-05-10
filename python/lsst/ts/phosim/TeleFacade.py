@@ -2,32 +2,29 @@ import os
 import re
 import numpy as np
 
-from lsst.ts.wep.Utility import FilterType, mapFilterRefToG
-
 from lsst.ts.phosim.CamSim import CamSim
 from lsst.ts.phosim.M1M3Sim import M1M3Sim
 from lsst.ts.phosim.M2Sim import M2Sim
 from lsst.ts.phosim.PhosimCommu import PhosimCommu
-from lsst.ts.phosim.Utility import SurfaceType, CamDistType, mapSurfNameToEnum
+from lsst.ts.phosim.Utility import SurfaceType, CamDistType, getConfigDir, \
+    mapSurfNameToEnum
+
+from lsst.ts.wep.Utility import FilterType, mapFilterRefToG
+from lsst.ts.wep.ParamReader import ParamReader
 
 
 class TeleFacade(object):
 
-    # Reference wavelength of reference filter (FilterType.REF)
-    WAVELENGTH_IN_NM = 500
-
-    def __init__(self, configFilePath=None):
+    def __init__(self):
         """Initialization of telescope facade class.
 
         This class uses the facade pattern that the high level class telescope
         helps to write the perturbations of camera, M1M3, and M2 into the
         PhoSim by the interface to PhoSim.
-
-        Parameters
-        ----------
-        configFilePath : str, optional
-            Telescope configuration file path. (the default is None.)
         """
+
+        settingFilePath = os.path.join(getConfigDir(), "teleSetting.yaml")
+        self._teleSettingFile = ParamReader(filePath=settingFilePath)
 
         self.cam = None
         self.m1m3 = None
@@ -42,13 +39,32 @@ class TeleFacade(object):
                             "filterType": FilterType.REF,
                             "boresight": (0, 0),
                             "zAngleInDeg": 0,
-                            "rotAngInDeg": 0,
-                            "mjd": 59552.3}
+                            "rotAngInDeg": 0}
         self.sensorOn = {"sciSensorOn": True,
                          "wfSensorOn": True,
                          "guidSensorOn": False}
 
-        self.configFile = configFilePath
+    def getCamMjd(self):
+        """Get the camera MJD.
+
+        Returns
+        -------
+        float
+            Camera MJD.
+        """
+
+        return self._teleSettingFile.getSetting("mjd")
+
+    def getRefWaveLength(self):
+        """Get the reference wavelength in nm.
+
+        Returns
+        -------
+        int
+            Reference wavelength in nm.
+        """
+
+        return self._teleSettingFile.getSetting("wavelengthInNm")
 
     def getDefocalDisInMm(self):
         """Get the defocal distance in mm.
@@ -62,7 +78,7 @@ class TeleFacade(object):
         return self.surveyParam["defocalDisInMm"]
 
     def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
-                       zAngleInDeg=None, rotAngInDeg=None, mjd=None):
+                       zAngleInDeg=None, rotAngInDeg=None):
         """Set the survey parameters.
 
         Parameters
@@ -78,8 +94,6 @@ class TeleFacade(object):
         rotAngInDeg : float, optional
             Camera rotation angle in degree between -90 and 90 degrees. (the
             default is None.)
-        mjd : float, optional
-            MJD of observation. (the default is None.)
         """
 
         self._setSurveyParamItem("obsId", obsId, int)
@@ -87,7 +101,6 @@ class TeleFacade(object):
         self._setSurveyParamItem("boresight", boresight, tuple)
         self._setSurveyParamItem("zAngleInDeg", zAngleInDeg, (int, float))
         self._setSurveyParamItem("rotAngInDeg", rotAngInDeg, (int, float))
-        self._setSurveyParamItem("mjd", mjd, (int, float))
 
     def _setSurveyParamItem(self, dictKeyName, varValue, varType):
         """Set the item in the dictionary of survey parameters.
@@ -122,64 +135,6 @@ class TeleFacade(object):
         self.sensorOn["sciSensorOn"] = sciSensorOn
         self.sensorOn["wfSensorOn"] = wfSensorOn
         self.sensorOn["guidSensorOn"] = guidSensorOn
-
-    def setConfigFile(self, configFilePath):
-        """Set the telescope configuration file.
-
-        Parameters
-        ----------
-        configFilePath : str
-            Configuration file path.
-        """
-
-        self.configFile = configFilePath
-
-    def getConfigValue(self, varName, index=1):
-        """Get the value of certain variable defined in the configuration file.
-
-        Parameters
-        ----------
-        varName : str
-            Name of variable.
-        index : int, optional
-            Index of value. (the default is 1.)
-
-        Returns
-        -------
-        float, int, or str
-            Variable value.
-        """
-
-        # Read the file
-        fid = open(self.configFile)
-
-        # Search for the value of certain variable
-        value = None
-        for line in fid:
-
-            # Strip the line
-            line = line.strip()
-
-            # Get the element of line
-            lineArray = line.split()
-
-            # Get the value
-            if (len(lineArray) > 0) and (lineArray[0] == varName):
-                value = lineArray[index]
-                break
-
-        # Close the file
-        fid.close()
-
-        # Change the value type if necessary
-        try:
-            value = float(value)
-            if (value == int(value)):
-                value = int(value)
-        except ValueError:
-            pass
-
-        return value
 
     def runPhoSim(self, argString):
         """
@@ -428,7 +383,7 @@ class TeleFacade(object):
         dec = boresight[1]
 
         rot = self.surveyParam["rotAngInDeg"]
-        mjd = self.surveyParam["mjd"]
+        mjd = self.getCamMjd()
 
         self.phoSimCommu.getStarInstance(
             obsId, aFilterId, ra=ra, dec=dec, rot=rot, mjd=mjd,
@@ -454,7 +409,7 @@ class TeleFacade(object):
         filterType = self.surveyParam["filterType"]
         if (filterType == FilterType.REF):
             self._writeSedFileIfPhoSimDirSet()
-            sedName = "sed_%s.txt" % int(self.WAVELENGTH_IN_NM)
+            sedName = "sed_%s.txt" % int(self.getRefWaveLength())
 
         # Write the star source
         for ii in range(len(skySim.starId)):
@@ -530,7 +485,7 @@ class TeleFacade(object):
         for ii in range(len(opdMetr.fieldX)):
             content += self.phoSimCommu.generateOpd(
                 ii, opdMetr.fieldX[ii], opdMetr.fieldY[ii],
-                self.WAVELENGTH_IN_NM)
+                self.getRefWaveLength())
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary
@@ -545,7 +500,7 @@ class TeleFacade(object):
         """
 
         if os.path.isdir(self.phoSimCommu.phosimDir):
-            self.phoSimCommu.writeSedFile(self.WAVELENGTH_IN_NM)
+            self.phoSimCommu.writeSedFile(self.getRefWaveLength())
         else:
             print("Do not inspect the SED file for no PhoSim directory.")
 
@@ -600,7 +555,7 @@ class TeleFacade(object):
         zAngleInRad = np.deg2rad(zAngleInDeg)
 
         # Get the numeber of grid used in Zemax
-        surfaceGridN = self.getConfigValue("surfaceGridN")
+        surfaceGridN = self._teleSettingFile.getSetting("surfaceGridN")
 
         # Write the camera perturbation command file
         if (self.m1m3 is not None):
@@ -616,14 +571,14 @@ class TeleFacade(object):
                     seedNum=seedNum)
 
             # Do the temperature correction
-            M1M3TBulk = self.getConfigValue("M1M3TBulk")
-            M1M3TxGrad = self.getConfigValue("M1M3TxGrad")
-            M1M3TyGrad = self.getConfigValue("M1M3TyGrad")
-            M1M3TzGrad = self.getConfigValue("M1M3TzGrad")
-            M1M3TrGrad = self.getConfigValue("M1M3TrGrad")
-            tempCorrInUm = self.m1m3.getTempCorr(M1M3TBulk, M1M3TxGrad,
-                                                 M1M3TyGrad, M1M3TzGrad,
-                                                 M1M3TrGrad)
+            m1m3TBulk = self._teleSettingFile.getSetting("m1m3TBulk")
+            m1m3TxGrad = self._teleSettingFile.getSetting("m1m3TxGrad")
+            m1m3TyGrad = self._teleSettingFile.getSetting("m1m3TyGrad")
+            m1m3TzGrad = self._teleSettingFile.getSetting("m1m3TzGrad")
+            m1m3TrGrad = self._teleSettingFile.getSetting("m1m3TrGrad")
+            tempCorrInUm = self.m1m3.getTempCorr(m1m3TBulk, m1m3TxGrad,
+                                                 m1m3TyGrad, m1m3TzGrad,
+                                                 m1m3TrGrad)
 
             # Set the mirror surface in mm
             if (randSurfInM is not None):
@@ -666,9 +621,9 @@ class TeleFacade(object):
             printthzInUm = self.m2.getPrintthz(zAngleInRad)
 
             # Do the temperature correction
-            M2TzGrad = self.getConfigValue("M2TzGrad")
-            M2TrGrad = self.getConfigValue("M2TrGrad")
-            tempCorrInUm = self.m2.getTempCorr(M2TzGrad, M2TrGrad)
+            m2TzGrad = self._teleSettingFile.getSetting("m2TzGrad")
+            m2TrGrad = self._teleSettingFile.getSetting("m2TrGrad")
+            tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
 
             # Set the mirror surface in mm
             mirrorSurfInUm = printthzInUm + tempCorrInUm
@@ -693,7 +648,7 @@ class TeleFacade(object):
             self.cam.setRotAngInDeg(rotAngInDeg)
 
             # Set the temperature information
-            tempInDegC = self.getConfigValue("camTB")
+            tempInDegC = self._teleSettingFile.getSetting("camTB")
             self.cam.setBodyTempInDegC(tempInDegC)
 
             # Write the perturbation file

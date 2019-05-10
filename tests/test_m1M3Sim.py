@@ -57,13 +57,13 @@ class TestM1M3Sim(unittest.TestCase):
 
     def _getTempCorrInUm(self):
 
-        M1M3TBulk = 0.0902
-        M1M3TxGrad = -0.0894
-        M1M3TyGrad = -0.1973
-        M1M3TzGrad = -0.0316
-        M1M3TrGrad = 0.0187
-        tempCorrInUm = self.m1m3.getTempCorr(M1M3TBulk, M1M3TxGrad, M1M3TyGrad,
-                                             M1M3TzGrad, M1M3TrGrad)
+        m1m3TBulk = 0.0902
+        m1m3TxGrad = -0.0894
+        m1m3TyGrad = -0.1973
+        m1m3TzGrad = -0.0316
+        m1m3TrGrad = 0.0187
+        tempCorrInUm = self.m1m3.getTempCorr(m1m3TBulk, m1m3TxGrad, m1m3TyGrad,
+                                             m1m3TzGrad, m1m3TrGrad)
 
         return tempCorrInUm
 

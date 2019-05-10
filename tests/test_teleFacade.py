@@ -9,13 +9,15 @@ from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.TeleFacade import TeleFacade
 
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, getConfigDir
 
 
 class TestTeleFacade(unittest.TestCase):
     """ Test the TeleFacade class."""
 
     def setUp(self):
+
+        self.configDir = getConfigDir()
 
         self.outputDir = os.path.join(getModulePath(), "output", "temp")
         os.makedirs(self.outputDir)
@@ -24,9 +26,7 @@ class TestTeleFacade(unittest.TestCase):
     def setUpClass(cls):
         """Only do the instantiation for one time for the slow speed."""
 
-        cls.configFilePath = os.path.join(getModulePath(), "configData",
-                                          "telescopeConfig", "GT.inst")
-        cls.tele = TeleFacade(configFilePath=cls.configFilePath)
+        cls.tele = TeleFacade()
         cls.tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
 
         # Set the survey parameters
@@ -35,14 +35,32 @@ class TestTeleFacade(unittest.TestCase):
         boresight = (0.2, 0.3)
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
-        mjd = 59552.3
         cls.tele.setSurveyParam(obsId=obsId, filterType=cls.filterType,
                                 boresight=boresight, zAngleInDeg=zAngleInDeg,
-                                rotAngInDeg=rotAngInDeg, mjd=mjd)
+                                rotAngInDeg=rotAngInDeg)
 
     def tearDown(self):
 
+        self._setDefaultTeleSetting()
+
         shutil.rmtree(self.outputDir)
+
+    def _setDefaultTeleSetting(self):
+
+        self.tele.setSensorOn()
+        self.tele.setDofInUm(np.zeros(50))
+        self.tele.setSurveyParam(filterType=self.filterType)
+        self.tele.setInstName("lsst")
+
+    def testGetCamMjd(self):
+
+        mjd = self.tele.getCamMjd()
+        self.assertEqual(mjd, 59552.3)
+
+    def testGetRefWaveLength(self):
+
+        refWaveLength = self.tele.getRefWaveLength()
+        self.assertEqual(refWaveLength, 500)
 
     def testGetDefocalDisInMm(self):
 
@@ -58,19 +76,17 @@ class TestTeleFacade(unittest.TestCase):
         boresight = (10, 20)
         zAngleInDeg = 10.0
         rotAngInDeg = 11.0
-        mjd = 4000.0
 
         tele = TeleFacade()
         tele.setSurveyParam(obsId=obsId, filterType=filterType,
                             boresight=boresight, zAngleInDeg=zAngleInDeg,
-                            rotAngInDeg=rotAngInDeg, mjd=mjd)
+                            rotAngInDeg=rotAngInDeg)
 
         self.assertEqual(tele.surveyParam["obsId"], obsId)
         self.assertEqual(tele.surveyParam["filterType"], filterType)
         self.assertEqual(tele.surveyParam["boresight"], boresight)
         self.assertEqual(tele.surveyParam["zAngleInDeg"], zAngleInDeg)
         self.assertEqual(tele.surveyParam["rotAngInDeg"], rotAngInDeg)
-        self.assertEqual(tele.surveyParam["mjd"], mjd)
 
     def testSetSurveyParamWithWrongInput(self):
 
@@ -93,32 +109,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(self.tele.sensorOn["sciSensorOn"], sciSensorOn)
         self.assertEqual(self.tele.sensorOn["wfSensorOn"], wfSensorOn)
         self.assertEqual(self.tele.sensorOn["guidSensorOn"], guidSensorOn)
-
-        self._setDefaultTeleSetting()
-
-    def _setDefaultTeleSetting(self):
-
-        self.tele.setConfigFile(self.configFilePath)
-        self.tele.setSensorOn()
-        self.tele.setDofInUm(np.zeros(50))
-        self.tele.setSurveyParam(filterType=self.filterType)
-        self.tele.setInstName("lsst")
-
-    def testSetConfigFile(self):
-
-        configFilePath = "NotConfigFilePath"
-        self.tele.setConfigFile(configFilePath)
-
-        self.assertEqual(self.tele.configFile, configFilePath)
-
-        self._setDefaultTeleSetting()
-
-    def testGetConfigValue(self):
-
-        varName = "M1M3TxGrad"
-        value = self.tele.getConfigValue(varName)
-
-        self.assertEqual(value, -0.0894)
 
     def testGetPhoSimArgs(self):
 
@@ -151,19 +141,15 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
-        self._setDefaultTeleSetting()
-
     def testAccDofInUm(self):
 
         dofInUm = np.random.rand(50)
         self.tele.accDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
-        self._setDefaultTeleSetting()
-
     def testAddSubSys(self):
 
-        tele = TeleFacade(configFilePath=self.configFilePath)
+        tele = TeleFacade()
         self.assertEqual(tele.cam, None)
         self.assertEqual(tele.m1m3, None)
         self.assertEqual(tele.m2, None)
@@ -205,8 +191,8 @@ class TestTeleFacade(unittest.TestCase):
 
     def testWriteCmdFile(self):
 
-        starCmdSettingFile = os.path.join(getModulePath(), "configData",
-                                          "cmdFile", "starDefault.cmd")
+        starCmdSettingFile = os.path.join(self.configDir, "cmdFile",
+                                          "starDefault.cmd")
 
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
         cmdFilePath = self.tele.writeCmdFile(
@@ -245,14 +231,12 @@ class TestTeleFacade(unittest.TestCase):
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
 
-        self._setDefaultTeleSetting()
-
     def _generateOpd(self):
 
         metr = OpdMetrology()
         metr.addFieldXYbyDeg(0, 0)
-        opdInstSettingFile = os.path.join(getModulePath(), "configData",
-                                          "instFile", "opdDefault.inst")
+        opdInstSettingFile = os.path.join(self.configDir, "instFile",
+                                          "opdDefault.inst")
 
         return metr, opdInstSettingFile
 
@@ -277,15 +261,13 @@ class TestTeleFacade(unittest.TestCase):
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 63)
 
-        self._setDefaultTeleSetting()
-
     def _generateFakeSky(self):
 
         skySim = SkySim()
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
 
-        starInstSettingFile = os.path.join(getModulePath(), "configData",
-                                           "instFile", "starDefault.inst")
+        starInstSettingFile = os.path.join(self.configDir, "instFile",
+                                           "starDefault.inst")
 
         return skySim, starInstSettingFile
 

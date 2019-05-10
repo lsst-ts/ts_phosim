@@ -43,9 +43,9 @@ class TestM2Sim(unittest.TestCase):
 
     def testGetTempCorr(self):
 
-        M2TzGrad = -0.0675
-        M2TrGrad = -0.1416
-        tempCorrInUm = self.m2.getTempCorr(M2TzGrad, M2TrGrad)
+        m2TzGrad = -0.0675
+        m2TrGrad = -0.1416
+        tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
 
         ansFilePath = os.path.join(self.testM2Data, "M2tempCorr.txt")
         ansTempCorrInUm = np.loadtxt(ansFilePath)
@@ -71,9 +71,9 @@ class TestM2Sim(unittest.TestCase):
         zAngleInRadian = np.deg2rad(zAngleInDeg)
         printthzInUm = self.m2.getPrintthz(zAngleInRadian)
 
-        M2TzGrad = -0.0675
-        M2TrGrad = -0.1416
-        tempCorrInUm = self.m2.getTempCorr(M2TzGrad, M2TrGrad)
+        m2TzGrad = -0.0675
+        m2TrGrad = -0.1416
+        tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
 
         mirrorSurfInUm = printthzInUm + tempCorrInUm
         self.m2.setSurfAlongZ(mirrorSurfInUm)

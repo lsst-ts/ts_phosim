@@ -105,7 +105,7 @@ class M2Sim(MirrorSim):
 
         return printthzInUm
 
-    def getTempCorr(self, M2TzGrad, M2TrGrad):
+    def getTempCorr(self, m2TzGrad, m2TrGrad):
         """Get the mirror print correction along z direction for certain
         temperature gradient.
 
@@ -113,10 +113,10 @@ class M2Sim(MirrorSim):
 
         Parameters
         ----------
-        M2TzGrad : float
+        m2TzGrad : float
             Temperature gradient along z direction in degree C (+/-2sigma
             spans 1C).
-        M2TrGrad : float
+        m2TrGrad : float
             Temperature gradient along r direction in degree C (+/-2sigma
             spans 1C).
 
@@ -136,7 +136,7 @@ class M2Sim(MirrorSim):
         trdz = data[:, 5]
 
         # Get the temprature correction
-        tempCorrInUm = M2TzGrad * tzdz + M2TrGrad * trdz
+        tempCorrInUm = m2TzGrad * tzdz + m2TrGrad * trdz
 
         return tempCorrInUm
 

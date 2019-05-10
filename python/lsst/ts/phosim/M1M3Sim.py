@@ -333,8 +333,8 @@ class M1M3Sim(MirrorSim):
         # (z0>0) is needed. That means the direction of M2 to M1M3.
         return -z0
 
-    def getTempCorr(self, M1M3TBulk, M1M3TxGrad, M1M3TyGrad, M1M3TzGrad,
-                    M1M3TrGrad):
+    def getTempCorr(self, m1m3TBulk, m1m3TxGrad, m1m3TyGrad, m1m3TzGrad,
+                    m1m3TrGrad):
         """Get the mirror print correction along z direction for certain
         temperature gradient.
 
@@ -342,18 +342,18 @@ class M1M3Sim(MirrorSim):
 
         Parameters
         ----------
-        M1M3TBulk : float
+        m1m3TBulk : float
             Bulk temperature in degree C (+/-2sigma spans +/-0.8C).
-        M1M3TxGrad : float
+        m1m3TxGrad : float
             Temperature gradient along x direction in degree C (+/-2sigma
             spans 0.4C).
-        M1M3TyGrad : float
+        m1m3TyGrad : float
             Temperature gradient along y direction in degree C (+/-2sigma
             spans 0.4C).
-        M1M3TzGrad : float
+        m1m3TzGrad : float
             Temperature gradient along z direction in degree C (+/-2sigma
             spans 0.1C).
-        M1M3TrGrad : float
+        m1m3TrGrad : float
             Temperature gradient along r direction in degree C (+/-2sigma
             spans 0.1C).
 
@@ -400,8 +400,8 @@ class M1M3Sim(MirrorSim):
         trdz = self._fitData(tx, ty, data[:, 6], normX, normY)
 
         # Get the temprature correction
-        tempCorrInUm = M1M3TBulk*tbdz + M1M3TxGrad*txdz + M1M3TyGrad*tydz + \
-            M1M3TzGrad*tzdz + M1M3TrGrad*trdz
+        tempCorrInUm = m1m3TBulk*tbdz + m1m3TxGrad*txdz + m1m3TyGrad*tydz + \
+            m1m3TzGrad*tzdz + m1m3TrGrad*trdz
 
         return tempCorrInUm
 
