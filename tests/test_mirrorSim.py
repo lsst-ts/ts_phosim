@@ -9,16 +9,18 @@ from lsst.ts.phosim.Utility import getConfigDir
 class TestMirrorSim(unittest.TestCase):
     """ Test the MirrorSim class."""
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        """Only do the instantiation for one time for the slow speed."""
 
-        self.innerRinM = 0.9
-        self.outerRinM = 1.710
+        cls.innerRinM = 0.9
+        cls.outerRinM = 1.710
 
         configDir = os.path.join(getConfigDir(), "M2")
-        self.mirror = MirrorSim(self.innerRinM, self.outerRinM, configDir)
-        self.mirror.config(numTerms=28,
-                           actForceFileName="M2_1um_force.yaml",
-                           lutFileName="")
+        cls.mirror = MirrorSim(cls.innerRinM, cls.outerRinM, configDir)
+        cls.mirror.config(numTerms=28,
+                          actForceFileName="M2_1um_force.yaml",
+                          lutFileName="")
 
     def testInit(self):
 

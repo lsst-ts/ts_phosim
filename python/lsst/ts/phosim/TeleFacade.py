@@ -30,8 +30,8 @@ class TeleFacade(object):
         """
 
         self.cam = None
-        self.M1M3 = None
-        self.M2 = None
+        self.m1m3 = None
+        self.m2 = None
         self.phoSimCommu = PhosimCommu()
 
         self.dofInUm = np.zeros(50)
@@ -119,33 +119,9 @@ class TeleFacade(object):
             Guider sensors are on. (the default is False.)
         """
 
-        if (self._isBool(sciSensorOn)):
-            self.sensorOn["sciSensorOn"] = sciSensorOn
-
-        if (self._isBool(wfSensorOn)):
-            self.sensorOn["wfSensorOn"] = wfSensorOn
-
-        if (self._isBool(guidSensorOn)):
-            self.sensorOn["guidSensorOn"] = guidSensorOn
-
-    def _isBool(self, input):
-        """Check the input is boolean type or not.
-
-        Parameters
-        ----------
-        input : bool
-            Input.
-
-        Returns
-        -------
-        bool
-            True if the type of input is boolean.
-        """
-
-        if isinstance(input, bool):
-            return True
-        else:
-            return False
+        self.sensorOn["sciSensorOn"] = sciSensorOn
+        self.sensorOn["wfSensorOn"] = wfSensorOn
+        self.sensorOn["guidSensorOn"] = guidSensorOn
 
     def setConfigFile(self, configFilePath):
         """Set the telescope configuration file.
@@ -319,36 +295,38 @@ class TeleFacade(object):
 
         self.dofInUm += np.array(dofInUm, dtype=float)
 
-    def setSubSysConfigDir(self, camDataDir=None, M1M3dataDir=None,
-                           M2dataDir=None, phosimDir=None):
-        """Set the subsystem data directory.
+    def addSubSys(self, addCam=False, addM1M3=False, addM2=False):
+        """Add the sub systems to do the perturbation.
 
         Parameters
         ----------
-        camDataDir : str, optional
-            Camera data directory. (the default is None.)
-        M1M3dataDir : str, optional
-            M1M3 data directory. (the default is None.)
-        M2dataDir : str, optional
-            M2 data directory. (the default is None.)
-        phosimDir : str, optional
-            PhoSim directory. (the default is None.)
+        addCam : bool, optional
+            Add the camera. (the default is False.)
+        addM1M3 : bool, optional
+            Add the M1M3 mirror. (the default is False.)
+        addM2 : bool, optional
+            Add the M2 mirror. (the default is False.)
         """
 
-        # Change here in a latter time since there is no config dir needed
-        # anymore.
-
-        if (camDataDir is not None):
+        if (addCam):
             self.cam = CamSim()
 
-        if (M1M3dataDir is not None):
-            self.M1M3 = M1M3Sim()
+        if (addM1M3):
+            self.m1m3 = M1M3Sim()
 
-        if (M2dataDir is not None):
-            self.M2 = M2Sim()
+        if (addM2):
+            self.m2 = M2Sim()
 
-        if (phosimDir is not None):
-            self.phoSimCommu.setPhoSimDir(phosimDir)
+    def setPhoSimDir(self, phosimDir):
+        """Set the directory of PhoSim.
+
+        Parameters
+        ----------
+        phosimDir : str
+            Directory of PhoSim.
+        """
+
+        self.phoSimCommu.setPhoSimDir(phosimDir)
 
     def writeAccDofFile(self, outputFileDir, dofFileName="pert.mat"):
         """Write the accumulated degree of freedom (DOF) in um to file.
@@ -625,15 +603,15 @@ class TeleFacade(object):
         surfaceGridN = self.getConfigValue("surfaceGridN")
 
         # Write the camera perturbation command file
-        if (self.M1M3 is not None):
+        if (self.m1m3 is not None):
 
             # Do the gravity correction
-            printthzInM = self.M1M3.getPrintthz(zAngleInRad)
+            printthzInM = self.m1m3.getPrintthz(zAngleInRad)
 
             # Add the surface error if necessary
             randSurfInM = None
             if (seedNum is not None):
-                randSurfInM = self.M1M3.genMirSurfRandErr(
+                randSurfInM = self.m1m3.genMirSurfRandErr(
                     zAngleInRad, M1M3ForceError=M1M3ForceError,
                     seedNum=seedNum)
 
@@ -643,7 +621,7 @@ class TeleFacade(object):
             M1M3TyGrad = self.getConfigValue("M1M3TyGrad")
             M1M3TzGrad = self.getConfigValue("M1M3TzGrad")
             M1M3TrGrad = self.getConfigValue("M1M3TrGrad")
-            tempCorrInUm = self.M1M3.getTempCorr(M1M3TBulk, M1M3TxGrad,
+            tempCorrInUm = self.m1m3.getTempCorr(M1M3TBulk, M1M3TxGrad,
                                                  M1M3TyGrad, M1M3TzGrad,
                                                  M1M3TrGrad)
 
@@ -653,10 +631,10 @@ class TeleFacade(object):
                     tempCorrInUm
             else:
                 mirrorSurfInUm = printthzInM * 1e6 + tempCorrInUm
-            self.M1M3.setSurfAlongZ(mirrorSurfInUm)
+            self.m1m3.setSurfAlongZ(mirrorSurfInUm)
 
             resFile = [M1resFilePath, M3resFilePath]
-            self.M1M3.writeMirZkAndGridResInZemax(
+            self.m1m3.writeMirZkAndGridResInZemax(
                 resFile=resFile, surfaceGridN=surfaceGridN,
                 writeZcInMnToFilePath=M1M3zcFilePath)
 
@@ -682,20 +660,20 @@ class TeleFacade(object):
             content += self.phoSimCommu.doSurfLink(surfIdList[1],
                                                    surfIdList[0])
 
-        if (self.M2 is not None):
+        if (self.m2 is not None):
 
             # Do the gravity correction
-            printthzInUm = self.M2.getPrintthz(zAngleInRad)
+            printthzInUm = self.m2.getPrintthz(zAngleInRad)
 
             # Do the temperature correction
             M2TzGrad = self.getConfigValue("M2TzGrad")
             M2TrGrad = self.getConfigValue("M2TrGrad")
-            tempCorrInUm = self.M2.getTempCorr(M2TzGrad, M2TrGrad)
+            tempCorrInUm = self.m2.getTempCorr(M2TzGrad, M2TrGrad)
 
             # Set the mirror surface in mm
             mirrorSurfInUm = printthzInUm + tempCorrInUm
-            self.M2.setSurfAlongZ(mirrorSurfInUm)
-            self.M2.writeMirZkAndGridResInZemax(
+            self.m2.setSurfAlongZ(mirrorSurfInUm)
+            self.m2.writeMirZkAndGridResInZemax(
                 resFile=M2resFilePath, surfaceGridN=surfaceGridN,
                 writeZcInMnToFilePath=M2zcFilePath)
 
@@ -734,7 +712,7 @@ class TeleFacade(object):
 
         # Save the mirror residue map if necessary
         if (saveResMapFig):
-            if (self.M1M3 is not None):
+            if (self.m1m3 is not None):
                 resFile = [M1resFilePath, M3resFilePath]
                 writeToResMapFilePath1 = os.path.splitext(M1resFilePath)[0] + \
                     ".png"
@@ -742,14 +720,14 @@ class TeleFacade(object):
                     ".png"
                 writeToResMapFilePath = [writeToResMapFilePath1,
                                          writeToResMapFilePath3]
-                self.M1M3.showMirResMap(
+                self.m1m3.showMirResMap(
                     resFile=resFile,
                     writeToResMapFilePath=writeToResMapFilePath)
 
-            if (self.M2 is not None):
+            if (self.m2 is not None):
                 writeToResMapFilePath = os.path.splitext(M2resFilePath)[0] + \
                     ".png"
-                self.M2.showMirResMap(
+                self.m2.showMirResMap(
                     resFile=M2resFilePath,
                     writeToResMapFilePath=writeToResMapFilePath)
 

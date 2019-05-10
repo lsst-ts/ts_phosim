@@ -11,7 +11,15 @@ class TestM1M3Sim(unittest.TestCase):
 
     def setUp(self):
 
-        self.m1m3 = M1M3Sim()
+        self.testM3Data = os.path.join(getModulePath(), "tests", "testData",
+                                       "testM1M3Func")
+        self.outputDir = os.path.join(getModulePath(), "output")
+
+    @classmethod
+    def setUpClass(cls):
+        """Only do the instantiation for one time for the slow speed."""
+
+        cls.m1m3 = M1M3Sim()
 
     def testInit(self):
 
@@ -28,8 +36,7 @@ class TestM1M3Sim(unittest.TestCase):
         zAngleInDeg = 27.0912
         printthzInM = self._getPrintthzInM(zAngleInDeg)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM1M3Func", "M1M3printthz.txt")
+        ansFilePath = os.path.join(self.testM3Data, "M1M3printthz.txt")
         ansPrintthzInM = np.loadtxt(ansFilePath)
         self.assertLess(np.sum(np.abs(printthzInM-ansPrintthzInM)), 1e-10)
 
@@ -44,8 +51,7 @@ class TestM1M3Sim(unittest.TestCase):
 
         tempCorrInUm = self._getTempCorrInUm()
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM1M3Func", "M1M3tempCorr.txt")
+        ansFilePath = os.path.join(self.testM3Data, "M1M3tempCorr.txt")
         ansTempCorrInUm = np.loadtxt(ansFilePath)
         self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 2*1e-8)
 
@@ -67,8 +73,7 @@ class TestM1M3Sim(unittest.TestCase):
         zAngleInDeg = 27.0912
         randSurfInM = self._getRandSurfInM(iSim, zAngleInDeg)
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM1M3Func", "M1M3surfRand.txt")
+        ansFilePath = os.path.join(self.testM3Data, "M1M3surfRand.txt")
         ansRandSurfInM = np.loadtxt(ansFilePath)
         self.assertLess(np.sum(np.abs(randSurfInM-ansRandSurfInM)), 1e-10)
 
@@ -84,8 +89,7 @@ class TestM1M3Sim(unittest.TestCase):
         self._setSurfAlongZ()
         zcInMmInZemax = self.m1m3.getMirrorResInMmInZemax()[3]
 
-        ansFilePath = os.path.join(getModulePath(), "tests", "testData",
-                                   "testM1M3Func", "sim6_M1M3zlist.txt")
+        ansFilePath = os.path.join(self.testM3Data, "sim6_M1M3zlist.txt")
         ansZcInUmInZemax = np.loadtxt(ansFilePath)
         ansZcInMmInZemax = ansZcInUmInZemax*1e-3
 
@@ -117,10 +121,8 @@ class TestM1M3Sim(unittest.TestCase):
         content1 = np.loadtxt(resFile1)
         content3 = np.loadtxt(resFile3)
 
-        ansFilePath1 = os.path.join(getModulePath(), "tests", "testData",
-                                    "testM1M3Func", "sim6_M1res.txt")
-        ansFilePath3 = os.path.join(getModulePath(), "tests", "testData",
-                                    "testM1M3Func", "sim6_M3res.txt")
+        ansFilePath1 = os.path.join(self.testM3Data, "sim6_M1res.txt")
+        ansFilePath3 = os.path.join(self.testM3Data, "sim6_M3res.txt")
         ansContent1 = np.loadtxt(ansFilePath1)
         ansContent3 = np.loadtxt(ansFilePath3)
 
@@ -139,8 +141,8 @@ class TestM1M3Sim(unittest.TestCase):
 
         self._setSurfAlongZ()
 
-        resFile1 = os.path.join(getModulePath(), "output", "M1res.txt")
-        resFile3 = os.path.join(getModulePath(), "output", "M3res.txt")
+        resFile1 = os.path.join(self.outputDir, "M1res.txt")
+        resFile3 = os.path.join(self.outputDir, "M3res.txt")
         resFile = [resFile1, resFile3]
         self.m1m3.writeMirZkAndGridResInZemax(resFile=resFile)
 
@@ -151,12 +153,9 @@ class TestM1M3Sim(unittest.TestCase):
         resFile = self._writeMirZkAndGridResInZemax()
         resFile1, resFile3 = resFile
 
-        writeToResMapFilePath1 = os.path.join(getModulePath(), "output",
-                                              "M1resMap.png")
-        writeToResMapFilePath3 = os.path.join(getModulePath(), "output",
-                                              "M3resMap.png")
-        writeToResMapFilePath = [writeToResMapFilePath1,
-                                 writeToResMapFilePath3]
+        writeToResMapFilePath1 = os.path.join(self.outputDir, "M1resMap.png")
+        writeToResMapFilePath3 = os.path.join(self.outputDir, "M3resMap.png")
+        writeToResMapFilePath = [writeToResMapFilePath1, writeToResMapFilePath3]
         self.m1m3.showMirResMap(resFile,
                                 writeToResMapFilePath=writeToResMapFilePath)
         self.assertTrue(os.path.isfile(writeToResMapFilePath1))

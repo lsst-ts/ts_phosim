@@ -17,32 +17,28 @@ class TestTeleFacade(unittest.TestCase):
 
     def setUp(self):
 
-        self.configFilePath = os.path.join(getModulePath(), "configData",
-                                           "telescopeConfig", "GT.inst")
-        self.tele = TeleFacade(configFilePath=self.configFilePath)
+        self.outputDir = os.path.join(getModulePath(), "output", "temp")
+        os.makedirs(self.outputDir)
 
-        # Set the subsystem data directory
-        camDataDir = os.path.join(getModulePath(), "configData", "camera")
-        M1M3dataDir = os.path.join(getModulePath(), "configData", "M1M3")
-        M2dataDir = os.path.join(getModulePath(), "configData", "M2")
-        self.tele.setSubSysConfigDir(camDataDir=camDataDir,
-                                     M1M3dataDir=M1M3dataDir,
-                                     M2dataDir=M2dataDir)
+    @classmethod
+    def setUpClass(cls):
+        """Only do the instantiation for one time for the slow speed."""
+
+        cls.configFilePath = os.path.join(getModulePath(), "configData",
+                                          "telescopeConfig", "GT.inst")
+        cls.tele = TeleFacade(configFilePath=cls.configFilePath)
+        cls.tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
 
         # Set the survey parameters
         obsId = 9006000
-        filterType = FilterType.G
+        cls.filterType = FilterType.G
         boresight = (0.2, 0.3)
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
         mjd = 59552.3
-        self.tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                                 boresight=boresight, zAngleInDeg=zAngleInDeg,
-                                 rotAngInDeg=rotAngInDeg, mjd=mjd)
-
-        # Set the output dir
-        self.outputDir = os.path.join(getModulePath(), "output", "temp")
-        os.makedirs(self.outputDir)
+        cls.tele.setSurveyParam(obsId=obsId, filterType=cls.filterType,
+                                boresight=boresight, zAngleInDeg=zAngleInDeg,
+                                rotAngInDeg=rotAngInDeg, mjd=mjd)
 
     def tearDown(self):
 
@@ -98,11 +94,15 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(self.tele.sensorOn["wfSensorOn"], wfSensorOn)
         self.assertEqual(self.tele.sensorOn["guidSensorOn"], guidSensorOn)
 
-    def testSetSensorOnWithWrongInput(self):
+        self._setDefaultTeleSetting()
 
-        sciSensorOn = 0
-        self.tele.setSensorOn(sciSensorOn=sciSensorOn)
-        self.assertEqual(self.tele.sensorOn["sciSensorOn"], True)
+    def _setDefaultTeleSetting(self):
+
+        self.tele.setConfigFile(self.configFilePath)
+        self.tele.setSensorOn()
+        self.tele.setDofInUm(np.zeros(50))
+        self.tele.setSurveyParam(filterType=self.filterType)
+        self.tele.setInstName("lsst")
 
     def testSetConfigFile(self):
 
@@ -110,6 +110,8 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setConfigFile(configFilePath)
 
         self.assertEqual(self.tele.configFile, configFilePath)
+
+        self._setDefaultTeleSetting()
 
     def testGetConfigValue(self):
 
@@ -149,36 +151,28 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
+        self._setDefaultTeleSetting()
+
     def testAccDofInUm(self):
 
         dofInUm = np.random.rand(50)
         self.tele.accDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
-    def testSetSubSysConfigDir(self):
+        self._setDefaultTeleSetting()
+
+    def testAddSubSys(self):
 
         tele = TeleFacade(configFilePath=self.configFilePath)
         self.assertEqual(tele.cam, None)
-        self.assertEqual(tele.M1M3, None)
-        self.assertEqual(tele.M2, None)
+        self.assertEqual(tele.m1m3, None)
+        self.assertEqual(tele.m2, None)
 
-        camDataDir = "NotCamDataDir"
-        M1M3dataDir = "NotM1M3dataDir"
-        M2dataDir = "NotM2dataDir"
-        phosimDir = "NotPhosimDir"
-        tele.setSubSysConfigDir(camDataDir=camDataDir, M1M3dataDir=M1M3dataDir,
-                                M2dataDir=M2dataDir, phosimDir=phosimDir)
+        tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
 
-        # Check the subsystems are instantiated after setting up the
-        # configuration directory.
         self.assertNotEqual(tele.cam, None)
-        self.assertNotEqual(tele.M1M3, None)
-        self.assertNotEqual(tele.M2, None)
-
-        # self.assertEqual(tele.cam.camDataDir, camDataDir)
-        # self.assertEqual(tele.M1M3.mirrorDataDir, M1M3dataDir)
-        # self.assertEqual(tele.M2.mirrorDataDir, M2dataDir)
-        # self.assertEqual(tele.phoSimCommu.phosimDir, phosimDir)
+        self.assertNotEqual(tele.m1m3, None)
+        self.assertNotEqual(tele.m2, None)
 
     def testWriteAccDofFile(self):
 
@@ -251,6 +245,8 @@ class TestTeleFacade(unittest.TestCase):
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
 
+        self._setDefaultTeleSetting()
+
     def _generateOpd(self):
 
         metr = OpdMetrology()
@@ -280,6 +276,8 @@ class TestTeleFacade(unittest.TestCase):
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 63)
+
+        self._setDefaultTeleSetting()
 
     def _generateFakeSky(self):
 

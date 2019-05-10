@@ -11,10 +11,15 @@ class TestM2Sim(unittest.TestCase):
 
     def setUp(self):
 
-        self.m2 = M2Sim()
         self.testM2Data = os.path.join(getModulePath(), "tests", "testData",
                                        "testM2Func")
         self.outputDir = os.path.join(getModulePath(), "output")
+
+    @classmethod
+    def setUpClass(cls):
+        """Only do the instantiation for one time for the slow speed."""
+
+        cls.m2 = M2Sim()
 
     def testInit(self):
 
