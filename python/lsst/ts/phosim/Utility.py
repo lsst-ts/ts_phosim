@@ -130,5 +130,31 @@ def mapSurfNameToEnum(surfName):
         raise ValueError("No surface type is found.")
 
 
+def getPhoSimPath(phosimPathVar="PHOSIMPATH"):
+    """Ge the PhoSim path from the environment variables.
+
+    Parameters
+    ----------
+    phosimPathVar : str, optional
+        PhoSim path variable name. (the default is "PHOSIMPATH".)
+
+    Returns
+    -------
+    str
+        PhoSim path.
+
+    Raises
+    ------
+    RuntimeError
+        Please set the 'PHOSIMPATH' environment variable.
+    """
+
+    try:
+        return os.environ[phosimPathVar]
+    except KeyError:
+        raise RuntimeError("Please set the '%s' environment variable."
+                           % phosimPathVar)
+
+
 if __name__ == "__main__":
     pass

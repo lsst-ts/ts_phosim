@@ -1,7 +1,8 @@
+import os
 import unittest
 
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans, \
-    mapSurfNameToEnum, SurfaceType
+    mapSurfNameToEnum, SurfaceType, getPhoSimPath
 
 
 class TestUtility(unittest.TestCase):
@@ -29,6 +30,18 @@ class TestUtility(unittest.TestCase):
         surfaceType = mapSurfNameToEnum(surfName)
         self.assertEqual(surfaceType, SurfaceType.L2F)
         self.assertRaises(ValueError, mapSurfNameToEnum, "L123F")
+
+    def testGetPhoSimPathNotExist(self):
+
+        self.assertRaises(RuntimeError, getPhoSimPath, "WRONGPATH")
+
+    def testGetPhoSimPath(self):
+
+        PHOSIMPATH = "/path/to/phosim"
+        os.environ["PHOSIMPATH"] = PHOSIMPATH
+
+        phosimPath = getPhoSimPath()
+        self.assertEqual(phosimPath, PHOSIMPATH)
 
 
 if __name__ == "__main__":
