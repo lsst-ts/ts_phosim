@@ -561,7 +561,7 @@ class M1M3Sim(MirrorSim):
                        byInMmInZemax[idx], outerRinMm, resFile=resFile[ii],
                        writeToResMapFilePath=writeToResMapFilePath[ii])
 
-    def genMirSurfRandErr(self, zAngleInRadian, M1M3ForceError=0.05,
+    def genMirSurfRandErr(self, zAngleInRadian, m1m3ForceError=0.05,
                           seedNum=0):
         """Generate the mirror surface random error.
 
@@ -571,7 +571,7 @@ class M1M3Sim(MirrorSim):
         ----------
         zAngleInRadian : float
             Zenith angle in radian.
-        M1M3ForceError : float, optional
+        m1m3ForceError : float, optional
             Ratio of actuator force error. (the default is 0.05.)
         seedNum : int, optional
             Random seed number. (the default is 0.)
@@ -586,12 +586,12 @@ class M1M3Sim(MirrorSim):
         zangleInDeg = np.rad2deg(zAngleInRadian)
         LUTforce = self.getLUTforce(zangleInDeg)
 
-        # Assume the M1M3ForceError=0.05
+        # Assume the m1m3ForceError=0.05
         # Add 5% force error to the original actuator forces
         # This means from -5% to +5% of original actuator's force.
         np.random.seed(int(seedNum))
         nActuator = len(LUTforce)
-        myu = (1 + 2*(np.random.rand(nActuator) - 0.5)*M1M3ForceError)*LUTforce
+        myu = (1 + 2*(np.random.rand(nActuator) - 0.5)*m1m3ForceError)*LUTforce
 
         # Balance forces along z-axis
         # This statement is intentionally to make the force balance.

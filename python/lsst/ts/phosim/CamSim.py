@@ -20,12 +20,17 @@ class CamSim(object):
             Camera rotation angle in radian. (the default is 0.)
         """
 
+        # Configuration directory
         self.configDir = os.path.join(getConfigDir(), "camera")
 
+        # Camera setting file
         settingFilePath = os.path.join(self.configDir, "camSetting.yaml")
         self._camSettingFile = ParamReader(filePath=settingFilePath)
 
+        # Camera body temperature in degree C
         self.camTBinDegC = self.setBodyTempInDegC(camTBinDegC)
+
+        # Camera rotation angle in radian
         self.camRotInRad = self.setRotAngInRad(camRotInRad)
 
     def setRotAngInRad(self, rotAngInRad):

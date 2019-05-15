@@ -1,5 +1,6 @@
 import os
 import re
+import warnings
 import numpy as np
 
 from lsst.ts.phosim.CamSim import CamSim
@@ -23,26 +24,76 @@ class TeleFacade(object):
         PhoSim by the interface to PhoSim.
         """
 
+        # Telescope setting file
         settingFilePath = os.path.join(getConfigDir(), "teleSetting.yaml")
         self._teleSettingFile = ParamReader(filePath=settingFilePath)
 
+        # Camera subsystem
         self.cam = None
+
+        # M1M3 subsystem
         self.m1m3 = None
+
+        # M2 subsystem
         self.m2 = None
+
+        # PhoSim communication
         self.phoSimCommu = PhosimCommu()
 
-        self.dofInUm = np.zeros(50)
+        # Telescope aggregated DOF in um
+        # This value will be put back to PhoSim to do the perturbation
+        numOfDof = self.getNumOfDof()
+        self.dofInUm = np.zeros(numOfDof)
 
+        # Telescopt survery parameters
+        defocalDist = self.getDefaultDefocalDist()
         self.surveyParam = {"instName": "lsst",
-                            "defocalDisInMm": 1.5,
+                            "defocalDistInMm": defocalDist,
                             "obsId": 9999,
                             "filterType": FilterType.REF,
                             "boresight": (0, 0),
                             "zAngleInDeg": 0,
                             "rotAngInDeg": 0}
+
+        # Sensors on the telescope
         self.sensorOn = {"sciSensorOn": True,
                          "wfSensorOn": True,
                          "guidSensorOn": False}
+
+    def getNumOfDof(self):
+        """Get the number of DOF in the setting file.
+
+        DOF: Degree of freedom.
+
+        Returns
+        -------
+        int
+            Number of DOF.
+        """
+
+        return int(self._teleSettingFile.getSetting("numOfDof"))
+
+    def getDefaultDefocalDist(self):
+        """Get the default defocal distance in mm.
+
+        Returns
+        -------
+        float
+            Default defocal distance in mm.
+        """
+
+        return self._teleSettingFile.getSetting("defocalDist")
+
+    def getSurfGridN(self):
+        """Get the number of grid of surface
+
+        Returns
+        -------
+        int
+            Number of grid of surface.
+        """
+
+        return int(self._teleSettingFile.getSetting("surfaceGridN"))
 
     def getCamMjd(self):
         """Get the camera MJD.
@@ -53,7 +104,7 @@ class TeleFacade(object):
             Camera MJD.
         """
 
-        return self._teleSettingFile.getSetting("mjd")
+        return self._teleSettingFile.getSetting("cameraMJD")
 
     def getRefWaveLength(self):
         """Get the reference wavelength in nm.
@@ -66,7 +117,7 @@ class TeleFacade(object):
 
         return self._teleSettingFile.getSetting("wavelengthInNm")
 
-    def getDefocalDisInMm(self):
+    def getDefocalDistInMm(self):
         """Get the defocal distance in mm.
 
         Returns
@@ -75,7 +126,7 @@ class TeleFacade(object):
             defocal distance in mm.
         """
 
-        return self.surveyParam["defocalDisInMm"]
+        return self.surveyParam["defocalDistInMm"]
 
     def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
                        zAngleInDeg=None, rotAngInDeg=None):
@@ -208,15 +259,14 @@ class TeleFacade(object):
         instName = m.groups()[0]
 
         # Decide the defocal distance offset in mm
-        defocalOffset = m.groups()[1]
-        if (defocalOffset is not None):
-            defocalOffset = float(defocalOffset) / 10
+        defocalDist = m.groups()[1]
+        if (defocalDist is not None):
+            defocalDist = float(defocalDist) / 10
         else:
-            # Default defocal distance is 1.5 mm
-            defocalOffset = 1.5
+            defocalDist = self.getDefaultDefocalDist()
 
         self.surveyParam["instName"] = instName
-        self.surveyParam["defocalDisInMm"] = defocalOffset
+        self.surveyParam["defocalDistInMm"] = defocalDist
 
     def setDofInUm(self, dofInUm):
         """Set the accumulated degree of freedom (DOF) in um.
@@ -232,7 +282,29 @@ class TeleFacade(object):
             DOF in um.
         """
 
+        self._checkNumOfDof(dofInUm)
         self.dofInUm = np.array(dofInUm, dtype=float)
+
+    def _checkNumOfDof(self, dof):
+        """Check the number of DOF:
+
+        DOF: Degree of freedom.
+
+        Parameters
+        ----------
+        dof : list or numpy.ndarray
+            DOF.
+
+        Raises
+        ------
+        ValueError
+            The size of DOF should be 50.
+        """
+
+        numOfDof = self.getNumOfDof()
+
+        if (len(dof) != numOfDof):
+            raise ValueError("The size of DOF should be %d." % numOfDof)
 
     def accDofInUm(self, dofInUm):
         """Accumulate the aggregated degree of freedom (DOF) in um.
@@ -248,6 +320,7 @@ class TeleFacade(object):
             DOF in um.
         """
 
+        self._checkNumOfDof(dofInUm)
         self.dofInUm += np.array(dofInUm, dtype=float)
 
     def addSubSys(self, addCam=False, addM1M3=False, addM2=False):
@@ -434,6 +507,18 @@ class TeleFacade(object):
 
         return self.phoSimCommu.getFilterId(mappedFilterType)
 
+    def _writeSedFileIfPhoSimDirSet(self):
+        """Write the SED file if the PhoSim directory is set.
+
+        SED: Spectral energy distribution.
+        """
+
+        if os.path.isdir(self.phoSimCommu.phosimDir):
+            self.phoSimCommu.writeSedFile(self.getRefWaveLength())
+        else:
+            warnings.warn("No inspection of SED file for no PhoSim path.",
+                          category=UserWarning)
+
     def writeOpdInstFile(self, instFileDir, opdMetr, instSettingFile=None,
                          instFileName="opd.inst"):
         """Write the optical path difference (OPD) instance file.
@@ -493,19 +578,8 @@ class TeleFacade(object):
 
         return instFilePath
 
-    def _writeSedFileIfPhoSimDirSet(self):
-        """Write the SED file if the PhoSim directory is set.
-
-        SED: Spectral energy distribution.
-        """
-
-        if os.path.isdir(self.phoSimCommu.phosimDir):
-            self.phoSimCommu.writeSedFile(self.getRefWaveLength())
-        else:
-            print("Do not inspect the SED file for no PhoSim directory.")
-
     def writePertBaseOnConfigFile(self, pertCmdFileDir, seedNum=None,
-                                  M1M3ForceError=0.05, saveResMapFig=False,
+                                  m1m3ForceError=0.05, saveResMapFig=False,
                                   pertCmdFileName="pert.cmd"):
         """Write the perturbation command file based on the telescope
         configuration file.
@@ -517,7 +591,7 @@ class TeleFacade(object):
         seedNum : int, optional
             Random seed number. If the value is not None, the M1M3 mirror
             will generate a random surface error. (the default is None.)
-        M1M3ForceError : float, optional
+        m1m3ForceError : float, optional
             Ratio of actuator force error. (the default is 0.05.)
         saveResMapFig : bool, optional
             Save the mirror surface residue map or not. (the default is False.)
@@ -530,166 +604,299 @@ class TeleFacade(object):
             Perturbation command file path.
         """
 
-        # Mirror surface residue file name
-        M1resFileName = "M1res.txt"
-        M2resFileName = "M2res.txt"
-        M3resFileName = "M3res.txt"
-
-        # Mirror Zc file
-        M1M3zcFileName = "M1M3zlist.txt"
-        M2zcFileName = "M2zlist.txt"
-
-        # Path of perturbation command file
-        pertCmdFilePath = os.path.join(pertCmdFileDir, pertCmdFileName)
-        M1resFilePath = os.path.join(pertCmdFileDir, M1resFileName)
-        M2resFilePath = os.path.join(pertCmdFileDir, M2resFileName)
-        M3resFilePath = os.path.join(pertCmdFileDir, M3resFileName)
-        M1M3zcFilePath = os.path.join(pertCmdFileDir, M1M3zcFileName)
-        M2zcFilePath = os.path.join(pertCmdFileDir, M2zcFileName)
-
-        # Perturbation command
+        # Get the perturbation of subsystems
         content = ""
-
-        # Get the zenith angle in radian
-        zAngleInDeg = self.surveyParam["zAngleInDeg"]
-        zAngleInRad = np.deg2rad(zAngleInDeg)
-
-        # Get the numeber of grid used in Zemax
-        surfaceGridN = self._teleSettingFile.getSetting("surfaceGridN")
-
-        # Write the camera perturbation command file
         if (self.m1m3 is not None):
+            m1ResFileName = "M1res.txt"
+            m3ResFileName = "M3res.txt"
+            m1m3ZcFileName = "M1M3zlist.txt"
 
-            # Do the gravity correction
-            printthzInM = self.m1m3.getPrintthz(zAngleInRad)
+            m1ResFilePath = os.path.join(pertCmdFileDir, m1ResFileName)
+            m3ResFilePath = os.path.join(pertCmdFileDir, m3ResFileName)
+            m1m3ZcFilePath = os.path.join(pertCmdFileDir, m1m3ZcFileName)
 
-            # Add the surface error if necessary
-            randSurfInM = None
-            if (seedNum is not None):
-                randSurfInM = self.m1m3.genMirSurfRandErr(
-                    zAngleInRad, M1M3ForceError=M1M3ForceError,
-                    seedNum=seedNum)
-
-            # Do the temperature correction
-            m1m3TBulk = self._teleSettingFile.getSetting("m1m3TBulk")
-            m1m3TxGrad = self._teleSettingFile.getSetting("m1m3TxGrad")
-            m1m3TyGrad = self._teleSettingFile.getSetting("m1m3TyGrad")
-            m1m3TzGrad = self._teleSettingFile.getSetting("m1m3TzGrad")
-            m1m3TrGrad = self._teleSettingFile.getSetting("m1m3TrGrad")
-            tempCorrInUm = self.m1m3.getTempCorr(m1m3TBulk, m1m3TxGrad,
-                                                 m1m3TyGrad, m1m3TzGrad,
-                                                 m1m3TrGrad)
-
-            # Set the mirror surface in mm
-            if (randSurfInM is not None):
-                mirrorSurfInUm = (printthzInM + randSurfInM) * 1e6 + \
-                    tempCorrInUm
-            else:
-                mirrorSurfInUm = printthzInM * 1e6 + tempCorrInUm
-            self.m1m3.setSurfAlongZ(mirrorSurfInUm)
-
-            resFile = [M1resFilePath, M3resFilePath]
-            self.m1m3.writeMirZkAndGridResInZemax(
-                resFile=resFile, surfaceGridN=surfaceGridN,
-                writeZcInMnToFilePath=M1M3zcFilePath)
-
-            # Get the Zk in mm
-            zkInMm = np.loadtxt(M1M3zcFilePath)
-
-            # Do the surface perturbation
-            surfList = [SurfaceType.M1, SurfaceType.M3]
-            surfIdList = []
-            for ii in range(len(surfList)):
-                surf = surfList[ii]
-                surfId = self.phoSimCommu.getSurfaceId(surf)
-                content += self.phoSimCommu.doSurfPert(surfId, zkInMm)
-
-                # Collect the surface ID
-                surfIdList.append(surfId)
-
-                # Do the surface residue map perturbation
-                content += self.phoSimCommu.doSurfMapPert(surfId,
-                                                          resFile[ii], 1)
-
-            # Do the surface linkage
-            content += self.phoSimCommu.doSurfLink(surfIdList[1],
-                                                   surfIdList[0])
+            content = self._addPertM1M3(m1ResFilePath, m3ResFilePath,
+                                        m1m3ZcFilePath, content,
+                                        m1m3ForceError, seedNum=seedNum)
 
         if (self.m2 is not None):
+            m2ResFileName = "M2res.txt"
+            m2ZcFileName = "M2zlist.txt"
 
-            # Do the gravity correction
-            printthzInUm = self.m2.getPrintthz(zAngleInRad)
+            m2ResFilePath = os.path.join(pertCmdFileDir, m2ResFileName)
+            m2ZcFilePath = os.path.join(pertCmdFileDir, m2ZcFileName)
 
-            # Do the temperature correction
-            m2TzGrad = self._teleSettingFile.getSetting("m2TzGrad")
-            m2TrGrad = self._teleSettingFile.getSetting("m2TrGrad")
-            tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
-
-            # Set the mirror surface in mm
-            mirrorSurfInUm = printthzInUm + tempCorrInUm
-            self.m2.setSurfAlongZ(mirrorSurfInUm)
-            self.m2.writeMirZkAndGridResInZemax(
-                resFile=M2resFilePath, surfaceGridN=surfaceGridN,
-                writeZcInMnToFilePath=M2zcFilePath)
-
-            # Get the Zk in mm
-            zkInMm = np.loadtxt(M2zcFilePath)
-
-            # Do the surface perturbation
-            surfId = self.phoSimCommu.getSurfaceId(SurfaceType.M2)
-            content += self.phoSimCommu.doSurfPert(surfId, zkInMm)
-
-            # Do the surface residue map perturbation
-            content += self.phoSimCommu.doSurfMapPert(surfId, M2resFilePath, 1)
+            content = self._addPertM2(m2ResFilePath, m2ZcFilePath, content)
 
         if (self.cam is not None):
-            # Set the camera rotation angle
-            rotAngInDeg = self.surveyParam["rotAngInDeg"]
-            self.cam.setRotAngInDeg(rotAngInDeg)
-
-            # Set the temperature information
-            tempInDegC = self._teleSettingFile.getSetting("camTB")
-            self.cam.setBodyTempInDegC(tempInDegC)
-
-            # Write the perturbation file
-            for distType in CamDistType:
-                # Get the surface ID
-                surfaceType = self._getPhoSimCamSurf(distType.name)
-                surfId = self.phoSimCommu.getSurfaceId(surfaceType)
-
-                # Do the perturbation
-                zkInMm = self.cam.getCamDistortionInMm(zAngleInRad, distType)
-                content += self.phoSimCommu.doSurfPert(surfId, zkInMm)
+            content = self._addPertCam(content)
 
         # Write the perturbation command to file
+        pertCmdFilePath = os.path.join(pertCmdFileDir, pertCmdFileName)
         self.phoSimCommu.writeToFile(pertCmdFilePath, content=content,
                                      mode="w")
 
         # Save the mirror residue map if necessary
         if (saveResMapFig):
+
             if (self.m1m3 is not None):
-                resFile = [M1resFilePath, M3resFilePath]
-                writeToResMapFilePath1 = os.path.splitext(M1resFilePath)[0] + \
-                    ".png"
-                writeToResMapFilePath3 = os.path.splitext(M3resFilePath)[0] + \
-                    ".png"
-                writeToResMapFilePath = [writeToResMapFilePath1,
-                                         writeToResMapFilePath3]
-                self.m1m3.showMirResMap(
-                    resFile=resFile,
-                    writeToResMapFilePath=writeToResMapFilePath)
+                self._saveM1M3ResMapFig(m1ResFilePath, m3ResFilePath)
 
             if (self.m2 is not None):
-                writeToResMapFilePath = os.path.splitext(M2resFilePath)[0] + \
-                    ".png"
-                self.m2.showMirResMap(
-                    resFile=M2resFilePath,
-                    writeToResMapFilePath=writeToResMapFilePath)
+                self._saveM2ResMapFig(m2ResFilePath)
 
         return pertCmdFilePath
 
+    def _addPertM1M3(self, m1ResFilePath, m3ResFilePath, m1m3ZcFilePath,
+                     content, m1m3ForceError, seedNum=None):
+        """Add the perturbation of M1M3.
+
+        Parameters
+        ----------
+        m1ResFilePath : str
+            M1 residue file path.
+        m3ResFilePath : str
+            M3 residue file path.
+        m1m3ZcFilePath : str
+            M1M3 fitted zk file path.
+        content : str
+            Perturbation without M1M3.
+        m1m3ForceError : float
+            Ratio of actuator force error.
+        seedNum : int, optional
+            Random seed number. If the value is not None, the M1M3 mirror
+            will generate a random surface error. (the default is None.)
+
+        Returns
+        -------
+        str
+            Perturbation with M1M3.
+        """
+
+        # Do the gravity correction
+        zAngleInRad = self._getZenAngleInRad()
+        printthzInM = self.m1m3.getPrintthz(zAngleInRad)
+
+        # Add the surface error if necessary
+        randSurfInM = None
+        if (seedNum is not None):
+            randSurfInM = self.m1m3.genMirSurfRandErr(
+                zAngleInRad, m1m3ForceError=m1m3ForceError,
+                seedNum=seedNum)
+
+        # Do the temperature correction
+        m1m3TBulk = self._teleSettingFile.getSetting("m1m3TBulk")
+        m1m3TxGrad = self._teleSettingFile.getSetting("m1m3TxGrad")
+        m1m3TyGrad = self._teleSettingFile.getSetting("m1m3TyGrad")
+        m1m3TzGrad = self._teleSettingFile.getSetting("m1m3TzGrad")
+        m1m3TrGrad = self._teleSettingFile.getSetting("m1m3TrGrad")
+        tempCorrInUm = self.m1m3.getTempCorr(m1m3TBulk, m1m3TxGrad,
+                                             m1m3TyGrad, m1m3TzGrad,
+                                             m1m3TrGrad)
+
+        # Set the mirror surface in mm
+        if (randSurfInM is not None):
+            mirrorSurfInUm = (printthzInM + randSurfInM) * 1e6 + \
+                tempCorrInUm
+        else:
+            mirrorSurfInUm = printthzInM * 1e6 + tempCorrInUm
+        self.m1m3.setSurfAlongZ(mirrorSurfInUm)
+
+        resFile = [m1ResFilePath, m3ResFilePath]
+        surfaceGridN = self.getSurfGridN()
+        self.m1m3.writeMirZkAndGridResInZemax(
+            resFile=resFile, surfaceGridN=surfaceGridN,
+            writeZcInMnToFilePath=m1m3ZcFilePath)
+
+        # Get the Zk in mm
+        zkInMm = np.loadtxt(m1m3ZcFilePath)
+
+        # Do the surface perturbation
+        surfList = [SurfaceType.M1, SurfaceType.M3]
+        surfIdList = []
+
+        contentWithPert = content
+        for ii in range(len(surfList)):
+            surf = surfList[ii]
+            surfId = self.phoSimCommu.getSurfaceId(surf)
+            contentWithPert += self.phoSimCommu.doSurfPert(surfId, zkInMm)
+
+            # Collect the surface ID
+            surfIdList.append(surfId)
+
+            # Do the surface residue map perturbation
+            contentWithPert += self.phoSimCommu.doSurfMapPert(surfId,
+                                                              resFile[ii], 1)
+
+        # Do the surface linkage
+        contentWithPert += self.phoSimCommu.doSurfLink(surfIdList[1],
+                                                       surfIdList[0])
+
+        return contentWithPert
+
+    def _getZenAngleInRad(self):
+        """Get the zenith angle in radian.
+
+        Returns
+        -------
+        float
+            Zenith angle in radian.
+        """
+
+        zAngleInDeg = self.surveyParam["zAngleInDeg"]
+        zAngleInRad = np.deg2rad(zAngleInDeg)
+
+        return zAngleInRad
+
+    def _addPertM2(self, m2ResFilePath, m2ZcFilePath, content):
+        """Add the perturbation of M2.
+
+        Parameters
+        ----------
+        m2ResFilePath : str
+            M2 residue file path.
+        m2ZcFilePath : str
+            M2 fitted zk file path.
+        content : str
+            Perturbation without M2.
+
+        Returns
+        -------
+        str
+            Perturbation with M2.
+        """
+
+        # Do the gravity correction
+        zAngleInRad = self._getZenAngleInRad()
+        printthzInUm = self.m2.getPrintthz(zAngleInRad)
+
+        # Do the temperature correction
+        m2TzGrad = self._teleSettingFile.getSetting("m2TzGrad")
+        m2TrGrad = self._teleSettingFile.getSetting("m2TrGrad")
+        tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
+
+        # Set the mirror surface in mm
+        mirrorSurfInUm = printthzInUm + tempCorrInUm
+        self.m2.setSurfAlongZ(mirrorSurfInUm)
+
+        surfaceGridN = self.getSurfGridN()
+        self.m2.writeMirZkAndGridResInZemax(
+            resFile=m2ResFilePath, surfaceGridN=surfaceGridN,
+            writeZcInMnToFilePath=m2ZcFilePath)
+
+        # Get the Zk in mm
+        zkInMm = np.loadtxt(m2ZcFilePath)
+
+        # Do the surface perturbation
+        surfId = self.phoSimCommu.getSurfaceId(SurfaceType.M2)
+
+        contentWithPert = content
+        contentWithPert += self.phoSimCommu.doSurfPert(surfId, zkInMm)
+
+        # Do the surface residue map perturbation
+        contentWithPert += self.phoSimCommu.doSurfMapPert(
+            surfId, m2ResFilePath, 1)
+
+        return contentWithPert
+
+    def _addPertCam(self, content):
+        """Add the perturbation of camera.
+
+        Parameters
+        ----------
+        content : str
+            Perturbation without camera.
+
+        Returns
+        -------
+        str
+            Perturbation with camera.
+        """
+
+        # Set the camera rotation angle
+        rotAngInDeg = self.surveyParam["rotAngInDeg"]
+        self.cam.setRotAngInDeg(rotAngInDeg)
+
+        # Set the temperature information
+        tempInDegC = self._teleSettingFile.getSetting("camTB")
+        self.cam.setBodyTempInDegC(tempInDegC)
+
+        # Add the perturbation of camera
+        zAngleInRad = self._getZenAngleInRad()
+        contentWithPert = content
+        for distType in CamDistType:
+            # Get the surface ID
+            surfaceType = self._getPhoSimCamSurf(distType.name)
+            surfId = self.phoSimCommu.getSurfaceId(surfaceType)
+
+            # Do the perturbation
+            zkInMm = self.cam.getCamDistortionInMm(zAngleInRad, distType)
+            contentWithPert += self.phoSimCommu.doSurfPert(surfId, zkInMm)
+
+        return contentWithPert
+
+    def _saveM1M3ResMapFig(self, m1ResFilePath, m3ResFilePath):
+        """Save the figure of M1M3 residue map.
+
+        Parameters
+        ----------
+        m1ResFilePath : str
+            M1 residue file path.
+        m3ResFilePath : str
+            M3 residue file path.
+        """
+
+        resFile = [m1ResFilePath, m3ResFilePath]
+
+        writeToResMapFilePath1 = self._getImgPathFromDataFilePath(
+            m1ResFilePath)
+        writeToResMapFilePath3 = self._getImgPathFromDataFilePath(
+            m3ResFilePath)
+        writeToResMapFilePath = [writeToResMapFilePath1,
+                                 writeToResMapFilePath3]
+
+        self.m1m3.showMirResMap(
+            resFile=resFile,
+            writeToResMapFilePath=writeToResMapFilePath)
+
+    def _getImgPathFromDataFilePath(self, dataFilePath, imgType=".png"):
+        """Get the image path from the data file path.
+
+        Parameters
+        ----------
+        dataFilePath : str
+            Data file path.
+        imgType : str, optional
+            Image type (the default is ".png".)
+
+        Returns
+        -------
+        str
+            Image path.
+        """
+
+        imgPath = os.path.splitext(dataFilePath)[0] + imgType
+
+        return imgPath
+
+    def _saveM2ResMapFig(self, m2ResFilePath):
+        """Save the figure of M2 residue map.
+
+        Parameters
+        ----------
+        m2ResFilePath : str
+            M2 residue file path.
+        """
+
+        writeToResMapFilePath = self._getImgPathFromDataFilePath(
+            m2ResFilePath)
+
+        self.m2.showMirResMap(
+            resFile=m2ResFilePath,
+            writeToResMapFilePath=writeToResMapFilePath)
+
     def _getPhoSimCamSurf(self, camSurfName):
-        """Get the camera surface name used in PhoSim.
+        """Get the camera surface used in PhoSim.
 
         Parameters
         ----------
@@ -698,8 +905,8 @@ class TeleFacade(object):
 
         Returns
         -------
-        SurfaceType
-            Camera surface enum.
+        enum 'SurfaceType'
+            Camera surface type.
 
         Raises
         ------

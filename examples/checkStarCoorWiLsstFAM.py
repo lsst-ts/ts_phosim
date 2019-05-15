@@ -86,7 +86,7 @@ def main(phosimDir):
         dofInUm = np.zeros(50)
 
         # Camera piston (Change the unit from mm to um)
-        dofInUm[5] = ii * tele.getDefocalDisInMm() * 1e3
+        dofInUm[5] = ii * tele.getDefocalDistInMm() * 1e3
 
         # Set the degree fo freedom on telescope
         tele.setDofInUm(dofInUm)

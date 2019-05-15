@@ -52,10 +52,25 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSurveyParam(filterType=self.filterType)
         self.tele.setInstName("lsst")
 
+    def testGetNumOfDof(self):
+
+        numOfDof = self.tele.getNumOfDof()
+        self.assertEqual(numOfDof, 50)
+
+    def testGetDefaultDefocalDist(self):
+
+        defocalDist = self.tele.getDefocalDistInMm()
+        self.assertEqual(defocalDist, 1.5)
+
+    def testGetSurfGridN(self):
+
+        surfGridN = self.tele.getSurfGridN()
+        self.assertEqual(surfGridN, 200)
+
     def testGetCamMjd(self):
 
         mjd = self.tele.getCamMjd()
-        self.assertEqual(mjd, 59552.3)
+        self.assertEqual(mjd, 59580.0)
 
     def testGetRefWaveLength(self):
 
@@ -67,7 +82,7 @@ class TestTeleFacade(unittest.TestCase):
         instName = "comcam13"
         self.tele.setInstName(instName)
 
-        self.assertEqual(self.tele.getDefocalDisInMm(), 1.3)
+        self.assertEqual(self.tele.getDefocalDistInMm(), 1.3)
 
     def testSetSurveyParamWithCorrectInput(self):
 
@@ -125,13 +140,13 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setInstName(instName)
 
         self.assertEqual(self.tele.surveyParam["instName"], "comcam")
-        self.assertEqual(self.tele.getDefocalDisInMm(), 1.0)
+        self.assertEqual(self.tele.getDefocalDistInMm(), 1.0)
 
         instName = "temp"
         self.tele.setInstName(instName)
 
         self.assertEqual(self.tele.surveyParam["instName"], "temp")
-        self.assertEqual(self.tele.getDefocalDisInMm(), 1.5)
+        self.assertEqual(self.tele.getDefocalDistInMm(), 1.5)
 
         self.assertRaises(ValueError, self.tele.setInstName, "a10a")
 
@@ -141,11 +156,21 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
+    def testSetDofInUmWithWrongLeng(self):
+
+        dofInUm = np.random.rand(45)
+        self.assertRaises(ValueError, self.tele.setDofInUm, dofInUm)
+
     def testAccDofInUm(self):
 
         dofInUm = np.random.rand(50)
         self.tele.accDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
+
+    def testAccDofInUmWithWrongLeng(self):
+
+        dofInUm = np.random.rand(45)
+        self.assertRaises(ValueError, self.tele.accDofInUm, dofInUm)
 
     def testAddSubSys(self):
 
@@ -179,7 +204,7 @@ class TestTeleFacade(unittest.TestCase):
 
         iSim = 6
         pertCmdFilePath = self.tele.writePertBaseOnConfigFile(
-            outputDir, seedNum=iSim, M1M3ForceError=0.05, saveResMapFig=True,
+            outputDir, seedNum=iSim, m1m3ForceError=0.05, saveResMapFig=True,
             pertCmdFileName="pert.cmd")
 
         return pertCmdFilePath
