@@ -2,7 +2,7 @@ import os
 import unittest
 
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans, \
-    mapSurfNameToEnum, SurfaceType, getPhoSimPath
+    mapSurfNameToEnum, SurfaceType, getPhoSimPath, sortOpdFileList
 
 
 class TestUtility(unittest.TestCase):
@@ -42,6 +42,25 @@ class TestUtility(unittest.TestCase):
 
         phosimPath = getPhoSimPath()
         self.assertEqual(phosimPath, PHOSIMPATH)
+
+    def testSortOpdFileList(self):
+
+        fileDir = "/fileDir"
+        opdFileNameList = ["opd_100_3.fits.gz", "opd_100_1.fits.gz",
+                           "opd_100_13.fits.gz", "opd_100_0.fits.gz",
+                           "opd_100_10.fits.gz"]
+        opdFileList = [os.path.join(fileDir, fileName)
+                       for fileName in opdFileNameList]
+
+        sortedOpdFileList = sortOpdFileList(opdFileList)
+
+        sortedIdxList = [3, 1, 0, 4, 2]
+        ansOpdFileList = [opdFileList[idx] for idx in sortedIdxList]
+        self.assertListEqual(sortedOpdFileList, ansOpdFileList)
+
+    def testSortOpdFileListWithUnmatchedName(self):
+
+        self.assertRaises(ValueError, sortOpdFileList, ["wrong_name"])
 
 
 if __name__ == "__main__":

@@ -60,6 +60,22 @@ class TeleFacade(object):
                          "wfSensorOn": True,
                          "guidSensorOn": False}
 
+    def getDofInUm(self):
+        """Get the accumulated degree of freedom (DOF) in um.
+
+        idx 0-4: M2 dz, dx, dy, rx, ry
+        idx 5-9: Cam dz, dx, dy, rx, ry
+        idx 10-29: M1M3 20 bending modes
+        idx 30-49: M2 20 bending modes
+
+        Returns
+        -------
+        numpy.ndarray
+            DOF in um.
+        """
+
+        return self.dofInUm
+
     def getNumOfDof(self):
         """Get the number of DOF in the setting file.
 
@@ -513,7 +529,7 @@ class TeleFacade(object):
         SED: Spectral energy distribution.
         """
 
-        if os.path.isdir(self.phoSimCommu.phosimDir):
+        if os.path.isdir(self.phoSimCommu.getPhoSimDir()):
             self.phoSimCommu.writeSedFile(self.getRefWaveLength())
         else:
             warnings.warn("No inspection of SED file for no PhoSim path.",

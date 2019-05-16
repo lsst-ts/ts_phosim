@@ -1,4 +1,5 @@
 import os
+import re
 from enum import Enum
 
 from lsst.utils import getPackageDir
@@ -154,6 +155,46 @@ def getPhoSimPath(phosimPathVar="PHOSIMPATH"):
     except KeyError:
         raise RuntimeError("Please set the '%s' environment variable."
                            % phosimPathVar)
+
+
+def sortOpdFileList(opdFileList):
+    """Sort the OPD file list.
+
+    OPD: Optical path difference.
+
+    Parameters
+    ----------
+    opdFileList : list[str]
+        OPD file list.
+
+    Returns
+    -------
+    list[str]
+        Sorted OPD file list.
+
+    Raises
+    ------
+    ValueError
+        Unmatched file name found.
+    """
+
+    # Get the sorted index based on the OPD number
+    baseNameList = [os.path.basename(filePath) for filePath in opdFileList]
+    opdNumList = []
+    for basename in baseNameList:
+        m = re.match(r"\Aopd_\d+_(\d+).fits", basename)
+        if (m is None):
+            raise ValueError("Unmatched file name (%s) found." % basename)
+        else:
+            opdNumList.append(int(m.groups()[0]))
+
+    sortedIdxList = sorted(range(len(opdNumList)),
+                           key=lambda idx: opdNumList[idx])
+
+    # Get the rearranged file list
+    sortedOpdFileList = [opdFileList[idx] for idx in sortedIdxList]
+
+    return sortedOpdFileList
 
 
 if __name__ == "__main__":

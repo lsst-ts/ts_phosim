@@ -52,6 +52,13 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSurveyParam(filterType=self.filterType)
         self.tele.setInstName("lsst")
 
+    def testGetDofInUm(self):
+
+        dofInUm = self.tele.getDofInUm()
+
+        self.assertEqual(len(dofInUm), 50)
+        self.assertEqual(np.sum(np.abs(dofInUm)), 0)
+
     def testGetNumOfDof(self):
 
         numOfDof = self.tele.getNumOfDof()
