@@ -2,7 +2,8 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.phosim.CamSim import CamSim
+from lsst.ts.phosim.telescope.CamSim import CamSim
+
 from lsst.ts.phosim.Utility import getModulePath, CamDistType
 
 

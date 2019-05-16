@@ -5,9 +5,10 @@ import unittest
 
 from lsst.ts.wep.Utility import FilterType
 
+from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
+
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.TeleFacade import TeleFacade
 
 from lsst.ts.phosim.Utility import getModulePath, getConfigDir
 

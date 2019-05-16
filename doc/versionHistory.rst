@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.1.3:
+
+-------------
+1.1.3
+-------------
+
+Combine with ts_tcs_aoclc_simulator to support the AOS closed loop simulation. Put the telescope related classes into the module of telescope.
+
 .. _lsst.ts.phosim-1.1.2:
 
 -------------

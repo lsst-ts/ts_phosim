@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .TeleFacade import TeleFacade
+from .PhosimCmpt import PhosimCmpt
 from .OpdMetrology import OpdMetrology
 from .SkySim import SkySim
 

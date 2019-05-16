@@ -2,7 +2,8 @@ import os
 import unittest
 import numpy as np
 
-from lsst.ts.phosim.MirrorSim import MirrorSim
+from lsst.ts.phosim.telescope.MirrorSim import MirrorSim
+
 from lsst.ts.phosim.Utility import getConfigDir
 
 

@@ -18,7 +18,7 @@ Using lsst.ts.phosim
 
 Important classes:
 
-* `TeleFacade` intergates the correction of camera and mirror distortion correction to PhoSim.
+* `PhosimCmpt` is a high-level class to use the module of ts_phosim.
 * `OpdMetrology` does the optical path difference (OPD) related metrology.
 * `SkySim` adds the stars.
 

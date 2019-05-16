@@ -3,6 +3,7 @@ from astropy.io import fits
 
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
 from lsst.ts.wep.SourceProcessor import SourceProcessor
+
 from lsst.ts.phosim.MetroTool import calc_pssn, psf2eAtmW
 
 

@@ -2,7 +2,8 @@ import os
 import unittest
 import numpy as np
 
-from lsst.ts.phosim.M2Sim import M2Sim
+from lsst.ts.phosim.telescope.M2Sim import M2Sim
+
 from lsst.ts.phosim.Utility import getModulePath
 
 

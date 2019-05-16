@@ -3,10 +3,11 @@ import re
 import warnings
 import numpy as np
 
-from lsst.ts.phosim.CamSim import CamSim
-from lsst.ts.phosim.M1M3Sim import M1M3Sim
-from lsst.ts.phosim.M2Sim import M2Sim
-from lsst.ts.phosim.PhosimCommu import PhosimCommu
+from lsst.ts.phosim.telescope.CamSim import CamSim
+from lsst.ts.phosim.telescope.M1M3Sim import M1M3Sim
+from lsst.ts.phosim.telescope.M2Sim import M2Sim
+from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
+
 from lsst.ts.phosim.Utility import SurfaceType, CamDistType, getConfigDir, \
     mapSurfNameToEnum
 

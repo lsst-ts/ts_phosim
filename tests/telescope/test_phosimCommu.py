@@ -3,7 +3,9 @@ import numpy as np
 import unittest
 
 from lsst.ts.wep.Utility import FilterType
-from lsst.ts.phosim.PhosimCommu import PhosimCommu
+
+from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
+
 from lsst.ts.phosim.Utility import getModulePath, SurfaceType
 
 
