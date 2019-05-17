@@ -502,10 +502,12 @@ class TeleFacade(object):
             sedName = "sed_%s.txt" % int(self.getRefWaveLength())
 
         # Write the star source
-        for ii in range(len(skySim.starId)):
+        starId = skySim.getStarId()
+        ra, decl = skySim.getRaDecInDeg()
+        mag = skySim.getStarMag()
+        for idx in range(len(starId)):
             content += self.phoSimCommu.generateStar(
-                skySim.starId[ii], skySim.ra[ii], skySim.decl[ii],
-                skySim.mag[ii], sedName)
+                starId[idx], ra[idx], decl[idx], mag[idx], sedName)
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         return instFilePath
@@ -584,10 +586,10 @@ class TeleFacade(object):
         content = self.phoSimCommu.doDofPert(self.dofInUm)
 
         # Write the OPD source
-        for ii in range(len(opdMetr.fieldX)):
+        fieldX, fieldY = opdMetr.getFieldXY()
+        for idx in range(len(fieldX)):
             content += self.phoSimCommu.generateOpd(
-                ii, opdMetr.fieldX[ii], opdMetr.fieldY[ii],
-                self.getRefWaveLength())
+                idx, fieldX[idx], fieldY[idx], self.getRefWaveLength())
         self.phoSimCommu.writeToFile(instFilePath, content=content)
 
         # Write the OPD SED file if necessary

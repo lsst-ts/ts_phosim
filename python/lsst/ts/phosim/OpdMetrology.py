@@ -19,6 +19,30 @@ class OpdMetrology(object):
         self.fieldX = np.array([])
         self.fieldY = np.array([])
 
+    def getFieldXY(self):
+        """Get the field X, Y in degree.
+
+        Returns
+        -------
+        numpy.ndarray
+            Field X in degree.
+        numpy.ndarray
+            Field Y in degree.
+        """
+
+        return self.fieldX, self.fieldY
+
+    def getWeightingRatio(self):
+        """Get the weighting ratio used in Gaussian quadrature.
+
+        Returns
+        -------
+        numpy.ndarray
+            Weighting ratio.
+        """
+
+        return self.wt
+
     def setWeightingRatio(self, wt):
         """Set the weighting ratio used in Gaussian quadrature.
 

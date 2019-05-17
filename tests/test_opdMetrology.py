@@ -15,13 +15,29 @@ class TestOpdMetrology(unittest.TestCase):
                                         "testOpdFunc")
         self.metr = OpdMetrology()
 
+    def testGetFieldXY(self):
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 0)
+        self.assertEqual(len(fieldY), 0)
+        self.assertTrue(isinstance(fieldX, np.ndarray))
+        self.assertTrue(isinstance(fieldY, np.ndarray))
+
+    def testGetWeightingRatio(self):
+
+        wt = self.metr.getWeightingRatio()
+        self.assertEqual(len(wt), 0)
+        self.assertTrue(isinstance(wt, np.ndarray))
+
     def testSetWeightingRatio(self):
 
         wt = [1, 2]
         self.metr.setWeightingRatio(wt)
-        self.assertEqual(len(self.metr.wt), len(wt))
-        self.assertEqual(np.sum(self.metr.wt), 1)
-        self.assertAlmostEqual(self.metr.wt[1]/self.metr.wt[0], 2)
+
+        wtInMetr = self.metr.getWeightingRatio()
+        self.assertEqual(len(wtInMetr), len(wt))
+        self.assertEqual(np.sum(wtInMetr), 1)
+        self.assertAlmostEqual(wtInMetr[1]/wtInMetr[0], 2)
         self.assertRaises(ValueError, self.metr.setWeightingRatio, [-1, 1])
 
     def testSetFieldXYinDeg(self):
@@ -30,23 +46,30 @@ class TestOpdMetrology(unittest.TestCase):
         fieldYInDegree = 0.2
         self.metr.setFieldXYinDeg(fieldXInDegree, fieldYInDegree)
 
-        self.assertEqual(self.metr.fieldX, fieldXInDegree)
-        self.assertEqual(self.metr.fieldY, fieldYInDegree)
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(fieldX, fieldXInDegree)
+        self.assertEqual(fieldY, fieldYInDegree)
 
     def testAddFieldXYbyDeg(self):
 
         fieldXInDegree = 0.1
         fieldYInDegree = 0.2
         self.metr.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)
-        self.assertEqual(len(self.metr.fieldX), 1)
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 1)
 
         self.metr.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)
-        self.assertEqual(len(self.metr.fieldX), 2)
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 2)
 
     def testSetDefaultLsstGQ(self):
 
         self.metr.setDefaultLsstGQ()
-        self.assertEqual(len(self.metr.fieldX), 31)
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 31)
 
     def testGetDefaultLsstWfsGQ(self):
 
@@ -56,7 +79,9 @@ class TestOpdMetrology(unittest.TestCase):
     def testSetDefaultComcamGQ(self):
 
         self.metr.setDefaultComcamGQ()
-        self.assertEqual(len(self.metr.fieldX), 9)
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 9)
 
     def testGetZkFromOpd(self):
 
@@ -93,7 +118,8 @@ class TestOpdMetrology(unittest.TestCase):
 
         ansFieldXinDeg = 2000*0.2/3600
         ansFieldYinDeg = 2036*0.2/3600
-        self.assertAlmostEqual((self.metr.fieldX[-1], self.metr.fieldY[-1]),
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertAlmostEqual((fieldX[-1], fieldY[-1]),
                                (ansFieldXinDeg, ansFieldYinDeg))
 
     def calcPSSN(self):

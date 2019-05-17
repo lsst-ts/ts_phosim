@@ -13,14 +13,65 @@ class SkySim(object):
     def __init__(self):
         """Initialization of sky simulator class."""
 
+        # Star ID
         self.starId = np.array([], dtype=int)
+
+        # Star RA
         self.ra = np.array([])
+
+        # Star Decl
         self.decl = np.array([])
+
+        # Star magnitude
         self.mag = np.array([])
 
+        # DM camera object contains the information to do the coordinate
+        # transformation
         self._camera = LsstSimMapper().camera
+
+        # SIMS observation metadata object
         self._obs = ObservationMetaData()
+
+        # Source processor in ts_wep
         self._sourProc = SourceProcessor()
+
+    def getStarId(self):
+        """Get the star Id.
+
+        Returns
+        -------
+        numpy.ndarray[int]
+            Star Id.
+        """
+
+        return self.starId
+
+    def getRaDecInDeg(self):
+        """Get the star ra, decl in degree.
+
+        RA: Right ascension.
+        Decl: Declination.
+
+        Returns
+        -------
+        numpy.ndarray
+            Star ra.
+        numpy.ndarray
+            Star decl.
+        """
+
+        return self.ra, self.decl
+
+    def getStarMag(self):
+        """Get the star magnitude.
+
+        Returns
+        -------
+        numpy.ndarray
+            Star magnitude.
+        """
+
+        return self.mag
 
     def setCamera(self, camera):
         """Set the camera object.
