@@ -4,6 +4,8 @@ import numpy as np
 import unittest
 
 from lsst.ts.wep.Utility import FilterType, CamType
+from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
+from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 
@@ -251,13 +253,37 @@ class TestPhosimCmpt(unittest.TestCase):
 
         return opdFileDir
 
+    def testMapOpdDataToListOfWfErr(self):
+
+        self._analyzeComCamOpdData()
+
+        refSensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10",
+                             "R22_S11", "R22_S12", "R22_S20", "R22_S21",
+                             "R22_S22"]
+        listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
+            self.zkFileName, refSensorNameList)
+
+        self.assertEqual(len(listOfWfErr), len(refSensorNameList))
+
+        opdZk = self.phosimCmpt._getZkFromFile(self.zkFileName)
+        mapSensorNameAndId = MapSensorNameAndId()
+        for wfErr, refSensorName, zk in zip(listOfWfErr, refSensorNameList, opdZk):
+
+            sensorId = wfErr.getSensorId()
+            sensorNameList = mapSensorNameAndId.mapSensorIdToName(sensorId)[0]
+            self.assertEqual(sensorNameList[0], refSensorName)
+
+            zkInWfErr = wfErr.getAnnularZernikePoly()
+            delta = np.sum(np.abs(zkInWfErr - zk))
+            self.assertEqual(delta, 0)
+
     def testGetZkFromFile(self):
 
         self._analyzeComCamOpdData()
 
         # The correctness of values have been tested at the test case of
         # testAnalyzeComCamOpdData
-        zk = self.phosimCmpt.getZkFromFile(self.zkFileName)
+        zk = self.phosimCmpt._getZkFromFile(self.zkFileName)
         self.assertEqual(zk.shape, (9, 19))
 
     def testGetOpdPssnFromFile(self):
@@ -373,11 +399,12 @@ class TestPhosimCmpt(unittest.TestCase):
 
     def testReorderAndSaveWfErrFile(self):
 
-        wfErrMap = self._prepareWfErrMap()[0]
-        refSensorNameList = ["a1", "a", "a2", "b"]
+        listOfWfErr = self._prapareListOfWfErr()
+
+        refSensorNameList = ["R00_S12", "R00_S21", "R01_S00", "R01_S01"]
         zkFileName = "testZk.zer"
         self.phosimCmpt.reorderAndSaveWfErrFile(
-            wfErrMap, refSensorNameList, zkFileName=zkFileName)
+            listOfWfErr, refSensorNameList, zkFileName=zkFileName)
 
         zkFilePath = os.path.join(self.phosimCmpt.getOutputImgDir(),
                                   zkFileName)
@@ -388,13 +415,41 @@ class TestPhosimCmpt(unittest.TestCase):
                          (len(refSensorNameList), numOfZk))
 
         self.assertEqual(np.sum(zkInFile[0, :]), 0)
-        self.assertEqual(np.sum(zkInFile[2, :]), 0)
+        self.assertEqual(np.sum(zkInFile[3, :]), 0)
 
-        delta = np.sum(np.abs(zkInFile[1, :] * 1e3 - wfErrMap["a"]))
+        delta = np.sum(np.abs(
+            zkInFile[1, :] - listOfWfErr[2].getAnnularZernikePoly()))
         self.assertLess(delta, 1e-10)
 
-        delta = np.sum(np.abs(zkInFile[3, :] * 1e3 - wfErrMap["b"]))
+        delta = np.sum(np.abs(
+            zkInFile[2, :] - listOfWfErr[1].getAnnularZernikePoly()))
         self.assertLess(delta, 1e-10)
+
+    def _prapareListOfWfErr(self):
+
+        numOfZk = self.phosimCmpt.getNumOfZk()
+
+        sensorIdList = [2, 3, 1]
+        listOfWfErr = []
+        for sensorId in sensorIdList:
+            sensorWavefrontData = SensorWavefrontData()
+            sensorWavefrontData.setSensorId(sensorId)
+
+            wfErr = np.random.rand(numOfZk)
+            sensorWavefrontData.setAnnularZernikePoly(wfErr)
+
+            listOfWfErr.append(sensorWavefrontData)
+
+        return listOfWfErr
+
+    def testGetWfErrValuesAndStackToMatrix(self):
+
+        wfErrMap, wfsValueMatrix = self._prepareWfErrMap()
+        valueMatrix = \
+            self.phosimCmpt._getWfErrValuesAndStackToMatrix(wfErrMap)
+
+        delta = np.sum(np.abs(valueMatrix - wfsValueMatrix))
+        self.assertEqual(delta, 0)
 
     def _prepareWfErrMap(self):
 
@@ -406,15 +461,6 @@ class TestPhosimCmpt(unittest.TestCase):
             wfErrMap[sensorName] = wfsValueMatrix[idx, :]
 
         return wfErrMap, wfsValueMatrix
-
-    def testGetWfErrValuesAndStackToMatrix(self):
-
-        wfErrMap, wfsValueMatrix = self._prepareWfErrMap()
-        valueMatrix = \
-            self.phosimCmpt.getWfErrValuesAndStackToMatrix(wfErrMap)
-
-        delta = np.sum(np.abs(valueMatrix - wfsValueMatrix))
-        self.assertEqual(delta, 0)
 
 
 if __name__ == "__main__":

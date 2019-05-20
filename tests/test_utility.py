@@ -2,7 +2,8 @@ import os
 import unittest
 
 from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans, \
-    mapSurfNameToEnum, SurfaceType, getPhoSimPath, sortOpdFileList
+    mapSurfNameToEnum, SurfaceType, getPhoSimPath, sortOpdFileList, \
+    getAoclcOutputPath, getModulePath
 
 
 class TestUtility(unittest.TestCase):
@@ -42,6 +43,24 @@ class TestUtility(unittest.TestCase):
 
         phosimPath = getPhoSimPath()
         self.assertEqual(phosimPath, PHOSIMPATH)
+
+        os.environ.pop("PHOSIMPATH")
+
+    def testGetAoclcOutputPathNotAssigned(self):
+
+        aoclcOutputPath = getAoclcOutputPath()
+        self.assertEqual(aoclcOutputPath,
+                         os.path.join(getModulePath(), "output"))
+
+    def testGetAoclcOutputPath(self):
+
+        AOCLCOUTPUTPATH = "/path/to/aoclc/output"
+        os.environ["AOCLCOUTPUTPATH"] = AOCLCOUTPUTPATH
+
+        aoclcOutputPath = getAoclcOutputPath()
+        self.assertEqual(aoclcOutputPath, AOCLCOUTPUTPATH)
+
+        os.environ.pop("AOCLCOUTPUTPATH")
 
     def testSortOpdFileList(self):
 

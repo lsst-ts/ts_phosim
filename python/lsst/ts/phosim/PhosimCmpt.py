@@ -5,6 +5,8 @@ import numpy as np
 
 from lsst.ts.wep.Utility import runProgram
 from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
+from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
@@ -856,7 +858,43 @@ class PhosimCmpt(object):
 
         return effFwhmList, gqEffFwhm
 
-    def getZkFromFile(self, zkFileName):
+    def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList):
+        """Map the OPD data to the list of wavefront error.
+
+        OPD: Optical path difference.
+
+        Parameters
+        ----------
+        opdZkFileName : str
+            OPD zk file name.
+        refSensorNameList : list
+            Reference sensor name list.
+
+        Returns
+        -------
+        list[SensorWavefrontData]
+            List of SensorWavefrontData object.
+        """
+
+        mapSensorNameAndId = MapSensorNameAndId()
+
+        opdZk = self._getZkFromFile(opdZkFileName)
+        listOfWfErr = []
+        for sensorName, zk in zip(refSensorNameList, opdZk):
+
+            sensorWavefrontData = SensorWavefrontData()
+
+            sensorIdList = mapSensorNameAndId.mapSensorNameToId(sensorName)
+            sensorId = sensorIdList[0]
+            sensorWavefrontData.setSensorId(sensorId)
+
+            sensorWavefrontData.setAnnularZernikePoly(zk)
+
+            listOfWfErr.append(sensorWavefrontData)
+
+        return listOfWfErr
+
+    def _getZkFromFile(self, zkFileName):
         """Get the zk (z4-z22) from file.
 
         Parameters
@@ -975,9 +1013,9 @@ class PhosimCmpt(object):
         # Remove the temp directory
         shutil.rmtree(tmpDirPath)
 
-    def reorderAndSaveWfErrFile(self, wfErrMap, refSensorNameList,
+    def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
                                 zkFileName="wfs.zer"):
-        """Reorder the wavefront error in the wavefront error map according to
+        """Reorder the wavefront error in the wavefront error list according to
         the reference sensor name list and save to a file.
 
         The unexisted wavefront error will be a numpy zero array. The unit is
@@ -985,26 +1023,24 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        wfErrMap : dict
-            Calculated wavefront error. The dictionary key [str] is the
-            abbreviated sensor name (e.g. R22_S11). The dictionary item
-            [numpy.ndarray] is the averaged wavefront error (z4-z22) in nm.
+        listOfWfErr : list[SensorWavefrontData]
+            List of SensorWavefrontData object.
         refSensorNameList : list
-            Reference sensor name list
+            Reference sensor name list.
         zkFileName : str, optional
             Wavefront error file name. (the default is "wfs.zer".)
         """
 
         # Get the sensor name that in the wavefront error map
+        wfErrMap = self._transListOfWfErrToMap(listOfWfErr)
         nameListInWfErrMap = list(wfErrMap.keys())
 
         # Reorder the wavefront error map based on the reference sensor name
-        # list. The wavefront error unit will change from nm to um.
+        # list.
         reorderedWfErrMap = dict()
         for sensorName in refSensorNameList:
             if sensorName in nameListInWfErrMap:
-                # Change the unit from nm to um
-                wfErr = wfErrMap[sensorName] * 1e-3
+                wfErr = wfErrMap[sensorName]
             else:
                 numOfZk = self.getNumOfZk()
                 wfErr = np.zeros(numOfZk)
@@ -1012,11 +1048,41 @@ class PhosimCmpt(object):
 
         # Save the file
         filePath = os.path.join(self.outputImgDir, zkFileName)
-        wfsData = self.getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
+        wfsData = self._getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
         header = "The followings are ZK in um from z4 to z22:"
         np.savetxt(filePath, wfsData, header=header)
 
-    def getWfErrValuesAndStackToMatrix(self, wfErrMap):
+    def _transListOfWfErrToMap(self, listOfWfErr):
+        """Transform the list of wavefront error to map.
+
+        Parameters
+        ----------
+        listOfWfErr : list[SensorWavefrontData]
+            List of SensorWavefrontData object.
+
+        Returns
+        -------
+        dict
+            Calculated wavefront error. The dictionary key [str] is the
+            abbreviated sensor name (e.g. R22_S11). The dictionary item
+            [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
+        """
+
+        mapSensorNameAndId = MapSensorNameAndId()
+
+        wfErrMap = dict()
+        for sensorWavefrontData in listOfWfErr:
+            sensorId = sensorWavefrontData.getSensorId()
+            sensorNameList = mapSensorNameAndId.mapSensorIdToName(sensorId)[0]
+            sensorName = sensorNameList[0]
+
+            avgErrInUm = sensorWavefrontData.getAnnularZernikePoly()
+
+            wfErrMap[sensorName] = avgErrInUm
+
+        return wfErrMap
+
+    def _getWfErrValuesAndStackToMatrix(self, wfErrMap):
         """Get the wavefront errors and stack them to be a matrix.
 
         Parameters
@@ -1024,12 +1090,12 @@ class PhosimCmpt(object):
         wfErrMap : dict
             Calculated wavefront error. The dictionary key [str] is the
             abbreviated sensor name (e.g. R22_S11). The dictionary item
-            [numpy.ndarray] is the averaged wavefront error (z4-z22) in nm.
+            [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
 
         Returns
         -------
         numpy.ndarray
-            Wavefront errors as a matrix. The column is z4-z22 in nm. The row
+            Wavefront errors as a matrix. The column is z4-z22 in um. The row
             is the individual sensor. The order is the same as the input of
             wfErrMap.
         """

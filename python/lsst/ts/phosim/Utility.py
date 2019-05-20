@@ -1,5 +1,6 @@
 import os
 import re
+import warnings
 from enum import Enum
 
 from lsst.utils import getPackageDir
@@ -155,6 +156,32 @@ def getPhoSimPath(phosimPathVar="PHOSIMPATH"):
     except KeyError:
         raise RuntimeError("Please set the '%s' environment variable."
                            % phosimPathVar)
+
+
+def getAoclcOutputPath(aoclcOutputPathVar="AOCLCOUTPUTPATH"):
+    """Get the AOCLC output path.
+
+    AOCLC: Active optics closed loop control
+
+    Parameters
+    ----------
+    aoclcOutputPathVar : str, optional
+        AOCLC output path variable. (the default is "AOCLCOUTPUTPATH".)
+
+    Returns
+    -------
+    str
+        AOCLC output path.
+    """
+
+    try:
+        outputPath = os.environ[aoclcOutputPathVar]
+    except KeyError:
+        outputPath = os.path.join(getModulePath(), "output")
+        warnings.warn("No 'AOCLCOUTPUTPATH' assigned. Use %s instead." % outputPath,
+                      category=UserWarning)
+
+    return outputPath
 
 
 def sortOpdFileList(opdFileList):
