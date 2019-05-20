@@ -1,4 +1,9 @@
 @startuml
+package "telescope" #DDDDDD {
+  class TeleFacade
+}
+
 PhosimCmpt ..> SkySim
 PhosimCmpt *-- OpdMetrology
+PhosimCmpt *-- TeleFacade
 @enduml
