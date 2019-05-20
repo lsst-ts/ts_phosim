@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.1.4:
+
+-------------
+1.1.4
+-------------
+
+Minor bugs fixed. Add the get methods for SkySim and OpdMetrology classes. Use the CamType of ts_wep module in TeleFacade.
+
 .. _lsst.ts.phosim-1.1.3:
 
 -------------

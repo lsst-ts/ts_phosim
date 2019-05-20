@@ -1,0 +1,22 @@
+---
+
+# PhoSim component setting
+
+# Number of zk (annular Zernike polynomials) terms
+numOfZk: 19
+
+# Intra-focal directory name. This is needed if the defocal image is by the
+# camera piston.
+intraDirName: intra
+
+# Extra-focal directory name. This is needed if the defocal image is by the
+# camera piston.
+extraDirName: extra
+
+# PhoSim-related default parameters
+
+# Number of processors. The value should be greater than 1.
+numPro: 1
+
+# Whether to generate amplifier images (1 = true, 0 = false)
+e2ADC: 1

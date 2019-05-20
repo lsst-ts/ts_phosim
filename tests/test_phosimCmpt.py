@@ -3,7 +3,7 @@ import shutil
 import numpy as np
 import unittest
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 
@@ -39,7 +39,7 @@ class TestPhosimCmpt(unittest.TestCase):
         cls.tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
         cls.tele.setSensorOn(sciSensorOn=True, wfSensorOn=False,
                              guidSensorOn=False)
-        cls.tele.setInstName("lsst15")
+        cls.tele.setInstName(CamType.ComCam)
 
         # Set the survey parameters
         obsId = 9006000
@@ -64,6 +64,22 @@ class TestPhosimCmpt(unittest.TestCase):
     def _setDefaultTeleSetting(self):
 
         self.tele.setDofInUm(np.zeros(50))
+
+    def testGetNumOfZk(self):
+
+        numOfZk = self.phosimCmpt.getNumOfZk()
+        self.assertTrue(isinstance(numOfZk, int))
+        self.assertEqual(numOfZk, 19)
+
+    def testGetIntraFocalDirName(self):
+
+        dirName = self.phosimCmpt.getIntraFocalDirName()
+        self.assertEqual(dirName, "intra")
+
+    def testGetExtraFocalDirName(self):
+
+        dirName = self.phosimCmpt.getExtraFocalDirName()
+        self.assertEqual(dirName, "extra")
 
     def testGetOutputDir(self):
 
@@ -117,7 +133,7 @@ class TestPhosimCmpt(unittest.TestCase):
 
         numPro = 3
         e2ADC = 0
-        self._setPhosimParam(numPro, e2ADC)
+        self.phosimCmpt.setPhosimParam(numPro, e2ADC)
 
         phosimParam = self.phosimCmpt.getPhosimParam()
 
@@ -126,18 +142,8 @@ class TestPhosimCmpt(unittest.TestCase):
 
     def testSetPhosimParamWithWrongValue(self):
 
-        numPro = -1
-        e2ADC = 2
-        self._setPhosimParam(numPro, e2ADC)
-
-        phosimParam = self.phosimCmpt.getPhosimParam()
-
-        self.assertEqual(phosimParam["numPro"], 1)
-        self.assertEqual(phosimParam["e2ADC"], 1)
-
-    def _setPhosimParam(self, numPro, e2ADC):
-
-        self.phosimCmpt.setPhosimParam(numPro=numPro, e2ADC=e2ADC)
+        self.assertRaises(ValueError, self.phosimCmpt.setPhosimParam, -1, 0)
+        self.assertRaises(ValueError, self.phosimCmpt.setPhosimParam, 1, 2)
 
     def testGetComCamOpdArgsAndFilesForPhoSim(self):
 
@@ -340,7 +346,7 @@ class TestPhosimCmpt(unittest.TestCase):
 
         intraFileFolderPath = os.path.join(
             self.phosimCmpt.getOutputImgDir(),
-            self.phosimCmpt.PISTON_INTRA_DIR_NAME)
+            self.phosimCmpt.getIntraFocalDirName())
         intraFileNum = self._getNumOfFileInFolder(intraFileFolderPath)
         self.assertEqual(intraFileNum, 16)
 
@@ -351,14 +357,15 @@ class TestPhosimCmpt(unittest.TestCase):
 
         extraFileFolderPath = os.path.join(
             self.phosimCmpt.getOutputImgDir(),
-            self.phosimCmpt.PISTON_EXTRA_DIR_NAME)
+            self.phosimCmpt.getExtraFocalDirName())
         extraFileNum = self._getNumOfFileInFolder(extraFileFolderPath)
         self.assertEqual(extraFileNum, 1)
 
     def _copyComCamAmpFiles(self):
 
-        for imgType in (self.phosimCmpt.PISTON_INTRA_DIR_NAME,
-                        self.phosimCmpt.PISTON_EXTRA_DIR_NAME):
+        intraFocalDirName = self.phosimCmpt.getIntraFocalDirName()
+        extraFocalDirName = self.phosimCmpt.getExtraFocalDirName()
+        for imgType in (intraFocalDirName, extraFocalDirName):
             ampDirPath = os.path.join(getModulePath(), "tests", "testData",
                                       "comcamAmpPhosimData", imgType)
             dst = os.path.join(self.phosimCmpt.getOutputImgDir(), imgType)
@@ -376,8 +383,9 @@ class TestPhosimCmpt(unittest.TestCase):
                                   zkFileName)
         zkInFile = np.loadtxt(zkFilePath)
 
+        numOfZk = self.phosimCmpt.getNumOfZk()
         self.assertEqual(zkInFile.shape,
-                         (len(refSensorNameList), self.phosimCmpt.NUM_OF_ZK))
+                         (len(refSensorNameList), numOfZk))
 
         self.assertEqual(np.sum(zkInFile[0, :]), 0)
         self.assertEqual(np.sum(zkInFile[2, :]), 0)
@@ -391,8 +399,8 @@ class TestPhosimCmpt(unittest.TestCase):
     def _prepareWfErrMap(self):
 
         sensorNameList = ["c", "b", "a"]
-        wfsValueMatrix = np.random.rand(len(sensorNameList),
-                                        self.phosimCmpt.NUM_OF_ZK)
+        numOfZk = self.phosimCmpt.getNumOfZk()
+        wfsValueMatrix = np.random.rand(len(sensorNameList), numOfZk)
         wfErrMap = dict()
         for idx, sensorName in enumerate(sensorNameList):
             wfErrMap[sensorName] = wfsValueMatrix[idx, :]

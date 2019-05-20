@@ -4,17 +4,13 @@ import shutil
 import numpy as np
 
 from lsst.ts.wep.Utility import runProgram
+from lsst.ts.wep.ParamReader import ParamReader
 
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 
 
 class PhosimCmpt(object):
-
-    NUM_OF_ZK = 19
-
-    PISTON_INTRA_DIR_NAME = "intra"
-    PISTON_EXTRA_DIR_NAME = "extra"
 
     def __init__(self, tele):
         """Initialization of PhoSim component class.
@@ -29,6 +25,11 @@ class PhosimCmpt(object):
 
         # Configuration directory
         self.configDir = getConfigDir()
+
+        # Telescope setting file
+        settingFilePath = os.path.join(self.configDir,
+                                       "phosimCmptSetting.yaml")
+        self._phosimCmptSettingFile = ParamReader(filePath=settingFilePath)
 
         # OPD metrology
         self.metr = OpdMetrology()
@@ -46,8 +47,43 @@ class PhosimCmpt(object):
         self.seedNum = 0
 
         # PhoSim parameters
-        self.phosimParam = {"numPro": 1,
-                            "e2ADC": 1}
+        numPro = self._phosimCmptSettingFile.getSetting("numPro")
+        e2ADC = self._phosimCmptSettingFile.getSetting("e2ADC")
+        self.phosimParam = {"numPro": numPro,
+                            "e2ADC": e2ADC}
+
+    def getNumOfZk(self):
+        """Get the number of Zk (annular Zernike polynomial).
+
+        Returns
+        -------
+        int
+            Number of Zk.
+        """
+
+        return int(self._phosimCmptSettingFile.getSetting("numOfZk"))
+
+    def getIntraFocalDirName(self):
+        """Get the intra-focal directory name.
+
+        Returns
+        -------
+        str
+            Intra-focal directory name.
+        """
+
+        return self._phosimCmptSettingFile.getSetting("intraDirName")
+
+    def getExtraFocalDirName(self):
+        """Get the extra-focal directory name.
+
+        Returns
+        -------
+        str
+            Extra-focal directory name.
+        """
+
+        return self._phosimCmptSettingFile.getSetting("extraDirName")
 
     def getOpdMetr(self):
         """Get the OPD metrology object.
@@ -154,24 +190,33 @@ class PhosimCmpt(object):
 
         return self.seedNum
 
-    def setPhosimParam(self, numPro=1, e2ADC=1):
+    def setPhosimParam(self, numPro, e2ADC):
         """Set the PhoSim simulation parameters.
 
         Parameters
         ----------
-        numPro : int, optional
-            Number of processors. The value should be greater than 1. (the
-            default is 1.)
-        e2ADC : int, optional
-            Whether to generate amplifier images (1 = true, 0 = false) (the
-            default is 1.)
+        numPro : int
+            Number of processors. The value should be greater than 1.
+        e2ADC : int
+            Whether to generate amplifier images (1 = true, 0 = false).
+
+        Raises
+        ------
+        ValueError
+            Number of processors should be >= 0.
+        ValueError
+            e2ADC should be 0 or 1.
         """
 
         if (numPro > 0):
             self.phosimParam["numPro"] = int(numPro)
+        else:
+            raise ValueError("Number of processors should be >= 0.")
 
         if e2ADC in (0, 1):
             self.phosimParam["e2ADC"] = int(e2ADC)
+        else:
+            raise ValueError("e2ADC should be 0 or 1.")
 
     def getPhosimParam(self):
         """Get the PhoSim simulation parameters.
@@ -499,8 +544,11 @@ class PhosimCmpt(object):
                             "1": "starIntra.inst"}
         logFileNameList = {"-1": "starExtraPhoSim.log",
                            "1": "starIntraPhoSim.log"}
-        outImgDirNameList = {"-1": self.PISTON_EXTRA_DIR_NAME,
-                             "1": self.PISTON_INTRA_DIR_NAME}
+
+        extraFocalDirName = self.getExtraFocalDirName()
+        intraFocalDirName = self.getIntraFocalDirName()
+        outImgDirNameList = {"-1": extraFocalDirName,
+                             "1": intraFocalDirName}
 
         # Write the instance and command files of defocal conditions
         cmdFileName = "star.cmd"
@@ -640,7 +688,8 @@ class PhosimCmpt(object):
         opdFileList = self._getOpdFileInDir(self.outputImgDir)
 
         # Map the OPD to the Zk basis and do the collection
-        opdData = np.zeros((len(opdFileList), self.NUM_OF_ZK))
+        numOfZk = self.getNumOfZk()
+        opdData = np.zeros((len(opdFileList), numOfZk))
         for idx, opdFile in enumerate(opdFileList):
 
             # z1 to z22 (22 terms)
@@ -648,7 +697,7 @@ class PhosimCmpt(object):
 
             # Only need to collect z4 to z22
             initIdx = 3
-            opdData[idx, :] = zk[initIdx:initIdx + self.NUM_OF_ZK]
+            opdData[idx, :] = zk[initIdx:initIdx + numOfZk]
 
         return opdData
 
@@ -905,7 +954,9 @@ class PhosimCmpt(object):
         tmpDirPath = os.path.join(self.outputImgDir, "tmp")
         self._makeDir(tmpDirPath)
 
-        for imgType in (self.PISTON_INTRA_DIR_NAME, self.PISTON_EXTRA_DIR_NAME):
+        intraFocalDirName = self.getIntraFocalDirName()
+        extraFocalDirName = self.getExtraFocalDirName()
+        for imgType in (intraFocalDirName, extraFocalDirName):
 
             # Repackage the images to that temp directory
             command = "phosim_repackager.py"
@@ -955,7 +1006,8 @@ class PhosimCmpt(object):
                 # Change the unit from nm to um
                 wfErr = wfErrMap[sensorName] * 1e-3
             else:
-                wfErr = np.zeros(self.NUM_OF_ZK)
+                numOfZk = self.getNumOfZk()
+                wfErr = np.zeros(numOfZk)
             reorderedWfErrMap[sensorName] = wfErr
 
         # Save the file
@@ -982,7 +1034,8 @@ class PhosimCmpt(object):
             wfErrMap.
         """
 
-        valueMatrix = np.empty((0, self.NUM_OF_ZK))
+        numOfZk = self.getNumOfZk()
+        valueMatrix = np.empty((0, numOfZk))
         for wfErr in wfErrMap.values():
             valueMatrix = np.vstack((valueMatrix, wfErr))
 
