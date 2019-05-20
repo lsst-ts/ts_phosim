@@ -192,7 +192,7 @@ class PhosimCmpt(object):
         ----------
         obsId : int, optional
             Observation Id. (the default is None.)
-        filterType : FilterType, optional
+        filterType : enum 'FilterType' in lsst.ts.wep.Utility, optional
             Active filter type. (the default is None.)
         boresight : tuple, optional
             Telescope boresight in (ra, decl). (the default is None.)

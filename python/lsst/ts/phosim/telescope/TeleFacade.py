@@ -11,7 +11,7 @@ from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
 from lsst.ts.phosim.Utility import SurfaceType, CamDistType, getConfigDir, \
     mapSurfNameToEnum
 
-from lsst.ts.wep.Utility import FilterType, mapFilterRefToG
+from lsst.ts.wep.Utility import FilterType, CamType, mapFilterRefToG
 from lsst.ts.wep.ParamReader import ParamReader
 
 
@@ -153,7 +153,7 @@ class TeleFacade(object):
         ----------
         obsId : int, optional
             Observation Id. (the default is None.)
-        filterType : enum 'FilterType', optional
+        filterType : enum 'FilterType' in lsst.ts.wep.Utility, optional
             Active filter type. (the default is None.)
         boresight : tuple, optional
             Telescope boresight in (ra, decl). (the default is None.)
@@ -255,35 +255,58 @@ class TeleFacade(object):
 
         return argString
 
-    def setInstName(self, instName):
-        """ Set the instrument name from the instrument file.
+    def setInstName(self, camType, defocalDist=None):
+        """Set the instrument name.
 
         Parameters
         ----------
-        instName : str
-            Instrument name (e.g. "lsst", "comcam10").
+        camType : enum 'CamType' in lsst.ts.wep.Utility
+            Camera type.
+        defocalDist : float, optional
+            Defocal distance in mm. If None, the default value will be used.
+            (the default is None.)
 
         Raises
         ------
         ValueError
-            Cannot get the instrument name.
+            Defocal distance can not be <= 0.
         """
 
-        # Get the instrument name
-        m = re.match(r"([a-z]+)(?:(\d+))?$", instName)
-        if (m is None):
-            raise ValueError("Cannot get the instrument name: %s." % instName)
-        instName = m.groups()[0]
-
-        # Decide the defocal distance offset in mm
-        defocalDist = m.groups()[1]
-        if (defocalDist is not None):
-            defocalDist = float(defocalDist) / 10
-        else:
+        if (defocalDist is None):
             defocalDist = self.getDefaultDefocalDist()
 
-        self.surveyParam["instName"] = instName
+        if (defocalDist <= 0):
+            raise ValueError("Defocal distance can not be <= 0.")
+
         self.surveyParam["defocalDistInMm"] = defocalDist
+
+        self._setInstNameBasedOnCamType(camType)
+
+    def _setInstNameBasedOnCamType(self, camType):
+        """Set the instrument name based on the camera type.
+
+        Parameters
+        ----------
+        camType : enum 'CamType' in lsst.ts.wep.Utility
+            Camera type.
+
+        Raises
+        ------
+        ValueError
+            This camera type is not supported yet.
+        """
+
+        if camType in (CamType.LsstCam, CamType.LsstFamCam):
+            instName = "lsst"
+        elif (camType == CamType.ComCam):
+            instName = "lsst"
+            warnings.warn("Use 'lsst' instead of 'comcam' in PhoSim.",
+                          category=UserWarning)
+        else:
+            raise ValueError("This camera type (%s) is not supported yet."
+                             % camType)
+
+        self.surveyParam["instName"] = instName
 
     def setDofInUm(self, dofInUm):
         """Set the accumulated degree of freedom (DOF) in um.

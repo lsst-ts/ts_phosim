@@ -3,7 +3,7 @@ import shutil
 import numpy as np
 import unittest
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 
@@ -51,7 +51,7 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSensorOn()
         self.tele.setDofInUm(np.zeros(50))
         self.tele.setSurveyParam(filterType=self.filterType)
-        self.tele.setInstName("lsst")
+        self.tele.setInstName(CamType.LsstFamCam)
 
     def testGetDofInUm(self):
 
@@ -87,10 +87,10 @@ class TestTeleFacade(unittest.TestCase):
 
     def testGetDefocalDisInMm(self):
 
-        instName = "comcam13"
-        self.tele.setInstName(instName)
+        defocalDist = 1.3
+        self.tele.setInstName(CamType.LsstCam, defocalDist=defocalDist)
 
-        self.assertEqual(self.tele.getDefocalDistInMm(), 1.3)
+        self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
     def testSetSurveyParamWithCorrectInput(self):
 
@@ -144,19 +144,23 @@ class TestTeleFacade(unittest.TestCase):
 
     def testSetInstName(self):
 
-        instName = "comcam10"
-        self.tele.setInstName(instName)
+        defocalDist = 1.0
+        self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
 
-        self.assertEqual(self.tele.surveyParam["instName"], "comcam")
-        self.assertEqual(self.tele.getDefocalDistInMm(), 1.0)
+        self.assertEqual(self.tele.surveyParam["instName"], "lsst")
+        self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
-        instName = "temp"
-        self.tele.setInstName(instName)
+    def testSetInstNameWithWrongCamType(self):
 
-        self.assertEqual(self.tele.surveyParam["instName"], "temp")
-        self.assertEqual(self.tele.getDefocalDistInMm(), 1.5)
+        self.assertRaises(ValueError, self.tele.setInstName, "wrongType")
 
-        self.assertRaises(ValueError, self.tele.setInstName, "a10a")
+    def testSetInstNameWithNegativeDefocalDist(self):
+
+        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam,
+                          -1.5)
+
+        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam,
+                          0)
 
     def testSetDofInUm(self):
 
