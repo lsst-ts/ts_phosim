@@ -12,7 +12,7 @@ Version History
 1.1.4
 -------------
 
-Minor bugs fixed. Add the get methods for SkySim and OpdMetrology classes. Use the CamType of ts_wep module in TeleFacade.
+Minor bugs fixed. Add the get methods for SkySim and OpdMetrology classes. Use the CamType of ts_wep module in TeleFacade class. Update PhosimCmpt class to use the interface classes of ts_wep and ts_ofc. Use the scientific pipeline of sims_w_2019_20.
 
 .. _lsst.ts.phosim-1.1.3:
 
