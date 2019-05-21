@@ -12,18 +12,26 @@
 ## 2. Needed Package
 
 - *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: af48bf0)*
+- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 58f8aed) (optional)*
 - *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
 - *[plantuml](http://plantuml.com) (optional)*
 - *[sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)*
 
 ## 3. Use of Module
 
-*Setup the WEP environment first, and then, setup the PhoSim environment by eups:*
+*1. Setup the WEP environment first, and then, setup the PhoSim environment by eups:*
 
 ```bash
 cd $ts_phosim_directory
 setup -k -r .
 scons
+```
+
+*2. Set the path variables:*
+
+```bash
+export PHOSIMPATH=$path_to_phosim
+export AOCLCOUTPUTPATH=$path_to_output
 ```
 
 ## 4. Example Script

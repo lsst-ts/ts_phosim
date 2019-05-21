@@ -1,37 +1,46 @@
 import os
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
-
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
+    getAoclcOutputPath
 
 
-def main(phosimDir):
+def main(phosimDir, numPro):
 
     # Settings
-    outputDir = os.path.join(getModulePath(), "output")
+    outputDir = getAoclcOutputPath()
     outputImgDir = os.path.join(outputDir, "img")
+    os.makedirs(outputImgDir, exist_ok=True)
 
-    cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
-                                  "starDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
-                                   "starSingleExp.inst")
+    configDir = getConfigDir()
+    cmdSettingFile = os.path.join(configDir, "cmdFile", "starDefault.cmd")
+    instSettingFile = os.path.join(configDir, "instFile", "starSingleExp.inst")
 
     # Survey information
     obsId = 9006000
-    instName = "lsst"
     filterType = FilterType.REF
     ra = 20
     decl = 30
     rotSkyPos = 10
-    mjd = 59580.0
+
+    # Set the Telescope facade class
+    tele = TeleFacade()
+    tele.setPhoSimDir(phosimDir)
+    tele.setSurveyParam(obsId=obsId, filterType=filterType,
+                        boresight=(ra, decl), rotAngInDeg=rotSkyPos)
+    tele.setInstName(CamType.LsstCam)
+
+    # Write the accumulated DOF file
+    tele.writeAccDofFile(outputDir)
 
     # Declare the SkySim()
     skySim = SkySim()
 
     # Set the observation information
+    mjd = tele.getCamMjd()
     skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
 
     # Add the interested stars
@@ -48,21 +57,8 @@ def main(phosimDir):
             starId += 1
 
     # Export sky information
-    outputSkyFilePath = os.path.join(getModulePath(), "output",
-                                     "skyWfsInfo.txt")
+    outputSkyFilePath = os.path.join(outputDir, "skyWfsInfo.txt")
     skySim.exportSkyToFile(outputSkyFilePath)
-
-    # Set the Telescope facade class
-    configFilePath = os.path.join(getModulePath(), "configData",
-                                  "telescopeConfig", "GT.inst")
-    tele = TeleFacade(configFilePath=configFilePath)
-    tele.setSubSysConfigDir(phosimDir=phosimDir)
-    tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                        boresight=(ra, decl), rotAngInDeg=rotSkyPos, mjd=mjd)
-    tele.setInstName(instName)
-
-    # Write the accumulated DOF file
-    tele.writeAccDofFile(outputDir)
 
     # Write the star physical command file
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
@@ -76,8 +72,8 @@ def main(phosimDir):
     # Get the argument to run the PhoSim
     logFilePath = os.path.join(outputImgDir, "phosimStar.log")
     argString = tele.getPhoSimArgs(instFilePath, extraCommandFile=cmdFilePath,
-                                   numPro=8, outputDir=outputImgDir, e2ADC=0,
-                                   logFilePath=logFilePath)
+                                   numPro=numPro, outputDir=outputImgDir,
+                                   e2ADC=0, logFilePath=logFilePath)
 
     # Run the PhoSim
     tele.runPhoSim(argString)
@@ -85,6 +81,6 @@ def main(phosimDir):
 
 if __name__ == "__main__":
 
-    phosimDir = os.path.join(os.sep, "home", "ttsai", "Document", "bitbucket",
-                             "phosim_syseng4")
-    main(phosimDir)
+    phosimDir = getPhoSimPath()
+    numPro = 1
+    main(phosimDir, numPro)

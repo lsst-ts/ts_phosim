@@ -1,38 +1,44 @@
 import os
 import numpy as np
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
-
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
+    getAoclcOutputPath
 
 
 def main(phosimDir):
 
     # Settings
-    outputDir = os.path.join(getModulePath(), "output")
+    outputDir = getAoclcOutputPath()
     outputImgDir = os.path.join(outputDir, "img")
+    os.makedirs(outputImgDir, exist_ok=True)
 
-    cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
-                                  "starDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
-                                   "starDefault.inst")
+    configDir = getConfigDir()
+    cmdSettingFile = os.path.join(configDir, "cmdFile", "starDefault.cmd")
+    instSettingFile = os.path.join(configDir, "instFile", "starSingleExp.inst")
 
     # Survey information
     obsId = 9006000
-    instName = "lsst"
     filterType = FilterType.REF
     ra = 20
     decl = 30
     rotSkyPos = 10
-    mjd = 59580.0
+
+    # Set the Telescope facade class
+    tele = TeleFacade()
+    tele.setPhoSimDir(phosimDir)
+    tele.setSurveyParam(obsId=obsId, filterType=filterType,
+                        boresight=(ra, decl), rotAngInDeg=rotSkyPos)
+    tele.setInstName(CamType.LsstFamCam)
 
     # Declare the SkySim()
     skySim = SkySim()
 
     # Set the observation information
+    mjd = tele.getCamMjd()
     skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
 
     # Add the interested stars
@@ -45,21 +51,9 @@ def main(phosimDir):
         skySim.addStarByChipPos(sensorName, starId[ii], xInpixelInCam[ii],
                                 yInPixelInCam[ii], starMag[ii])
 
-    # Set the Telescope facade class
-    configFilePath = os.path.join(getModulePath(), "configData",
-                                  "telescopeConfig", "GT.inst")
-    tele = TeleFacade(configFilePath=configFilePath)
-    tele.setSubSysConfigDir(phosimDir=phosimDir)
-    tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                        boresight=(ra, decl), rotAngInDeg=rotSkyPos, mjd=mjd)
-    tele.setInstName(instName)
-
-    # Update the telescope degree of freedom
+    # Update the telescope degree of freedom with camera piston in um
     dofInUm = np.zeros(50)
-
-    # Camera piston in um
     dofInUm[5] = 1000
-
     tele.accDofInUm(dofInUm)
 
     # Write the accumulated DOF file
@@ -86,6 +80,5 @@ def main(phosimDir):
 
 if __name__ == "__main__":
 
-    phosimDir = os.path.join(os.sep, "home", "ttsai", "Document", "bitbucket",
-                             "phosim_syseng4")
+    phosimDir = getPhoSimPath()
     main(phosimDir)

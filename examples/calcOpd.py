@@ -4,21 +4,21 @@ import numpy as np
 from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
-
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
+    getAoclcOutputPath
 
 
 def main(phosimDir):
 
     # Settings
-    outputDir = os.path.join(getModulePath(), "output")
+    outputDir = getAoclcOutputPath()
     outputImgDir = os.path.join(outputDir, "img")
+    os.makedirs(outputImgDir, exist_ok=True)
 
-    cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
-                                  "opdDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
-                                   "opdDefault.inst")
+    configDir = getConfigDir()
+    cmdSettingFile = os.path.join(configDir, "cmdFile", "opdDefault.cmd")
+    instSettingFile = os.path.join(configDir, "instFile", "opdDefault.inst")
 
     # Declare the opd metrology and add the interested field points
     metr = OpdMetrology()
@@ -26,19 +26,15 @@ def main(phosimDir):
     metr.addFieldXYbyDeg(0.2, 0.3)
 
     # Set the Telescope facade class
-    configFilePath = os.path.join(getModulePath(), "configData",
-                                  "telescopeConfig", "GT.inst")
-    tele = TeleFacade(configFilePath=configFilePath)
-    tele.setSubSysConfigDir(phosimDir=phosimDir)
+    tele = TeleFacade()
+    tele.setPhoSimDir(phosimDir)
 
     obsId = 9006050
     filterType = FilterType.REF
     tele.setSurveyParam(obsId=obsId, filterType=filterType)
 
-    # Update the telescope degree of freedom
+    # Update the telescope degree of freedom with sepecific camera dx
     dofInUm = np.zeros(50)
-
-    # Camera dx
     dofInUm[6] = 1000
     tele.accDofInUm(dofInUm)
 
@@ -61,18 +57,16 @@ def main(phosimDir):
     tele.runPhoSim(argString)
 
     # Analyze the OPD fits images
-    opdFitsFile = os.path.join(outputImgDir, "opd_9006050_0.fits.gz")
+    opdFitsFile = os.path.join(outputImgDir, "opd_%d_0.fits.gz" % obsId)
     zk = metr.getZkFromOpd(opdFitsFile=opdFitsFile)[0]
-    print(zk)
+    print("Zk of OPD_0 is %s." % zk)
 
-    wavelengthInUm = tele.WAVELENGTH_IN_NM * 1e-3
+    wavelengthInUm = tele.getRefWaveLength() * 1e-3
     pssn = metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFitsFile)
-
-    print(pssn)
+    print("Calculated PSSN is %.4f." % pssn)
 
 
 if __name__ == "__main__":
 
-    phosimDir = os.path.join(os.sep, "home", "ttsai", "Document", "bitbucket",
-                             "phosim_syseng4")
+    phosimDir = getPhoSimPath()
     main(phosimDir)

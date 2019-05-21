@@ -237,7 +237,7 @@ class TestTeleFacade(unittest.TestCase):
             pertFilePath=pertCmdFilePath, cmdFileName="star.cmd")
 
         numOfLineInFile = self._getNumOfLineInFile(cmdFilePath)
-        self.assertEqual(numOfLineInFile, 267)
+        self.assertEqual(numOfLineInFile, 268)
 
     def testGetPhoSimCamSurf(self):
 

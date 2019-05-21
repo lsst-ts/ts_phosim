@@ -1,69 +1,27 @@
 import os
 import numpy as np
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
-
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath
-
-
-def precondition(phosimDir):
-
-    # Survey information
-    instName = "lsst"
-    filterType = FilterType.REF
-    ra = 20
-    decl = 30
-    rotSkyPos = 10
-    mjd = 59580.0
-
-    # Declare the SkySim()
-    skySim = SkySim()
-
-    # Set the observation information
-    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
-
-    # Add the interested stars
-    sensorName = "R22_S11"
-    starId = [0, 1]
-    xInpixelInCam = [3200, 400]
-    yInPixelInCam = [3800, 700]
-    starMag = [15, 16]
-    for ii in range(len(starId)):
-        skySim.addStarByChipPos(sensorName, starId[ii], xInpixelInCam[ii],
-                                yInPixelInCam[ii], starMag[ii])
-
-    # Output the sky information
-    outputFilePath = os.path.join(getModulePath(), "output",
-                                  "skyLsstFamInfo.txt")
-    skySim.exportSkyToFile(outputFilePath)
-
-    # Set the Telescope facade class
-    configFilePath = os.path.join(getModulePath(), "configData",
-                                  "telescopeConfig", "GT.inst")
-    tele = TeleFacade(configFilePath=configFilePath)
-    tele.setSubSysConfigDir(phosimDir=phosimDir)
-    tele.setSurveyParam(filterType=filterType, boresight=(ra, decl),
-                        rotAngInDeg=rotSkyPos, mjd=mjd)
-    tele.setInstName(instName)
-
-    return tele, skySim
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
+    getAoclcOutputPath
 
 
 def main(phosimDir):
 
     # Set the output directory
-    outputDir = os.path.join(getModulePath(), "output")
+    outputDir = getAoclcOutputPath()
     outputImgDir = os.path.join(outputDir, "img")
-    cmdSettingFile = os.path.join(getModulePath(), "configData", "cmdFile",
-                                  "starDefault.cmd")
-    instSettingFile = os.path.join(getModulePath(), "configData", "instFile",
-                                   "starSingleExp.inst")
+    os.makedirs(outputImgDir, exist_ok=True)
+
+    configDir = getConfigDir()
+    cmdSettingFile = os.path.join(configDir, "cmdFile", "starDefault.cmd")
+    instSettingFile = os.path.join(configDir, "instFile", "starSingleExp.inst")
 
     # Get the objects of TeleFacade and SkySim classes
-    tele, skySim = precondition(phosimDir)
+    tele, skySim = _prepareTeleAndSky(phosimDir)
 
     # Write the star physical command file
     cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
@@ -77,6 +35,9 @@ def main(phosimDir):
     outputImgDirIntra = os.path.join(outputImgDir, "intra")
     outputImgDirExtra = os.path.join(outputImgDir, "extra")
     outputImgDirList = {"-1": outputImgDirExtra, "1": outputImgDirIntra}
+
+    os.makedirs(outputImgDirIntra, exist_ok=True)
+    os.makedirs(outputImgDirExtra, exist_ok=True)
 
     argStringList = []
     for ii in (-1, 1):
@@ -110,8 +71,46 @@ def main(phosimDir):
         tele.runPhoSim(argStringList[ii])
 
 
+def _prepareTeleAndSky(phosimDir):
+
+    # Survey information
+    filterType = FilterType.REF
+    ra = 20
+    decl = 30
+    rotSkyPos = 10
+
+    # Set the Telescope facade class
+    tele = TeleFacade()
+    tele.setPhoSimDir(phosimDir)
+    tele.setSurveyParam(filterType=filterType, boresight=(ra, decl),
+                        rotAngInDeg=rotSkyPos)
+    tele.setInstName(CamType.LsstFamCam)
+
+    # Declare the SkySim()
+    skySim = SkySim()
+
+    # Set the observation information
+    mjd = tele.getCamMjd()
+    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+
+    # Add the interested stars
+    sensorName = "R22_S11"
+    starId = [0, 1]
+    xInpixelInCam = [3200, 400]
+    yInPixelInCam = [3800, 700]
+    starMag = [15, 16]
+    for ii in range(len(starId)):
+        skySim.addStarByChipPos(sensorName, starId[ii], xInpixelInCam[ii],
+                                yInPixelInCam[ii], starMag[ii])
+
+    # Output the sky information
+    outputFilePath = os.path.join(getAoclcOutputPath(), "skyLsstFamInfo.txt")
+    skySim.exportSkyToFile(outputFilePath)
+
+    return tele, skySim
+
+
 if __name__ == "__main__":
 
-    phosimDir = os.path.join(os.sep, "home", "ttsai", "Document", "bitbucket",
-                             "phosim_syseng4")
+    phosimDir = getPhoSimPath()
     main(phosimDir)

@@ -1,3 +1,3 @@
-backgroundmode 0 
-raydensity 0.0 
-perturbationmode 1 
+backgroundmode 0
+raydensity 0.0
+perturbationmode 1
