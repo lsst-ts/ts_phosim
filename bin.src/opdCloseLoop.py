@@ -1,5 +1,5 @@
 import os
-import numpy as np
+import argparse
 
 from lsst.ts.wep.Utility import FilterType
 from lsst.ts.ofc.Utility import InstName
@@ -7,11 +7,11 @@ from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
-from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
-    getAoclcOutputPath
+from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
+from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-def main(phosimDir, numPro, iterNum):
+def main(phosimDir, numPro, iterNum, baseOutputDir):
 
     # Survey parameters
     filterType = FilterType.REF
@@ -25,12 +25,8 @@ def main(phosimDir, numPro, iterNum):
     state0 = ofcCalc.getStateAggregated()
     phosimCmpt.setDofInUm(state0)
 
-    # Get the sensor name of ComCam
-    sensorNameList = _getComCamSensorNameList()
-
     # Do the iteration
     obsId = 9006000
-    baseOutputDir = getAoclcOutputPath()
     opdZkFileName = "opd.zer"
     opdPssnFileName = "PSSN.txt"
     outputDirName = "pert"
@@ -66,32 +62,38 @@ def main(phosimDir, numPro, iterNum):
         pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
         print("Calculated PSSN is %s." % pssn)
 
-        ######################################
-        # Update the following part
-        ######################################
-
-        # Set the gain value in ofcCalc by pssn
-        ofcCalc.setGainByPSSN(pssn, sensorNameList)
-
         # Get the GQ effective FWHM from file
         gqEffFwhm = phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
-        print(gqEffFwhm)
+        print("GQ effective FWHM is %.4f." % gqEffFwhm)
 
-        # Get the OPD zk from file
-        opdZkData = phosimCmpt.getZkFromFile(opdZkFileName)
+        # Set the FWHM data
+        refSensorNameList = _getComCamSensorNameList()
+        listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
+            opdPssnFileName, refSensorNameList)
+        ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
-        # Calculate the new DOF by OFC component
-        dofInUm = ofcCalc.calcAggDofForPhoSim(opdZkData, sensorNameList)
+        # Simulate to get the wavefront sensor data from WEP and calculate
+        # the DOF
+        listOfWfErr = phosimCmpt.mapOpdDataToListOfWfErr(
+            opdZkFileName, refSensorNameList)
+        ofcCalc.calculateCorrections(listOfWfErr)
 
-        # Set the new DOF to phosimCmpt
+        # Set the new aggregated DOF to phosimCmpt
+        dofInUm = ofcCalc.getStateAggregated()
         phosimCmpt.setDofInUm(dofInUm)
 
         # Save the DOF file
         phosimCmpt.saveDofInUmFileForNextIter(
-                                    dofInUm, dofInUmFileName=dofInUmFileName)
+            dofInUm, dofInUmFileName=dofInUmFileName)
 
         # Add the observation ID by 1
         obsId += 1
+
+    # Summarize the FWHM
+    pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
+                 outputImgDirName, opdPssnFileName) for num in range(iterNum)]
+    saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
+    plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
 
 
 def _preparePhosimCmpt(phosimDir, filterType, rotAngInDeg, numPro):
@@ -140,13 +142,23 @@ def _getComCamSensorNameList():
 
 if __name__ == "__main__":
 
-    # PhoSim directory
+    # Set the parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--numOfProc", type=int, default=1,
+                        help="number of processor to run PhoSim")
+    parser.add_argument("--iterNum", type=int, default=5,
+                        help="number of closed-loop iteration")
+    parser.add_argument("--output", type=str, default="",
+                        help="output directory")
+    args = parser.parse_args()
+
+    # Run the simulation
     phosimDir = getPhoSimPath()
 
-    # Number of processor
-    numPro = 1
+    if (args.output == ""):
+        outputDir = getAoclcOutputPath()
+    else:
+        outputDir = args.output
+    os.makedirs(outputDir, exist_ok=True)
 
-    # Iteration number
-    iterNum = 5
-
-    main(phosimDir, numPro, iterNum)
+    main(phosimDir, args.numOfProc, args.iterNum, outputDir)

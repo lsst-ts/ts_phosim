@@ -42,12 +42,15 @@ export AOCLCOUTPUTPATH=$path_to_output
 - **checkWfsStarCoor.py**: Test to add the stars on WFS and get the images.
 - **checkStarCoor.py**: Test to add the star by pixel position and get the image.
 - **checkStarCoorWiLsstFAM.py**: Test to add the star by pixel position in LSST FAM condition and get the images.
-- **opdClosedLoop.py**: Closed-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
 
-## 5. Build the Document
+## 5. Command Line Task
+
+- **opdCloseLoop.py**: Closed-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
+
+## 6. Build the Document
 
 *The user can use `package-docs build` to build the documentation. The packages of documenteer, plantuml, and sphinxcontrib-plantuml are needed. The path of plantuml.jar in doc/conf.py needs to be updated to the correct path. To clean the built documents, use `package-docs clean`. See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.*
 
-## 6. Reference of PhoSim with active optics (AOS)
+## 7. Reference of PhoSim with active optics (AOS)
 
 - The original work was done by Bo Xin and Chuck Claver. The source code can be found in: [IM](https://github.com/bxin/IM).

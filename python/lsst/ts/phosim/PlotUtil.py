@@ -6,7 +6,7 @@ plt.switch_backend('Agg')
 
 
 def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
-               writeToResMapFilePath=None):
+               writeToResMapFilePath=None, dpi=None):
     """Plot the mirror residue map.
 
     Parameters
@@ -22,7 +22,10 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
     resFile : str, optional
         File path of the grid surface residue map. (the default is None.)
     writeToResMapFilePath : str, optional
-        File path to save the residue map. (the default is None.)
+        File path to save the residue map. If None, the figure will be showed.
+        (the default is None.)
+    dpi : int, optional
+        The resolution in dots per inch. (the default is None.)
     """
 
     # Plot the figure
@@ -79,8 +82,25 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
     cbar_ax = fig.add_axes([0.85, 0.1, 0.03, 0.8])
     fig.colorbar(sc, cax=cbar_ax)
 
-    if (writeToResMapFilePath is not None):
-        plt.savefig(writeToResMapFilePath)
+    _saveFig(plt, saveToFilePath=writeToResMapFilePath, dpi=dpi)
+
+
+def _saveFig(plt, saveToFilePath=None, dpi=None):
+    """Save the figure.
+
+    Parameters
+    ----------
+    plt : module
+        Module of matplotlib.pyplot.
+    saveToFilePath : str, optional
+        File path to save the figure. If None, the figure will be showed. (the
+        default is None.)
+    dpi : int, optional
+        The resolution in dots per inch. (the default is None.)
+    """
+
+    if (saveToFilePath is not None):
+        plt.savefig(saveToFilePath, dpi=dpi)
         plt.close()
     else:
         plt.show()
@@ -143,12 +163,7 @@ def showFieldMap(fieldX=None, fieldY=None, saveToFilePath=None, dpi=None):
     # Set the same scale
     plt.axis("equal")
 
-    # Save the figure or not
-    if (saveToFilePath is not None):
-        plt.savefig(saveToFilePath, dpi=dpi)
-        plt.close()
-    else:
-        plt.show()
+    _saveFig(plt, saveToFilePath=saveToFilePath, dpi=dpi)
 
 
 def _getCCDBoundInDeg(sourProc, sensorName):
@@ -191,6 +206,50 @@ def _getCCDBoundInDeg(sourProc, sensorName):
         fieldYinDeglist.append(fieldY)
 
     return fieldXinDegList, fieldYinDeglist
+
+
+def plotFwhmOfIters(pssnFiles, saveToFilePath=None, dpi=None):
+    """Plot the FWHM of iteration.
+
+    FWHM: Full width at half maximum.
+    PSSN: Normalized point source sensitivity.
+
+    Parameters
+    ----------
+    pssnFiles : list
+        List of PSSN files.
+    saveToFilePath : str, optional
+        File path to save the figure. If None, the figure will be showed. (the
+        default is None.)
+    dpi : int, optional
+        The resolution in dots per inch. (the default is None.)
+    """
+
+    # Collect the FWHM data. The row is the FWHM for each field. The final row
+    # is the GQ FWHM. The column is the iterations.
+    numOfIter = len(pssnFiles)
+
+    numOfFwhmData = 0
+    fwhmDataAll = np.array([])
+    for pssnFile in pssnFiles:
+
+        fwhmData = np.loadtxt(pssnFile)[1, :]
+        if (numOfFwhmData == 0):
+            numOfFwhmData = len(fwhmData)
+
+        fwhmDataAll = np.append(fwhmDataAll, fwhmData)
+
+    reshapedFwhmData = fwhmDataAll.reshape((numOfIter, numOfFwhmData)).T
+
+    # Plot the figure
+    plt.figure()
+    plt.plot(reshapedFwhmData[:-1, :].T, "bx-")
+    plt.plot(reshapedFwhmData[-1, :], "ro-", label="GQ FWHM_eff")
+    plt.xlabel("Iteration")
+    plt.ylabel("Arcsec")
+    plt.legend()
+
+    _saveFig(plt, saveToFilePath=saveToFilePath, dpi=dpi)
 
 
 if __name__ == "__main__":

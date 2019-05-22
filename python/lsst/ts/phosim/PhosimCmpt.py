@@ -645,8 +645,8 @@ class PhosimCmpt(object):
         """Analyze the ComCam OPD data.
 
         ComCam: Commissioning camera.
-        OPD: optical path difference.
-        PSSN: normalized point source sensitivity.
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
 
         Parameters
         ----------
@@ -760,8 +760,8 @@ class PhosimCmpt(object):
     def _writeOpdPssnFile(self, pssnFileName):
         """Write the OPD PSSN in file.
 
-        OPD: optical path difference.
-        PSSN: normalized point source sensitivity.
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
 
         Parameters
         ----------
@@ -791,10 +791,10 @@ class PhosimCmpt(object):
     def _calcComCamOpdPssn(self):
         """Calculate the ComCam PSSN of OPD.
 
-        ComCam: commissioning camera.
-        OPD: optical path difference.
-        PSSN: normalized point source sensitivity.
-        GQ: gaussian quadrature.
+        ComCam: Commissioning camera.
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
 
         Returns
         -------
@@ -830,9 +830,9 @@ class PhosimCmpt(object):
     def _calcComCamOpdEffFwhm(self, pssnList):
         """Calculate the ComCam effective FWHM of OPD.
 
-        ComCam: commissioning camera.
-        FWHM: full width and half maximum.
-        PSSN: normalized point source sensitivity.
+        ComCam: Commissioning camera.
+        FWHM: Full width and half maximum.
+        PSSN: Normalized point source sensitivity.
         GQ: Gaussian quadrature.
 
         Parameters
@@ -916,8 +916,8 @@ class PhosimCmpt(object):
     def getOpdPssnFromFile(self, pssnFileName):
         """Get the OPD PSSN from file.
 
-        OPD: optical path difference.
-        PSSN: normalized point source sensitivity.
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
 
         Parameters
         ----------
