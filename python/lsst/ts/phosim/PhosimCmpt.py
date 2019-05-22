@@ -8,6 +8,8 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 
+from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
+
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 
@@ -876,18 +878,16 @@ class PhosimCmpt(object):
             List of SensorWavefrontData object.
         """
 
-        mapSensorNameAndId = MapSensorNameAndId()
-
         opdZk = self._getZkFromFile(opdZkFileName)
+
+        mapSensorNameAndId = MapSensorNameAndId()
+        sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+
         listOfWfErr = []
-        for sensorName, zk in zip(refSensorNameList, opdZk):
+        for sensorId, zk in zip(sensorIdList, opdZk):
 
             sensorWavefrontData = SensorWavefrontData()
-
-            sensorIdList = mapSensorNameAndId.mapSensorNameToId(sensorName)
-            sensorId = sensorIdList[0]
             sensorWavefrontData.setSensorId(sensorId)
-
             sensorWavefrontData.setAnnularZernikePoly(zk)
 
             listOfWfErr.append(sensorWavefrontData)
@@ -935,30 +935,6 @@ class PhosimCmpt(object):
 
         return pssn
 
-    def getOpdGqEffFwhmFromFile(self, pssnFileName):
-        """Get the OPD GQ effective FWHM from file.
-
-        OPD: optical path difference.
-        GQ: Gaussian quadrature.
-        FWHM: full width at half maximum.
-        PSSN: normalized point source sensitivity.
-
-        Parameters
-        ----------
-        pssnFileName : str
-            PSSN file name.
-
-        Returns
-        -------
-        float
-            OPD GQ effective FWHM.
-        """
-
-        data = self._getDataOfPssnFile(pssnFileName)
-        gqEffFwhm = data[1, -1]
-
-        return gqEffFwhm
-
     def _getDataOfPssnFile(self, pssnFileName):
         """Get the data of the PSSN file.
 
@@ -979,6 +955,66 @@ class PhosimCmpt(object):
         data = np.loadtxt(filePath)
 
         return data
+
+    def getOpdGqEffFwhmFromFile(self, pssnFileName):
+        """Get the OPD GQ effective FWHM from file.
+
+        OPD: Optical path difference.
+        GQ: Gaussian quadrature.
+        FWHM: Full width at half maximum.
+        PSSN: Normalized point source sensitivity.
+
+        Parameters
+        ----------
+        pssnFileName : str
+            PSSN file name.
+
+        Returns
+        -------
+        float
+            OPD GQ effective FWHM.
+        """
+
+        data = self._getDataOfPssnFile(pssnFileName)
+        gqEffFwhm = data[1, -1]
+
+        return gqEffFwhm
+
+    def getListOfFwhmSensorData(self, pssnFileName, refSensorNameList):
+        """Get the list of FWHM sensor data based on the OPD PSSN file.
+
+        FWHM: Full width at half maximum.
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+
+        Parameters
+        ----------
+        pssnFileName : str
+            PSSN file name.
+        refSensorNameList : list
+            Reference sensor name list.
+
+        Returns
+        -------
+        list[FWHMSensorData]
+            List of FWHMSensorData which contains the sensor Id and FWHM data.
+        """
+
+        # Get the FWHM data from the PSSN file
+        # The first row is the PSSN and the second one is the FWHM
+        # The final element in each row is the GQ value
+        data = self._getDataOfPssnFile(pssnFileName)
+        fwhmData = data[1, :-1]
+
+        mapSensorNameAndId = MapSensorNameAndId()
+        sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+
+        listOfFWHMSensorData = []
+        for sensorId, fwhm in zip(sensorIdList, fwhmData):
+            fwhmSensorData = FWHMSensorData(sensorId, np.array([fwhm]))
+            listOfFWHMSensorData.append(fwhmSensorData)
+
+        return listOfFWHMSensorData
 
     def repackageComCamImgFromPhoSim(self):
         """Repackage the ComCam amplifier images from PhoSim to the single 16

@@ -257,9 +257,7 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self._analyzeComCamOpdData()
 
-        refSensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10",
-                             "R22_S11", "R22_S12", "R22_S20", "R22_S21",
-                             "R22_S22"]
+        refSensorNameList = self._getRefSensorNameList()
         listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
             self.zkFileName, refSensorNameList)
 
@@ -276,6 +274,14 @@ class TestPhosimCmpt(unittest.TestCase):
             zkInWfErr = wfErr.getAnnularZernikePoly()
             delta = np.sum(np.abs(zkInWfErr - zk))
             self.assertEqual(delta, 0)
+
+    def _getRefSensorNameList(self):
+
+        refSensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10",
+                             "R22_S11", "R22_S12", "R22_S20", "R22_S21",
+                             "R22_S22"]
+
+        return refSensorNameList
 
     def testGetZkFromFile(self):
 
@@ -302,6 +308,26 @@ class TestPhosimCmpt(unittest.TestCase):
         gqEffFwhm = self.phosimCmpt.getOpdGqEffFwhmFromFile(
             self.pssnFileName)
         self.assertAlmostEqual(gqEffFwhm, 0.5534, places=3)
+
+    def testGetListOfFwhmSensorData(self):
+
+        self._analyzeComCamOpdData()
+        refSensorNameList = self._getRefSensorNameList()
+
+        listOfFWHMSensorData = self.phosimCmpt.getListOfFwhmSensorData(
+            self.pssnFileName, refSensorNameList)
+        self.assertEqual(len(listOfFWHMSensorData), len(refSensorNameList))
+
+        mapSensorNameAndId = MapSensorNameAndId()
+        ansSensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+
+        ansData = self.phosimCmpt._getDataOfPssnFile(self.pssnFileName)
+        ansFwhmData = ansData[1, :-1]
+
+        for fwhmSensorData, sensorId, fwhm in zip(listOfFWHMSensorData,
+                                                  ansSensorIdList, ansFwhmData):
+            self.assertEqual(fwhmSensorData.getSensorId(), sensorId)
+            self.assertEqual(fwhmSensorData.getFwhmValues()[0], fwhm)
 
     def testGetOpdMetr(self):
 

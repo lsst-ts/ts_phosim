@@ -48,6 +48,12 @@ pipeline {
                         git checkout af48bf0
                         setup -k -r .
                         scons
+                        cd ..
+                        git clone --branch master https://github.com/lsst-ts/ts_ofc.git
+                        cd ts_ofc/
+                        git checkout 58f8aed
+                        setup -k -r .
+                        scons
                     """
                 }
             }
@@ -67,6 +73,8 @@ pipeline {
                         cd phosim_utils/
                         setup -k -r . -t sims_w_2019_20
                         cd ../ts_wep/
+                        setup -k -r .
+                        cd ../ts_ofc/
                         setup -k -r .
                         cd ..
                         setup -k -r .

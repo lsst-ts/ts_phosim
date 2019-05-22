@@ -12,14 +12,14 @@
 ## 2. Needed Package
 
 - *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: af48bf0)*
-- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 58f8aed) (optional)*
+- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 58f8aed)*
 - *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
 - *[plantuml](http://plantuml.com) (optional)*
 - *[sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)*
 
 ## 3. Use of Module
 
-*1. Setup the WEP environment first, and then, setup the PhoSim environment by eups:*
+*1. Setup the WEP and OFC environments first, and then, setup the PhoSim environment by eups:*
 
 ```bash
 cd $ts_phosim_directory
@@ -42,6 +42,7 @@ export AOCLCOUTPUTPATH=$path_to_output
 - **checkWfsStarCoor.py**: Test to add the stars on WFS and get the images.
 - **checkStarCoor.py**: Test to add the star by pixel position and get the image.
 - **checkStarCoorWiLsstFAM.py**: Test to add the star by pixel position in LSST FAM condition and get the images.
+- **opdClosedLoop.py**: Closed-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
 
 ## 5. Build the Document
 
