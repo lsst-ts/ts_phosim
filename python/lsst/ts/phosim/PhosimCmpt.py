@@ -56,6 +56,17 @@ class PhosimCmpt(object):
         self.phosimParam = {"numPro": numPro,
                             "e2ADC": e2ADC}
 
+    def getTele(self):
+        """Get the telescope object.
+
+        Returns
+        -------
+        TeleFacade
+            Telescope object.
+        """
+
+        return self.tele
+
     def getNumOfZk(self):
         """Get the number of Zk (annular Zernike polynomial).
 

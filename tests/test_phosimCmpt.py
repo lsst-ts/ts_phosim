@@ -67,6 +67,11 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self.tele.setDofInUm(np.zeros(50))
 
+    def testGetTele(self):
+
+        tele = self.phosimCmpt.getTele()
+        self.assertTrue(isinstance(tele, TeleFacade))
+
     def testGetNumOfZk(self):
 
         numOfZk = self.phosimCmpt.getNumOfZk()

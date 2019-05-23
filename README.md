@@ -45,7 +45,8 @@ export AOCLCOUTPUTPATH=$path_to_output
 
 ## 5. Command Line Task
 
-- **opdCloseLoop.py**: Closed-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
+- **opdCloseLoop.py**: Close-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
+- **comcamCloseLoop.py**: Close-loop simulation of commissioning camera. There are 9 stars on the center of each CCD.
 
 ## 6. Build the Document
 
