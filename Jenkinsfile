@@ -45,13 +45,13 @@ pipeline {
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
-                        git checkout af48bf0
+                        git checkout b0d90ce
                         setup -k -r .
                         scons
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_ofc.git
                         cd ts_ofc/
-                        git checkout 58f8aed
+                        git checkout 8b2f74b
                         setup -k -r .
                         scons
                     """

@@ -11,8 +11,8 @@
 
 ## 2. Needed Package
 
-- *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: af48bf0)*
-- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 58f8aed)*
+- *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: b0d90ce)*
+- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 8b2f74b)*
 - *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
 - *[plantuml](http://plantuml.com) (optional)*
 - *[sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)*
