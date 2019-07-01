@@ -6,7 +6,7 @@ import numpy as np
 from lsst.ts.wep.Utility import runProgram
 from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
-from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
+from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
 from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
 
@@ -543,7 +543,7 @@ class PhosimCmpt(object):
         cmdSettingFileName : str, optional
             Physical command setting file name. (the default is
             "starDefault.cmd".)
-        instSettingFileName : {str}, optional
+        instSettingFileName : str, optional
             Instance setting file name. (the default is "starSingleExp.inst".)
 
         Returns
@@ -885,8 +885,8 @@ class PhosimCmpt(object):
 
         Returns
         -------
-        list[SensorWavefrontData]
-            List of SensorWavefrontData object.
+        list [lsst.ts.wep.ctrlIntf.SensorWavefrontError]
+            List of SensorWavefrontError object.
         """
 
         opdZk = self._getZkFromFile(opdZkFileName)
@@ -897,7 +897,8 @@ class PhosimCmpt(object):
         listOfWfErr = []
         for sensorId, zk in zip(sensorIdList, opdZk):
 
-            sensorWavefrontData = SensorWavefrontData()
+            sensorWavefrontData = SensorWavefrontError(
+                numOfZk=self.getNumOfZk())
             sensorWavefrontData.setSensorId(sensorId)
             sensorWavefrontData.setAnnularZernikePoly(zk)
 
@@ -1007,7 +1008,7 @@ class PhosimCmpt(object):
 
         Returns
         -------
-        list[FWHMSensorData]
+        list [lsst.ts.ofc.ctrlIntf.FWHMSensorData]
             List of FWHMSensorData which contains the sensor Id and FWHM data.
         """
 
@@ -1070,7 +1071,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        listOfWfErr : list[SensorWavefrontData]
+        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
             List of SensorWavefrontData object.
         refSensorNameList : list
             Reference sensor name list.
@@ -1104,7 +1105,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        listOfWfErr : list[SensorWavefrontData]
+        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
             List of SensorWavefrontData object.
 
         Returns
