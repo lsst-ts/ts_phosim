@@ -8,7 +8,7 @@ pipeline {
         // The nodes in T&S teams is 'jenkins-el7-1'.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'lsstts/aos:w_2019_20'
+            image 'lsstts/aos:w_2019_24'
             args '-u root'
         }
     }
@@ -20,6 +20,8 @@ pipeline {
     environment {
         // Position of LSST stack directory
         LSST_STACK="/opt/lsst/software/stack"
+        // Pipeline Sims Version
+        SIMS_VERSION="sims_w_2019_24"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -39,19 +41,19 @@ pipeline {
                         conda install scikit-image
                         git clone --branch master https://github.com/lsst-dm/phosim_utils.git
                         cd phosim_utils/
-                        git checkout 7b02084
-                        setup -k -r . -t sims_w_2019_20
+                        git checkout c1f2391
+                        setup -k -r . -t ${env.SIMS_VERSION}
                         scons
                         cd ..
-                        git clone --branch master https://github.com/lsst-ts/ts_wep.git
+                        git clone --branch develop https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
-                        git checkout b0d90ce
+                        git checkout 082fdd7
                         setup -k -r .
                         scons
                         cd ..
-                        git clone --branch master https://github.com/lsst-ts/ts_ofc.git
+                        git clone --branch develop https://github.com/lsst-ts/ts_ofc.git
                         cd ts_ofc/
-                        git checkout 8b2f74b
+                        git checkout ccf971c
                         setup -k -r .
                         scons
                     """
@@ -71,7 +73,7 @@ pipeline {
                         source /opt/rh/devtoolset-6/enable
                         source ${env.LSST_STACK}/loadLSST.bash
                         cd phosim_utils/
-                        setup -k -r . -t sims_w_2019_20
+                        setup -k -r . -t ${env.SIMS_VERSION}
                         cd ../ts_wep/
                         setup -k -r .
                         cd ../ts_ofc/
