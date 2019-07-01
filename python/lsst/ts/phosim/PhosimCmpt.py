@@ -50,11 +50,16 @@ class PhosimCmpt(object):
         # Seed number
         self.seedNum = 0
 
-        # PhoSim parameters
-        numPro = self._phosimCmptSettingFile.getSetting("numPro")
-        e2ADC = self._phosimCmptSettingFile.getSetting("e2ADC")
-        self.phosimParam = {"numPro": numPro,
-                            "e2ADC": e2ADC}
+    def getSettingFile(self):
+        """Get the setting file.
+
+        Returns
+        -------
+        lsst.ts.wep.ParamReader
+            Setting file.
+        """
+
+        return self._phosimCmptSettingFile
 
     def getTele(self):
         """Get the telescope object.
@@ -204,45 +209,6 @@ class PhosimCmpt(object):
         """
 
         return self.seedNum
-
-    def setPhosimParam(self, numPro, e2ADC):
-        """Set the PhoSim simulation parameters.
-
-        Parameters
-        ----------
-        numPro : int
-            Number of processors. The value should be greater than 1.
-        e2ADC : int
-            Whether to generate amplifier images (1 = true, 0 = false).
-
-        Raises
-        ------
-        ValueError
-            Number of processors should be >= 0.
-        ValueError
-            e2ADC should be 0 or 1.
-        """
-
-        if (numPro > 0):
-            self.phosimParam["numPro"] = int(numPro)
-        else:
-            raise ValueError("Number of processors should be >= 0.")
-
-        if e2ADC in (0, 1):
-            self.phosimParam["e2ADC"] = int(e2ADC)
-        else:
-            raise ValueError("e2ADC should be 0 or 1.")
-
-    def getPhosimParam(self):
-        """Get the PhoSim simulation parameters.
-
-        Returns
-        -------
-        dict
-            PhoSim simulation parameters.
-        """
-
-        return self.phosimParam
 
     def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
                        zAngleInDeg=None, rotAngInDeg=None):
@@ -513,8 +479,9 @@ class PhosimCmpt(object):
             Arguments to run the PhoSim.
         """
 
-        numPro = self.phosimParam["numPro"]
-        e2ADC = self.phosimParam["e2ADC"]
+        # PhoSim parameters
+        numPro = int(self._phosimCmptSettingFile.getSetting("numPro"))
+        e2ADC = int(self._phosimCmptSettingFile.getSetting("e2ADC"))
         logFilePath = os.path.join(self.outputImgDir, logFileName)
 
         argString = self.tele.getPhoSimArgs(
@@ -1028,7 +995,7 @@ class PhosimCmpt(object):
 
         return listOfFWHMSensorData
 
-    def repackageComCamImgFromPhoSim(self):
+    def repackageComCamAmpImgFromPhoSim(self):
         """Repackage the ComCam amplifier images from PhoSim to the single 16
         extension MEFs for processing.
 
@@ -1036,7 +1003,18 @@ class PhosimCmpt(object):
         MEF: multi-extension frames.
         """
 
-        # Make a temp directory
+        self._repackageComCamImages(isEimg=False)
+
+    def _repackageComCamImages(self, isEimg=False):
+        """Repackage the ComCam images from PhoSim for processing.
+
+        Parameters
+        ----------
+        isEimg : bool, optional
+            Is eimage or not. (the default is False.)
+        """
+
+        # Make a temporary directory
         tmpDirPath = os.path.join(self.outputImgDir, "tmp")
         self._makeDir(tmpDirPath)
 
@@ -1044,22 +1022,32 @@ class PhosimCmpt(object):
         extraFocalDirName = self.getExtraFocalDirName()
         for imgType in (intraFocalDirName, extraFocalDirName):
 
-            # Repackage the images to that temp directory
+            # Repackage the images to the temporary directory
             command = "phosim_repackager.py"
-            phosimAmgImgDir = os.path.join(self.outputImgDir, imgType)
-            argstring = "%s --out_dir=%s" % (phosimAmgImgDir, tmpDirPath)
+            phosimImgDir = os.path.join(self.outputImgDir, imgType)
+            argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
+            if (isEimg):
+                argstring += " --eimage"
             runProgram(command, argstring=argstring)
 
             # Remove the image data in the original directory
-            argString = "-rf %s/lsst_a_*.fits.gz" % phosimAmgImgDir
+            argString = "-rf %s/*.fits*" % phosimImgDir
             runProgram("rm", argstring=argString)
 
             # Put the repackaged data into the image directory
-            argstring = "%s/*.fits %s" % (tmpDirPath, phosimAmgImgDir)
+            argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
             runProgram("mv", argstring=argstring)
 
-        # Remove the temp directory
+        # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
+
+    def repackageComCamEimgFromPhoSim(self):
+        """Repackage the ComCam eimages from PhoSim for processing.
+
+        ComCam: commissioning camera.
+        """
+
+        self._repackageComCamImages(isEimg=True)
 
     def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
                                 zkFileName="wfs.zer"):

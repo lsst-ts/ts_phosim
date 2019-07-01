@@ -114,8 +114,10 @@ def _preparePhosimCmpt(phosimDir, filterType, rotAngInDeg, numPro):
     phosimCmpt.setSurveyParam(filterType=filterType, boresight=boresight,
                               zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
 
-    # Set the PhoSim parameters
-    phosimCmpt.setPhosimParam(numPro, 1)
+    # Update the number of processor if necessary
+    if (numPro > 1):
+        settingFile = phosimCmpt.getSettingFile()
+        settingFile.updateSetting("numPro", numPro)
 
     # Set the seed number for M1M3 surface
     seedNum = 6
@@ -145,7 +147,8 @@ def _getComCamSensorNameList():
 if __name__ == "__main__":
 
     # Set the parser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Run AOS closed-loop simulation in OPD level.")
     parser.add_argument("--numOfProc", type=int, default=1,
                         help="number of processor to run PhoSim")
     parser.add_argument("--iterNum", type=int, default=5,

@@ -4,6 +4,7 @@ import numpy as np
 import unittest
 
 from lsst.ts.wep.Utility import FilterType, CamType
+from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
@@ -67,6 +68,11 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self.tele.setDofInUm(np.zeros(50))
 
+    def testGetSettingFile(self):
+
+        settingFile = self.phosimCmpt.getSettingFile()
+        self.assertTrue(isinstance(settingFile, ParamReader))
+
     def testGetTele(self):
 
         tele = self.phosimCmpt.getTele()
@@ -128,29 +134,6 @@ class TestPhosimCmpt(unittest.TestCase):
         self.phosimCmpt.setSeedNum(seedNum)
 
         self.assertEqual(self.phosimCmpt.getSeedNum(), seedNum)
-
-    def testGetPhosimParam(self):
-
-        phosimParam = self.phosimCmpt.getPhosimParam()
-
-        self.assertEqual(phosimParam["numPro"], 1)
-        self.assertEqual(phosimParam["e2ADC"], 1)
-
-    def testSetPhosimParam(self):
-
-        numPro = 3
-        e2ADC = 0
-        self.phosimCmpt.setPhosimParam(numPro, e2ADC)
-
-        phosimParam = self.phosimCmpt.getPhosimParam()
-
-        self.assertEqual(phosimParam["numPro"], numPro)
-        self.assertEqual(phosimParam["e2ADC"], e2ADC)
-
-    def testSetPhosimParamWithWrongValue(self):
-
-        self.assertRaises(ValueError, self.phosimCmpt.setPhosimParam, -1, 0)
-        self.assertRaises(ValueError, self.phosimCmpt.setPhosimParam, 1, 2)
 
     def testGetComCamOpdArgsAndFilesForPhoSim(self):
 
@@ -397,18 +380,34 @@ class TestPhosimCmpt(unittest.TestCase):
         numOfLine = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLine, 63)
 
-    def testRepackageComCamImgFromPhoSim(self):
+    def testRepackageComCamAmpImgFromPhoSim(self):
 
-        self._copyComCamAmpFiles()
-
+        self._copyComCamFiles()
         intraFileFolderPath = os.path.join(
             self.phosimCmpt.getOutputImgDir(),
             self.phosimCmpt.getIntraFocalDirName())
         intraFileNum = self._getNumOfFileInFolder(intraFileFolderPath)
-        self.assertEqual(intraFileNum, 16)
+        self.assertEqual(intraFileNum, 17)
 
-        self.phosimCmpt.repackageComCamImgFromPhoSim()
+        self.phosimCmpt.repackageComCamAmpImgFromPhoSim()
 
+        self._checkNumOfFilesAfterRepackage()
+
+    def _copyComCamFiles(self):
+
+        intraFocalDirName = self.phosimCmpt.getIntraFocalDirName()
+        extraFocalDirName = self.phosimCmpt.getExtraFocalDirName()
+        for imgType in (intraFocalDirName, extraFocalDirName):
+            imgDirPath = os.path.join(getModulePath(), "tests", "testData",
+                                      "comcamPhosimData", imgType)
+            dst = os.path.join(self.phosimCmpt.getOutputImgDir(), imgType)
+            shutil.copytree(imgDirPath, dst)
+
+    def _checkNumOfFilesAfterRepackage(self):
+
+        intraFileFolderPath = os.path.join(
+            self.phosimCmpt.getOutputImgDir(),
+            self.phosimCmpt.getIntraFocalDirName())
         intraFileNum = self._getNumOfFileInFolder(intraFileFolderPath)
         self.assertEqual(intraFileNum, 1)
 
@@ -418,15 +417,12 @@ class TestPhosimCmpt(unittest.TestCase):
         extraFileNum = self._getNumOfFileInFolder(extraFileFolderPath)
         self.assertEqual(extraFileNum, 1)
 
-    def _copyComCamAmpFiles(self):
+    def testRepackageComCamEimgFromPhoSim(self):
 
-        intraFocalDirName = self.phosimCmpt.getIntraFocalDirName()
-        extraFocalDirName = self.phosimCmpt.getExtraFocalDirName()
-        for imgType in (intraFocalDirName, extraFocalDirName):
-            ampDirPath = os.path.join(getModulePath(), "tests", "testData",
-                                      "comcamAmpPhosimData", imgType)
-            dst = os.path.join(self.phosimCmpt.getOutputImgDir(), imgType)
-            shutil.copytree(ampDirPath, dst)
+        self._copyComCamFiles()
+        self.phosimCmpt.repackageComCamEimgFromPhoSim()
+
+        self._checkNumOfFilesAfterRepackage()
 
     def testReorderAndSaveWfErrFile(self):
 

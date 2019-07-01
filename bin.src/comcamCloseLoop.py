@@ -17,11 +17,12 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-def main(phosimDir, numPro, iterNum, baseOutputDir):
+def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False):
 
-    # Prepate the calibration products
+    # Prepare the calibration products (only for the amplifier images)
     sensorNameList = _getComCamSensorNameList()
-    fakeFlatDir = _makeCalibs(baseOutputDir, sensorNameList)
+    if (not isEimg):
+        fakeFlatDir = _makeCalibs(baseOutputDir, sensorNameList)
 
     # Make the ISR directory
     isrDirName = "input"
@@ -39,8 +40,9 @@ def main(phosimDir, numPro, iterNum, baseOutputDir):
 
     # Prepare the components
     phosimCmpt = _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
-                                    rotAngInDeg, numPro)
-    wepCalc = _prepareWepCalc(isrDir, filterType, raInDeg, decInDeg, rotAngInDeg)
+                                    rotAngInDeg, numPro, isEimg)
+    wepCalc = _prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
+                              rotAngInDeg, isEimg)
 
     tele = phosimCmpt.getTele()
     defocalDisInMm = tele.getDefocalDistInMm()
@@ -48,8 +50,9 @@ def main(phosimDir, numPro, iterNum, baseOutputDir):
 
     ofcCalc = _prepareOfcCalc(filterType, rotAngInDeg)
 
-    # Ingest the calibration products
-    wepCalc.ingestCalibs(fakeFlatDir)
+    # Ingest the calibration products (only for the amplifier images)
+    if (not isEimg):
+        wepCalc.ingestCalibs(fakeFlatDir)
 
     # Set the telescope state to be the same as the OFC
     state0 = ofcCalc.getStateAggregated()
@@ -125,8 +128,11 @@ def main(phosimDir, numPro, iterNum, baseOutputDir):
         for argString in argStringList:
             phosimCmpt.runPhoSim(argString)
 
-        # Repackage the images
-        phosimCmpt.repackageComCamImgFromPhoSim()
+        # Repackage the images based on the image type
+        if (isEimg):
+            phosimCmpt.repackageComCamEimgFromPhoSim()
+        else:
+            phosimCmpt.repackageComCamAmpImgFromPhoSim()
 
         # Collect the defocal images
         intraRawExpData = RawExpData()
@@ -208,7 +214,7 @@ def _makeFakeFlat(detector):
 
 
 def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
-                       numPro):
+                       numPro, isEimg):
 
     # Set the Telescope facade class
     tele = TeleFacade()
@@ -224,8 +230,12 @@ def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
     phosimCmpt.setSurveyParam(filterType=filterType, boresight=boresight,
                               zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
 
-    # Set the PhoSim parameters
-    phosimCmpt.setPhosimParam(numPro, 1)
+    # Update the setting file if needed
+    settingFile = phosimCmpt.getSettingFile()
+    if (numPro > 1):
+        settingFile.updateSetting("numPro", numPro)
+    if isEimg:
+        settingFile.updateSetting("e2ADC", 0)
 
     # Set the seed number for M1M3 surface
     seedNum = 6
@@ -234,12 +244,17 @@ def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
     return phosimCmpt
 
 
-def _prepareWepCalc(isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg):
+def _prepareWepCalc(isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
+                    isEimg):
 
     wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
     wepCalc.setFilter(filterType)
     wepCalc.setBoresight(raInDeg, decInDeg)
     wepCalc.setRotAng(rotAngInDeg)
+
+    if (isEimg):
+        settingFile = wepCalc.getSettingFile()
+        settingFile.updateSetting("imageType", "eimage")
 
     return wepCalc
 
@@ -247,7 +262,6 @@ def _prepareWepCalc(isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg):
 def _prepareOfcCalc(filterType, rotAngInDeg):
 
     ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-
     ofcCalc.setFilter(filterType)
     ofcCalc.setRotAng(rotAngInDeg)
     ofcCalc.setGainByPSSN()
@@ -275,13 +289,16 @@ def _prepareSkySim(opdMetr, starMag):
 if __name__ == "__main__":
 
     # Set the parser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Run AOS closed-loop simulation (default is amp files).")
     parser.add_argument("--numOfProc", type=int, default=1,
                         help="number of processor to run PhoSim")
     parser.add_argument("--iterNum", type=int, default=5,
                         help="number of closed-loop iteration")
     parser.add_argument("--output", type=str, default="",
                         help="output directory")
+    parser.add_argument('--eimage', default=False, action='store_true',
+                        help='Use the eimage files')
     args = parser.parse_args()
 
     # Run the simulation
@@ -293,4 +310,5 @@ if __name__ == "__main__":
         outputDir = args.output
     os.makedirs(outputDir, exist_ok=True)
 
-    main(phosimDir, args.numOfProc, args.iterNum, outputDir)
+    main(phosimDir, args.numOfProc, args.iterNum, outputDir,
+         isEimg=args.eimage)

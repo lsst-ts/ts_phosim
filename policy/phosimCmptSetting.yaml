@@ -15,7 +15,7 @@ extraDirName: extra
 
 # PhoSim-related default parameters
 
-# Number of processors. The value should be greater than 1.
+# Number of processors. The value should be >= 1.
 numPro: 1
 
 # Whether to generate amplifier images (1 = true, 0 = false)
