@@ -11,8 +11,8 @@
 
 ## 2. Needed Package
 
-- *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: b0d90ce)*
-- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 8b2f74b)*
+- *[ts_wep](https://github.com/lsst-ts/ts_wep) - develop branch (commit: 082fdd7)*
+- *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - develop branch (commit: ccf971c)*
 - *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
 - *[plantuml](http://plantuml.com) (optional)*
 - *[sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)*
@@ -46,7 +46,7 @@ export AOCLCOUTPUTPATH=$path_to_output
 ## 5. Command Line Task
 
 - **opdCloseLoop.py**: Close-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
-- **comcamCloseLoop.py**: Close-loop simulation of commissioning camera. There are 9 stars on the center of each CCD.
+- **comcamCloseLoop.py**: Close-loop simulation of commissioning camera. There are 9 stars on the center of each CCD. This task supports the amplifier images and eimages of PhoSim.
 
 ## 6. Build the Document
 

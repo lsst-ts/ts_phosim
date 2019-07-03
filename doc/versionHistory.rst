@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.1.5:
+
+-------------
+1.1.5
+-------------
+
+Use sims_w_2019_24. Support the eimage in comcamCloseLoop.py. Depend on the SensorWavefrontError in ts_wep. Update the table file.
+
 .. _lsst.ts.phosim-1.1.4:
 
 -------------
