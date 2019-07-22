@@ -11,7 +11,7 @@
 
 ## 2. Needed Package
 
-- *[ts_wep](https://github.com/lsst-ts/ts_wep) - develop branch (commit: 082fdd7)*
+- *[ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: c49e978)*
 - *[ts_ofc](https://github.com/lsst-ts/ts_ofc) - develop branch (commit: ccf971c)*
 - *[documenteer](https://github.com/lsst-sqre/documenteer) (optional)*
 - *[plantuml](http://plantuml.com) (optional)*
