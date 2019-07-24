@@ -2,6 +2,7 @@
 
 import os
 import argparse
+import numpy as np
 
 from lsst.ts.wep.Utility import FilterType, CamType, runProgram
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
@@ -17,7 +18,8 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False):
+def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
+         useMinDofIdx=False, inputSkyFilePath=""):
 
     # Prepare the calibration products (only for the amplifier images)
     sensorNameList = _getComCamSensorNameList()
@@ -53,6 +55,10 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False):
     # Ingest the calibration products (only for the amplifier images)
     if (not isEimg):
         wepCalc.ingestCalibs(fakeFlatDir)
+
+    # Only use 10 hexapod positions and first 3 bending modes of M1M3 and M2
+    if (useMinDofIdx):
+        _useMinDofIdx(ofcCalc)
 
     # Set the telescope state to be the same as the OFC
     state0 = ofcCalc.getStateAggregated()
@@ -106,11 +112,17 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False):
             opdPssnFileName, sensorNameList)
         ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
-        # Prepare the faked sky according to the OPD field positions
-        metr = phosimCmpt.getOpdMetr()
-        skySim = _prepareSkySim(metr, starMag)
+        # Prepare the faked sky
+        if (inputSkyFilePath == ""):
+            # According to the OPD field positions
+            metr = phosimCmpt.getOpdMetr()
+            skySim = _prepareSkySim(metr, starMag)
+            print("Use the default OPD field positions to be star positions.")
+            print("The star magnitude is chosen to be %.2f." % starMag)
+        else:
+            skySim = _prepareSkySimBySkyFile(inputSkyFilePath)
 
-        # Output the sky information.
+        # Output the sky information
         outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
         skySim.exportSkyToFile(outputSkyInfoFilePath)
         wepCalc.setSkyFile(outputSkyInfoFilePath)
@@ -286,6 +298,29 @@ def _prepareSkySim(opdMetr, starMag):
     return skySim
 
 
+def _prepareSkySimBySkyFile(inputSkyFilePath):
+
+    skySim = SkySim()
+
+    absSkyFilePath = os.path.abspath(inputSkyFilePath)
+    skySim.addStarByFile(absSkyFilePath)
+
+    return skySim
+
+
+def _useMinDofIdx(ofcCalc):
+
+    ztaac = ofcCalc.getZtaac()
+
+    m1m3Bend = np.zeros(20, dtype=int)
+    m1m3Bend[0: 3] = 1
+
+    m2Bend = np.zeros(20, dtype=int)
+    m2Bend[0: 3] = 1
+
+    ztaac.setZkAndDofInGroups(m1m3Bend=m1m3Bend, m2Bend=m2Bend)
+
+
 if __name__ == "__main__":
 
     # Set the parser
@@ -299,6 +334,10 @@ if __name__ == "__main__":
                         help="output directory")
     parser.add_argument('--eimage', default=False, action='store_true',
                         help='Use the eimage files')
+    parser.add_argument('--minDof', default=False, action='store_true',
+                        help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
+    parser.add_argument("--skyFile", type=str, default="",
+                        help="Star ra, dec, and magnitude")
     args = parser.parse_args()
 
     # Run the simulation
@@ -311,4 +350,5 @@ if __name__ == "__main__":
     os.makedirs(outputDir, exist_ok=True)
 
     main(phosimDir, args.numOfProc, args.iterNum, outputDir,
-         isEimg=args.eimage)
+         isEimg=args.eimage, useMinDofIdx=args.minDof,
+         inputSkyFilePath=args.skyFile)
