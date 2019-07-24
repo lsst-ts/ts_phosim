@@ -210,8 +210,16 @@ class SkySim(object):
         """
 
         data = np.loadtxt(readFilePath, skiprows=skiprows)
-        for star in data:
-            self.addStarByRaDecInDeg(star[0], star[1], star[2], star[3])
+
+        # Only consider the non-empty data
+        if (len(data) != 0):
+
+            # Change to 2D array if the input is 1D array
+            if (data.ndim == 1):
+                data = np.expand_dims(data, axis=0)
+
+            for star in data:
+                self.addStarByRaDecInDeg(star[0], star[1], star[2], star[3])
 
     def exportSkyToFile(self, outputFilePath):
         """Export the star information into the file.

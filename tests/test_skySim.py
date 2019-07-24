@@ -64,7 +64,7 @@ class TestSkySim(unittest.TestCase):
 
     def testAddStarByFile(self):
 
-        self._addStarByFile()
+        self._addStarByFile("wfsStar.txt")
 
         self.assertEqual(len(self.skySim.getStarId()), 8)
 
@@ -74,15 +74,27 @@ class TestSkySim(unittest.TestCase):
 
         self.assertEqual(self.skySim.getStarMag()[2], 17.0)
 
-    def _addStarByFile(self):
+    def _addStarByFile(self, skyFileName):
 
         skyFile = os.path.join(getModulePath(), "tests", "testData", "sky",
-                               "wfsStar.txt")
+                               skyFileName)
         self.skySim.addStarByFile(skyFile)
+
+    def testAddStarByFileWithSglStar(self):
+
+        self._addStarByFile("wfsSglStar.txt")
+
+        self.assertEqual(len(self.skySim.getStarId()), 1)
+
+        ra, decl = self.skySim.getRaDecInDeg()
+        self.assertEqual(ra[0], 1.196)
+        self.assertEqual(decl[0], 1.176)
+
+        self.assertEqual(self.skySim.getStarMag()[0], 17.0)
 
     def testExportSkyToFile(self):
 
-        self._addStarByFile()
+        self._addStarByFile("wfsStar.txt")
         outputFilePath = os.path.join(getModulePath(), "output",
                                       "testSkyOutput.txt")
 
