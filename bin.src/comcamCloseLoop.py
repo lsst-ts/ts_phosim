@@ -19,7 +19,7 @@ from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
 def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
-         useMinDofIdx=False, inputSkyFilePath=""):
+         useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05):
 
     # Prepare the calibration products (only for the amplifier images)
     sensorNameList = _getComCamSensorNameList()
@@ -42,7 +42,9 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
 
     # Prepare the components
     phosimCmpt = _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
-                                    rotAngInDeg, numPro, isEimg)
+                                    rotAngInDeg, numPro, isEimg,
+                                    m1m3ForceError)
+
     wepCalc = _prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                               rotAngInDeg, isEimg)
 
@@ -226,7 +228,7 @@ def _makeFakeFlat(detector):
 
 
 def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
-                       numPro, isEimg):
+                       numPro, isEimg, m1m3ForceError):
 
     # Set the Telescope facade class
     tele = TeleFacade()
@@ -252,6 +254,9 @@ def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
     # Set the seed number for M1M3 surface
     seedNum = 6
     phosimCmpt.setSeedNum(seedNum)
+
+    # Set the M1M3 force error
+    phosimCmpt.setM1M3ForceError(m1m3ForceError)
 
     return phosimCmpt
 
@@ -327,9 +332,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run AOS closed-loop simulation (default is amp files).")
     parser.add_argument("--numOfProc", type=int, default=1,
-                        help="number of processor to run PhoSim")
+                        help="number of processor to run PhoSim (default: 1)")
     parser.add_argument("--iterNum", type=int, default=5,
-                        help="number of closed-loop iteration")
+                        help="number of closed-loop iteration (default: 5)")
     parser.add_argument("--output", type=str, default="",
                         help="output directory")
     parser.add_argument('--eimage', default=False, action='store_true',
@@ -337,7 +342,9 @@ if __name__ == "__main__":
     parser.add_argument('--minDof', default=False, action='store_true',
                         help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
     parser.add_argument("--skyFile", type=str, default="",
-                        help="Star ra, dec, and magnitude")
+                        help="Star Id, ra, dec, and magnitude")
+    parser.add_argument("--m1m3FErr", type=float, default=0.05,
+                        help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
     args = parser.parse_args()
 
     # Run the simulation
@@ -351,4 +358,4 @@ if __name__ == "__main__":
 
     main(phosimDir, args.numOfProc, args.iterNum, outputDir,
          isEimg=args.eimage, useMinDofIdx=args.minDof,
-         inputSkyFilePath=args.skyFile)
+         inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3FErr)

@@ -68,6 +68,17 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self.tele.setDofInUm(np.zeros(50))
 
+    def testGetM1M3ForceError(self):
+
+        self.assertEqual(self.phosimCmpt.getM1M3ForceError(), 0.05)
+
+    def testSetM1M3ForceError(self):
+
+        m1m3ForceError = 0.1
+        self.phosimCmpt.setM1M3ForceError(m1m3ForceError)
+
+        self.assertEqual(self.phosimCmpt.getM1M3ForceError(), m1m3ForceError)
+
     def testGetSettingFile(self):
 
         settingFile = self.phosimCmpt.getSettingFile()

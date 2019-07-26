@@ -50,6 +50,31 @@ class PhosimCmpt(object):
         # Seed number
         self.seedNum = 0
 
+        # M1M3 force error
+        self.m1m3ForceError = 0.05
+
+    def setM1M3ForceError(self, m1m3ForceError):
+        """Set the M1M3 force error.
+
+        Parameters
+        ----------
+        m1m3ForceError : float
+            Ratio of actuator force error between 0 and 1.
+        """
+
+        self.m1m3ForceError = m1m3ForceError
+
+    def getM1M3ForceError(self):
+        """Get the M1M3 force error.
+
+        Returns
+        -------
+        float
+            Ratio of actuator force error.
+        """
+
+        return self.m1m3ForceError
+
     def getSettingFile(self):
         """Get the setting file.
 
@@ -428,7 +453,8 @@ class PhosimCmpt(object):
         pertCmdFilePath = os.path.join(self.outputDir, pertCmdFileName)
         if (not os.path.exists(pertCmdFilePath)):
             self.tele.writePertBaseOnConfigFile(
-                self.outputDir, seedNum=self.seedNum, saveResMapFig=True,
+                self.outputDir, seedNum=self.seedNum,
+                m1m3ForceError=self.m1m3ForceError, saveResMapFig=True,
                 pertCmdFileName=pertCmdFileName)
 
         # Write the physical command file
