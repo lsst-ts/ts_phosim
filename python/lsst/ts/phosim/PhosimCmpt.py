@@ -2,6 +2,8 @@ import os
 import re
 import shutil
 import numpy as np
+from scipy import ndimage
+from astropy.io import fits
 
 from lsst.ts.wep.Utility import runProgram
 from lsst.ts.wep.ParamReader import ParamReader
@@ -645,8 +647,12 @@ class PhosimCmpt(object):
         return argString
 
     def analyzeComCamOpdData(self, zkFileName="opd.zer",
+                             rotOpdInDeg=0.0,
                              pssnFileName="PSSN.txt"):
         """Analyze the ComCam OPD data.
+
+        Rotate OPD to simulate the output by rotated camera. When anaylzing the
+        PSSN, the unrotated OPD is used.
 
         ComCam: Commissioning camera.
         OPD: Optical path difference.
@@ -656,14 +662,17 @@ class PhosimCmpt(object):
         ----------
         zkFileName : str, optional
             OPD in zk file name. (the default is "opd.zer".)
+        rotOpdInDeg : float, optional
+            Rotate OPD in degree in the counter-clockwise direction. (the
+            default is 0.0.)
         pssnFileName : str, optional
             PSSN file name. (the default is "PSSN.txt".)
         """
 
-        self._writeOpdZkFile(zkFileName)
+        self._writeOpdZkFile(zkFileName, rotOpdInDeg)
         self._writeOpdPssnFile(pssnFileName)
 
-    def _writeOpdZkFile(self, zkFileName):
+    def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
         """Write the OPD in zk file.
 
         OPD: optical path difference.
@@ -672,17 +681,25 @@ class PhosimCmpt(object):
         ----------
         zkFileName : str
             OPD in zk file name.
+        rotOpdInDeg : float
+            Rotate OPD in degree in the counter-clockwise direction.
         """
 
         filePath = os.path.join(self.outputImgDir, zkFileName)
-        opdData = self._mapOpdToZk()
-        header = "The followings are OPD in um from z4 to z22:"
+        opdData = self._mapOpdToZk(rotOpdInDeg)
+        header = "The followings are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
+            rotOpdInDeg)
         np.savetxt(filePath, opdData, header=header)
 
-    def _mapOpdToZk(self):
+    def _mapOpdToZk(self, rotOpdInDeg):
         """Map the OPD to the basis of annular Zernike polynomial (Zk).
 
         OPD: optical path difference.
+
+        Parameters
+        ----------
+        rotOpdInDeg : float
+            Rotate OPD in degree in the counter-clockwise direction.
 
         Returns
         -------
@@ -699,9 +716,17 @@ class PhosimCmpt(object):
         numOfZk = self.getNumOfZk()
         opdData = np.zeros((len(opdFileList), numOfZk))
         for idx, opdFile in enumerate(opdFileList):
+            opd = fits.getdata(opdFile)
+
+            # Rotate OPD if needed
+            if (rotOpdInDeg != 0):
+                opdRot = ndimage.rotate(opd, rotOpdInDeg, reshape=False)
+                opdRot[opd == 0] = 0
+            else:
+                opdRot = opd
 
             # z1 to z22 (22 terms)
-            zk = self.metr.getZkFromOpd(opdFitsFile=opdFile)[0]
+            zk = self.metr.getZkFromOpd(opdMap=opdRot)[0]
 
             # Only need to collect z4 to z22
             initIdx = 3

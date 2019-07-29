@@ -13,15 +13,14 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-def main(phosimDir, numPro, iterNum, baseOutputDir):
+def main(phosimDir, numPro, iterNum, baseOutputDir, rotCamInDeg=0.0):
 
     # Survey parameters
     filterType = FilterType.REF
-    rotAngInDeg = 0.0
 
     # Prepare the components
-    phosimCmpt = _preparePhosimCmpt(phosimDir, filterType, rotAngInDeg, numPro)
-    ofcCalc = _prepareOfcCalc(filterType, rotAngInDeg)
+    phosimCmpt = _preparePhosimCmpt(phosimDir, filterType, 0.0, numPro)
+    ofcCalc = _prepareOfcCalc(filterType, rotCamInDeg)
 
     # Set the telescope state to be the same as the OFC
     state0 = ofcCalc.getStateAggregated()
@@ -57,7 +56,9 @@ def main(phosimDir, numPro, iterNum, baseOutputDir):
         phosimCmpt.runPhoSim(argString)
 
         # Analyze the OPD data
+        # Rotate OPD in the reversed direction of camera
         phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
+                                        rotOpdInDeg=-rotCamInDeg,
                                         pssnFileName=opdPssnFileName)
 
         # Get the PSSN from file
@@ -155,6 +156,8 @@ if __name__ == "__main__":
                         help="number of closed-loop iteration")
     parser.add_argument("--output", type=str, default="",
                         help="output directory")
+    parser.add_argument("--rotCam", type=float, default=0.0,
+                        help="Rotate camera (degree) in counter-clockwise direction (default: 0.0)")
     args = parser.parse_args()
 
     # Run the simulation
@@ -166,4 +169,5 @@ if __name__ == "__main__":
         outputDir = args.output
     os.makedirs(outputDir, exist_ok=True)
 
-    main(phosimDir, args.numOfProc, args.iterNum, outputDir)
+    main(phosimDir, args.numOfProc, args.iterNum, outputDir,
+         rotCamInDeg=args.rotCam)

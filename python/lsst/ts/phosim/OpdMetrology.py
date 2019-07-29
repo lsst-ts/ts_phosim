@@ -191,9 +191,9 @@ class OpdMetrology(object):
         Parameters
         ----------
         opdFitsFile : str, optional
-            OPD FITS file. (the default is None)
+            OPD FITS file. (the default is None.)
         opdMap : numpy.ndarray, optional
-            OPD map data. (the default is None, which [default_description])
+            OPD map data. (the default is None.)
         znTerms : int, optional
             Number of terms of annular Zk (z1-z22 by default). (the default
             is 22.)
