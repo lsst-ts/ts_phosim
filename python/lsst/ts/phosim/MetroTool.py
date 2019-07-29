@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 import scipy.special as sp
 
 from lsst.ts.wep.cwfs.Tool import padArray, extractArray
@@ -296,16 +297,14 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
         # Modified bessel of 2nd/3rd kind
         sfa_k = sp.kv(5 / 6, (2 * np.pi / L0 * r))
 
-        sfa = sfa_c * (2**(-1 / 6) * sp.gamma(5 / 6) -
-                       (2 * np.pi / L0 * r)**(5 / 6) * sfa_k)
+        # There is the undefined value (nan = 0 * inf, 0 from 'r' and inf from
+        # 'sfa_k')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
 
-        # If we don't do below, everything will be nan after ifft2
-        # midp = r.shape[0]/2+1
-        # 1e-2 is to avoid x.49999 be rounded to x
-        midp = int(np.rint(0.5 * (r.shape[0] - 1) + 1e-2))
-
-        # At this single point, sfa_k=Inf, 0*Inf=Nan;
-        sfa[midp, midp] = 0
+            sfa = sfa_c * (2**(-1 / 6) * sp.gamma(5 / 6) -
+                           (2 * np.pi / L0 * r)**(5 / 6) * sfa_k)
+            np.nan_to_num(sfa, copy=False)
 
     return sfa
 
