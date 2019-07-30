@@ -145,7 +145,8 @@ class TestTeleFacade(unittest.TestCase):
     def testSetInstName(self):
 
         defocalDist = 1.0
-        self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
+        with self.assertWarns(UserWarning):
+            self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
 
         self.assertEqual(self.tele.surveyParam["instName"], "lsst")
         self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
@@ -251,8 +252,9 @@ class TestTeleFacade(unittest.TestCase):
 
         metr, opdInstSettingFile = self._generateOpd()
 
-        instFilePath = self.tele.writeOpdInstFile(
-            self.outputDir, metr, instSettingFile=opdInstSettingFile)
+        with self.assertWarns(UserWarning):
+            instFilePath = self.tele.writeOpdInstFile(
+                self.outputDir, metr, instSettingFile=opdInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
@@ -262,8 +264,9 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSurveyParam(filterType=FilterType.REF)
 
         metr, opdInstSettingFile = self._generateOpd()
-        instFilePath = self.tele.writeOpdInstFile(
-            self.outputDir, metr, instSettingFile=opdInstSettingFile)
+        with self.assertWarns(UserWarning):
+            instFilePath = self.tele.writeOpdInstFile(
+                self.outputDir, metr, instSettingFile=opdInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
@@ -292,8 +295,9 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSurveyParam(filterType=FilterType.REF)
 
         skySim, starInstSettingFile = self._generateFakeSky()
-        instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, instSettingFile=starInstSettingFile)
+        with self.assertWarns(UserWarning):
+            instFilePath = self.tele.writeStarInstFile(
+                self.outputDir, skySim, instSettingFile=starInstSettingFile)
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 63)

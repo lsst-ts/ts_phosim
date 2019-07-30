@@ -1,6 +1,7 @@
 import os
 import shutil
 import numpy as np
+import warnings
 import unittest
 
 from lsst.ts.wep.Utility import FilterType, CamType
@@ -42,7 +43,11 @@ class TestPhosimCmpt(unittest.TestCase):
         cls.tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
         cls.tele.setSensorOn(sciSensorOn=True, wfSensorOn=False,
                              guidSensorOn=False)
-        cls.tele.setInstName(CamType.ComCam)
+
+        # Use the "lsst" instead of "comcam" in the PhoSim simulation
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=UserWarning)
+            cls.tele.setInstName(CamType.ComCam)
 
         # Set the survey parameters
         obsId = 9006000
@@ -149,8 +154,9 @@ class TestPhosimCmpt(unittest.TestCase):
     def testGetComCamOpdArgsAndFilesForPhoSim(self):
 
         instFileName = "opd.inst"
-        argString = self.phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
-            instFileName=instFileName)
+        with self.assertWarns(UserWarning):
+            argString = self.phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
+                instFileName=instFileName)
 
         self.assertTrue(isinstance(argString, str))
         self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 11)
@@ -174,8 +180,9 @@ class TestPhosimCmpt(unittest.TestCase):
         skySim = self._addSglStarToSkySim()
 
         instFileName = "star.inst"
-        argString = self.phosimCmpt.getStarArgsAndFilesForPhoSim(
-            skySim, instFileName=instFileName)
+        with self.assertWarns(UserWarning):
+            argString = self.phosimCmpt.getStarArgsAndFilesForPhoSim(
+                skySim, instFileName=instFileName)
 
         self.assertTrue(isinstance(argString, str))
         self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 11)
@@ -392,10 +399,12 @@ class TestPhosimCmpt(unittest.TestCase):
         extraObsId = 9005000
         intraObsId = 9005001
         skySim = self._addSglStarToSkySim()
-        argStringList = self.phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
-            extraObsId, intraObsId, skySim, simSeed=1000,
-            cmdSettingFileName="starDefault.cmd",
-            instSettingFileName="starSingleExp.inst")
+
+        with self.assertWarns(UserWarning):
+            argStringList = self.phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
+                extraObsId, intraObsId, skySim, simSeed=1000,
+                cmdSettingFileName="starDefault.cmd",
+                instSettingFileName="starSingleExp.inst")
 
         self.assertEqual(len(argStringList), 2)
         self.assertTrue(isinstance(argStringList[0], str))

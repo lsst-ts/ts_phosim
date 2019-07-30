@@ -48,7 +48,9 @@ class TestUtility(unittest.TestCase):
 
     def testGetAoclcOutputPathNotAssigned(self):
 
-        aoclcOutputPath = getAoclcOutputPath()
+        with self.assertWarns(UserWarning):
+            aoclcOutputPath = getAoclcOutputPath()
+
         self.assertEqual(aoclcOutputPath,
                          os.path.join(getModulePath(), "output"))
 
