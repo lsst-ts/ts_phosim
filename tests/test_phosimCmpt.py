@@ -232,11 +232,12 @@ class TestPhosimCmpt(unittest.TestCase):
         delta = np.sum(np.abs(pssn - ansPssn))
         self.assertLess(delta, 1e-10)
 
-    def _analyzeComCamOpdData(self):
+    def _analyzeComCamOpdData(self, rotOpdInDeg=0.0):
 
         self._copyOpdToImgDirFromTestData()
         self.phosimCmpt.analyzeComCamOpdData(
-            zkFileName=self.zkFileName, pssnFileName=self.pssnFileName)
+            zkFileName=self.zkFileName, rotOpdInDeg=rotOpdInDeg,
+            pssnFileName=self.pssnFileName)
 
     def _copyOpdToImgDirFromTestData(self):
 
@@ -251,6 +252,20 @@ class TestPhosimCmpt(unittest.TestCase):
                                   "comcamOpdFile", "iter0")
 
         return opdFileDir
+
+    def testAnalyzeComCamOpdDataWithNonZeroAngle(self):
+
+        self._analyzeComCamOpdData(rotOpdInDeg=30.0)
+
+        zkFilePath = os.path.join(self.outputImgDir, self.zkFileName)
+        zk = np.loadtxt(zkFilePath)
+
+        ansZkFilePath = os.path.join(self._getOpdFileDirOfComCam(),
+                                     "zkRot30.txt")
+        ansZk = np.loadtxt(ansZkFilePath)
+
+        delta = np.sum(np.abs(zk - ansZk))
+        self.assertLess(delta, 1e-10)
 
     def testMapOpdDataToListOfWfErr(self):
 
