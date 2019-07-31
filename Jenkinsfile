@@ -51,9 +51,9 @@ pipeline {
                         setup -k -r .
                         scons
                         cd ..
-                        git clone --branch develop https://github.com/lsst-ts/ts_ofc.git
+                        git clone --branch master https://github.com/lsst-ts/ts_ofc.git
                         cd ts_ofc/
-                        git checkout ccf971c
+                        git checkout 009bba5
                         setup -k -r .
                         scons
                     """

@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.1.6:
+
+-------------
+1.1.6
+-------------
+
+Use sims_w_2019_29. Supress the warning in unit tests. Fix the warning of nan in atmosphere structure function. Rotate the OPD and support the sky file, minimum DOF, and M1M3 force error ratio in command line tasks.
+
 .. _lsst.ts.phosim-1.1.5:
 
 -------------
