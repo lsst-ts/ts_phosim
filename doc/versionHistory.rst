@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.1.7:
+
+-------------
+1.1.7
+-------------
+
+Use sims_w_2019_31. Use the latest versions of ts_wep and ts_ofc. Remove the conda package installation in Jenkinsfile. Update the permission of workspace after the unit test.
+
 .. _lsst.ts.phosim-1.1.6:
 
 -------------
