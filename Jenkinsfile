@@ -7,7 +7,7 @@ pipeline {
         // Use the label to assign the node to run the test.
         // It is recommended by SQUARE team do not add the label.
         docker {
-            image 'lsstts/aos:w_2019_31'
+            image 'lsstts/aos:w_2019_38'
             args '-u root'
         }
     }
@@ -20,7 +20,7 @@ pipeline {
         // Position of LSST stack directory
         LSST_STACK="/opt/lsst/software/stack"
         // Pipeline Sims Version
-        SIMS_VERSION="sims_w_2019_31"
+        SIMS_VERSION="sims_w_2019_38"
         // XML report path
         XML_REPORT="jenkinsReport/report.xml"
         // Module name used in the pytest coverage analysis
@@ -45,13 +45,13 @@ pipeline {
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_wep.git
                         cd ts_wep/
-                        git checkout a9d5627
+                        git checkout 5d20039
                         setup -k -r .
                         scons
                         cd ..
                         git clone --branch master https://github.com/lsst-ts/ts_ofc.git
                         cd ts_ofc/
-                        git checkout 42e4206
+                        git checkout e38c4e1
                         setup -k -r .
                         scons
                     """
@@ -83,20 +83,16 @@ pipeline {
                 }
             }
         }
-
-        stage('Change Ownership to Jenkins') {
-            steps {
-                // Change the ownership of workspace to Jenkins for the clean up
-                // This is a "work around" method
-                withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh 'chown -R 1003:1003 ${HOME}/'
-                }
-            }
-        }
     }
 
-    post {        
+    post {
         always {
+            // Change the ownership of workspace to Jenkins for the clean up
+            // This is a "work around" method
+            withEnv(["HOME=${env.WORKSPACE}"]) {
+                sh 'chown -R 1003:1003 ${HOME}/'
+            }
+
             // The path of xml needed by JUnit is relative to
             // the workspace.
             junit 'jenkinsReport/*.xml'
@@ -109,12 +105,12 @@ pipeline {
                 reportDir: 'htmlcov',
                 reportFiles: 'index.html',
                 reportName: "Coverage Report"
-              ])
+            ])
         }
 
         cleanup {
             // clean up the workspace
             deleteDir()
-        }  
+        }
     }
 }
