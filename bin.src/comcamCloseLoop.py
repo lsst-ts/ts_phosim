@@ -3,6 +3,7 @@
 import os
 import argparse
 import numpy as np
+import shutil
 
 from lsst.ts.wep.Utility import FilterType, CamType, runProgram
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
@@ -345,6 +346,8 @@ if __name__ == "__main__":
                         help="Star Id, ra, dec, and magnitude")
     parser.add_argument("--m1m3FErr", type=float, default=0.05,
                         help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
+    parser.add_argument('--clobber', default=False, action='store_true',
+                        help='Delete existing output directory')
     args = parser.parse_args()
 
     # Run the simulation
@@ -354,6 +357,9 @@ if __name__ == "__main__":
         outputDir = getAoclcOutputPath()
     else:
         outputDir = args.output
+
+    if (args.clobber == True):
+        shutil.rmtree(outputDir)
     os.makedirs(outputDir, exist_ok=True)
 
     main(phosimDir, args.numOfProc, args.iterNum, outputDir,
