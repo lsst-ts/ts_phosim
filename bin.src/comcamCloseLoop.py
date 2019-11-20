@@ -326,6 +326,13 @@ def _useMinDofIdx(ofcCalc):
 
     ztaac.setZkAndDofInGroups(m1m3Bend=m1m3Bend, m2Bend=m2Bend)
 
+def eraseFolderContent(targetDir):
+    for the_file in os.listdir(targetDir):
+        file_path = os.path.join(targetDir, the_file)
+        if os.path.isfile(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
 
 if __name__ == "__main__":
 
@@ -358,9 +365,9 @@ if __name__ == "__main__":
     else:
         outputDir = args.output
 
-    if (args.clobber == True):
-        shutil.rmtree(outputDir)
     os.makedirs(outputDir, exist_ok=True)
+    if (args.clobber == True):
+        eraseFolderContent(outputDir)
 
     main(phosimDir, args.numOfProc, args.iterNum, outputDir,
          isEimg=args.eimage, useMinDofIdx=args.minDof,
