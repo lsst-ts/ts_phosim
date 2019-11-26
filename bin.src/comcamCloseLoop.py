@@ -5,6 +5,7 @@ import argparse
 import numpy as np
 import shutil
 
+from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.Utility import FilterType, CamType, runProgram
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
@@ -15,8 +16,9 @@ from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
-from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
+from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
+                                   getConfigDir
+from lsst.ts.phosim.PlotUtil import plotFwhmOfIters, plotZernickeDiff
 
 
 def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
@@ -36,10 +38,14 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
     starMag = 15
 
     # Survey parameters
-    filterType = FilterType.REF
-    raInDeg = 0.0
-    decInDeg = 0.0
-    rotAngInDeg = 0.0
+    surveySettingFilePath = os.path.join(getConfigDir(),
+                                         "surveySettings.yaml")
+    surveySettings = ParamReader(filePath=surveySettingFilePath)
+    filterType = FilterType.fromString(
+        surveySettings.getSetting("filterType"))
+    raInDeg = surveySettings.getSetting("raInDeg")
+    decInDeg = surveySettings.getSetting("decInDeg")
+    rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
 
     # Prepare the components
     phosimCmpt = _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
