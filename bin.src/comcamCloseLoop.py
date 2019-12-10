@@ -18,7 +18,7 @@ from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
                                    getConfigDir
-from lsst.ts.phosim.PlotUtil import plotFwhmOfIters, plotZernickeDiff
+from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
 def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
