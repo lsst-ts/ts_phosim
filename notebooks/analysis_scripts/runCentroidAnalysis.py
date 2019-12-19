@@ -24,43 +24,6 @@ class centroidLoop(comcamLoop):
 
         return skySim, wepCalc
 
-class centroidPhosimCatalog(createPhosimCatalog):
-
-    def __init__(self, centroidOffset):
-
-        self.centroidOffset = centroidOffset
-
-    def _addStarsInField(self, skySim, opdMetr, numStars, starSep, starMagList):
-
-        starId = 0
-        raInDegList, declInDegList = opdMetr.getFieldXY()
-
-        raOffset = np.zeros(numStars)
-        decMin = -1 * starSep * (float(numStars-1) / 2)
-        decMax = -1 * decMin
-        decOffset = np.linspace(decMin, decMax, numStars)
-
-        raOffset += self.centroidOffset[0]
-        decOffset += self.centroidOffset[1]
-
-        for raInDeg, declInDeg in zip(raInDegList, declInDegList):
-            # It is noted that the field position might be < 0. But it is not the
-            # same case for ra (0 <= ra <= 360).
-            # if (raInDeg < 0):
-            #     raInDeg += 360.0
-
-            for num in range(numStars):
-                raPerturbed = raInDeg + raOffset[num]
-                decPerturbed = declInDeg + decOffset[num]
-
-                if raPerturbed < 0:
-                    raPerturbed += 360.0
-
-                skySim.addStarByRaDecInDeg(starId, raPerturbed,
-                                           decPerturbed, starMagList[num])
-                starId += 1
-
-        return skySim
 
 if __name__ == "__main__":
 
@@ -69,9 +32,11 @@ if __name__ == "__main__":
     parser.add_argument("--testOutput", type=str, default="")
     parser.add_argument("--skyFile", type=str, default="starCat.txt")
     parser.add_argument("--centroidFile", type=str, default="perturbStarCat.txt")
-    parser.add_argument("--genOpd", default=True, action='store_false')
-    parser.add_argument("--genDefocalImg", default=True, action='store_false')
-    parser.add_argument("--genFlats", default=True, action='store_false')
+    parser.add_argument("--raShift", type=float, default=0.0)
+    parser.add_argument("--decShift", type=float, default=0.0)
+    parser.add_argument("--opd", default=True, action='store_false')
+    parser.add_argument("--defocalImg", default=True, action='store_false')
+    parser.add_argument("--flats", default=True, action='store_false')
     args = parser.parse_args()
 
     # Load directory paths
@@ -88,34 +53,42 @@ if __name__ == "__main__":
 
     os.environ["closeLoopTestDir"] = testOutputDir
 
-    for offset in range(-10, -41, -10):
+    for offset in range(-40, 41, 10):
 
         # Clobber
-        if args.genOpd is True:
+        if args.opd is True:
             _eraseFolderContent(outputDir)
         else:
-            if args.genFlats is True:
+            if args.flats is True:
                 _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
                 _eraseFolderContent(os.path.join(outputDir, 'input'))     
-            if args.genDefocalImg is True:
+            if args.defocalImg is True:
                 _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
                 _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
 
         createCat = createPhosimCatalog()
-        createCat.createPhosimCatalog(1, 0, 15, 15,
-                                    skyFilePath)
+        raShift = (args.raShift * .2) / 3600 # Convert to degrees
+        decShift = (args.decShift * .2) / 3600 # Convert to degrees
+        createCat.createPhosimCatalog(1, 0, [15], raShift, decShift,
+                                      skyFilePath)
 
         rand_state = np.random.RandomState(seed=(100+offset))
-        offset_ang = 90 # rand_state.choice(np.arange(0, 360)) # 0 is y-direction (ra), 90 is x-direction (dec)
+        offset_ang = 0 # rand_state.choice(np.arange(0, 360)) # 0 is y-direction (ra), 90 is x-direction (dec)
         pixelOffset = np.array([np.cos(np.radians(offset_ang))*offset,
                                 np.sin(np.radians(offset_ang))*offset]) # ra is y direction as set up
         centroidOffset = (pixelOffset * .2) / 3600 # Convert to degrees
-        createCat = centroidPhosimCatalog(centroidOffset)
-        createCat.createPhosimCatalog(1, 0, 15, 15,
+        createCat = createPhosimCatalog()
+        createCat.createPhosimCatalog(1, 0, [15], raShift + centroidOffset[0], 
+                                      decShift + centroidOffset[1],
                                       str(centroidSkyFilePath[:-3]+str(offset) + 'ang' + str(offset_ang) + '.txt'))
 
         ccLoop = centroidLoop(str(centroidSkyFilePath[:-3]+str(offset) + 'ang' + str(offset_ang) + '.txt'))
         ccLoop.main(phosimDir, 8, 1, outputDir, str(testLabel + '.' + str(offset) + 'ang'+ str(offset_ang)), 
-                    isEimg=False, genOpd=args.genOpd, genDefocalImg=args.genDefocalImg, 
-                    genFlats=args.genFlats, useMinDofIdx=False,
+                    isEimg=False, genOpd=args.opd, genDefocalImg=args.defocalImg, 
+                    genFlats=args.flats, useMinDofIdx=False,
                     inputSkyFilePath=skyFilePath, m1m3ForceError=0.05)
+
+        # Once the necessary data is created we don't need to recreate on every iteration
+        args.opd = False
+        args.flats = False
+        args.defocalImg = False

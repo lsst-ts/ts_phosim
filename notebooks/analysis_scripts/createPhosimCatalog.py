@@ -15,17 +15,15 @@ from lsst.ts.phosim.Utility import getAoclcOutputPath, getConfigDir
 
 class createPhosimCatalog():
 
-    def createPhosimCatalog(self, numStars, starSep, magFaintLim, magBrightLim,
-                            outputFilePath):
+    def createPhosimCatalog(self, numStars, starSep, magList,
+                            raOffset, decOffset, outputFilePath):
 
         """
         numStars: number of stars per field
 
         starSep: Minimum separation between stars
 
-        magFaintLim: Faint Limit for magnitudes in catalog
-
-        magBrightLim: Bright Limit for magnitudes in catalog
+        magList: Star magnitudes in catalog
 
         outputFilePath: Filename for output catalog
         """
@@ -45,9 +43,9 @@ class createPhosimCatalog():
         metr = OpdMetrology()
         metr.setDefaultComcamGQ()
 
-        starMagList = np.linspace(magBrightLim, magFaintLim, numStars)
         skySim = self._addStarsInField(skySim, metr, numStars,
-                                starSep, starMagList)
+                                       starSep, raOffset, decOffset,
+                                       magList)
         skySim.exportSkyToFile(outputFilePath)
 
 
@@ -61,15 +59,19 @@ class createPhosimCatalog():
         return ofcCalc
 
 
-    def _addStarsInField(self, skySim, opdMetr, numStars, starSep, starMagList):
+    def _addStarsInField(self, skySim, opdMetr, numStars, starSep,
+                         raOffset, decOffset, starMagList):
 
         starId = 0
         raInDegList, declInDegList = opdMetr.getFieldXY()
 
-        raOffset = np.zeros(numStars)
+        raShift = np.zeros(numStars)
         decMin = -1 * starSep * (float(numStars-1) / 2)
         decMax = -1 * decMin
-        decOffset = np.linspace(decMin, decMax, numStars)
+        decShift = np.linspace(decMin, decMax, numStars)
+
+        raShift += raOffset
+        decShift += decOffset
 
         for raInDeg, declInDeg in zip(raInDegList, declInDegList):
             # It is noted that the field position might be < 0. But it is not the
@@ -78,8 +80,8 @@ class createPhosimCatalog():
             #     raInDeg += 360.0
 
             for num in range(numStars):
-                raPerturbed = raInDeg + raOffset[num]
-                decPerturbed = declInDeg + decOffset[num]
+                raPerturbed = raInDeg + raShift[num]
+                decPerturbed = declInDeg + decShift[num]
 
                 if raPerturbed < 0:
                     raPerturbed += 360.0
@@ -98,6 +100,10 @@ if __name__ == "__main__":
         description="Create a Star Catalog for comcamCloseLoop simulation.")
     parser.add_argument("--numStars", type=int, default=1,
                         help="number of stars per field (default: 1)")
+    parser.add_argument("--raOffset", type=float, default=0.0,
+                        help="Offset from center of chip in RA in arcsec (default: 0.)")
+    parser.add_argument("--decOffset", type=float, default=0.0,
+                        help="Offset from center of chip in dec in arcsec (default: 0.)")
     parser.add_argument("--starSep", type=float, default=0.05,
                         help="minimum separation between stars in degrees (default: 0.05)")
     parser.add_argument("--magFaintLim", type=float, default=15.,
@@ -114,7 +120,10 @@ if __name__ == "__main__":
     else:
         outputFilePath = args.output
 
+    starMagList = np.linspace(args.magBrightLim, args.magFaintLim, args.numStars)
+
     createCat = createPhosimCatalog()
     createCat.createPhosimCatalog(args.numStars, args.starSep,
                                   args.magFaintLim, args.magBrightLim,
+                                  args.raOffset, args.decOffset,
                                   outputFilePath)
