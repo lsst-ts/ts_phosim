@@ -1,0 +1,13 @@
+# Survey Settings for Catalogs
+
+# Filter Type
+filterType: ref
+
+# RA in degrees
+raInDeg: 0.0
+
+# Dec in degrees
+decInDeg: 0.0
+
+# Rotation Angle in degrees
+rotAngInDeg: 0.0
