@@ -83,6 +83,7 @@ class baseComcamLoop():
 
     def main(self, phosimDir, numPro, iterNum, baseOutputDir, 
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
+            surveyFilter=None, starMag=15, 
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05):
 
         # Prepare the calibration products (only for the amplifier images)
@@ -97,14 +98,17 @@ class baseComcamLoop():
             self._makeDir(isrDir)
 
         # Test star magnitude
-        starMag = 15
+        #starMag = starMag
 
         # Survey parameters
         surveySettingFilePath = os.path.join(getConfigDir(),
                                             "surveySettings.yaml")
         surveySettings = ParamReader(filePath=surveySettingFilePath)
-        filterType = FilterType.fromString(
-            surveySettings.getSetting("filterType"))
+        if surveyFilter is None:
+            filterType = FilterType.fromString(
+                surveySettings.getSetting("filterType"))
+        else:
+            filterType = FilterType.fromString(surveyFilter)
         raInDeg = surveySettings.getSetting("raInDeg")
         decInDeg = surveySettings.getSetting("decInDeg")
         rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
