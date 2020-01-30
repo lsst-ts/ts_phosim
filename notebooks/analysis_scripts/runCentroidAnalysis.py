@@ -80,7 +80,7 @@ if __name__ == "__main__":
         createCat = createPhosimCatalog()
         createCat.createPhosimCatalog(1, 0, [15], raShift + centroidOffset[0], 
                                       decShift + centroidOffset[1],
-                                      str(centroidSkyFilePath[:-3]+str(offset) + 'ang' + str(offset_ang) + '.txt'))
+                                      str(centroidSkyFilePath[:-3] + str(offset) + 'ang' + str(offset_ang) + '.txt'))
 
         ccLoop = centroidLoop(str(centroidSkyFilePath[:-3]+str(offset) + 'ang' + str(offset_ang) + '.txt'))
         ccLoop.main(phosimDir, 8, 1, outputDir, str(testLabel + '.' + str(offset) + 'ang'+ str(offset_ang)), 
