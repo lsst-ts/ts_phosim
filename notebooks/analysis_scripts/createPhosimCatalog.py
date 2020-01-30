@@ -16,7 +16,8 @@ from lsst.ts.phosim.Utility import getAoclcOutputPath, getConfigDir
 class createPhosimCatalog():
 
     def createPhosimCatalog(self, numStars, starSep, magList,
-                            raOffset, decOffset, outputFilePath):
+                            raOffset, decOffset, outputFilePath,
+                            numFields=9):
 
         """
         numStars: number of stars per field
@@ -45,7 +46,7 @@ class createPhosimCatalog():
 
         skySim = self._addStarsInField(skySim, metr, numStars,
                                        starSep, raOffset, decOffset,
-                                       magList)
+                                       magList, numFields)
         skySim.exportSkyToFile(outputFilePath)
 
 
@@ -60,10 +61,13 @@ class createPhosimCatalog():
 
 
     def _addStarsInField(self, skySim, opdMetr, numStars, starSep,
-                         raOffset, decOffset, starMagList):
+                         raOffset, decOffset, starMagList, numFields=9):
 
         starId = 0
         raInDegList, declInDegList = opdMetr.getFieldXY()
+        if numFields < len(raInDegList):
+            raInDegList = raInDegList[:numFields]
+            declInDegList = declInDegList[:numFields]
 
         raShift = np.zeros(numStars)
         decMin = -1 * starSep * (float(numStars-1) / 2)
@@ -112,6 +116,8 @@ if __name__ == "__main__":
                         help="bright limit of stars in catalog (default: 15)")
     parser.add_argument("--output", type=str, default="",
                         help="output catalog filepath")
+    parser.add_argument("--numFields", type=int, default=9,
+                        help="number of comcam CCDs to use")
     args = parser.parse_args()
 
     if (args.output == ""):
@@ -119,11 +125,12 @@ if __name__ == "__main__":
         outputFilePath = os.path.join(outputDir, "starCat.txt")
     else:
         outputFilePath = args.output
+        outputFilePath = os.path.join(outputFilePath, "starCat.txt")
 
     starMagList = np.linspace(args.magBrightLim, args.magFaintLim, args.numStars)
 
     createCat = createPhosimCatalog()
     createCat.createPhosimCatalog(args.numStars, args.starSep,
-                                  args.magFaintLim, args.magBrightLim,
+                                  [args.magFaintLim, args.magBrightLim],
                                   args.raOffset, args.decOffset,
-                                  outputFilePath)
+                                  outputFilePath, args.numFields)
