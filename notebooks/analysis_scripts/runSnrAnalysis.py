@@ -28,6 +28,7 @@ if __name__ == "__main__":
     outputDir = getAoclcOutputPath()
     testLabel = args.testLabel
     skyFilePath = args.skyFile
+    genFlats = True
 
     if (args.testOutput == ""):
         testOutputDir = os.path.dirname(os.path.realpath(__file__))
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 
     os.environ["closeLoopTestDir"] = testOutputDir
 
-    for magVal in np.arange(14, 19.1, 0.5):
+    for magVal in np.arange(10.0, 16.1, 0.5):
 
         # # Clobber
         # if args.opd is True:
@@ -53,15 +54,15 @@ if __name__ == "__main__":
         raShift = (args.raShift * .2) / 3600 # Convert to degrees
         decShift = (args.decShift * .2) / 3600 # Convert to degrees
         createCat.createPhosimCatalog(1, 0, [magVal], raShift, decShift,
-                                      skyFilePath)
+                                      skyFilePath, numFields=3)
 
         ccLoop = comcamLoop()
         ccLoop.main(phosimDir, 8, 1, outputDir, '%s.%.1f' % (testLabel, magVal), 
                     isEimg=False, genOpd=True, genDefocalImg=True, 
-                    genFlats=True, useMinDofIdx=False,
+                    genFlats=genFlats, useMinDofIdx=False,
                     inputSkyFilePath=skyFilePath, m1m3ForceError=0.05)
 
         # # Once the necessary data is created we don't need to recreate on every iteration
         # args.opd = False
-        # args.flats = False
+        # genFlats = False
         # args.defocalImg = False
