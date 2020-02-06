@@ -171,6 +171,8 @@ class baseComcamLoop():
                   
                 argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim()
                 argString = '-w $AOCLCOUTPUTPATH ' + argString
+                print('Generating OPD with Phosim\n')
+                print(argString)
                 phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
@@ -215,6 +217,9 @@ class baseComcamLoop():
                 instSettingFileName="starSingleExp.inst")
             if genDefocalImg is True:
                 for argString in argStringList:
+                    argString = '-w $AOCLCOUTPUTPATH ' + argString
+                    print('Generating defocal images with Phosim\n')
+                    print(argString)
                     phosimCmpt.runPhoSim(argString)
 
                 # Repackage the images based on the image type
