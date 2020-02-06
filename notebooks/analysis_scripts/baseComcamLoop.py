@@ -168,7 +168,9 @@ class baseComcamLoop():
 
             # Generate the OPD image
             if genOpd is True:
+                  
                 argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim()
+                argString = '-w $AOCLCOUTPUTPATH ' + argString
                 phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
