@@ -13,15 +13,16 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigD
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    testOutputDir = '/data/epyc/users/suberlak/Commissioning/aos/aoclc_analysis/'
     parser.add_argument("--testLabel", type=str, default="sep")
-    parser.add_argument("--testOutput", type=str, default="")
+    parser.add_argument("--testOutput", type=str, default=testOutputDir)
     parser.add_argument("--skyFile", type=str, default="starCat.txt")
-    parser.add_argument("--raShift", type=float, default=0.0)
-    parser.add_argument("--decShift", type=float, default=0.0)
-    parser.add_argument("--magVal", type=float, default=15)
-    # parser.add_argument("--opd", default=True, action='store_false')
-    # parser.add_argument("--defocalImg", default=True, action='store_false')
-    # parser.add_argument("--flats", default=True, action='store_false')
+    parser.add_argument("--raShift", type=float, default=150.0)
+    parser.add_argument("--decShift", type=float, default=150.0)
+    parser.add_argument("--magVal", type=float, default=16)
+    parser.add_argument("--opd", default=True, action='store_false')
+    parser.add_argument("--defocalImg", default=True, action='store_false')
+    parser.add_argument("--flats", default=True, action='store_false')
     args = parser.parse_args()
 
     # Load directory paths
@@ -43,18 +44,18 @@ if __name__ == "__main__":
 
     # We create a PhoSim catalog with 2 stars with magVal brightness,
     # with varying separation in degrees     
-    for starSep in np.arange(0.01, 0.2347, 0.025 ) : 
+    for starSep in [0.05]:#np.arange(0.01, 0.2347, 0.025 ) : 
 
         # # Clobber
-        # if args.opd is True:
-        _eraseFolderContent(outputDir)
-        # else:
-        #     if args.flats is True:
-        #         _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
-        #         _eraseFolderContent(os.path.join(outputDir, 'input'))     
-        #     if args.defocalImg is True:
-        #         _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
-        #         _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
+        if args.opd is True:
+            _eraseFolderContent(outputDir)
+        else:
+            if args.flats is True:
+                _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
+                _eraseFolderContent(os.path.join(outputDir, 'input'))     
+            if args.defocalImg is True:
+                _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
+                _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
 
         createCat = createPhosimCatalog()
         raShift = (args.raShift * .2) / 3600 # Convert to degrees
@@ -68,11 +69,12 @@ if __name__ == "__main__":
                                       skyFilePath)
 
         ccLoop = comcamLoop() 
-        numPro = 8 # number of processors setting in phosimCmptSetting.yaml 
+        numPro = 40 # number of processors setting in phosimCmptSetting.yaml 
         iterNum  = 1 # number of iterations 
-        ccLoop.main(phosimDir, numPro, 1, outputDir, '%s.%.1f' % (testLabel, starSep), 
-                    isEimg=False, genOpd=True, genDefocalImg=True, 
-                    genFlats=True, useMinDofIdx=False,
+        print('For starSep%f, the outputDir is %s'%(starSep,outputDir))
+        ccLoop.main(phosimDir, numPro, iterNum, outputDir, '%s.%.3f' % (testLabel, starSep), 
+                    isEimg=False,  genOpd=args.opd, genDefocalImg=args.defocalImg, 
+                    genFlats=args.flats, useMinDofIdx=False,
                     inputSkyFilePath=skyFilePath, m1m3ForceError=0.05)
 
         # # Once the necessary data is created we don't need to recreate on every iteration
