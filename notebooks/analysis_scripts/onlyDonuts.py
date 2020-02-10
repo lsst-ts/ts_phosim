@@ -72,7 +72,8 @@ class genDonuts():
         phosimCmpt.setDofInUm(state0)
 
         # Do the iteration
-        obsId = 9006000
+        filt_num_dict = {'u':0, 'g':1, 'r':2, 'i':3, 'z':4, 'y':5}
+        obsId = 9006000 + 10*filt_num_dict[surveyFilter]
         opdZkFileName = str("opd.zer" + '.' + testName)
         wfsZkFileName = str("wfs.zer" + '.' + testName)
         opdPssnFileName = "PSSN.txt"
@@ -309,7 +310,7 @@ if __name__ == "__main__":
 
         filt_class.setFilter(FilterType.fromString(filt_name))
         magBounds = filt_class.getMagBoundary()
-        starMag = magBounds[0] # Index 0 is brightest
+        starMag = magBounds[0]# Index 0 is brightest
 
         createCat = createPhosimCatalog()
         raShift = (args.raShift * .2) / 3600 # Convert to degrees

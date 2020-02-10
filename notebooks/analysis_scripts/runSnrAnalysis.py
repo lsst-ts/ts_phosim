@@ -37,11 +37,22 @@ if __name__ == "__main__":
 
     os.environ["closeLoopTestDir"] = testOutputDir
 
-    for magVal in np.arange(10.0, 16.1, 0.5):
+    save_images = True
+
+    for magVal in np.arange(16.0, 9.9, -0.5):
+
+        if save_images is True:
+            dir_name = 'test_output/mag_%.2f_output' % magVal
+            if os.path.exists(dir_name):
+                _eraseFolderContent(dir_name)
+            else:
+                os.makedirs(dir_name)
+            outputDir = dir_name
 
         # # Clobber
         # if args.opd is True:
-        _eraseFolderContent(outputDir)
+        if save_images is False:
+            _eraseFolderContent(outputDir)
         # else:
         #     if args.flats is True:
         #         _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
@@ -57,7 +68,7 @@ if __name__ == "__main__":
                                       skyFilePath, numFields=3)
 
         ccLoop = comcamLoop()
-        ccLoop.main(phosimDir, 8, 1, outputDir, '%s.%.1f' % (testLabel, magVal), 
+        ccLoop.main(phosimDir, 16, 1, outputDir, '%s.%.1f' % (testLabel, magVal), 
                     isEimg=False, genOpd=True, genDefocalImg=True, 
                     genFlats=genFlats, useMinDofIdx=False,
                     inputSkyFilePath=skyFilePath, m1m3ForceError=0.05)

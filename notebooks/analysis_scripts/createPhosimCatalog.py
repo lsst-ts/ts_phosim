@@ -96,6 +96,44 @@ class createPhosimCatalog():
 
         return skySim
 
+class createRandomStars(createPhosimCatalog):
+
+    def _addStarsInField(self, skySim, opdMetr, numStars, starSep,
+                         raOffset, decOffset, starMagList, numFields=9):
+
+        starId = 0
+        raInDegList, declInDegList = opdMetr.getFieldXY()
+        if numFields < len(raInDegList):
+            raInDegList = raInDegList[:numFields]
+            declInDegList = declInDegList[:numFields]
+
+        randState = np.random.RandomState(32)
+        minOffSet = (-600 * .2) / 3600
+        maxOffSet = (600 * .2) / 3600
+        raShift = randState.uniform(minOffSet, maxOffSet, size=numStars)
+        decShift = randState.uniform(minOffSet, maxOffSet, size=numStars)
+
+        raShift += raOffset
+        decShift += decOffset
+
+        for raInDeg, declInDeg in zip(raInDegList, declInDegList):
+            # It is noted that the field position might be < 0. But it is not the
+            # same case for ra (0 <= ra <= 360).
+            # if (raInDeg < 0):
+            #     raInDeg += 360.0
+
+            for num in range(numStars):
+                raPerturbed = raInDeg + raShift[num]
+                decPerturbed = declInDeg + decShift[num]
+
+                if raPerturbed < 0:
+                    raPerturbed += 360.0
+
+                skySim.addStarByRaDecInDeg(starId, raPerturbed,
+                                           decPerturbed, starMagList[num])
+                starId += 1
+
+        return skySim
 
 if __name__ == "__main__":
 
