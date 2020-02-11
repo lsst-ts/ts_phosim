@@ -33,8 +33,8 @@ if __name__ == "__main__":
    
 
     # read the pixel shift off center 
-    raShift = (args.raShift * .2) / 3600 # Convert to degrees
-    decShift = (args.decShift * .2) / 3600 # Convert to degrees
+    raShift = (args.raShift * .02) / 3600 # Convert to degrees
+    decShift = (args.decShift * .02) / 3600 # Convert to degrees
 
     # read the star brightness
     magVal   = args.magVal
@@ -67,14 +67,14 @@ if __name__ == "__main__":
 
         # Clobber
         if args.opd is True:
-           _eraseFolderContent(outputDir)
+            eraseFolderContent(outputDir)
         else:
-           if args.flats is True:
-               _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
-               _eraseFolderContent(os.path.join(outputDir, 'input'))     
-           if args.defocalImg is True:
-              _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
-               _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
+            if args.flats is True:
+                _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
+                _eraseFolderContent(os.path.join(outputDir, 'input'))     
+            if args.defocalImg is True:
+                _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
+                _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
         
        
         # make the star caatalog 
