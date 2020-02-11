@@ -13,9 +13,9 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigD
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    testOutputDir = '/data/epyc/users/suberlak/Commissioning/aos/aoclc_analysis/'
+    #testOutputDir = '/data/epyc/users/suberlak/Commissioning/aos/aoclc_analysis/'
     parser.add_argument("--testLabel", type=str, default="sep")
-    parser.add_argument("--testOutput", type=str, default=testOutputDir)
+    parser.add_argument("--testOutput", type=str, default="")
     parser.add_argument("--skyFile", type=str, default="starCat.txt")
     parser.add_argument("--raShift", type=float, default=150.0)
     parser.add_argument("--decShift", type=float, default=150.0)
@@ -27,12 +27,23 @@ if __name__ == "__main__":
 
     # Load directory paths
     phosimDir = getPhoSimPath()
-    outputDir = getAoclcOutputPath()
+    #outputDir = getAoclcOutputPath()
     testLabel = args.testLabel
-    skyFilePath = args.skyFile
-
-
+    #skyFilePath = args.skyFile
    
+
+    # read the pixel shift off center 
+    raShift = (args.raShift * .2) / 3600 # Convert to degrees
+    decShift = (args.decShift * .2) / 3600 # Convert to degrees
+
+    # read the star brightness
+    magVal   = args.magVal
+
+
+    # settings for simulation
+    numPro = 60 # number of processors setting in phosimCmptSetting.yaml 
+    iterNum  = 1 # number of iterations 
+    numFields = 9 # 9 for all CCDs,  3 to get the result quicker... 
 
     if (args.testOutput == ""):
         testOutputDir = os.path.dirname(os.path.realpath(__file__))
@@ -44,39 +55,45 @@ if __name__ == "__main__":
 
     # We create a PhoSim catalog with 2 stars with magVal brightness,
     # with varying separation in degrees     
-    for starSep in [0.05]:#np.arange(0.01, 0.2347, 0.025 ) : 
+    starNum  = 2 
+    for starSep in np.arange(0.01, 0.23, 0.025 )[::-1] : 
+        print('\nStarting ccLoop for separation %.3f'%starSep)
 
-        # # Clobber
+        outputDir = 'output/sep_%.3f' % starSep
+        print(outputDir)
+        if (not os.path.exists(outputDir)):
+            os.makedirs(outputDir)
+
+
+        # Clobber
         if args.opd is True:
-            _eraseFolderContent(outputDir)
+           _eraseFolderContent(outputDir)
         else:
-            if args.flats is True:
-                _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
-                _eraseFolderContent(os.path.join(outputDir, 'input'))     
-            if args.defocalImg is True:
-                _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
-                _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
-
+           if args.flats is True:
+               _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
+               _eraseFolderContent(os.path.join(outputDir, 'input'))     
+           if args.defocalImg is True:
+              _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'intra'))
+               _eraseFolderContent(os.path.join(outputDir, 'iter0', 'img', 'extra'))
+        
+       
+        # make the star caatalog 
+        skyFilePath = 'output/starCat_%.3f.txt'%starSep
+        print(skyFilePath)
         createCat = createPhosimCatalog()
-        raShift = (args.raShift * .2) / 3600 # Convert to degrees
-        decShift = (args.decShift * .2) / 3600 # Convert to degrees
+        createCat.createPhosimCatalog(starNum, starSep, [magVal,magVal], raShift, decShift,
+                                      skyFilePath,numFields=numFields)
         
-
-        # read the star brightness
-        magVal   = args.magVal
-        
-        createCat.createPhosimCatalog(2, starSep, [magVal,magVal], raShift, decShift,
-                                      skyFilePath)
-
+        # #initialize the baseComcamLoop.py Class 
         ccLoop = comcamLoop() 
-        numPro = 40 # number of processors setting in phosimCmptSetting.yaml 
-        iterNum  = 1 # number of iterations 
+        
         print('For starSep%f, the outputDir is %s'%(starSep,outputDir))
         ccLoop.main(phosimDir, numPro, iterNum, outputDir, '%s.%.3f' % (testLabel, starSep), 
                     isEimg=False,  genOpd=args.opd, genDefocalImg=args.defocalImg, 
                     genFlats=args.flats, useMinDofIdx=False,
                     inputSkyFilePath=skyFilePath, m1m3ForceError=0.05)
-
+        print('Done running ccLoop for this separation\n\n')
+ 
         # # Once the necessary data is created we don't need to recreate on every iteration
         args.opd = False
         args.flats = False
