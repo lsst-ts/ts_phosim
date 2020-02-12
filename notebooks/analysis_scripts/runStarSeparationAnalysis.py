@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
         # Clobber
         if args.opd is True:
-            eraseFolderContent(outputDir)
+            _eraseFolderContent(outputDir)
         else:
             if args.flats is True:
                 _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
