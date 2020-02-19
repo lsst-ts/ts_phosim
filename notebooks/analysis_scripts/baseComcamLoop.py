@@ -84,7 +84,8 @@ class baseComcamLoop():
     def main(self, phosimDir, numPro, iterNum, baseOutputDir, 
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
             surveyFilter=None, starMag=15, 
-            useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05):
+            useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
+            doDeblending=False):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
@@ -119,7 +120,7 @@ class baseComcamLoop():
                                         m1m3ForceError)
 
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
-                                rotAngInDeg, isEimg)
+                                rotAngInDeg, isEimg, doDeblending)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -160,18 +161,19 @@ class baseComcamLoop():
             # Set the output directory
             outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
             phosimCmpt.setOutputDir(outputDir)
-
+            print('PhoSim outputDir is %s'%outputDir)
             # Set the output image directory
             outputImgDir = os.path.join(baseOutputDir, iterDirName,
                                         outputImgDirName)
             phosimCmpt.setOutputImgDir(outputImgDir)
-
+            print('PhoSim outputImgDir is %s'%outputImgDir)
             # Generate the OPD image
             if genOpd is True:
                   
                 argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim()
-                argString = '-w $AOCLCOUTPUTPATH ' + argString
-                print('Generating OPD with Phosim\n')
+                argString = '-w ' + baseOutputDir+ ' '+ argString
+                #argString = '-w $AOCLCOUTPUTPATH ' + argString
+                print('Generating OPD with Phosim, argString is \n')
                 print(argString)
                 phosimCmpt.runPhoSim(argString)
 
@@ -217,7 +219,8 @@ class baseComcamLoop():
                 instSettingFileName="starSingleExp.inst")
             if genDefocalImg is True:
                 for argString in argStringList:
-                    argString = '-w $AOCLCOUTPUTPATH ' + argString
+                    #argString = '-w $AOCLCOUTPUTPATH ' + argString
+                    argString = '-w ' + baseOutputDir+ ' '+ argString
                     print('Generating defocal images with Phosim\n')
                     print(argString)
                     phosimCmpt.runPhoSim(argString)
@@ -349,7 +352,7 @@ class baseComcamLoop():
 
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        isEimg):
+                        isEimg,doDeblending):
 
         wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
         wepCalc.setFilter(filterType)
@@ -359,6 +362,10 @@ class baseComcamLoop():
         if (isEimg):
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
+
+        if (doDeblending):
+            settingFile = wepCalc.getSettingFile()
+            settingFile.updateSetting("doDeblending", "True") 
 
         return wepCalc
 
