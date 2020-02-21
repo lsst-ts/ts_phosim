@@ -8,7 +8,7 @@ from baseComcamLoop import baseComcamLoop as comcamLoop
 from baseComcamLoop import _eraseFolderContent
 from createPhosimCatalogNew import createPhosimCatalog
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigDir
-
+from lsst.ts.wep.Utility import runProgram
 
 if __name__ == "__main__":
 
@@ -56,8 +56,8 @@ if __name__ == "__main__":
     # We create a PhoSim catalog with 2 stars with magVal brightness,
     # with varying separation in degrees     
     numStars  = 2 
-    #args.opd = False
-    #args.flats = False
+    args.opd = False
+    args.flats = False
 
     # since at such small separations the donuts overlap, we need to 
     # turn on the deblending ....
@@ -71,7 +71,24 @@ if __name__ == "__main__":
         print(outputDir)
         if (not os.path.exists(outputDir)):
             os.makedirs(outputDir)
+        
+        # re-use the flats and calibs : copy from the sep_10  ...
 
+        if not args.opd and not args.flats : 
+            print('Copying content of /sep_10/ to re-use the flats and OPD files...')
+            argString = '-a singleAmp/sep_10/. '+ outputDir+'/'
+            runProgram("cp", argstring=argString)
+
+            # ensure that input/raw and input/rerun are empty 
+            print('Deleting content of input/raw/ and input/rerun/')
+            _eraseFolderContent(os.path.join(outputDir, 'input','raw'))
+            _eraseFolderContent(os.path.join(outputDir, 'input','rerun'))
+
+            # remove files that are remade
+            argString = os.path.join(outputDir, 'input')
+            runProgram("rm", argstring=argString+'/isr*')
+            runProgram("rm", argstring=argString+'/registry*')
+            runProgram("rm", argstring=argString+'/_mappe*')
 
         # Clobber
         if args.opd is True:
