@@ -85,7 +85,7 @@ class baseComcamLoop():
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
             surveyFilter=None, starMag=15, 
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
-            doDeblending=False, postageImg=False,postageImgDir = None):
+            doDeblending=False, postageImg=False):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
@@ -97,6 +97,11 @@ class baseComcamLoop():
         isrDir = os.path.join(baseOutputDir, isrDirName)
         if genFlats is True:
             self._makeDir(isrDir)
+
+        # Make the postage Image directory if needed
+        if postageImg :
+            postageImgDir  = os.path.join(baseOutputDir,'postage')
+            self._makeDir(postageImgDir)
 
         # Test star magnitude
         #starMag = starMag
