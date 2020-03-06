@@ -85,7 +85,7 @@ class baseComcamLoop():
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
             surveyFilter=None, starMag=15, 
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
-            doDeblending=False):
+            doDeblending=False, postageImg=False,postageImgDir = None):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
