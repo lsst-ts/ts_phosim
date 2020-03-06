@@ -56,8 +56,8 @@ if __name__ == "__main__":
     # We create a PhoSim catalog with 2 stars with magVal brightness,
     # with varying separation in degrees     
     numStars  = 2 
-    args.opd = False
-    args.flats = False
+    args.opd = True # initially we calculate opd and flats .. 
+    args.flats = True
 
     # since at such small separations the donuts overlap, we need to 
     # turn on the deblending ....
