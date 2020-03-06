@@ -244,7 +244,8 @@ class baseComcamLoop():
 
             # Calculate the wavefront error and DOF
             listOfWfErr = wepCalc.calculateWavefrontErrors(
-                intraRawExpData, extraRawExpData=extraRawExpData)
+                intraRawExpData, extraRawExpData=extraRawExpData,
+                postageImg=postageImg,postageImgDir = postageImgDir)
             ofcCalc.calculateCorrections(listOfWfErr)
 
             # Record the wfs error with the same order as OPD for the comparison
