@@ -28,3 +28,6 @@ pytest_session.txt
 
 # Jupyter Notebook Checkpoints
 *.ipynb_checkpoints
+
+# OSX Finder files
+*.DS_Store

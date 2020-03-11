@@ -41,9 +41,9 @@ if __name__ == "__main__":
 
 
     # settings for simulation
-    numPro = 60 # number of processors setting in phosimCmptSetting.yaml 
+    numPro = 24 # number of processors setting in phosimCmptSetting.yaml 
     iterNum  = 1 # number of iterations 
-    numFields = 9 # 9 for all CCDs,  3 to get the result quicker... 
+    numFields = 3 # 9 for all CCDs,  3 to get the result quicker... 
 
     if (args.testOutput == ""):
         testOutputDir = os.path.dirname(os.path.realpath(__file__))
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     doDeblending = True 
 
     magList = np.ones(numStars) * magVal
-    for starSep in [5,4,3,2,1] : 
+    for starSep in [1] : 
         print('\nStarting ccLoop for separation equal to %d percent of amplifier ra span '%starSep)
 
         outputDir = 'singleAmp/sep_%d' % starSep
@@ -75,9 +75,9 @@ if __name__ == "__main__":
         # re-use the flats and calibs : copy from the sep_10  ...
 
         if not args.opd and not args.flats : 
-            print('Copying content of /sep_10/ to re-use the flats and OPD files...')
-            argString = '-a singleAmp/sep_10/. '+ outputDir+'/'
-            runProgram("cp", argstring=argString)
+            #print('Copying content of /sep_10/ to re-use the flats and OPD files...')
+            #argString = '-a singleAmp/sep_10/. '+ outputDir+'/'
+            #runProgram("cp", argstring=argString)
 
             # ensure that input/raw and input/rerun are empty 
             print('Deleting content of input/raw/ and input/rerun/')

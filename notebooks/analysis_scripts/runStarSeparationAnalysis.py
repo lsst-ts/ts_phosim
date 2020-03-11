@@ -56,7 +56,7 @@ if __name__ == "__main__":
     # We create a PhoSim catalog with 2 stars with magVal brightness,
     # with varying separation in degrees     
     starNum  = 2 
-    for starSep in np.arange(0.01, 0.23, 0.025 )[::-1] : 
+    for starSep in np.arange(0.01, 0.02, 0.025 ): 
         print('\nStarting ccLoop for separation %.3f'%starSep)
 
         outputDir = 'output/sep_%.3f' % starSep
