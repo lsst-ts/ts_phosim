@@ -3,7 +3,7 @@
 # Telescope setting
 
 # Camera MJD
-cameraMJD: 59580.0
+cameraMJD: 51591.093528
 
 # Camera body temperature in degree Celsius
 # Temperature in (2, 16), make these two sigma bounds for Gaussian.

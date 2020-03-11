@@ -85,7 +85,9 @@ class baseComcamLoop():
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
             surveyFilter=None, starMag=15, 
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
-            doDeblending=False, postageImg=False):
+            doDeblending=False, postageImg=False,
+            opdCmdSettingsFile='opdDefault.cmd',
+            comcamCmdSettingsFile='starDefault.cmd'):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
@@ -102,6 +104,8 @@ class baseComcamLoop():
         if postageImg :
             postageImgDir  = os.path.join(baseOutputDir,'postage')
             self._makeDir(postageImgDir)
+        else:
+            postageImgDir = None
 
         # Test star magnitude
         #starMag = starMag
@@ -175,7 +179,9 @@ class baseComcamLoop():
             # Generate the OPD image
             if genOpd is True:
                   
-                argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim()
+                argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
+                    cmdSettingFileName=opdCmdSettingsFile
+                )
                 argString = '-w ' + baseOutputDir+ ' '+ argString
                 #argString = '-w $AOCLCOUTPUTPATH ' + argString
                 print('Generating OPD with Phosim, argString is \n')
@@ -220,7 +226,7 @@ class baseComcamLoop():
             simSeed = 1000
             argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
                 extraObsId, intraObsId, skySim, simSeed=simSeed,
-                cmdSettingFileName="starDefault.cmd",
+                cmdSettingFileName=comcamCmdSettingsFile,
                 instSettingFileName="starSingleExp.inst")
             if genDefocalImg is True:
                 for argString in argStringList:
@@ -250,7 +256,7 @@ class baseComcamLoop():
             # Calculate the wavefront error and DOF
             listOfWfErr = wepCalc.calculateWavefrontErrors(
                 intraRawExpData, extraRawExpData=extraRawExpData,
-                postageImg=postageImg,postageImgDir = postageImgDir)
+                postageImg=postageImg, postageImgDir = postageImgDir)
             ofcCalc.calculateCorrections(listOfWfErr)
 
             # Record the wfs error with the same order as OPD for the comparison
