@@ -7,8 +7,8 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigD
 from lsst.ts.wep.Utility import runProgram
 
 # initial setting whether  to calculate opd, etc. 
-opd = False
-flats = False
+opd = True
+flats = True
 defocalImg = True
 
 
@@ -17,7 +17,7 @@ phosimDir = getPhoSimPath()
 testLabel = 'gaia'
 
 # settings for simulation
-numPro = 90 # number of processors setting in phosimCmptSetting.yaml 
+numPro = 60 # number of processors setting in phosimCmptSetting.yaml 
 iterNum  = 1 # number of iterations 
 numFields = 9 # 9 for all CCDs,  3 to get the result quicker... 
 
@@ -36,7 +36,7 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'noMagCut' # name of the experiment dir 
+expDir = 'gMagGt11' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
@@ -96,7 +96,7 @@ else:
 # read the star catalog from file ... 
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
-skyFilePath = os.path.join(topDir,'starCatGAIA.txt')
+skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
 print('Using sky catalog from %s'%skyFilePath)
        
 # initialize the baseComcamLoop.py Class 
