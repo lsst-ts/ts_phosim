@@ -17,7 +17,7 @@ phosimDir = getPhoSimPath()
 testLabel = 'gaia'
 
 # settings for simulation
-numPro = 60 # number of processors setting in phosimCmptSetting.yaml 
+numPro = 20 # of 90 : the number of processors to use  in phosimCmptSetting.yaml 
 iterNum  = 1 # number of iterations 
 numFields = 9 # 9 for all CCDs,  3 to get the result quicker... 
 
@@ -36,7 +36,7 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'gMagGt11' # name of the experiment dir 
+expDir = 'gMagGt11_R22' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
@@ -99,6 +99,12 @@ else:
 skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
 print('Using sky catalog from %s'%skyFilePath)
        
+# set the opd.cmd and star.cmd files ...
+opdCmd  = 'opdQuickBackground.cmd'
+comcamCmd = 'starQuickBackground.cmd'
+
+print('For PhoSim using /policy/cmdFile/%s and %s'%(opdCmd,comcamCmd))
+
 # initialize the baseComcamLoop.py Class 
 ccLoop = comcamLoop() 
 testName = 'gaia' 
@@ -107,5 +113,7 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testName,
             isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, 
             genFlats=flats, useMinDofIdx=False,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
-            doDeblending=doDeblending, postageImg=postageImg )
+            doDeblending=doDeblending, postageImg=postageImg ,
+            opdCmdSettingsFile=opdCmd,
+            comcamCmdSettingsFile=comcamCmd)
 print('Done running ccLoop for GAIA \n\n')
