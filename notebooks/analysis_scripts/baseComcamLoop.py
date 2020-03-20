@@ -87,7 +87,7 @@ class baseComcamLoop():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd'):
+            comcamCmdSettingsFile='starDefault.cmd', onlyComcam = True):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
@@ -149,6 +149,21 @@ class baseComcamLoop():
         state0 = ofcCalc.getStateAggregated()
         phosimCmpt.setDofInUm(state0)
 
+
+        # decide which args should be added to PhoSim 
+        # they are prepended 
+        # this applies both to OPD and to star image 
+        if  onlyComcam:  
+            # then prepend argument to run PhoSim only on R22 
+            sensors = 'R22_S00|R22_S01|R22_S02|R22_S10|R22_S11|R22_S12|R22_S20|R22_S21|R22_S22|'
+            argPrepend = '-w ' + baseOutputDir+ ' ' + '-s ' + sensors+ ' '
+
+        else: # just prepend the working directory by default 
+            argPrepend = '-w ' + baseOutputDir+ ' ' 
+
+        print('PhoSim added argPrepend is %s'%argPrepend)
+
+
         # Do the iteration
         obsId = 9006000
         opdZkFileName = str("opd.zer" + '.' + testName)
@@ -176,13 +191,15 @@ class baseComcamLoop():
                                         outputImgDirName)
             phosimCmpt.setOutputImgDir(outputImgDir)
             print('PhoSim outputImgDir is %s'%outputImgDir)
+
+
             # Generate the OPD image
             if genOpd is True:
                   
                 argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                     cmdSettingFileName=opdCmdSettingsFile
                 )
-                argString = '-w ' + baseOutputDir+ ' '+ argString
+                argString = argPrepend + argString
                 #argString = '-w $AOCLCOUTPUTPATH ' + argString
                 print('Generating OPD with Phosim, argString is \n')
                 print(argString)
@@ -231,7 +248,7 @@ class baseComcamLoop():
             if genDefocalImg is True:
                 for argString in argStringList:
                     #argString = '-w $AOCLCOUTPUTPATH ' + argString
-                    argString = '-w ' + baseOutputDir+ ' '+ argString
+                    argString = argPrepend + argString
                     print('Generating defocal images with Phosim\n')
                     print(argString)
                     phosimCmpt.runPhoSim(argString)
