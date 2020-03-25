@@ -155,7 +155,7 @@ class baseComcamLoop():
         # this applies both to OPD and to star image 
         if  onlyComcam:  
             # then prepend argument to run PhoSim only on R22 
-            sensors = 'R22_S00|R22_S01|R22_S02|R22_S10|R22_S11|R22_S12|R22_S20|R22_S21|R22_S22|'
+            sensors = ' "R22_S00|R22_S01|R22_S02|R22_S10|R22_S11|R22_S12|R22_S20|R22_S21|R22_S22" '
             argPrepend = '-w ' + baseOutputDir+ ' ' + '-s ' + sensors+ ' '
 
         else: # just prepend the working directory by default 
