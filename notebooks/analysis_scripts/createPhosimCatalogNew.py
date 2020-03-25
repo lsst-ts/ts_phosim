@@ -15,9 +15,12 @@ from lsst.ts.phosim.Utility import getAoclcOutputPath, getConfigDir
 
 class createPhosimCatalog():
 
-    def createPhosimCatalog(self, numStars, starSep, magList, 
-                             outputFilePath, numFields=1, addStarsInAmp = True,
-                             addStarsAcrossAmps = False):
+    def createPhosimCatalog(self, numStars, starMag, numFields, 
+                             outputFilePath,
+                             addStarsCcdEdge = True, 
+                             addStarsInAmp = False,
+                             addStarsAcrossAmps = False,
+                             starSep = None, magList = None):
 
         """
         numStars: number of stars per field
@@ -28,7 +31,7 @@ class createPhosimCatalog():
 
         outputFilePath: Filename for output catalog
         """
-        print('Making single amp PhoSim cat\n')
+        
         # Survey parameters
         surveySettingFilePath = os.path.join(getConfigDir(),
                                             "surveySettings.yaml")
@@ -46,8 +49,16 @@ class createPhosimCatalog():
         
         # here starSep is in percentage of ra span
         if addStarsInAmp :  
+            print('Making single amp PhoSim cat\n')
             skySim = self._addStarsInAmp(skySim, metr, numStars,
                                      starSep, magList, numFields)
+
+
+        if addStarsCcdEdge:
+            print('Adding stars close to CCD edge\n')
+            skySim = self._addStarsCcdEdge(skySim, metr, numStars,
+                starMag, numFields)
+            
 
         # here starSep is in number of amps separating the stars: 
         # minimum is 1, maximum is 7 
@@ -69,6 +80,59 @@ class createPhosimCatalog():
         ofcCalc.setGainByPSSN()
 
         return ofcCalc
+
+
+    def _addStarsCcdEdge(self, skySim, opdMetr, numStars=5, 
+        starMag = 16, numFields=9,raMinOffsetPx = 50,
+        raOffsetDeltaPx = 50,decOffsetPx = 380):
+
+        raCenterDegList, declCenterDegList = opdMetr.getFieldXY()
+
+        # limit the list to however many fields we are simulating 
+        raCenterDegList = raCenterDegList[:numFields]
+        declCenterDegList = declCenterDegList[:numFields]
+
+        # at this point, instead of adding any offset, select single ccd 
+        # and add few stars on the edge, with distance d from the edge
+
+        declCcdSpan = abs(declCenterDegList[1]-declCenterDegList[0])  # 0.2347 
+        raCcdSpan = abs(np.unique(raCenterDegList)[1] - np.unique(raCenterDegList)[0]) # 0.2347 
+
+        raLeftEdgeList =raCenterDegList-raCcdSpan/2
+
+        #Add offset from the edge :
+        raNumPx = 4096
+        decNumPx = 4096 
+
+        raOffsetPxList = np.arange(raMinOffsetPx,
+            raMinOffsetPx+raOffsetDeltaPx*numStars,
+            raOffsetDeltaPx)
+        raOffsetDegList = (raOffsetPxList / raNumPx) * raCcdSpan
+
+        
+        decOffsetDeg = (decOffsetPx / decNumPx) * declCcdSpan
+
+
+        raCatalog = []
+        decCatalog = []
+
+        count = 0 # this iteartes over all CCDs to consider...
+        for raOffsetDeg in raOffsetDegList:
+            for ra,dec in zip(raLeftEdgeList+raOffsetDeg, 
+                declCenterDegList-count*decOffsetDeg):     
+                if ra< 0:
+                    ra += 360.0
+                raCatalog.append(ra)
+                decCatalog.append(dec)
+            count += 1 
+
+
+        for i in range(len(raCatalog)):
+            starId = i 
+            skySim.addStarByRaDecInDeg(starId, raCatalog[i],
+                           decCatalog[i], starMag)
+        return skySim
+
 
 
     def _addStarsInAmp(self, skySim, opdMetr, numStars, starSep,
