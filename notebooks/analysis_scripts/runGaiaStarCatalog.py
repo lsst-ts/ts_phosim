@@ -36,6 +36,12 @@ numFields = 9 # 9 for all CCDs,  3 to get the result quicker...
 # turn on the deblending ....
 doDeblending = True 
 
+
+# change the camDimOffset  setting in ts_wep/policy
+# to not select stars that are too close to the edge ...
+camDimOffset = 50 
+
+
 # we want to save postage stamps - the 
 # default directory is 
 # outputDir + '/postage'
@@ -62,6 +68,10 @@ if (not os.path.exists(outputDir)):
     os.makedirs(outputDir)
 
 
+
+if justWfs:
+    print('Skipping  OPD and flat copying, not making new defocalImg')
+    print('Just calculating WFS ')
  # only do all that if not trying to just rerun the WFS ... 
 if not justWfs :  
     # re-use the flats and calibs,
@@ -122,7 +132,8 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, 
             genFlats=flats, useMinDofIdx=False,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
-            doDeblending=doDeblending, postageImg=postageImg ,
+            doDeblending=doDeblending, camDimOffset = camDimOffset, 
+            postageImg=postageImg ,
             opdCmdSettingsFile=opdCmd,
             comcamCmdSettingsFile=comcamCmd)
 print('Done running ccLoop for GAIA \n\n')
