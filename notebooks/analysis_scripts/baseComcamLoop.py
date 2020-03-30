@@ -85,7 +85,7 @@ class baseComcamLoop():
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
             surveyFilter=None, starMag=15, 
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
-            doDeblending=False, postageImg=False,
+            doDeblending=False, camDimOffset = 0, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
             comcamCmdSettingsFile='starDefault.cmd', onlyComcam = True):
 
@@ -129,7 +129,7 @@ class baseComcamLoop():
                                         m1m3ForceError)
 
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
-                                rotAngInDeg, isEimg, doDeblending)
+                                rotAngInDeg, isEimg, doDeblending, camDimOffset)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -381,7 +381,7 @@ class baseComcamLoop():
 
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        isEimg,doDeblending):
+                        isEimg,doDeblending, camDimOffset):
 
         wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
         wepCalc.setFilter(filterType)
@@ -395,6 +395,10 @@ class baseComcamLoop():
         if (doDeblending):
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("doDeblending", "True") 
+        if camDimOffset > 0 : 
+            settingFile = wepCalc.getSettingFile()
+            settingFile.updateSetting("camDimOffset", "50")
+
 
         return wepCalc
 
