@@ -9,7 +9,7 @@ from lsst.ts.wep.Utility import runProgram
 # initial setting whether  to calculate opd, etc. 
 flats = False
 opd = False
-defocalImg = False
+defocalImg = True
 justWfs = True # switch to only re-do wfs,  
 #not making or copying flats, opd, defocalImg...
 
@@ -39,7 +39,7 @@ doDeblending = True
 
 # change the camDimOffset  setting in ts_wep/policy
 # to not select stars that are too close to the edge ...
-camDimOffset = 50 
+camDimOffset = -50
 
 
 # we want to save postage stamps - the 
@@ -50,7 +50,7 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'gMagGt11_R22' # name of the experiment dir 
+expDir = 'gMagGt11_R22_' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
