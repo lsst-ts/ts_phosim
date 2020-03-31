@@ -85,7 +85,7 @@ class baseComcamLoop():
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
             surveyFilter=None, starMag=15, 
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
-            doDeblending=False, camDimOffset = 0, postageImg=False,
+            doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
             comcamCmdSettingsFile='starDefault.cmd', onlyComcam = True):
 
@@ -395,9 +395,11 @@ class baseComcamLoop():
         if (doDeblending):
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("doDeblending", "True") 
-        if camDimOffset > 0 : 
+            
+        if camDimOffset  is not None : 
             settingFile = wepCalc.getSettingFile()
-            settingFile.updateSetting("camDimOffset", "50")
+            settingFile.updateSetting("camDimOffset", camDimOffset)
+            print('camDimOffset is ', settingFile.getSetting("camDimOffset"))
 
 
         return wepCalc
