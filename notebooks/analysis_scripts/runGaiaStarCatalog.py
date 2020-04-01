@@ -12,7 +12,7 @@ opd = False
 defocalImg = True
 justWfs = False # switch to only re-do wfs,  
 
-simulatedSensors  = 'comcam' # 'wfs'
+selectSensors  = 'wfs' # 'comcam'
 
 #not making or copying flats, opd, defocalImg...
 
@@ -28,7 +28,9 @@ phosimDir = getPhoSimPath()
 testLabel = 'gaia'
 
 # settings for simulation
-numPro = 20 # of 90 : the number of processors to use  in phosimCmptSetting.yaml 
+numPro = 10 # of 90 : the number of processors to use  in phosimCmptSetting.yaml 
+            # need to make sure this is many times less than the actual 
+            # numProc b/c each process is massively parallel 
 iterNum  = 1 # number of iterations 
 numFields = 9 # 9 for all CCDs,  3 to get the result quicker... 
 
@@ -120,15 +122,13 @@ if not justWfs :
 # read the star catalog from file ... 
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
-if simulatedSensors is 'comcam':
+if selectSensors is 'comcam':
     skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
-    onlyComcam  = True
-    onlyWfsSensors = False
 
-if simulatedSensors is 'wfs':
-    skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt13_wfs.txt')
-    onlyComcam = False
-    onlyWfsSensors = True 
+
+if selectSensors is 'wfs':
+    skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
+ 
 
 print('Using sky catalog from %s'%skyFilePath)
        
@@ -147,6 +147,5 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             doDeblending=doDeblending, camDimOffset = camDimOffset, 
             postageImg=postageImg ,
             opdCmdSettingsFile=opdCmd,
-            comcamCmdSettingsFile=comcamCmd,onlyComcam = onlyComcam, 
-            onlyWfsSensors  = onlyWfsSensors)
+            comcamCmdSettingsFile=comcamCmd,selectSensors = selectSensors)
 print('Done running ccLoop for GAIA \n\n')
