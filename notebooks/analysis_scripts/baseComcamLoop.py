@@ -87,7 +87,8 @@ class baseComcamLoop():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd', onlyComcam = True):
+            comcamCmdSettingsFile='starDefault.cmd', onlyComcam = True,
+            onlyWfsSensors = False):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
@@ -153,14 +154,31 @@ class baseComcamLoop():
         # decide which args should be added to PhoSim 
         # they are prepended 
         # this applies both to OPD and to star image 
+
+        # just prepend the working directory by default 
+        argPrepend = '-w ' + baseOutputDir+ ' ' 
+        chips  = ['00','01','02', 
+                      '10','11','12',
+                      '20','21','22']
+
+        # then prepend argument to run PhoSim only on R22 
         if  onlyComcam:  
-            # then prepend argument to run PhoSim only on R22 
-            sensors = ' "R22_S00|R22_S01|R22_S02|R22_S10|R22_S11|R22_S12|R22_S20|R22_S21|R22_S22" '
-            argPrepend = '-w ' + baseOutputDir+ ' ' + '-s ' + sensors+ ' '
+            rafts = ['22']
+        
+        if onlyWfsSensors:
+            rafts = ['00','04', '40', '44']
+        
+        sensors = ''
+        for r in rafts:
+            for c in chips:
+                s = "R%s_S%s|"%(r,c) 
+                sensors += s 
+        sensors = ' "%s" '%sensors
 
-        else: # just prepend the working directory by default 
-            argPrepend = '-w ' + baseOutputDir+ ' ' 
+        if onlyComcam or onlyWfsSensors : 
+            argPrepend +=  '-s ' + sensors+ ' '
 
+            
         print('PhoSim added argPrepend is %s'%argPrepend)
 
 
