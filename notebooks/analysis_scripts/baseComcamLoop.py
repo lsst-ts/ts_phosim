@@ -87,8 +87,7 @@ class baseComcamLoop():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd', onlyComcam = True,
-            onlyWfsSensors = False):
+            comcamCmdSettingsFile='starDefault.cmd', selectSensors = None):
 
         # Prepare the calibration products (only for the amplifier images)
         sensorNameList = self._getComCamSensorNameList()
@@ -162,10 +161,10 @@ class baseComcamLoop():
                       '20','21','22']
 
         # then prepend argument to run PhoSim only on R22 
-        if  onlyComcam:  
+        if selectSensors is 'comcam':  
             rafts = ['22']
         
-        if onlyWfsSensors:
+        if selectSensors is 'wfs':
             rafts = ['00','04', '40', '44']
         
         sensors = ''
@@ -175,10 +174,10 @@ class baseComcamLoop():
                 sensors += s 
         sensors = ' "%s" '%sensors
 
-        if onlyComcam or onlyWfsSensors : 
+        if selectSensors is not None: 
             argPrepend +=  '-s ' + sensors+ ' '
 
-            
+
         print('PhoSim added argPrepend is %s'%argPrepend)
 
 
