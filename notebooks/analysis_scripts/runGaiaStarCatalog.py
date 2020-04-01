@@ -10,7 +10,10 @@ from lsst.ts.wep.Utility import runProgram
 flats = False
 opd = False
 defocalImg = True
-justWfs = True # switch to only re-do wfs,  
+justWfs = False # switch to only re-do wfs,  
+
+simulatedSensors  = 'comcam' # 'wfs'
+
 #not making or copying flats, opd, defocalImg...
 
 # just to be consistent...
@@ -117,7 +120,16 @@ if not justWfs :
 # read the star catalog from file ... 
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
-skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
+if simulatedSensors is 'comcam':
+    skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
+    onlyComcam  = True
+    onlyWfsSensors = False
+
+if simulatedSensors is 'wfs':
+    skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt13_wfs.txt')
+    onlyComcam = False
+    onlyWfsSensors = True 
+
 print('Using sky catalog from %s'%skyFilePath)
        
 # set the opd.cmd and star.cmd files ...
@@ -135,5 +147,6 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             doDeblending=doDeblending, camDimOffset = camDimOffset, 
             postageImg=postageImg ,
             opdCmdSettingsFile=opdCmd,
-            comcamCmdSettingsFile=comcamCmd)
+            comcamCmdSettingsFile=comcamCmd,onlyComcam = onlyComcam, 
+            onlyWfsSensors  = onlyWfsSensors)
 print('Done running ccLoop for GAIA \n\n')
