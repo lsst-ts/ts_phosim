@@ -89,8 +89,14 @@ class baseComcamLoop():
             opdCmdSettingsFile='opdDefault.cmd',
             comcamCmdSettingsFile='starDefault.cmd', selectSensors = None):
 
-        # Prepare the calibration products (only for the amplifier images)
+        # get the list of sensors  - by default it's comCam...
         sensorNameList = self._getComCamSensorNameList()
+
+        # ... but it may be the wavefront sensing corner sensors ... 
+        if selectSensors is 'wfs':
+            sensorNameList = self._getWfsSensorNameList()
+
+        # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
@@ -327,7 +333,21 @@ class baseComcamLoop():
         sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10", "R22_S11",
                         "R22_S12", "R22_S20", "R22_S21", "R22_S22"]
         return sensorNameList
+    
+    def _getWfsSensorNameList(self):
+        chips  = ['00','01','02', 
+              '10','11','12',
+              '20','21','22']
+        rafts = ['00','04', '40', '44']
+        sensors = []
+        for r in rafts:
+            for c in chips:
+                s = "R%s_S%s"%(r,c) 
+                sensors.append(s)
 
+        sensorNameList = sensors
+
+        return sensorNameList
 
     def _makeCalibs(self, outputDir, sensorNameList):
 
