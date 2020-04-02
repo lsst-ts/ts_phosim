@@ -139,13 +139,13 @@ class baseComcamLoop():
                                         m1m3ForceError)
 
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
-                                rotAngInDeg, isEimg, doDeblending, camDimOffset)
+                                rotAngInDeg, isEimg, doDeblending, camDimOffset,selectSensors)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
         wepCalc.setDefocalDisInMm(defocalDisInMm)
 
-        ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg)
+        ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
         # Ingest the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
@@ -386,7 +386,7 @@ class baseComcamLoop():
         argstring = "--just_wfs"
         runProgram(command,argstring=argstring)
         os.chdir(currWorkDir)
-        
+
         return fakeFlatDir
 
     def _makeDir(self, directory):
@@ -446,9 +446,13 @@ class baseComcamLoop():
 
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        isEimg,doDeblending, camDimOffset):
+                        isEimg,doDeblending, camDimOffset, selectSensors):
+        
+        if selectSensors is None: # by default
+            wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
+        elif selectSensors is 'wfs': # use LsstCam 
+            wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
 
-        wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
         wepCalc.setFilter(filterType)
         wepCalc.setBoresight(raInDeg, decInDeg)
         wepCalc.setRotAng(rotAngInDeg)
@@ -470,9 +474,13 @@ class baseComcamLoop():
         return wepCalc
 
 
-    def _prepareOfcCalc(self, filterType, rotAngInDeg):
+    def _prepareOfcCalc(self, filterType, rotAngInDeg, selectSensors):
 
-        ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
+        if selectSensors is None: # by default
+            ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
+        elif selectSensors is 'wfs': # use LsstCam 
+            ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
+
         ofcCalc.setFilter(filterType)
         ofcCalc.setRotAng(rotAngInDeg)
         ofcCalc.setGainByPSSN()
