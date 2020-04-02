@@ -222,10 +222,15 @@ class baseComcamLoop():
 
             # Generate the OPD image
             if genOpd is True:
-                  
-                argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
-                    cmdSettingFileName=opdCmdSettingsFile
-                )
+                
+                if selectSensors is None:
+                    argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
+                         cmdSettingFileName=opdCmdSettingsFile)
+                    
+                elif selectSensors is 'wfs':
+                    argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
+                        cmdSettingFileName=opdCmdSettingsFile)
+
                 argString = argPrepend + argString
                 #argString = '-w $AOCLCOUTPUTPATH ' + argString
                 print('Generating OPD with Phosim, argString is \n')
