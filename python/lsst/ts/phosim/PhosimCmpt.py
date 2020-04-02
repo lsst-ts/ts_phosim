@@ -392,6 +392,48 @@ class PhosimCmpt(object):
 
         return argString
 
+
+
+    def getLsstCamOpdArgsAndFilesForPhoSim(
+            self, cmdFileName="opd.cmd", instFileName="opd.inst",
+            logFileName="opdPhoSim.log", cmdSettingFileName="opdDefault.cmd",
+            instSettingFileName="opdDefault.inst"):
+        """Get the OPD calculation arguments and files of LsstCam for the PhoSim
+        calculation.
+
+        OPD: optical path difference.
+        ComCam: commissioning camera.
+
+        Parameters
+        ----------
+        cmdFileName : str, optional
+            Physical command file name. (the default is "opd.cmd".)
+        instFileName : str, optional
+            OPD instance file name. (the default is "opd.inst".)
+        logFileName : str, optional
+            Log file name. (the default is "opdPhoSim.log".)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "opdDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "opdDefault.inst".)
+
+        Returns
+        -------
+        str
+            Arguments to run the PhoSim.
+        """
+
+        # Set the default LsstCam OPD field positions
+        self.metr.setDefaultLsstGQ()
+
+        argString = self._getOpdArgsAndFilesForPhoSim(
+            cmdFileName, instFileName, logFileName, cmdSettingFileName,
+            instSettingFileName)
+
+        return argString
+
+
     def _getOpdArgsAndFilesForPhoSim(self, cmdFileName, instFileName,
                                      logFileName, cmdSettingFileName,
                                      instSettingFileName):
