@@ -978,7 +978,7 @@ class PhosimCmpt(object):
         wt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
         self.metr.setWeightingRatio(wt)
 
-        
+
 
     def _setComCamWgtRatio(self):
         """Set the ComCam weighting ratio.
@@ -1022,6 +1022,39 @@ class PhosimCmpt(object):
         gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
 
         return effFwhmList, gqEffFwhm
+
+ def _calcLsstCamOpdEffFwhm(self, pssnList):
+        """Calculate the LsstCam effective FWHM of OPD.
+
+        LsstCam: WFS sensors
+        FWHM: Full width and half maximum.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
+
+        Parameters
+        ----------
+        pssnList : list of PSSN.
+
+        Returns
+        -------
+        list
+            Effective FWHM list.
+        float
+            GQ effective FWHM of ComCam.
+        """
+
+        # Calculate the list of effective FWHM
+        effFwhmList = []
+        for pssn in pssnList:
+            effFwhm = self.metr.calcFWHMeff(pssn)
+            effFwhmList.append(effFwhm)
+
+        # Calculate the GQ effectice FWHM
+        self._setLsstCamWgtRatio()
+        gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
+
+        return effFwhmList, gqEffFwhm
+
 
     def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList):
         """Map the OPD data to the list of wavefront error.
