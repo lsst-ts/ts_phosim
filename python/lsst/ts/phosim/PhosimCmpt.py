@@ -712,7 +712,33 @@ class PhosimCmpt(object):
         """
 
         self._writeOpdZkFile(zkFileName, rotOpdInDeg)
-        self._writeOpdPssnFile(pssnFileName)
+        self._writeOpdPssnFile(pssnFileName, sensor='comcam')
+
+    def analyzeLsstCamOpdData(self, zkFileName="opd.zer",
+                             rotOpdInDeg=0.0,
+                             pssnFileName="PSSN.txt"):
+        """Analyze the LsstCam OPD data.
+
+        Rotate OPD to simulate the output by rotated camera. When analyzing the
+        PSSN, the unrotated OPD is used.
+
+        LsstCam: The corner wavefront sensors R00_S22, R04_S20, R44_S00, R40_S02
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+
+        Parameters
+        ----------
+        zkFileName : str, optional
+            OPD in zk file name. (the default is "opd.zer".)
+        rotOpdInDeg : float, optional
+            Rotate OPD in degree in the counter-clockwise direction. (the
+            default is 0.0.)
+        pssnFileName : str, optional
+            PSSN file name. (the default is "PSSN.txt".)
+        """
+
+        self._writeOpdZkFile(zkFileName, rotOpdInDeg)
+        self._writeOpdPssnFile(pssnFileName,sensor='wfs')
 
     def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
         """Write the OPD in zk file.
@@ -828,7 +854,7 @@ class PhosimCmpt(object):
 
         return fileList
 
-    def _writeOpdPssnFile(self, pssnFileName):
+    def _writeOpdPssnFile(self, pssnFileName,sensor='comcam'):
         """Write the OPD PSSN in file.
 
         OPD: Optical path difference.
@@ -842,11 +868,15 @@ class PhosimCmpt(object):
 
         filePath = os.path.join(self.outputImgDir, pssnFileName)
 
-        # Calculate the PSSN
-        pssnList, gqEffPssn = self._calcComCamOpdPssn()
+        if sensor is 'comcam':
+            # Calculate the PSSN
+            pssnList, gqEffPssn = self._calcComCamOpdPssn()
 
-        # Calculate the FWHM
-        effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
+            # Calculate the FWHM
+            effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
+            
+        elif sensor is 'wfs':
+            pass 
 
         # Append the list to write the data into file
         pssnList.append(gqEffPssn)
@@ -856,7 +886,7 @@ class PhosimCmpt(object):
         data = np.vstack((pssnList, effFwhmList))
 
         # Write to file
-        header = "The followings are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
+        header = "The following are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
         np.savetxt(filePath, data, header=header)
 
     def _calcComCamOpdPssn(self):
