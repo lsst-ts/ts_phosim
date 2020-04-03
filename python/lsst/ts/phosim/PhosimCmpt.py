@@ -874,9 +874,14 @@ class PhosimCmpt(object):
 
             # Calculate the FWHM
             effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
-            
+
         elif sensor is 'wfs':
-            pass 
+            # Calculate the PSSN
+            pssnList, gqEffPssn = self._calcLsstCamOpdPssn()
+
+            # Calculate the FWHM
+            effFwhmList, gqEffFwhm = self._calcLsstCamOpdEffFwhm(pssnList)
+             
 
         # Append the list to write the data into file
         pssnList.append(gqEffPssn)
@@ -919,6 +924,62 @@ class PhosimCmpt(object):
 
         return pssnList, gqEffPssn
 
+    def _calcLsstCamOpdPssn(self):
+        """Calculate the LsstCam PSSN of OPD.
+
+        LsstCam: The corner wavefront sensors R00_S22, R04_S20, R44_S00, R40_S02
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
+
+        Returns
+        -------
+        list
+            PSSN list.
+        float
+            GQ effective PSSN.
+        """
+
+        opdFileList = self._getOpdFileInDir(self.outputImgDir)
+
+        wavelengthInUm = self.tele.getRefWaveLength() * 1e-3
+        pssnList = []
+        for opdFile in opdFileList:
+            pssn = self.metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFile)
+            pssnList.append(pssn)
+
+        # Calculate the GQ effectice PSSN
+        self._setLsstCamWgtRatio()
+        gqEffPssn = self.metr.calcGQvalue(pssnList)
+
+        return pssnList, gqEffPssn
+    
+    def _setLsstCamWgtRatio(self):
+         """Set the LsstCam weighting ratio.
+
+        LsstCam: The corner wavefront sensors R00_S22, R04_S20, R44_S00, R40_S02
+        """
+
+        # from ts.phosim.OpdMetrology.setDefaultLsstGQ()
+        # The distance of point xi (used in Gaussian quadrature plane) to the
+        # origin
+        # This value is in [-1.75, 1.75]
+        armLen = [0.379, 0.841, 1.237, 1.535, 1.708]
+
+        # Weighting of point xi (used in Gaussian quadrature plane) for each
+        # ring
+        armW = [0.2369, 0.4786, 0.5689, 0.4786, 0.2369]
+
+        # Number of points on each ring
+        nArm = 6
+
+        # Get the weighting for all field points (31 for lsst camera)
+        # Consider the first element is center (0)
+        wt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
+        self.metr.setWeightingRatio(wt)
+
+        
+
     def _setComCamWgtRatio(self):
         """Set the ComCam weighting ratio.
 
@@ -927,6 +988,7 @@ class PhosimCmpt(object):
 
         comcamWtRatio = np.ones(9)
         self.metr.setWeightingRatio(comcamWtRatio)
+
 
     def _calcComCamOpdEffFwhm(self, pssnList):
         """Calculate the ComCam effective FWHM of OPD.
