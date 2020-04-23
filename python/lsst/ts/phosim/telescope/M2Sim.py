@@ -86,14 +86,25 @@ class M2Sim(MirrorSim):
             Corrected projection in um along z direction.
         """
 
+        # Get the x, y in ZEMAX coordinate
+        bx, by = self._getMirCoor()
+        bxInZemax, byInZemax, _ = opt2ZemaxCoorTrans(bx, by, 0)
+
+        # Get the outer radius in meter
+        radius = self.getOuterRinM()
+
         # Read the FEA file
         data = self._feaFile.getMatContent()
+        xFea = data[:, 0]
+        yFea = data[:, 1]
 
         # Zenith direction in um
-        zdz = data[:, 2]
+        zdz = self.fitData(xFea, yFea, data[:, 2], bxInZemax/radius,
+                           byInZemax/radius)
 
         # Horizon direction in um
-        hdz = data[:, 3]
+        hdz = self.fitData(xFea, yFea, data[:, 3], bxInZemax/radius,
+                           byInZemax/radius)
 
         # Do the M2 gravitational correction.
         # Map the changes of dz on a plane for certain zenith angle
@@ -105,6 +116,26 @@ class M2Sim(MirrorSim):
             hdz * np.sin(preCompElevInRadian)
 
         return printthzInUm
+
+    def _getMirCoor(self):
+        """Get the mirror coordinate and node.
+
+        Returns
+        -------
+        numpy.ndarray
+            x coordinate.
+        numpy.ndarray
+            y coordinate.
+        """
+
+        # Get the bending mode information
+        data = self._gridFile.getMatContent()
+
+        # Get the x, y coordinate
+        bx = data[:, 1]
+        by = data[:, 2]
+
+        return bx, by
 
     def getTempCorr(self, m2TzGrad, m2TrGrad):
         """Get the mirror print correction along z direction for certain
@@ -127,14 +158,25 @@ class M2Sim(MirrorSim):
             Corrected projection in um along z direction.
         """
 
+        # Get the x, y in ZEMAX coordinate
+        bx, by = self._getMirCoor()
+        bxInZemax, byInZemax, _ = opt2ZemaxCoorTrans(bx, by, 0)
+
+        # Get the outer radius in meter
+        radius = self.getOuterRinM()
+
         # Read the FEA file
         data = self._feaFile.getMatContent()
+        xFea = data[:, 0]
+        yFea = data[:, 1]
 
         # Z-gradient in um
-        tzdz = data[:, 4]
+        tzdz = self.fitData(xFea, yFea, data[:, 4], bxInZemax/radius,
+                            byInZemax/radius)
 
         # r-gradient in um
-        trdz = data[:, 5]
+        trdz = self.fitData(xFea, yFea, data[:, 5], bxInZemax/radius,
+                            byInZemax/radius)
 
         # Get the temprature correction
         tempCorrInUm = m2TzGrad * tzdz + m2TrGrad * trdz
@@ -166,12 +208,8 @@ class M2Sim(MirrorSim):
             Fitted zk in mm in Zemax coordinate.
         """
 
-        # Get the bending mode information
-        data = self._gridFile.getMatContent()
-
         # Get the x, y coordinate
-        bx = data[:, 0]
-        by = data[:, 1]
+        bx, by = self._getMirCoor()
 
         # Transform the M2 coordinate to Zemax coordinate
         bxInZemax, byInZemax, surfInZemax = opt2ZemaxCoorTrans(

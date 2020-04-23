@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.2.2:
+
+-------------
+1.2.2
+-------------
+
+Use sims_w_2020_15. Use the update bending mode and grid files of M1M3 and M2. Update the M2 FEA correction (gravity and temperature) for the fitting of x, y coordinate in grid file.
+
 .. _lsst.ts.phosim-1.2.1:
 
 -------------

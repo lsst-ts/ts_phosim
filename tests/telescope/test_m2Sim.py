@@ -30,7 +30,7 @@ class TestM2Sim(unittest.TestCase):
     def testGetActForce(self):
 
         forceInN = self.m2.getActForce()
-        self.assertEqual(forceInN.shape, (156, 156))
+        self.assertEqual(forceInN.shape, (72, 72))
 
     def testGetPrintthz(self):
 
@@ -38,9 +38,17 @@ class TestM2Sim(unittest.TestCase):
         zAngleInRadian = np.deg2rad(zAngleInDeg)
         printthzInUm = self.m2.getPrintthz(zAngleInRadian)
 
-        ansFilePath = os.path.join(self.testM2Data, "M2printthz.txt")
-        ansPrintthzInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(printthzInUm-ansPrintthzInUm)), 1e-10)
+        self.assertEqual(len(printthzInUm), 15984)
+        self.assertAlmostEqual(printthzInUm[0] * 1e4, 8.65985, places=4)
+        self.assertAlmostEqual(printthzInUm[1] * 1e3, 1.36859, places=4)
+
+        printthzMax = np.max(printthzInUm)
+        self.assertAlmostEqual(printthzMax * 1e2, 4.91178, places=4)
+        self.assertEqual(np.where(printthzInUm == printthzMax)[0][0], 1079)
+
+        printthzMin = np.min(printthzInUm)
+        self.assertAlmostEqual(printthzMin * 1e2, -5.27582, places=4)
+        self.assertEqual(np.where(printthzInUm == printthzMin)[0][0], 15731)
 
     def testGetTempCorr(self):
 
@@ -48,23 +56,34 @@ class TestM2Sim(unittest.TestCase):
         m2TrGrad = -0.1416
         tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
 
-        ansFilePath = os.path.join(self.testM2Data, "M2tempCorr.txt")
-        ansTempCorrInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 1e-10)
+        self.assertEqual(len(tempCorrInUm), 15984)
+        self.assertAlmostEqual(tempCorrInUm[0] * 1e3, 2.94989, places=4)
+        self.assertAlmostEqual(tempCorrInUm[1] * 1e3, 2.85619, places=4)
+
+        tempCorrMax = np.max(tempCorrInUm)
+        self.assertAlmostEqual(tempCorrMax * 1e3, 2.95336, places=4)
+        self.assertEqual(np.where(tempCorrInUm == tempCorrMax)[0][0], 7781)
+
+        tempCorrMin = np.min(tempCorrInUm)
+        self.assertAlmostEqual(tempCorrMin * 1e3, -4.52449, places=4)
+        self.assertEqual(np.where(tempCorrInUm == tempCorrMin)[0][0], 3618)
 
     def testGetMirrorResInMmInZemax(self):
 
-        numTerms = 28
         self._setSurfAlongZ()
         zcInMmInZemax = self.m2.getMirrorResInMmInZemax()[3]
 
-        ansFilePath = os.path.join(self.testM2Data, "sim6_M2zlist.txt")
-        ansZcInUmInZemax = np.loadtxt(ansFilePath)
-        ansZcInMmInZemax = ansZcInUmInZemax*1e-3
+        self.assertEqual(len(zcInMmInZemax), 28)
+        self.assertAlmostEqual(zcInMmInZemax[0] * 1e6, -1.26777, places=4)
+        self.assertAlmostEqual(zcInMmInZemax[1] * 1e11, 6.16316, places=4)
 
-        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] -
-                              ansZcInMmInZemax[0:numTerms]))
-        self.assertLess(delta, 1e-9)
+        zcMax = np.max(zcInMmInZemax)
+        self.assertAlmostEqual(zcMax * 1e6, 3.82926, places=4)
+        self.assertEqual(np.where(zcInMmInZemax == zcMax)[0][0], 3)
+
+        zcMin = np.min(zcInMmInZemax)
+        self.assertAlmostEqual(zcMin * 1e6, -1.30288, places=4)
+        self.assertEqual(np.where(zcInMmInZemax == zcMin)[0][0], 20)
 
     def _setSurfAlongZ(self):
 
@@ -84,11 +103,14 @@ class TestM2Sim(unittest.TestCase):
         resFile = self._writeMirZkAndGridResInZemax()
         content = np.loadtxt(resFile)
 
-        ansFilePath = os.path.join(self.testM2Data, "sim6_M2res.txt")
-        ansContent = np.loadtxt(ansFilePath)
+        self.assertEqual(content.shape, (41617, 4))
 
-        self.assertLess(np.sum(np.abs(content[0, :]-ansContent[0, :])), 1e-9)
-        self.assertLess(np.sum(np.abs(content[1:, 0]-ansContent[1:, 0])), 1e-9)
+        deltaX = content[0, 2]
+        self.assertAlmostEqual(deltaX, 17.18592965, places=7)
+
+        self.assertAlmostEqual(content[300, 0] * 1e6, 1.50337, places=4)
+        self.assertAlmostEqual(content[300, 1] * 1e9, 9.100, places=2)
+        self.assertAlmostEqual(content[300, 2] * 1e9, -8.581, places=2)
 
         os.remove(resFile)
 

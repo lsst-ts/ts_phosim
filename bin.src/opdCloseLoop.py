@@ -151,9 +151,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run AOS closed-loop simulation in OPD level.")
     parser.add_argument("--numOfProc", type=int, default=1,
-                        help="number of processor to run PhoSim")
+                        help="number of processor to run PhoSim (default: 1)")
     parser.add_argument("--iterNum", type=int, default=5,
-                        help="number of closed-loop iteration")
+                        help="number of closed-loop iteration (default: 5)")
     parser.add_argument("--output", type=str, default="",
                         help="output directory")
     parser.add_argument("--rotCam", type=float, default=0.0,

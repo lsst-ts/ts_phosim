@@ -357,6 +357,34 @@ class MirrorSim(object):
 
         return res, zc
 
+    def fitData(self, dataX, dataY, data, x, y):
+        """Fit the data by radial basis function.
+
+        Parameters
+        ----------
+        dataX : numpy.ndarray
+            Data x.
+        dataY : numpy.ndarray
+            Data y.
+        data : numpy.ndarray
+            Data to fit.
+        x : numpy.ndarray
+            x coordinate.
+        y : numpy.ndarray
+            y coordinate.
+
+        Returns
+        -------
+        numpy.ndarray
+            Fitted data.
+        """
+
+        # Construct the fitting model
+        rbfi = Rbf(dataX, dataY, data)
+
+        # Return the fitted data
+        return rbfi(x, y)
+
     def getPrintthz(self, zAngleInRadian, preCompElevInRadian=0):
         """Get the mirror print in um along z direction in specific zenith
         angle.
