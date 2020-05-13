@@ -87,19 +87,20 @@ class baseComcamLoop():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd', selectSensors = None):
+            comcamCmdSettingsFile='starDefault.cmd', selectSensors = 'comcam',
+            splitWfsByMag=False):
 
         # get the list of sensors  - by default it's comCam...
         sensorNameList = self._getComCamSensorNameList()
 
         # ... but it may be the wavefront sensing corner sensors ... 
-        #if selectSensors is 'wfs':
-        #    sensorNameList = self._getWfsSensorNameList()
+        if selectSensors is 'wfs':
+            sensorNameList = self._getWfsSensorNameList()
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             # by default only make calibs for comcam 
-            if selectSensors is None or selectSensors is 'comcam':
+            if selectSensors is 'comcam':
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
             if selectSensors is 'wfs':
@@ -139,7 +140,8 @@ class baseComcamLoop():
                                         m1m3ForceError)
 
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
-                                rotAngInDeg, isEimg, doDeblending, camDimOffset,selectSensors)
+                                rotAngInDeg, isEimg, doDeblending, camDimOffset,
+                                selectSensors)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -166,27 +168,30 @@ class baseComcamLoop():
 
         # just prepend the working directory by default 
         argPrepend = '-w ' + baseOutputDir+ ' ' 
-        chips  = ['00','01','02', 
-                      '10','11','12',
-                      '20','21','22']
+       
 
         # then prepend argument to run PhoSim only on R22 
         if selectSensors is 'comcam':  
             rafts = ['22']
-        
+            chips  = ['00','01','02', 
+                      '10','11','12',
+                      '20','21','22']
+            sensors = ''
+            for r in rafts:
+                for c in chips:
+                    s = "R%s_S%s|"%(r,c) 
+                    sensors += s 
+            sensors = ' "%s" '%sensors
+
         if selectSensors is 'wfs':
-            rafts = ['00','04', '40', '44']
-        
-        sensors = ''
-        for r in rafts:
-            for c in chips:
-                s = "R%s_S%s|"%(r,c) 
-                sensors += s 
-        sensors = ' "%s" '%sensors
+            sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
+            #rafts = ['00','04', '40', '44']
+            #chips  = ['00','01','02', 
+            #          '10','11','12',
+            #          '20','21','22']
 
         if selectSensors is not None: 
             argPrepend +=  '-s ' + sensors+ ' '
-
 
         print('PhoSim added argPrepend is %s'%argPrepend)
 
@@ -223,10 +228,11 @@ class baseComcamLoop():
             # Generate the OPD image
             if genOpd is True:
                 
-                if selectSensors is None:
+                if selectSensors is 'comcam':
                     argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                          cmdSettingFileName=opdCmdSettingsFile)
-                    
+                 
+                # for LsstFamCam   == science sensors 
                 elif selectSensors is 'wfs':
                     argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
                         cmdSettingFileName=opdCmdSettingsFile)
@@ -238,7 +244,14 @@ class baseComcamLoop():
                 phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
-            phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
+            # this step creates iter0/img/PSSN.txt, 
+            # as well as opd.zer.xxx file 
+            # that describe the OPD 
+            if selectSensors is 'comcam':
+                phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
+                                            pssnFileName=opdPssnFileName)
+            elif selectSensors is 'wfs':
+                phosimCmpt.analyzeLsstCamOpdData(zkFileName=opdZkFileName,
                                             pssnFileName=opdPssnFileName)
 
             # Get the PSSN from file
@@ -251,7 +264,7 @@ class baseComcamLoop():
 
             # Set the FWHM data
             listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
-                opdPssnFileName, sensorNameList)
+                                            opdPssnFileName, sensorNameList)
             ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
             # Prepare the faked sky
@@ -302,15 +315,39 @@ class baseComcamLoop():
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
-            # Calculate the wavefront error and DOF
-            listOfWfErr = wepCalc.calculateWavefrontErrors(
-                intraRawExpData, extraRawExpData=extraRawExpData,
-                postageImg=postageImg, postageImgDir = postageImgDir)
-            ofcCalc.calculateCorrections(listOfWfErr)
+            if splitWfsByMag :  # an option to calculate WFS only 
+                # for stars of certain magnitude range  by 
+                # feeding the mag limits explicitly ...
+                # Calculate the wavefront error and DOF
+                for lowMagnitude in [11,12,13,14,15]:
+                    highMagnitude = lowMagnitude+1
+                    print('Calculating wavefront errors for stars between ')
+                    print('%d and %d magnitude'%(lowMagnitude,highMagnitude))
 
-            # Record the wfs error with the same order as OPD for the comparison
-            phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
+                listOfWfErr = wepCalc.calculateWavefrontErrors(
+                    intraRawExpData, extraRawExpData=extraRawExpData,
+                    postageImg=postageImg, postageImgDir = postageImgDir)
+                ofcCalc.calculateCorrections(listOfWfErr)
+          
+                zkFilenameAppend  = str(lowMagnitude)+'-'+str(highMagnitude)
+                
+                # Record the wfs error with the same order as OPD for the comparison
+                phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
+                                               zkFileName=wfsZkFileName+zkFilenameAppend)
+            
+            else: # the original code ... 
+                  # Calculate the wavefront error and DOF
+                listOfWfErr = wepCalc.calculateWavefrontErrors(
+                    intraRawExpData, extraRawExpData=extraRawExpData,
+                    postageImg=postageImg, postageImgDir = postageImgDir)
+                ofcCalc.calculateCorrections(listOfWfErr)
+
+                # Record the wfs error with the same order as OPD for the comparison
+                phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
                                                zkFileName=wfsZkFileName)
+
+
+           
 
             # Set the new aggregated DOF to phosimCmpt
             dofInUm = ofcCalc.getStateAggregated()
