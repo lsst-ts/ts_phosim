@@ -490,7 +490,7 @@ class baseComcamLoop():
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors):
         
-        if selectSensors is None: # by default
+        if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
         elif selectSensors is 'wfs': # use LsstCam 
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
@@ -518,7 +518,7 @@ class baseComcamLoop():
 
     def _prepareOfcCalc(self, filterType, rotAngInDeg, selectSensors):
 
-        if selectSensors is None: # by default
+        if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
         elif selectSensors is 'wfs': # use LsstCam 
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
