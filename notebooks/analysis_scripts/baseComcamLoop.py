@@ -315,25 +315,77 @@ class baseComcamLoop():
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
-            if splitWfsByMag :  # an option to calculate WFS only 
+            if splitWfsByMag :  
+                print('Running WFS ingest and ISR once in split-stars-by-mag mode ')
+                # an option to calculate WFS only 
                 # for stars of certain magnitude range  by 
                 # feeding the mag limits explicitly ...
                 # Calculate the wavefront error and DOF
+
+                ##############################
+                #####   BEGIN PART 1    ######
+                # wepCalc.calculateWavefrontErrors() 
+
+                # first, ingest files just once ...
+                rawExpData = intraRawExpData
+
+                # When evaluating the eimage, the calibration products are not needed.
+                # Therefore, need to make sure the camera mapper file exists.
+                wepCalc._genCamMapperIfNeed()
+
+                # Ingest the exposure data and do the ISR
+                wepCalc._ingestImg(rawExpData)
+                wepCalc._ingestImg(extraRawExpData)
+
+                # Only the amplifier image needs to do the ISR
+                imgType = wepCalc._getImageType()
+                if (imgType == ImageType.Amp):
+                    wepCalc._doIsr(isrConfigfileName="isr_config.py")
+
+                # Set the butler inputs path to get the images
+                butlerRootPath = wepCalc._getButlerRootPath()
+                wepCalc.wepCntlr.setPostIsrCcdInputs(butlerRootPath)
+
+                #####   END PART 1    ######
+                ############################
+
+
                 for lowMagnitude in [11,12,13,14,15]:
                     highMagnitude = lowMagnitude+1
-                    print('Calculating wavefront errors for stars between ')
-                    print('%d and %d magnitude'%(lowMagnitude,highMagnitude))
+                    print('    Calculating wavefront errors for stars between ')
+                    print('    %d and %d magnitude'%(lowMagnitude,highMagnitude))
 
-                listOfWfErr = wepCalc.calculateWavefrontErrors(
-                    intraRawExpData, extraRawExpData=extraRawExpData,
-                    postageImg=postageImg, postageImgDir = postageImgDir)
-                ofcCalc.calculateCorrections(listOfWfErr)
-          
-                zkFilenameAppend  = str(lowMagnitude)+'-'+str(highMagnitude)
-                
-                # Record the wfs error with the same order as OPD for the comparison
-                phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
-                                               zkFileName=wfsZkFileName+zkFilenameAppend)
+                    #############################
+                    #####   BEGIN PART 2   ######
+                    # wepCalc.calculateWavefrontErrors() 
+                    # Get the target stars map neighboring stars
+                    neighborStarMap = wepCalc._getTargetStar(lowMagnitude=lowMagnitude, 
+                                                          highMagnitude=highMagnitude)
+
+                    # Calculate the wavefront error
+                    intraObsIdList = rawExpData.getVisit()
+                    intraObsId = intraObsIdList[0]
+                    if (extraRawExpData is None):
+                        obsIdList = [intraObsId]
+                    else:
+                        extraObsIdList = extraRawExpData.getVisit()
+                        extraObsId = extraObsIdList[0]
+                        obsIdList = [intraObsId, extraObsId]
+
+                    donutMap = wepCalc._calcWfErr(neighborStarMap, obsIdList,postageImg,postageImgDir)
+
+                    listOfWfErr = wepCalc._populateListOfSensorWavefrontData(donutMap)
+
+                    #####   END PART 2   ######
+                    ###########################
+
+                    ofcCalc.calculateCorrections(listOfWfErr)
+              
+                    zkFilenameAppend  = str(lowMagnitude)+'-'+str(highMagnitude)
+                    
+                    # Record the wfs error with the same order as OPD for the comparison
+                    phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
+                                                   zkFileName=wfsZkFileName+zkFilenameAppend)
             
             else: # the original code ... 
                   # Calculate the wavefront error and DOF
