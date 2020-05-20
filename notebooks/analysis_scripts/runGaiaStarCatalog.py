@@ -9,7 +9,10 @@ from lsst.ts.wep.Utility import runProgram
 # initial setting whether  to calculate opd, etc. 
 flats = False
 opd = False
-defocalImg = False   
+defocalImg = False  
+
+copy = False
+
 
 justWfs = True # switch to only re-do wfs,  
 splitWfsByMag = True # whether to calculate the wfs for subsets of stars 
@@ -72,12 +75,12 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'gMagGt11_' # name of the experiment dir 
+expDir = 'gMagGt11_w_2020_15' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
 #copyDir = 'results_before_centroid_update/singleAmpSep/sep_10'
-copyDir = 'results_gaia/gMagGt11'
+copyDir = 'results_gaia/gMagGt11_'
 
 # the opd and wfs are stored here 
 os.environ["closeLoopTestDir"] = os.path.join(topDir, expDir) 
@@ -95,45 +98,73 @@ if justWfs:
     print('Skipping  OPD and flat copying, not making new defocalImg')
     print('Just calculating WFS ')
  # only do all that if not trying to just rerun the WFS ... 
-if not justWfs :  
-    # re-use the flats and calibs,
-    # since these have nothing to do with the actual stars ...
-    # -  copy from the sep_10  ...
-    if not opd and not flats : 
-        print('Copying content of %s to re-use the flats and OPD files...'%copyDir)
+# if not justWfs :  
+#     # re-use the flats and calibs,
+#     # since these have nothing to do with the actual stars ...
+#     # -  copy from the sep_10  ...
+
+#     # note : this is copying the results of previously ingested 
+#     # calibration products. So to test a different version of the stack, 
+#     # need to do the ingest ... 
+#     if not opd and not flats and copy : 
+#         print('Copying content of %s to re-use the flats and OPD files...'%copyDir)
         
-        # first copy the old results...
-        argString = '-a '+copyDir+'/. '+outputDir+'/'
-        runProgram("cp", argstring=argString)
+#         # first copy the old results...
+#         argString = '-a '+copyDir+'/. '+outputDir+'/'
+#         runProgram("cp", argstring=argString)
 
-        # ensure that input/raw and input/rerun are empty 
-        print('Deleting content of input/raw/ and input/rerun/')
-        _eraseFolderContent(os.path.join(outputDir, 'input','raw'))
-        _eraseFolderContent(os.path.join(outputDir, 'input','rerun'))
+#         # ensure that input/raw and input/rerun are empty 
+#         print('Deleting content of input/raw/ and input/rerun/')
+#         _eraseFolderContent(os.path.join(outputDir, 'input','raw'))
+#         _eraseFolderContent(os.path.join(outputDir, 'input','rerun'))
 
-        # remove files that are remade
-        argString = os.path.join(outputDir, 'input')
-        runProgram("rm", argstring=argString+'/isr*')
-        runProgram("rm", argstring=argString+'/registry*')
-        runProgram("rm", argstring=argString+'/_mappe*')
+#         # remove files that are remade
+#         argString = os.path.join(outputDir, 'input')
+#         runProgram("rm", argstring=argString+'/isr*')
+#         runProgram("rm", argstring=argString+'/registry*')
+#         runProgram("rm", argstring=argString+'/_mappe*')
+
+#     # copy only opd and defocal images
+#     if not opd and not defocalImg and copy : 
+#         print('Copying content of %s to re-use the OPD images/files and defocal images ...'%copyDir)
+
+#         # copy iter0/*
+#         argString = '-a ' + copyDir+'/iter0/ ' + outputDir+'/iter0/'
+#         iterDir = os.path.join(outputDir,'iter0')
+#         if (not os.path.exists(iterDir)):
+#             os.makedirs(iterDir)
+#         runProgram("cp", argstring=argString)
+
+#         # copy opdFiles 
+#         argString = copyDir + '/opd* ' + outputDir+'/'
+#         runProgram("cp", argstring=argString)
+
+
+
+
+
 
     # Clobber
-    if opd is True:
-        print('We will make new OPD files in this run')
-        _eraseFolderContent(outputDir)
-    else:
-        if flats is True:
-            print('We will make new flats in this run')
-            _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
-            _eraseFolderContent(os.path.join(outputDir, 'input'))     
-        if defocalImg is True:
-            print('We will make new defocal images in this run ')
-            intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
-            extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
-            if os.path.exists(intraPath):
-                _eraseFolderContent(intraPath)
-            if os.path.exists(extraPath):
-                _eraseFolderContent(extraPath)
+    #if opd is True:
+    #    print('We will make new OPD files in this run')
+    #    _eraseFolderContent(outputDir)
+
+
+    
+
+    # else:
+    #     if flats is True:
+    #         print('We will make new flats in this run')
+    #         _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
+    #         _eraseFolderContent(os.path.join(outputDir, 'input'))     
+    #     if defocalImg is True:
+    #         print('We will make new defocal images in this run ')
+    #         intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
+    #         extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
+    #         if os.path.exists(intraPath):
+    #             _eraseFolderContent(intraPath)
+    #         if os.path.exists(extraPath):
+    #             _eraseFolderContent(extraPath)
 
 
 # read the star catalog from file ... 
@@ -160,10 +191,9 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, 
             genFlats=flats, useMinDofIdx=False,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
-            doDeblending=doDeblending, camDimOffset = camDimOffset, 
-            postageImg=postageImg ,
-            opdCmdSettingsFile=opdCmd,
-            comcamCmdSettingsFile=comcamCmd, selectSensors = selectSensors,
+            doDeblending=doDeblending, camDimOffset=camDimOffset, 
+            postageImg=postageImg, opdCmdSettingsFile=opdCmd,
+            comcamCmdSettingsFile=comcamCmd, selectSensors=selectSensors,
             splitWfsByMag =splitWfsByMag
             )
 print('Done running ccLoop for GAIA \n\n')
