@@ -103,6 +103,7 @@ class baseWfsWep():
             #     fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
             if selectSensors is 'wfs':
                 fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
+
         # Make the ISR directory
         isrDirName = "input"
         isrDir = os.path.join(baseOutputDir, isrDirName)
@@ -130,18 +131,29 @@ class baseWfsWep():
         rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
 
         # Prepare the components
+        print('\nPreparing PhosimCmpt...')
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
                                         rotAngInDeg, numPro, isEimg,
                                         m1m3ForceError)
         # here selectSensors =  'wfs'
+        print('\nPreparing WepCalc...')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
                                 selectSensors)
 
         tele = phosimCmpt.getTele()
-        defocalDisInMm = tele.getDefocalDistInMm()
-        wepCalc.setDefocalDisInMm(defocalDisInMm)
 
+        # this step only possible for ComCam, where WepCalc 
+        # is a nested instance of WEPCalculationOfComCam(WEPCalculationOfPiston),
+        # WepCalculationOfPiston adds that method,
+        # and WEPCalculationOfPiston(WEPCalculation)
+
+        # WEPCalculationOfLsstCam(WEPCalculation),
+        # so there is no such method 
+
+        #defocalDisInMm = tele.getDefocalDistInMm()
+        #wepCalc.setDefocalDisInMm(defocalDisInMm)
+        print('\nPreparing OfcCalc')
         ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
         # Ingest the calibration products (only for the amplifier images)
@@ -176,7 +188,6 @@ class baseWfsWep():
         #         for c in chips:
         #             s = "R%s_S%s|"%(r,c) 
         #             sensors += s 
-        #     sensors = ' "%s" '%sensors
 
         if selectSensors is 'wfs':
             sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
@@ -184,10 +195,12 @@ class baseWfsWep():
             #chips  = ['00','01','02', 
             #          '10','11','12',
             #          '20','21','22']
+            
 
         if selectSensors is not None: 
+            sensors = ' "%s" '%sensors # needed to pass the argument in 
+            # comment signs 
             argPrepend +=  '-s ' + sensors+ ' '
-
         print('PhoSim added argPrepend is %s'%argPrepend)
 
 
