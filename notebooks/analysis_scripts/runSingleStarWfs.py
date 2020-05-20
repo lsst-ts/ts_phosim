@@ -20,11 +20,10 @@ numFields = 9 # 9 for all CCDs, 3 is the minimum
 
 # We create a PhoSim catalog with 1 star on each WFS sensor
 # we do not attempt to calculate OPD...
-numStars  = 2 
 opd = False 
 
 # But we can calculate the calibration products to do the ISR 
-flats = False
+flats = True
 
 
 # And we definitely want to calculate defocal image to run WEPCalc ....
@@ -83,16 +82,17 @@ if (not os.path.exists(outputDir)):
 # else:
 if flats is True:
     print('We will make new flats in this run')
-    _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
-    _eraseFolderContent(os.path.join(outputDir, 'input'))     
+    flatDir  = os.path.join(outputDir, 'fake_flats')
+    inputDir = os.path.join(outputDir, 'input')
+    if os.path.exists(flatDir):  _eraseFolderContent(flatDir)
+    if os.path.exists(inputDir): _eraseFolderContent(inputDir)    
+
 if defocalImg is True:
     print('We will make new defocal images in this run ')
     intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
     extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
-    if os.path.exists(intraPath):
-        _eraseFolderContent(intraPath)
-    if os.path.exists(extraPath):
-        _eraseFolderContent(extraPath)   
+    if os.path.exists(intraPath):  _eraseFolderContent(intraPath)
+    if os.path.exists(extraPath):  _eraseFolderContent(extraPath)   
    
 # make the star catalog 
 skyFilePath = os.path.join(outputDir, 'starCat.txt')
