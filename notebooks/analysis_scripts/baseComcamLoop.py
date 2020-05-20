@@ -6,7 +6,7 @@ import numpy as np
 import shutil
 
 from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.Utility import FilterType, CamType, runProgram
+from lsst.ts.wep.Utility import FilterType, CamType, runProgram, ImageType
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
 
@@ -37,47 +37,47 @@ class AnalysisPhosimCmpt(PhosimCmpt):
         testOutputDir = os.environ["closeLoopTestDir"]
         filePath = os.path.join(testOutputDir, zkFileName)
         opdData = self._mapOpdToZk(rotOpdInDeg)
-        header = "The followings are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
+        header = "The following are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
             rotOpdInDeg)
         np.savetxt(filePath, opdData, header=header)
 
-    def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
-                                zkFileName="wfs.zer"):
-        """Reorder the wavefront error in the wavefront error list according to
-        the reference sensor name list and save to a file.
-        The unexisted wavefront error will be a numpy zero array. The unit is
-        um.
-        Parameters
-        ----------
-        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
-            List of SensorWavefrontData object.
-        refSensorNameList : list
-            Reference sensor name list.
-        zkFileName : str, optional
-            Wavefront error file name. (the default is "wfs.zer".)
-        """
+    # def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
+    #                             zkFileName="wfs.zer"):
+    #     """Reorder the wavefront error in the wavefront error list according to
+    #     the reference sensor name list and save to a file.
+    #     The unexisted wavefront error will be a numpy zero array. The unit is
+    #     um.
+    #     Parameters
+    #     ----------
+    #     listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
+    #         List of SensorWavefrontData object.
+    #     refSensorNameList : list
+    #         Reference sensor name list.
+    #     zkFileName : str, optional
+    #         Wavefront error file name. (the default is "wfs.zer".)
+    #     """
 
-        # Get the sensor name that in the wavefront error map
-        wfErrMap = self._transListOfWfErrToMap(listOfWfErr)
-        nameListInWfErrMap = list(wfErrMap.keys())
+    #     # Get the sensor name that in the wavefront error map
+    #     wfErrMap = self._transListOfWfErrToMap(listOfWfErr)
+    #     nameListInWfErrMap = list(wfErrMap.keys())
 
-        # Reorder the wavefront error map based on the reference sensor name
-        # list.
-        reorderedWfErrMap = dict()
-        for sensorName in refSensorNameList:
-            if sensorName in nameListInWfErrMap:
-                wfErr = wfErrMap[sensorName]
-            else:
-                numOfZk = self.getNumOfZk()
-                wfErr = np.zeros(numOfZk)
-            reorderedWfErrMap[sensorName] = wfErr
+    #     # Reorder the wavefront error map based on the reference sensor name
+    #     # list.
+    #     reorderedWfErrMap = dict()
+    #     for sensorName in refSensorNameList:
+    #         if sensorName in nameListInWfErrMap:
+    #             wfErr = wfErrMap[sensorName]
+    #         else:
+    #             numOfZk = self.getNumOfZk()
+    #             wfErr = np.zeros(numOfZk)
+    #         reorderedWfErrMap[sensorName] = wfErr
 
-        # Save the file
-        testOutputDir = os.environ["closeLoopTestDir"]
-        filePath = os.path.join(testOutputDir, zkFileName)
-        wfsData = self._getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
-        header = "The followings are ZK in um from z4 to z22:"
-        np.savetxt(filePath, wfsData, header=header)
+    #     # Save the file
+    #     testOutputDir = os.environ["closeLoopTestDir"]
+    #     filePath = os.path.join(testOutputDir, zkFileName)
+    #     wfsData = self._getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
+    #     header = "The following are ZK in um from z4 to z22:"
+    #     np.savetxt(filePath, wfsData, header=header)
 
 class baseComcamLoop():
 
@@ -105,11 +105,11 @@ class baseComcamLoop():
 
             if selectSensors is 'wfs':
                 fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
+
         # Make the ISR directory
         isrDirName = "input"
         isrDir = os.path.join(baseOutputDir, isrDirName)
-        if genFlats is True:
-            self._makeDir(isrDir)
+        self._makeDir(isrDir)
 
         # Make the postage Image directory if needed
         if postageImg :
@@ -214,11 +214,12 @@ class baseComcamLoop():
             # The iteration directory
             iterDirName = "%s%d" % (iterDefaultDirName, iterCount)
 
-            # Set the output directory
+            # Set the output directory :   iter0/pert 
             outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
             phosimCmpt.setOutputDir(outputDir)
             print('PhoSim outputDir is %s'%outputDir)
-            # Set the output image directory
+
+            # Set the output image directory:    iter0/img/
             outputImgDir = os.path.join(baseOutputDir, iterDirName,
                                         outputImgDirName)
             phosimCmpt.setOutputImgDir(outputImgDir)
@@ -252,7 +253,7 @@ class baseComcamLoop():
                                             pssnFileName=opdPssnFileName)
             elif selectSensors is 'wfs':
                 phosimCmpt.analyzeLsstCamOpdData(zkFileName=opdZkFileName,
-                                            pssnFileName=opdPssnFileName)
+                                                pssnFileName=opdPssnFileName)
 
             # Get the PSSN from file
             pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
@@ -285,12 +286,13 @@ class baseComcamLoop():
             intraObsId = obsId + 2
 
             # Generate the defocal images
-            simSeed = 1000
-            argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
-                extraObsId, intraObsId, skySim, simSeed=simSeed,
-                cmdSettingFileName=comcamCmdSettingsFile,
-                instSettingFileName="starSingleExp.inst")
             if genDefocalImg is True:
+                simSeed = 1000
+                argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
+                  extraObsId, intraObsId, skySim, simSeed=simSeed,
+                  cmdSettingFileName=comcamCmdSettingsFile,
+                  instSettingFileName="starSingleExp.inst")
+
                 for argString in argStringList:
                     #argString = '-w $AOCLCOUTPUTPATH ' + argString
                     argString = argPrepend + argString
@@ -305,12 +307,15 @@ class baseComcamLoop():
                     phosimCmpt.repackageComCamAmpImgFromPhoSim()
 
             # Collect the defocal images
-            intraRawExpData = RawExpData()
+            intraRawExpData = RawExpData()  
+
+            # it is iter0/img/intra/
             intraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getIntraFocalDirName())
             intraRawExpData.append(intraObsId, 0, intraRawExpDir)
 
             extraRawExpData = RawExpData()
+            # it is   iter0/img/extra/
             extraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
