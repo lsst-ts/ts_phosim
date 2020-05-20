@@ -16,7 +16,7 @@ flats = False
 opd = False
 defocalImg = True
 
-justWfs = True # switch to only re-do wfs,  
+justWfs = False # switch to only re-do wfs,  
 #not making or copying flats, opd, defocalImg...
 
 # just to be consistent...
@@ -28,15 +28,15 @@ if justWfs:
 
 # Load directory paths
 phosimDir = getPhoSimPath()
-testLabel = 'edge'
+testLabel = 'edgeTest'
 
 
 # settings for simulation
 numPro = 20 # of 90 : the number of processors to use  in phosimCmptSetting.yaml 
 iterNum  = 1 # number of iterations 
 numFields = 9 # 9 for all CCDs,  3 to get the result quicker... 
-numStars = 5  # per CCD 
-starMag = 16
+numStars = 3 # per CCD 
+starMag = 17
 
 # We make a new PhoSim star catalog with stars close to the edge ... 
  
@@ -51,8 +51,8 @@ postageImg = True
 
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
-topDir = 'results_edge'
-expDir = 'edge' # name of the experiment dir 
+topDir = 'results_edge_test'
+expDir = 'edgeTest' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
@@ -113,7 +113,7 @@ if not justWfs :
 
 
 
-skyFilePath = os.path.join(topDir,'starCatEdge.txt')
+skyFilePath = os.path.join(topDir,'starCatEdgeTest.txt')
 if not os.path.exists:
     print('Making a new sky catalog at %s'%skyFilePath)
     createCat = createPhosimCatalog()
@@ -138,5 +138,5 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
             doDeblending=doDeblending, postageImg=postageImg ,
             opdCmdSettingsFile=opdCmd,
-            comcamCmdSettingsFile=comcamCmd)
+            comcamCmdSettingsFile=comcamCmd, splitWfsByMag=False)
 print('Done running ccLoop for %s \n\n'%testLabel)
