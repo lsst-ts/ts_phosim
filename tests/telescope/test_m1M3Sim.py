@@ -37,9 +37,17 @@ class TestM1M3Sim(unittest.TestCase):
         zAngleInDeg = 27.0912
         printthzInM = self._getPrintthzInM(zAngleInDeg)
 
-        ansFilePath = os.path.join(self.testM3Data, "M1M3printthz.txt")
-        ansPrintthzInM = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(printthzInM-ansPrintthzInM)), 1e-10)
+        printthzMax = np.max(printthzInM)
+        self.assertAlmostEqual(printthzMax * 1e7, 1.38887, places=4)
+        self.assertEqual(np.where(printthzInM == printthzMax)[0][0], 3863)
+
+        printthzMin = np.min(printthzInM)
+        self.assertAlmostEqual(printthzMin * 1e7, -1.01992, places=4)
+        self.assertEqual(np.where(printthzInM == printthzMin)[0][0], 3607)
+
+        self.assertAlmostEqual(printthzInM[0] * 1e7, 1.12625, places=4)
+        self.assertAlmostEqual(printthzInM[1] * 1e8, -3.40947, places=4)
+        self.assertAlmostEqual(printthzInM[2] * 1e8, -2.04782, places=4)
 
     def _getPrintthzInM(self, zAngleInDeg):
 
@@ -52,9 +60,17 @@ class TestM1M3Sim(unittest.TestCase):
 
         tempCorrInUm = self._getTempCorrInUm()
 
-        ansFilePath = os.path.join(self.testM3Data, "M1M3tempCorr.txt")
-        ansTempCorrInUm = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(tempCorrInUm-ansTempCorrInUm)), 2*1e-8)
+        tempCorrMax = np.max(tempCorrInUm)
+        self.assertAlmostEqual(tempCorrMax * 1e1, 9.60311, places=4)
+        self.assertEqual(np.where(tempCorrInUm == tempCorrMax)[0][0], 228)
+
+        tempCorrMin = np.min(tempCorrInUm)
+        self.assertAlmostEqual(tempCorrMin * 1e1, -5.07911, places=4)
+        self.assertEqual(np.where(tempCorrInUm == tempCorrMin)[0][0], 5034)
+
+        self.assertAlmostEqual(tempCorrInUm[0] * 1e1, 4.34362, places=4)
+        self.assertAlmostEqual(tempCorrInUm[1] * 1e1, 5.30053, places=4)
+        self.assertAlmostEqual(tempCorrInUm[2] * 1e1, 6.49608, places=4)
 
     def _getTempCorrInUm(self):
 
@@ -122,18 +138,23 @@ class TestM1M3Sim(unittest.TestCase):
         content1 = np.loadtxt(resFile1)
         content3 = np.loadtxt(resFile3)
 
-        ansFilePath1 = os.path.join(self.testM3Data, "sim6_M1res.txt")
-        ansFilePath3 = os.path.join(self.testM3Data, "sim6_M3res.txt")
-        ansContent1 = np.loadtxt(ansFilePath1)
-        ansContent3 = np.loadtxt(ansFilePath3)
+        contentShape = (41617, 4)
+        self.assertEqual(content1.shape, contentShape)
+        self.assertEqual(content3.shape, contentShape)
 
-        self.assertLess(np.sum(np.abs(content1[0, :]-ansContent1[0, :])), 1e-9)
-        self.assertLess(np.sum(np.abs(content1[1:, 0]-ansContent1[1:, 0])),
-                        1e-9)
+        deltaXcontent1 = content1[0, 2]
+        self.assertAlmostEqual(deltaXcontent1, 42.01005, places=4)
 
-        self.assertLess(np.sum(np.abs(content3[0, :]-ansContent3[0, :])), 1e-9)
-        self.assertLess(np.sum(np.abs(content3[1:, 0]-ansContent3[1:, 0])),
-                        1e-9)
+        self.assertAlmostEqual(content1[320, 0] * 1e5, -9.97911, places=4)
+        self.assertAlmostEqual(content1[320, 1] * 1e7, -1.43345, places=4)
+        self.assertAlmostEqual(content1[320, 2] * 1e7, -5.70963, places=4)
+
+        deltaXcontent3 = content3[0, 2]
+        self.assertAlmostEqual(deltaXcontent3, 25.20603, places=4)
+
+        self.assertAlmostEqual(content3[320, 0] * 1e5, -6.60547, places=4)
+        self.assertAlmostEqual(content3[320, 1] * 1e8, 2.61952, places=4)
+        self.assertAlmostEqual(content3[320, 2] * 1e9, -5.575, places=2)
 
         os.remove(resFile1)
         os.remove(resFile3)
