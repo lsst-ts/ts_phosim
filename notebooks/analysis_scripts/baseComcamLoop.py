@@ -320,6 +320,21 @@ class baseComcamLoop():
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
+
+
+            # before ingesting images by WEP,  make sure that the previously ingested 
+            # ones are erased, especially in WFS-only mode !
+            ingestedDir = os.path.join(isrDir, 'raw')
+            if os.path.exists(ingestedDir):
+                argString = '-rf %s/'%ingestedDir
+                runProgram("rm", argstring=argString)
+            
+            # also erase previously existing registry since this would mess the ingest process
+            registryFile= os.path.join(isrDir,'registry.sqlite3')
+            if os.path.exists(registryFile):
+                runProgram("rm", argstring=registryFile)
+            
+
             if splitWfsByMag :  
                 print('Running WFS ingest and ISR once in split-stars-by-mag mode ')
                 # an option to calculate WFS only 
@@ -353,7 +368,6 @@ class baseComcamLoop():
 
                 #####   END PART 1    ######
                 ############################
-
 
                 for lowMagnitude in [11,12,13,14,15]:
                     highMagnitude = lowMagnitude+1
