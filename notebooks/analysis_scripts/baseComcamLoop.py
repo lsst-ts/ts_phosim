@@ -88,7 +88,8 @@ class baseComcamLoop():
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
             comcamCmdSettingsFile='starDefault.cmd', selectSensors = 'comcam',
-            splitWfsByMag=False, deblendDonutAlgo='convolveTemplate'):
+            splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
+            templateType='model'):
         '''
         Code to run the full AOS loop on ComCam (or other sensors)
 
@@ -126,7 +127,7 @@ class baseComcamLoop():
         comcamCmdSettingsFile: str, name of .cmd setting file for PhoSim when 
             simulating the comcam images, should be located in 
             /ts_phosim/policy/cmdFile/
-            
+
         selectSensors: str, 'comcam'  for R22, or 'wfs' for corner wavefront sensors,
             a setting to pass explicitly to PhoSim  , also passed to _prepareOfcCalc,
             _prepareWepCalc  
@@ -140,6 +141,8 @@ class baseComcamLoop():
             close to the CCD edge 
         deblendDonutAlgo : str, a deblending algorithm to use if doDeblending=True,
             currently 'adapt' (old, pre-2020) or 'convolveTemplate' (new, May2020)
+        templateType: str, which type of template to use with new centroid algorithms,
+            'model', or 'phosim' 
 
         Parameters not often changed (legacy):
         --------------------------------------
@@ -629,8 +632,8 @@ class baseComcamLoop():
 
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo
-                        ):
+                        isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
+                        templateType):
         
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
@@ -648,7 +651,13 @@ class baseComcamLoop():
         if (doDeblending):
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("doDeblending", "True") 
-            
+            settingFile.updateSetting("deblendDonutAlgo",deblendDonutAlgo)
+            settingFile.updateSetting("templateType", templateType)
+            print('Using following settings in ts_wep/policy/default.yaml:')
+            print("doDeblending:  True")
+            print("deblendDonutAlgo: %s"%deblendDonutAlgo)
+            print("templateType: %s"%templateType)
+
         if camDimOffset  is not None : 
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("camDimOffset", camDimOffset)
