@@ -169,6 +169,7 @@ class baseComcamLoop():
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
+            print('Making the calibration products ')
             # by default only make calibs for comcam 
             if selectSensors is 'comcam':
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
@@ -205,22 +206,27 @@ class baseComcamLoop():
         rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
 
         # Prepare the components
+        print('Preparing the PhoSim component ')
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
                                         rotAngInDeg, numPro, isEimg,
                                         m1m3ForceError)
-
+        print('Preparing the wepCalc component ')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
-                                selectSensors,deblendDonutAlgo)
+                                selectSensors,deblendDonutAlgo,templateType)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
         wepCalc.setDefocalDisInMm(defocalDisInMm)
 
+        print('Preparing the ofcCalc component ')
         ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
         # Ingest the calibration products (only for the amplifier images)
+        # this step executes  
+        # xxx 
         if ((not isEimg) & (genFlats is True)):
+            print('Ingesting calibration products')
             wepCalc.ingestCalibs(fakeFlatDir)
 
         # Only use 10 hexapod positions and first 3 bending modes of M1M3 and M2
@@ -228,6 +234,7 @@ class baseComcamLoop():
             self._useMinDofIdx(ofcCalc)
 
         # Set the telescope state to be the same as the OFC
+        print('Setting the telescope state to be the same as OFC')
         state0 = ofcCalc.getStateAggregated()
         phosimCmpt.setDofInUm(state0)
 
@@ -318,6 +325,7 @@ class baseComcamLoop():
             # this step creates iter0/img/PSSN.txt, 
             # as well as opd.zer.xxx file 
             # that describe the OPD 
+            print('Analyzing the OPD data ')
             if selectSensors is 'comcam':
                 phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
                                             pssnFileName=opdPssnFileName)
@@ -327,11 +335,11 @@ class baseComcamLoop():
 
             # Get the PSSN from file
             pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
-            print("Calculated PSSN is %s." % pssn)
+            print("   Calculated PSSN is %s." % pssn)
 
             # Get the GQ effective FWHM from file
             gqEffFwhm = phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
-            print("GQ effective FWHM is %.4f." % gqEffFwhm)
+            print("   GQ effective FWHM is %.4f." % gqEffFwhm)
 
             # Set the FWHM data
             listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
@@ -349,7 +357,8 @@ class baseComcamLoop():
                 skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
 
             # Output the sky information
-            skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName, skySim, wepCalc)
+            skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName, 
+                skySim, wepCalc)
 
             # Assign the entra- and intra-focal observation Id
             extraObsId = obsId + 1
@@ -480,6 +489,7 @@ class baseComcamLoop():
                                                    zkFileName=wfsZkFileName+zkFilenameAppend)
             
             else: # the original code ... 
+                print('Calculating the wavefront error ')
                   # Calculate the wavefront error and DOF
                 listOfWfErr = wepCalc.calculateWavefrontErrors(
                     intraRawExpData, extraRawExpData=extraRawExpData,
@@ -604,6 +614,7 @@ class baseComcamLoop():
         tele = TeleFacade()
         tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
         tele.setPhoSimDir(phosimDir)
+        print('Using phosim.py located in %s'%phosimDir)
 
         # Prepare the phosim component
         phosimCmpt = AnalysisPhosimCmpt(tele)
