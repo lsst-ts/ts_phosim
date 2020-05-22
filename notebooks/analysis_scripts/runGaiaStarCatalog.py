@@ -11,11 +11,11 @@ flats = False
 opd = False
 defocalImg = False  
 
-copy = False
+copy = True
 
 
 justWfs = True # switch to only re-do wfs,  
-splitWfsByMag = True # whether to calculate the wfs for subsets of stars 
+splitWfsByMag = False # whether to calculate the wfs for subsets of stars 
                      # based on magnitude ranges, or not ...
                      # the ranges are 11-16 mag, as the normal
                      # Filter.py g-mag range is 9.74-16.17,
@@ -75,12 +75,12 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'gMagGt11_w_2020_15' # name of the experiment dir 
+expDir = 'gMagGt11_w_2020_15_convolveTemplate' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
 #copyDir = 'results_before_centroid_update/singleAmpSep/sep_10'
-copyDir = 'results_gaia/gMagGt11_'
+copyDir = 'results_gaia/gMagGt11_w_2020_15'
 
 # the opd and wfs are stored here 
 os.environ["closeLoopTestDir"] = os.path.join(topDir, expDir) 
@@ -95,8 +95,31 @@ if (not os.path.exists(outputDir)):
 
 
 if justWfs:
-    print('Skipping  OPD and flat copying, not making new defocalImg')
+    #print('Skipping  OPD and flat copying, not making new defocalImg')
     print('Just calculating WFS ')
+
+if copy : 
+    print('Copying content of %s ...'%copyDir)
+    #first copy the old results...
+    argString = '-a '+copyDir+'/. '+outputDir+'/'
+    runProgram("cp", argstring=argString)
+    
+    # remove the ISR directory,
+    # especially the input/rerun/run1/repositoryCfg.yaml , which 
+    # contains the explicit absolute path 
+    # eg. 
+    # _root: /data/epyc/users/suberlak/Commissioning/aos/ts_phosim/
+    #         notebooks/analysis_scripts/results_gaia/
+    #         gMagGt11_w_2020_15/input
+    argString = '-rf  '+ os.path.join(outputDir,'input', 'rerun')
+    runProgram("rm", argstring=argString)
+
+    # remove files that are remade
+    argString = os.path.join(outputDir, 'input')
+    runProgram("rm", argstring=argString+'/isr*')
+    runProgram("rm", argstring=argString+'/registry*')
+    runProgram("rm", argstring=argString+'/_mappe*')
+
  # only do all that if not trying to just rerun the WFS ... 
 # if not justWfs :  
 #     # re-use the flats and calibs,
@@ -141,30 +164,27 @@ if justWfs:
 
 
 
+# Clobber
+#if opd is True:
+#    print('We will make new OPD files in this run')
+#    _eraseFolderContent(outputDir)
 
 
 
-    # Clobber
-    #if opd is True:
-    #    print('We will make new OPD files in this run')
-    #    _eraseFolderContent(outputDir)
 
-
-    
-
-    # else:
-    #     if flats is True:
-    #         print('We will make new flats in this run')
-    #         _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
-    #         _eraseFolderContent(os.path.join(outputDir, 'input'))     
-    #     if defocalImg is True:
-    #         print('We will make new defocal images in this run ')
-    #         intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
-    #         extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
-    #         if os.path.exists(intraPath):
-    #             _eraseFolderContent(intraPath)
-    #         if os.path.exists(extraPath):
-    #             _eraseFolderContent(extraPath)
+# else:
+#     if flats is True:
+#         print('We will make new flats in this run')
+#         _eraseFolderContent(os.path.join(outputDir, 'fake_flats'))
+#         _eraseFolderContent(os.path.join(outputDir, 'input'))     
+#     if defocalImg is True:
+#         print('We will make new defocal images in this run ')
+#         intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
+#         extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
+#         if os.path.exists(intraPath):
+#             _eraseFolderContent(intraPath)
+#         if os.path.exists(extraPath):
+#             _eraseFolderContent(extraPath)
 
 
 # read the star catalog from file ... 
