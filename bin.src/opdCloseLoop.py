@@ -1,5 +1,26 @@
 #!/usr/bin/env python
 
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import argparse
 
@@ -47,8 +68,7 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, rotCamInDeg=0.0):
         phosimCmpt.setOutputDir(outputDir)
 
         # Set the output image directory
-        outputImgDir = os.path.join(baseOutputDir, iterDirName,
-                                    outputImgDirName)
+        outputImgDir = os.path.join(baseOutputDir, iterDirName, outputImgDirName)
         phosimCmpt.setOutputImgDir(outputImgDir)
 
         # Generate the OPD image
@@ -57,9 +77,11 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, rotCamInDeg=0.0):
 
         # Analyze the OPD data
         # Rotate OPD in the reversed direction of camera
-        phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
-                                        rotOpdInDeg=-rotCamInDeg,
-                                        pssnFileName=opdPssnFileName)
+        phosimCmpt.analyzeComCamOpdData(
+            zkFileName=opdZkFileName,
+            rotOpdInDeg=-rotCamInDeg,
+            pssnFileName=opdPssnFileName,
+        )
 
         # Get the PSSN from file
         pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
@@ -72,13 +94,15 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, rotCamInDeg=0.0):
         # Set the FWHM data
         refSensorNameList = _getComCamSensorNameList()
         listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
-            opdPssnFileName, refSensorNameList)
+            opdPssnFileName, refSensorNameList
+        )
         ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
         # Simulate to get the wavefront sensor data from WEP and calculate
         # the DOF
         listOfWfErr = phosimCmpt.mapOpdDataToListOfWfErr(
-            opdZkFileName, refSensorNameList)
+            opdZkFileName, refSensorNameList
+        )
         ofcCalc.calculateCorrections(listOfWfErr)
 
         # Set the new aggregated DOF to phosimCmpt
@@ -86,15 +110,21 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, rotCamInDeg=0.0):
         phosimCmpt.setDofInUm(dofInUm)
 
         # Save the DOF file
-        phosimCmpt.saveDofInUmFileForNextIter(
-            dofInUm, dofInUmFileName=dofInUmFileName)
+        phosimCmpt.saveDofInUmFileForNextIter(dofInUm, dofInUmFileName=dofInUmFileName)
 
         # Add the observation ID by 1
         obsId += 1
 
     # Summarize the FWHM
-    pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
-                 outputImgDirName, opdPssnFileName) for num in range(iterNum)]
+    pssnFiles = [
+        os.path.join(
+            baseOutputDir,
+            "%s%d" % (iterDefaultDirName, num),
+            outputImgDirName,
+            opdPssnFileName,
+        )
+        for num in range(iterNum)
+    ]
     saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
     plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
 
@@ -112,11 +142,15 @@ def _preparePhosimCmpt(phosimDir, filterType, rotAngInDeg, numPro):
     # Set the telescope survey parameters
     boresight = (0, 0)
     zAngleInDeg = 27.0912
-    phosimCmpt.setSurveyParam(filterType=filterType, boresight=boresight,
-                              zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+    phosimCmpt.setSurveyParam(
+        filterType=filterType,
+        boresight=boresight,
+        zAngleInDeg=zAngleInDeg,
+        rotAngInDeg=rotAngInDeg,
+    )
 
     # Update the number of processor if necessary
-    if (numPro > 1):
+    if numPro > 1:
         settingFile = phosimCmpt.getSettingFile()
         settingFile.updateSetting("numPro", numPro)
 
@@ -140,8 +174,17 @@ def _prepareOfcCalc(filterType, rotAngInDeg):
 
 def _getComCamSensorNameList():
 
-    sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10", "R22_S11",
-                      "R22_S12", "R22_S20", "R22_S21", "R22_S22"]
+    sensorNameList = [
+        "R22_S00",
+        "R22_S01",
+        "R22_S02",
+        "R22_S10",
+        "R22_S11",
+        "R22_S12",
+        "R22_S20",
+        "R22_S21",
+        "R22_S22",
+    ]
     return sensorNameList
 
 
@@ -149,25 +192,36 @@ if __name__ == "__main__":
 
     # Set the parser
     parser = argparse.ArgumentParser(
-        description="Run AOS closed-loop simulation in OPD level.")
-    parser.add_argument("--numOfProc", type=int, default=1,
-                        help="number of processor to run PhoSim (default: 1)")
-    parser.add_argument("--iterNum", type=int, default=5,
-                        help="number of closed-loop iteration (default: 5)")
-    parser.add_argument("--output", type=str, default="",
-                        help="output directory")
-    parser.add_argument("--rotCam", type=float, default=0.0,
-                        help="Rotate camera (degree) in counter-clockwise direction (default: 0.0)")
+        description="Run AOS closed-loop simulation in OPD level."
+    )
+    parser.add_argument(
+        "--numOfProc",
+        type=int,
+        default=1,
+        help="number of processor to run PhoSim (default: 1)",
+    )
+    parser.add_argument(
+        "--iterNum",
+        type=int,
+        default=5,
+        help="number of closed-loop iteration (default: 5)",
+    )
+    parser.add_argument("--output", type=str, default="", help="output directory")
+    parser.add_argument(
+        "--rotCam",
+        type=float,
+        default=0.0,
+        help="Rotate camera (degree) in counter-clockwise direction (default: 0.0)",
+    )
     args = parser.parse_args()
 
     # Run the simulation
     phosimDir = getPhoSimPath()
 
-    if (args.output == ""):
+    if args.output == "":
         outputDir = getAoclcOutputPath()
     else:
         outputDir = args.output
     os.makedirs(outputDir, exist_ok=True)
 
-    main(phosimDir, args.numOfProc, args.iterNum, outputDir,
-         rotCamInDeg=args.rotCam)
+    main(phosimDir, args.numOfProc, args.iterNum, outputDir, rotCamInDeg=args.rotCam)

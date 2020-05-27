@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -11,8 +32,9 @@ class TestOpdMetrology(unittest.TestCase):
 
     def setUp(self):
 
-        self.testDataDir = os.path.join(getModulePath(), "tests", "testData",
-                                        "testOpdFunc")
+        self.testDataDir = os.path.join(
+            getModulePath(), "tests", "testData", "testOpdFunc"
+        )
         self.metr = OpdMetrology()
 
     def testGetFieldXY(self):
@@ -37,7 +59,7 @@ class TestOpdMetrology(unittest.TestCase):
         wtInMetr = self.metr.getWeightingRatio()
         self.assertEqual(len(wtInMetr), len(wt))
         self.assertEqual(np.sum(wtInMetr), 1)
-        self.assertAlmostEqual(wtInMetr[1]/wtInMetr[0], 2)
+        self.assertAlmostEqual(wtInMetr[1] / wtInMetr[0], 2)
         self.assertRaises(ValueError, self.metr.setWeightingRatio, [-1, 1])
 
     def testSetFieldXYinDeg(self):
@@ -91,7 +113,7 @@ class TestOpdMetrology(unittest.TestCase):
         ansOpdFileName = "sim6_iter0_opd.zer"
         ansOpdFilePath = os.path.join(self.testDataDir, ansOpdFileName)
         allOpdAns = np.loadtxt(ansOpdFilePath)
-        self.assertLess(np.sum(np.abs(zk-allOpdAns[0, :])), 1e-10)
+        self.assertLess(np.sum(np.abs(zk - allOpdAns[0, :])), 1e-10)
 
     def _getOpdFilePath(self):
 
@@ -113,14 +135,14 @@ class TestOpdMetrology(unittest.TestCase):
         sensorName = "R22_S11"
         xInpixel = 4000
         yInPixel = 4072
-        self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel,
-                                     self.testDataDir)
+        self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, self.testDataDir)
 
-        ansFieldXinDeg = 2000*0.2/3600
-        ansFieldYinDeg = 2036*0.2/3600
+        ansFieldXinDeg = 2000 * 0.2 / 3600
+        ansFieldYinDeg = 2036 * 0.2 / 3600
         fieldX, fieldY = self.metr.getFieldXY()
-        self.assertAlmostEqual((fieldX[-1], fieldY[-1]),
-                               (ansFieldXinDeg, ansFieldYinDeg))
+        self.assertAlmostEqual(
+            (fieldX[-1], fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg)
+        )
 
     def calcPSSN(self):
 

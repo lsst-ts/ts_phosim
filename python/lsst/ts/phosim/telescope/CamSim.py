@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -6,7 +27,6 @@ from lsst.ts.phosim.Utility import getConfigDir
 
 
 class CamSim(object):
-
     def __init__(self, camTBinDegC=6.5650, camRotInRad=0):
         """Initialization of camera simulator class.
 
@@ -44,7 +64,7 @@ class CamSim(object):
             Rotation angle in radian.
         """
 
-        if self._valueInRange(rotAngInRad, -np.pi/2, np.pi/2):
+        if self._valueInRange(rotAngInRad, -np.pi / 2, np.pi / 2):
             self.camRotInRad = rotAngInRad
 
     def setRotAngInDeg(self, rotAngInDeg):
@@ -99,11 +119,13 @@ class CamSim(object):
         """
 
         valueInRange = False
-        if (lowerBound <= value <= upperBound):
+        if lowerBound <= value <= upperBound:
             valueInRange = True
         else:
-            raise ValueError("The setting value should be in (%.3f, %.3f)."
-                             % (lowerBound, upperBound))
+            raise ValueError(
+                "The setting value should be in (%.3f, %.3f)."
+                % (lowerBound, upperBound)
+            )
         return valueInRange
 
     def getCamDistortionInMm(self, zAngleInRad, camDistType):
@@ -130,8 +152,7 @@ class CamSim(object):
         data = paramReader.getMatContent()
 
         # Calculate the gravity and temperature distortions
-        distortion = self._calcGravityDist(data, zAngleInRad) + \
-            self._calcTempDist(data)
+        distortion = self._calcGravityDist(data, zAngleInRad) + self._calcTempDist(data)
 
         # Reorder the index of Zernike corrections to match the PhoSim use
         zIdx = self._camSettingFile.getSetting("zIdxMapping")
@@ -163,9 +184,9 @@ class CamSim(object):
         # Pre-compensated camera rotation angle in radian.
         pre_camR = 0
 
-        distortion = self._gravityDistFunc(camDistData, zAngleInRad,
-                                           self.camRotInRad) - \
-            self._gravityDistFunc(camDistData, pre_elev, pre_camR)
+        distortion = self._gravityDistFunc(
+            camDistData, zAngleInRad, self.camRotInRad
+        ) - self._gravityDistFunc(camDistData, pre_elev, pre_camR)
 
         return distortion
 
@@ -187,10 +208,10 @@ class CamSim(object):
             Gravity distortion function.
         """
 
-        distFun = camDistData[0, 3:]*np.cos(zenithAngle) + \
-            (camDistData[1, 3:]*np.cos(camRotAngle) +
-             camDistData[2, 3:]*np.sin(camRotAngle)) * \
-            np.sin(zenithAngle)
+        distFun = camDistData[0, 3:] * np.cos(zenithAngle) + (
+            camDistData[1, 3:] * np.cos(camRotAngle)
+            + camDistData[2, 3:] * np.sin(camRotAngle)
+        ) * np.sin(zenithAngle)
 
         return distFun
 
@@ -219,27 +240,29 @@ class CamSim(object):
 
         # If the temperature is too low, use the lowest listed temperature
         # to do the correction.
-        if (self.camTBinDegC <= camDistData[startTempRowIdx, 2]):
+        if self.camTBinDegC <= camDistData[startTempRowIdx, 2]:
             distortion = camDistData[startTempRowIdx, 3:]
 
         # If the temperature is too high, use the highest listed temperature
         # to do the correction.
-        elif (self.camTBinDegC >= camDistData[endTempRowIdx, 2]):
+        elif self.camTBinDegC >= camDistData[endTempRowIdx, 2]:
             distortion = camDistData[endTempRowIdx, 3:]
 
         # Get the correction value by the linear fitting
         else:
 
             # Find the temperature boundary indexes
-            p2 = (camDistData[startTempRowIdx:, 2] >
-                  self.camTBinDegC).argmax() + startTempRowIdx
-            p1 = p2-1
+            p2 = (
+                camDistData[startTempRowIdx:, 2] > self.camTBinDegC
+            ).argmax() + startTempRowIdx
+            p1 = p2 - 1
 
             # Calculate the linear weighting
-            w1 = (camDistData[p2, 2] - self.camTBinDegC) / \
-                 (camDistData[p2, 2] - camDistData[p1, 2])
-            w2 = 1-w1
-            distortion = w1*camDistData[p1, 3:] + w2*camDistData[p2, 3:]
+            w1 = (camDistData[p2, 2] - self.camTBinDegC) / (
+                camDistData[p2, 2] - camDistData[p1, 2]
+            )
+            w2 = 1 - w1
+            distortion = w1 * camDistData[p1, 3:] + w2 * camDistData[p2, 3:]
 
         # Minus the reference temperature correction. There is the problem
         # here.
@@ -249,8 +272,11 @@ class CamSim(object):
         # Pre-compensated camera temperature in degree C.
         pre_temp_cam = 0
 
-        distortion -= camDistData[(camDistData[startTempRowIdx:, 2] ==
-                                  pre_temp_cam).argmax() + startTempRowIdx, 3:]
+        distortion -= camDistData[
+            (camDistData[startTempRowIdx:, 2] == pre_temp_cam).argmax()
+            + startTempRowIdx,
+            3:,
+        ]
 
         return distortion
 

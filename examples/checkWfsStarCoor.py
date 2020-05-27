@@ -1,11 +1,31 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 
 from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
-    getAoclcOutputPath
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, getAoclcOutputPath
 
 
 def main(phosimDir, numPro):
@@ -29,8 +49,9 @@ def main(phosimDir, numPro):
     # Set the Telescope facade class
     tele = TeleFacade()
     tele.setPhoSimDir(phosimDir)
-    tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                        boresight=(ra, decl), rotAngInDeg=rotSkyPos)
+    tele.setSurveyParam(
+        obsId=obsId, filterType=filterType, boresight=(ra, decl), rotAngInDeg=rotSkyPos
+    )
     tele.setInstName(CamType.LsstCam)
 
     # Write the accumulated DOF file
@@ -44,16 +65,25 @@ def main(phosimDir, numPro):
     skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
 
     # Add the interested stars
-    sensorName = ["R44_S00_C0", "R00_S22_C1", "R44_S00_C1", "R00_S22_C0",
-                  "R04_S20_C1", "R40_S02_C0", "R04_S20_C0", "R40_S02_C1"]
+    sensorName = [
+        "R44_S00_C0",
+        "R00_S22_C1",
+        "R44_S00_C1",
+        "R00_S22_C0",
+        "R04_S20_C1",
+        "R40_S02_C0",
+        "R04_S20_C0",
+        "R40_S02_C1",
+    ]
     xInpixelInCam = [500, 800]
     yInPixelInCam = [1000, 1300]
     starMag = [15, 15]
     starId = 0
     for sensor in sensorName:
         for ii in range(len(starMag)):
-            skySim.addStarByChipPos(sensor, starId, xInpixelInCam[ii],
-                                    yInPixelInCam[ii], starMag[ii])
+            skySim.addStarByChipPos(
+                sensor, starId, xInpixelInCam[ii], yInPixelInCam[ii], starMag[ii]
+            )
             starId += 1
 
     # Export sky information
@@ -61,19 +91,25 @@ def main(phosimDir, numPro):
     skySim.exportSkyToFile(outputSkyFilePath)
 
     # Write the star physical command file
-    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
-                                    cmdFileName="star.cmd")
+    cmdFilePath = tele.writeCmdFile(
+        outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="star.cmd"
+    )
 
     # Write the instance file
-    instFilePath = tele.writeStarInstFile(outputDir, skySim,
-                                          instSettingFile=instSettingFile,
-                                          instFileName="star.inst")
+    instFilePath = tele.writeStarInstFile(
+        outputDir, skySim, instSettingFile=instSettingFile, instFileName="star.inst"
+    )
 
     # Get the argument to run the PhoSim
     logFilePath = os.path.join(outputImgDir, "phosimStar.log")
-    argString = tele.getPhoSimArgs(instFilePath, extraCommandFile=cmdFilePath,
-                                   numPro=numPro, outputDir=outputImgDir,
-                                   e2ADC=0, logFilePath=logFilePath)
+    argString = tele.getPhoSimArgs(
+        instFilePath,
+        extraCommandFile=cmdFilePath,
+        numPro=numPro,
+        outputDir=outputImgDir,
+        e2ADC=0,
+        logFilePath=logFilePath,
+    )
 
     # Run the PhoSim
     tele.runPhoSim(argString)

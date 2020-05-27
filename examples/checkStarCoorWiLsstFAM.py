@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -5,8 +26,7 @@ from lsst.ts.wep.Utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
-    getAoclcOutputPath
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, getAoclcOutputPath
 
 
 def main(phosimDir):
@@ -24,8 +44,9 @@ def main(phosimDir):
     tele, skySim = _prepareTeleAndSky(phosimDir)
 
     # Write the star physical command file
-    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
-                                    cmdFileName="star.cmd")
+    cmdFilePath = tele.writeCmdFile(
+        outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="star.cmd"
+    )
 
     # Set the intra- and extra-focal related information
     obsIdList = {"-1": 9005000, "1": 9005001}
@@ -55,16 +76,22 @@ def main(phosimDir):
 
         # Write the star instance file
         instFilePath = tele.writeStarInstFile(
-            outputDir, skySim, instSettingFile=instSettingFile,
-            instFileName=instFileNameList[str(ii)])
+            outputDir,
+            skySim,
+            instSettingFile=instSettingFile,
+            instFileName=instFileNameList[str(ii)],
+        )
 
         # Get the argument to run the phosim
-        logFilePath = os.path.join(outputImgDirList[str(ii)],
-                                   logFileNameList[str(ii)])
+        logFilePath = os.path.join(outputImgDirList[str(ii)], logFileNameList[str(ii)])
         argString = tele.getPhoSimArgs(
-            instFilePath, extraCommandFile=cmdFilePath, numPro=1,
-            outputDir=outputImgDirList[str(ii)], e2ADC=0,
-            logFilePath=logFilePath)
+            instFilePath,
+            extraCommandFile=cmdFilePath,
+            numPro=1,
+            outputDir=outputImgDirList[str(ii)],
+            e2ADC=0,
+            logFilePath=logFilePath,
+        )
         argStringList.append(argString)
 
     for ii in range(2):
@@ -82,8 +109,9 @@ def _prepareTeleAndSky(phosimDir):
     # Set the Telescope facade class
     tele = TeleFacade()
     tele.setPhoSimDir(phosimDir)
-    tele.setSurveyParam(filterType=filterType, boresight=(ra, decl),
-                        rotAngInDeg=rotSkyPos)
+    tele.setSurveyParam(
+        filterType=filterType, boresight=(ra, decl), rotAngInDeg=rotSkyPos
+    )
     tele.setInstName(CamType.LsstFamCam)
 
     # Declare the SkySim()
@@ -100,8 +128,9 @@ def _prepareTeleAndSky(phosimDir):
     yInPixelInCam = [3800, 700]
     starMag = [15, 16]
     for ii in range(len(starId)):
-        skySim.addStarByChipPos(sensorName, starId[ii], xInpixelInCam[ii],
-                                yInPixelInCam[ii], starMag[ii])
+        skySim.addStarByChipPos(
+            sensorName, starId[ii], xInpixelInCam[ii], yInPixelInCam[ii], starMag[ii]
+        )
 
     # Output the sky information
     outputFilePath = os.path.join(getAoclcOutputPath(), "skyLsstFamInfo.txt")
