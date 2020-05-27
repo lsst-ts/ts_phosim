@@ -26,5 +26,8 @@ pytest_session.txt
 # Output directory
 /output/*
 
+# Vscode setting
+.vscode/
+
 # MacOS metadata
 .DS_Store
