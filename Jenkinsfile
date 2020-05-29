@@ -29,7 +29,20 @@ pipeline {
     }
 
     stages {
-        stage ('Install Requirements') {
+
+        stage('Cloning Repos') {
+            steps {
+                withEnv(["HOME=${env.WORKSPACE}"]) {
+                    sh """
+                        git clone -b master https://github.com/lsst-dm/phosim_utils.git
+                        git clone -b master https://github.com/lsst-ts/ts_wep.git
+                        git clone -b master https://github.com/lsst-ts/ts_ofc.git
+                    """
+                }
+            }
+        }
+
+        stage ('Building the Dependencies') {
             steps {
                 // When using the docker container, we need to change
                 // the HOME path to WORKSPACE to have the authority
@@ -37,17 +50,14 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
-                        git clone --branch master https://github.com/lsst-dm/phosim_utils.git
+
                         cd phosim_utils/
                         setup -k -r . -t ${env.SIMS_VERSION}
                         scons
-                        cd ..
-                        git clone --branch master https://github.com/lsst-ts/ts_wep.git
-                        cd ts_wep/
+
+                        cd ../ts_wep/
                         setup -k -r .
                         scons
-                        cd ..
-                        git clone --branch master https://github.com/lsst-ts/ts_ofc.git
                     """
                 }
             }
@@ -63,12 +73,16 @@ pipeline {
                 withEnv(["HOME=${env.WORKSPACE}"]) {
                     sh """
                         source ${env.LSST_STACK}/loadLSST.bash
+
                         cd phosim_utils/
                         setup -k -r . -t ${env.SIMS_VERSION}
+
                         cd ../ts_wep/
                         setup -k -r .
+
                         cd ../ts_ofc/
                         setup -k -r .
+
                         cd ..
                         setup -k -r .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT} tests/
