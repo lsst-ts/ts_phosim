@@ -1,5 +1,26 @@
 #!/usr/bin/env python
 
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import argparse
 import numpy as np
@@ -19,12 +40,20 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
-         useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05):
+def main(
+    phosimDir,
+    numPro,
+    iterNum,
+    baseOutputDir,
+    isEimg=False,
+    useMinDofIdx=False,
+    inputSkyFilePath="",
+    m1m3ForceError=0.05,
+):
 
     # Prepare the calibration products (only for the amplifier images)
     sensorNameList = _getComCamSensorNameList()
-    if (not isEimg):
+    if not isEimg:
         fakeFlatDir = _makeCalibs(baseOutputDir, sensorNameList)
 
     # Make the ISR directory
@@ -42,12 +71,20 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
     rotAngInDeg = 0.0
 
     # Prepare the components
-    phosimCmpt = _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
-                                    rotAngInDeg, numPro, isEimg,
-                                    m1m3ForceError)
+    phosimCmpt = _preparePhosimCmpt(
+        phosimDir,
+        filterType,
+        raInDeg,
+        decInDeg,
+        rotAngInDeg,
+        numPro,
+        isEimg,
+        m1m3ForceError,
+    )
 
-    wepCalc = _prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
-                              rotAngInDeg, isEimg)
+    wepCalc = _prepareWepCalc(
+        isrDir, filterType, raInDeg, decInDeg, rotAngInDeg, isEimg
+    )
 
     tele = phosimCmpt.getTele()
     defocalDisInMm = tele.getDefocalDistInMm()
@@ -56,11 +93,11 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
     ofcCalc = _prepareOfcCalc(filterType, rotAngInDeg)
 
     # Ingest the calibration products (only for the amplifier images)
-    if (not isEimg):
+    if not isEimg:
         wepCalc.ingestCalibs(fakeFlatDir)
 
     # Only use 10 hexapod positions and first 3 bending modes of M1M3 and M2
-    if (useMinDofIdx):
+    if useMinDofIdx:
         _useMinDofIdx(ofcCalc)
 
     # Set the telescope state to be the same as the OFC
@@ -90,8 +127,7 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
         phosimCmpt.setOutputDir(outputDir)
 
         # Set the output image directory
-        outputImgDir = os.path.join(baseOutputDir, iterDirName,
-                                    outputImgDirName)
+        outputImgDir = os.path.join(baseOutputDir, iterDirName, outputImgDirName)
         phosimCmpt.setOutputImgDir(outputImgDir)
 
         # Generate the OPD image
@@ -99,8 +135,9 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
         phosimCmpt.runPhoSim(argString)
 
         # Analyze the OPD data
-        phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
-                                        pssnFileName=opdPssnFileName)
+        phosimCmpt.analyzeComCamOpdData(
+            zkFileName=opdZkFileName, pssnFileName=opdPssnFileName
+        )
 
         # Get the PSSN from file
         pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
@@ -112,11 +149,12 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
 
         # Set the FWHM data
         listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
-            opdPssnFileName, sensorNameList)
+            opdPssnFileName, sensorNameList
+        )
         ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
         # Prepare the faked sky
-        if (inputSkyFilePath == ""):
+        if inputSkyFilePath == "":
             # According to the OPD field positions
             metr = phosimCmpt.getOpdMetr()
             skySim = _prepareSkySim(metr, starMag)
@@ -137,60 +175,79 @@ def main(phosimDir, numPro, iterNum, baseOutputDir, isEimg=False,
         # Generate the defocal images
         simSeed = 1000
         argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
-            extraObsId, intraObsId, skySim, simSeed=simSeed,
+            extraObsId,
+            intraObsId,
+            skySim,
+            simSeed=simSeed,
             cmdSettingFileName="starDefault.cmd",
-            instSettingFileName="starSingleExp.inst")
+            instSettingFileName="starSingleExp.inst",
+        )
         for argString in argStringList:
             phosimCmpt.runPhoSim(argString)
 
         # Repackage the images based on the image type
-        if (isEimg):
+        if isEimg:
             phosimCmpt.repackageComCamEimgFromPhoSim()
         else:
             phosimCmpt.repackageComCamAmpImgFromPhoSim()
 
         # Collect the defocal images
         intraRawExpData = RawExpData()
-        intraRawExpDir = os.path.join(outputImgDir,
-                                      phosimCmpt.getIntraFocalDirName())
+        intraRawExpDir = os.path.join(outputImgDir, phosimCmpt.getIntraFocalDirName())
         intraRawExpData.append(intraObsId, 0, intraRawExpDir)
 
         extraRawExpData = RawExpData()
-        extraRawExpDir = os.path.join(outputImgDir,
-                                      phosimCmpt.getExtraFocalDirName())
+        extraRawExpDir = os.path.join(outputImgDir, phosimCmpt.getExtraFocalDirName())
         extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
         # Calculate the wavefront error and DOF
         listOfWfErr = wepCalc.calculateWavefrontErrors(
-            intraRawExpData, extraRawExpData=extraRawExpData)
+            intraRawExpData, extraRawExpData=extraRawExpData
+        )
         ofcCalc.calculateCorrections(listOfWfErr)
 
         # Record the wfs error with the same order as OPD for the comparison
-        phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
-                                           zkFileName=wfsZkFileName)
+        phosimCmpt.reorderAndSaveWfErrFile(
+            listOfWfErr, sensorNameList, zkFileName=wfsZkFileName
+        )
 
         # Set the new aggregated DOF to phosimCmpt
         dofInUm = ofcCalc.getStateAggregated()
         phosimCmpt.setDofInUm(dofInUm)
 
         # Save the DOF file
-        phosimCmpt.saveDofInUmFileForNextIter(
-            dofInUm, dofInUmFileName=dofInUmFileName)
+        phosimCmpt.saveDofInUmFileForNextIter(dofInUm, dofInUmFileName=dofInUmFileName)
 
         # Add the observation ID by 10 for the next iteration
         obsId += 10
 
     # Summarize the FWHM
-    pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
-                 outputImgDirName, opdPssnFileName) for num in range(iterNum)]
+    pssnFiles = [
+        os.path.join(
+            baseOutputDir,
+            "%s%d" % (iterDefaultDirName, num),
+            outputImgDirName,
+            opdPssnFileName,
+        )
+        for num in range(iterNum)
+    ]
     saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
     plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
 
 
 def _getComCamSensorNameList():
 
-    sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10", "R22_S11",
-                      "R22_S12", "R22_S20", "R22_S21", "R22_S22"]
+    sensorNameList = [
+        "R22_S00",
+        "R22_S01",
+        "R22_S02",
+        "R22_S10",
+        "R22_S11",
+        "R22_S12",
+        "R22_S20",
+        "R22_S21",
+        "R22_S22",
+    ]
     return sensorNameList
 
 
@@ -208,7 +265,7 @@ def _makeCalibs(outputDir, sensorNameList):
 
 def _makeDir(directory):
 
-    if (not os.path.exists(directory)):
+    if not os.path.exists(directory):
         os.makedirs(directory)
 
 
@@ -228,8 +285,16 @@ def _makeFakeFlat(detector):
     runProgram(command, argstring=argstring)
 
 
-def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
-                       numPro, isEimg, m1m3ForceError):
+def _preparePhosimCmpt(
+    phosimDir,
+    filterType,
+    raInDeg,
+    decInDeg,
+    rotAngInDeg,
+    numPro,
+    isEimg,
+    m1m3ForceError,
+):
 
     # Set the Telescope facade class
     tele = TeleFacade()
@@ -242,12 +307,16 @@ def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
     # Set the telescope survey parameters
     boresight = (raInDeg, decInDeg)
     zAngleInDeg = 27.0912
-    phosimCmpt.setSurveyParam(filterType=filterType, boresight=boresight,
-                              zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
+    phosimCmpt.setSurveyParam(
+        filterType=filterType,
+        boresight=boresight,
+        zAngleInDeg=zAngleInDeg,
+        rotAngInDeg=rotAngInDeg,
+    )
 
     # Update the setting file if needed
     settingFile = phosimCmpt.getSettingFile()
-    if (numPro > 1):
+    if numPro > 1:
         settingFile.updateSetting("numPro", numPro)
     if isEimg:
         settingFile.updateSetting("e2ADC", 0)
@@ -262,15 +331,14 @@ def _preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
     return phosimCmpt
 
 
-def _prepareWepCalc(isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                    isEimg):
+def _prepareWepCalc(isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg, isEimg):
 
     wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
     wepCalc.setFilter(filterType)
     wepCalc.setBoresight(raInDeg, decInDeg)
     wepCalc.setRotAng(rotAngInDeg)
 
-    if (isEimg):
+    if isEimg:
         settingFile = wepCalc.getSettingFile()
         settingFile.updateSetting("imageType", "eimage")
 
@@ -296,7 +364,7 @@ def _prepareSkySim(opdMetr, starMag):
     for raInDeg, declInDeg in zip(raInDegList, declInDegList):
         # It is noted that the field position might be < 0. But it is not the
         # same case for ra (0 <= ra <= 360).
-        if (raInDeg < 0):
+        if raInDeg < 0:
             raInDeg += 360.0
         skySim.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
         starId += 1
@@ -319,10 +387,10 @@ def _useMinDofIdx(ofcCalc):
     ztaac = ofcCalc.getZtaac()
 
     m1m3Bend = np.zeros(20, dtype=int)
-    m1m3Bend[0: 3] = 1
+    m1m3Bend[0:3] = 1
 
     m2Bend = np.zeros(20, dtype=int)
-    m2Bend[0: 3] = 1
+    m2Bend[0:3] = 1
 
     ztaac.setZkAndDofInGroups(m1m3Bend=m1m3Bend, m2Bend=m2Bend)
 
@@ -340,37 +408,66 @@ if __name__ == "__main__":
 
     # Set the parser
     parser = argparse.ArgumentParser(
-        description="Run AOS closed-loop simulation (default is amp files).")
-    parser.add_argument("--numOfProc", type=int, default=1,
-                        help="number of processor to run PhoSim (default: 1)")
-    parser.add_argument("--iterNum", type=int, default=5,
-                        help="number of closed-loop iteration (default: 5)")
-    parser.add_argument("--output", type=str, default="",
-                        help="output directory")
-    parser.add_argument('--eimage', default=False, action='store_true',
-                        help='Use the eimage files')
-    parser.add_argument('--minDof', default=False, action='store_true',
-                        help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
-    parser.add_argument("--skyFile", type=str, default="",
-                        help="Star Id, ra, dec, and magnitude")
-    parser.add_argument("--m1m3FErr", type=float, default=0.05,
-                        help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
-    parser.add_argument('--clobber', default=False, action='store_true',
-                        help='Delete existing output directory')
+        description="Run AOS closed-loop simulation (default is amp files)."
+    )
+    parser.add_argument(
+        "--numOfProc",
+        type=int,
+        default=1,
+        help="number of processor to run PhoSim (default: 1)",
+    )
+    parser.add_argument(
+        "--iterNum",
+        type=int,
+        default=5,
+        help="number of closed-loop iteration (default: 5)",
+    )
+    parser.add_argument("--output", type=str, default="", help="output directory")
+    parser.add_argument(
+        "--eimage", default=False, action="store_true", help="Use the eimage files"
+    )
+    parser.add_argument(
+        "--minDof",
+        default=False,
+        action="store_true",
+        help="Use 10 hexapod positions and first 3 bending modes of M1M3 and M2",
+    )
+    parser.add_argument(
+        "--skyFile", type=str, default="", help="Star Id, ra, dec, and magnitude"
+    )
+    parser.add_argument(
+        "--m1m3FErr",
+        type=float,
+        default=0.05,
+        help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)",
+    )
+    parser.add_argument(
+        "--clobber",
+        default=False,
+        action="store_true",
+        help="Delete existing output directory",
+    )
     args = parser.parse_args()
 
     # Run the simulation
     phosimDir = getPhoSimPath()
 
-    if (args.output == ""):
+    if args.output == "":
         outputDir = getAoclcOutputPath()
     else:
         outputDir = args.output
 
     os.makedirs(outputDir, exist_ok=True)
-    if (args.clobber is True):
+    if args.clobber is True:
         _eraseFolderContent(outputDir)
 
-    main(phosimDir, args.numOfProc, args.iterNum, outputDir,
-         isEimg=args.eimage, useMinDofIdx=args.minDof,
-         inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3FErr)
+    main(
+        phosimDir,
+        args.numOfProc,
+        args.iterNum,
+        outputDir,
+        isEimg=args.eimage,
+        useMinDofIdx=args.minDof,
+        inputSkyFilePath=args.skyFile,
+        m1m3ForceError=args.m1m3FErr,
+    )

@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -5,8 +26,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
-from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, \
-    getAoclcOutputPath
+from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, getAoclcOutputPath
 
 
 def main(phosimDir):
@@ -39,19 +59,25 @@ def main(phosimDir):
     tele.accDofInUm(dofInUm)
 
     # Write the physical command file
-    cmdFilePath = tele.writeCmdFile(outputDir, cmdSettingFile=cmdSettingFile,
-                                    cmdFileName="opd.cmd")
+    cmdFilePath = tele.writeCmdFile(
+        outputDir, cmdSettingFile=cmdSettingFile, cmdFileName="opd.cmd"
+    )
 
     # Write the instance file
-    instFilePath = tele.writeOpdInstFile(outputDir, metr,
-                                         instSettingFile=instSettingFile,
-                                         instFileName="opd.inst")
+    instFilePath = tele.writeOpdInstFile(
+        outputDir, metr, instSettingFile=instSettingFile, instFileName="opd.inst"
+    )
 
     # Get the argument to run the PhoSim
     logFilePath = os.path.join(outputImgDir, "opdPhoSim.log")
-    argString = tele.getPhoSimArgs(instFilePath, extraCommandFile=cmdFilePath,
-                                   numPro=2, outputDir=outputImgDir, e2ADC=0,
-                                   logFilePath=logFilePath)
+    argString = tele.getPhoSimArgs(
+        instFilePath,
+        extraCommandFile=cmdFilePath,
+        numPro=2,
+        outputDir=outputImgDir,
+        e2ADC=0,
+        logFilePath=logFilePath,
+    )
 
     # Run the PhoSim
     tele.runPhoSim(argString)

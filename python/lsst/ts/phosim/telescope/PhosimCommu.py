@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import subprocess
 
@@ -64,21 +85,22 @@ class PhosimCommu(object):
         """
 
         filterId = -1
-        if (filterType == FilterType.U):
+        if filterType == FilterType.U:
             filterId = 0
-        elif (filterType == FilterType.G):
+        elif filterType == FilterType.G:
             filterId = 1
-        elif (filterType == FilterType.R):
+        elif filterType == FilterType.R:
             filterId = 2
-        elif (filterType == FilterType.I):
+        elif filterType == FilterType.I:
             filterId = 3
-        elif (filterType == FilterType.Z):
+        elif filterType == FilterType.Z:
             filterId = 4
-        elif (filterType == FilterType.Y):
+        elif filterType == FilterType.Y:
             filterId = 5
         else:
-            raise ValueError("The filter type (%s) is not defined in PhoSim."
-                             % filterType)
+            raise ValueError(
+                "The filter type (%s) is not defined in PhoSim." % filterType
+            )
 
         return filterId
 
@@ -100,31 +122,31 @@ class PhosimCommu(object):
         # "L1F" means lense 1 front. "L1B" means lense 1 back.
         # "chip" means individual chip.
         surfaceID = -1
-        if (surfaceType == SurfaceType.M1):
+        if surfaceType == SurfaceType.M1:
             surfaceID = 0
-        elif (surfaceType == SurfaceType.M2):
+        elif surfaceType == SurfaceType.M2:
             surfaceID = 1
-        elif (surfaceType == SurfaceType.M3):
+        elif surfaceType == SurfaceType.M3:
             surfaceID = 2
-        elif (surfaceType == SurfaceType.L1F):
+        elif surfaceType == SurfaceType.L1F:
             surfaceID = 3
-        elif (surfaceType == SurfaceType.L1B):
+        elif surfaceType == SurfaceType.L1B:
             surfaceID = 4
-        elif (surfaceType == SurfaceType.L2F):
+        elif surfaceType == SurfaceType.L2F:
             surfaceID = 5
-        elif (surfaceType == SurfaceType.L2B):
+        elif surfaceType == SurfaceType.L2B:
             surfaceID = 6
-        elif (surfaceType == SurfaceType.FilterF):
+        elif surfaceType == SurfaceType.FilterF:
             surfaceID = 7
-        elif (surfaceType == SurfaceType.FilterB):
+        elif surfaceType == SurfaceType.FilterB:
             surfaceID = 8
-        elif (surfaceType == SurfaceType.L3F):
+        elif surfaceType == SurfaceType.L3F:
             surfaceID = 9
-        elif (surfaceType == SurfaceType.L3B):
+        elif surfaceType == SurfaceType.L3B:
             surfaceID = 10
-        elif (surfaceType == SurfaceType.FP):
+        elif surfaceType == SurfaceType.FP:
             surfaceID = 11
-        elif (surfaceType == SurfaceType.Chip):
+        elif surfaceType == SurfaceType.Chip:
             surfaceID = 12
 
         return surfaceID
@@ -151,9 +173,8 @@ class PhosimCommu(object):
         """
 
         # Check the length of degree of freedom.
-        if (len(dofInUm) != int(self.DOF_NUM)):
-            raise ValueError("The length of DOF should be %s."
-                             % int(self.DOF_NUM))
+        if len(dofInUm) != int(self.DOF_NUM):
+            raise ValueError("The length of DOF should be %s." % int(self.DOF_NUM))
 
         # List the phosim dof here
         # idx 5-9: M2 dz, dx, dy, rx, ry
@@ -163,7 +184,7 @@ class PhosimCommu(object):
 
         # Write the perturbation of degree of freedom
         content = ""
-        idxRange = range(self.DOF_START_IDX, self.DOF_START_IDX+self.DOF_NUM)
+        idxRange = range(self.DOF_START_IDX, self.DOF_START_IDX + self.DOF_NUM)
         for idx, dof in zip(idxRange, dofInUm):
             content += "move %d %7.4f \n" % (idx, dof)
 
@@ -216,8 +237,7 @@ class PhosimCommu(object):
 
         return content
 
-    def doCameraConfig(self, sciSensorOn=False, wfSensorOn=False,
-                       guidSensorOn=False):
+    def doCameraConfig(self, sciSensorOn=False, wfSensorOn=False, guidSensorOn=False):
         """Do the camera configuratioin.
 
         Parameters
@@ -239,8 +259,7 @@ class PhosimCommu(object):
         # (For LSST: bitmask where first bit is science sensors on;
         # second bit is wavefront sensors on; third bit is guiders on)
 
-        camConfigId = int(sciSensorOn) + 2*int(wfSensorOn) + \
-            4*int(guidSensorOn)
+        camConfigId = int(sciSensorOn) + 2 * int(wfSensorOn) + 4 * int(guidSensorOn)
 
         content = "camconfig %d \n" % camConfigId
 
@@ -289,13 +308,30 @@ class PhosimCommu(object):
         """
 
         content = "opd %2d\t%9.6f\t%9.6f %5.1f \n" % (
-                  opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm)
+            opdId,
+            fieldXInDeg,
+            fieldYInDeg,
+            wavelengthInNm,
+        )
 
         return content
 
-    def generateStar(self, starId, ra, dec, magNorm, sedName, redshift=0,
-                     gamma1=0, gamma2=0, kappa=0, deltaRa=0, deltaDec=0,
-                     sourceType="star", spatialPars=0):
+    def generateStar(
+        self,
+        starId,
+        ra,
+        dec,
+        magNorm,
+        sedName,
+        redshift=0,
+        gamma1=0,
+        gamma2=0,
+        kappa=0,
+        deltaRa=0,
+        deltaDec=0,
+        sourceType="star",
+        spatialPars=0,
+    ):
         """Generate the star source.
 
         Parameters
@@ -351,15 +387,36 @@ class PhosimCommu(object):
         """
 
         content = "object %2d\t%9.6f\t%9.6f %9.6f ../sky/%s " % (
-                  starId, ra, dec, magNorm, sedName)
+            starId,
+            ra,
+            dec,
+            magNorm,
+            sedName,
+        )
         content += "%.1f %.1f %.1f %.1f %.1f %.1f %s %.1f none none \n" % (
-                   redshift, gamma1, gamma2, kappa, deltaRa, deltaDec,
-                   sourceType, starId)
+            redshift,
+            gamma1,
+            gamma2,
+            kappa,
+            deltaRa,
+            deltaDec,
+            sourceType,
+            starId,
+        )
 
         return content
 
-    def getStarInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0,
-                        mjd=49552.3, simSeed=1000, filePath=None):
+    def getStarInstance(
+        self,
+        obsId,
+        aFilterId,
+        ra=0,
+        dec=0,
+        rot=0,
+        mjd=49552.3,
+        simSeed=1000,
+        filePath=None,
+    ):
         """Get the star instance catalog.
 
         Parameters
@@ -400,13 +457,12 @@ class PhosimCommu(object):
         content += "declination %.6f \n" % dec
         content += "rotskypos %.6f \n" % rot
 
-        if (filePath is not None):
+        if filePath is not None:
             self.writeToFile(filePath, content=content, mode="w")
 
         return content
 
-    def getOpdInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0,
-                       filePath=None):
+    def getOpdInstance(self, obsId, aFilterId, ra=0, dec=0, rot=0, filePath=None):
         """Get the default OPD instance catalog.
 
         OPD: Optical path difference.
@@ -442,7 +498,7 @@ class PhosimCommu(object):
         content += "declination %.6f \n" % dec
         content += "rotskypos %.6f \n" % rot
 
-        if (filePath is not None):
+        if filePath is not None:
             self.writeToFile(filePath, content=content, mode="w")
 
         return content
@@ -480,16 +536,16 @@ class PhosimCommu(object):
             fid = open(filePath, mode)
 
             # Write the content into the file
-            if (content is not None):
+            if content is not None:
                 fid.write(content)
 
             # Write the content of source file into the file
-            if (sourceFile is not None):
+            if sourceFile is not None:
                 fSrc = open(sourceFile, "r")
 
                 # Enforce to add "\n" if necessary
                 fileContent = fSrc.read()
-                if (not fileContent.endswith("\n")):
+                if not fileContent.endswith("\n"):
                     fileContent = fileContent + "\n"
 
                 fid.write(fileContent)
@@ -526,9 +582,18 @@ class PhosimCommu(object):
 
         return sedFilePath
 
-    def getPhoSimArgs(self, instanceFile, extraCommandFile=None, numProc=1,
-                      numThread=1, outputDir=None, instrument="lsst",
-                      sensorName=None, e2ADC=1, logFilePath=None):
+    def getPhoSimArgs(
+        self,
+        instanceFile,
+        extraCommandFile=None,
+        numProc=1,
+        numThread=1,
+        outputDir=None,
+        instrument="lsst",
+        sensorName=None,
+        e2ADC=1,
+        logFilePath=None,
+    ):
         """Get the arguments needed to run the PhoSim.
 
         Parameters
@@ -569,22 +634,22 @@ class PhosimCommu(object):
         # Prepare the argument list
         argString = "%s -i %s -e %d" % (instanceFile, instrument, e2ADC)
 
-        if (extraCommandFile is not None):
+        if extraCommandFile is not None:
             argString += " -c %s" % extraCommandFile
 
-        if (numProc > 1):
+        if numProc > 1:
             argString += " -p %d" % numProc
 
-        if (numThread > 1):
+        if numThread > 1:
             argString += " -t %d" % numThread
 
-        if (sensorName is not None):
+        if sensorName is not None:
             argString += " -s %s" % sensorName
 
-        if (outputDir is not None):
+        if outputDir is not None:
             argString += " -o %s" % outputDir
 
-        if (logFilePath is not None):
+        if logFilePath is not None:
             argString += " > %s 2>&1" % logFilePath
 
         return argString
@@ -603,7 +668,7 @@ class PhosimCommu(object):
             Absolute file path.
         """
 
-        if (filePath is not None):
+        if filePath is not None:
             filePath = os.path.abspath(filePath)
 
         return filePath
@@ -645,15 +710,15 @@ class PhosimCommu(object):
         """
 
         # Directory of binary application
-        if (binDir is not None):
+        if binDir is not None:
             command = os.path.join(binDir, command)
 
         # Arguments for the program
-        if (argstring is not None):
-            command += (" " + argstring)
+        if argstring is not None:
+            command += " " + argstring
 
         # Call the program w/o arguments
-        if (subprocess.call(command, shell=True) != 0):
+        if subprocess.call(command, shell=True) != 0:
             raise RuntimeError("Error running: %s" % command)
 
 

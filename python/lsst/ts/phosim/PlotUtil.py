@@ -1,12 +1,41 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 
 import matplotlib.pyplot as plt
-plt.switch_backend('Agg')
+
+plt.switch_backend("Agg")
 
 
-def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
-               writeToResMapFilePath=None, dpi=None):
+def plotResMap(
+    zfInMm,
+    xfInMm,
+    yfInMm,
+    outerRinMm,
+    resFile=None,
+    writeToResMapFilePath=None,
+    dpi=None,
+):
     """Plot the mirror residue map.
 
     Parameters
@@ -32,15 +61,16 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
 
     # The input data to gridSamp.m is in mm (zemax default)
-    sc = ax[1].scatter(xfInMm, yfInMm, s=25, c=zfInMm*1e6, marker=".",
-                       edgecolor="none")
+    sc = ax[1].scatter(
+        xfInMm, yfInMm, s=25, c=zfInMm * 1e6, marker=".", edgecolor="none"
+    )
     ax[1].axis("equal")
     ax[1].set_title("Surface map on FEA grid (nm)")
     ax[1].set_xlim([-outerRinMm, outerRinMm])
     ax[1].set_ylim([-outerRinMm, outerRinMm])
     ax[1].set_xlabel("x (mm)")
 
-    if (resFile is not None):
+    if resFile is not None:
 
         # Get the data
         data = np.loadtxt(resFile)
@@ -53,23 +83,23 @@ def plotResMap(zfInMm, xfInMm, yfInMm, outerRinMm, resFile=None,
         zp = np.zeros((NUM_X_PIXELS, NUM_Y_PIXELS))
         for jj in range(1, NUM_X_PIXELS + 1):
             for ii in range(1, NUM_Y_PIXELS + 1):
-                zp[NUM_X_PIXELS+1-jj-1, ii-1] = zpTemp[(jj-1)*NUM_X_PIXELS +
-                                                       (ii-1)]
+                zp[NUM_X_PIXELS + 1 - jj - 1, ii - 1] = zpTemp[
+                    (jj - 1) * NUM_X_PIXELS + (ii - 1)
+                ]
 
         # Minimum x and y
-        minx = -0.5*(NUM_X_PIXELS-1)*delxInMm
-        miny = -0.5*(NUM_Y_PIXELS-1)*delyInMm
+        minx = -0.5 * (NUM_X_PIXELS - 1) * delxInMm
+        miny = -0.5 * (NUM_Y_PIXELS - 1) * delyInMm
 
         xx = np.linspace(minx, -minx, NUM_X_PIXELS)
         yy = np.linspace(miny, -miny, NUM_Y_PIXELS)
         xp, yp = np.meshgrid(xx, yy)
 
-        xp = xp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS, 1))
-        yp = yp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS, 1))
-        zp = zp.reshape((NUM_X_PIXELS*NUM_Y_PIXELS, 1))
+        xp = xp.reshape((NUM_X_PIXELS * NUM_Y_PIXELS, 1))
+        yp = yp.reshape((NUM_X_PIXELS * NUM_Y_PIXELS, 1))
+        zp = zp.reshape((NUM_X_PIXELS * NUM_Y_PIXELS, 1))
 
-        sc = ax[0].scatter(xp, yp, s=25, c=zp*1e6, marker=".",
-                           edgecolor="none")
+        sc = ax[0].scatter(xp, yp, s=25, c=zp * 1e6, marker=".", edgecolor="none")
 
     ax[0].axis("equal")
     ax[0].set_title("grid input to ZEMAX (nm)")
@@ -99,7 +129,7 @@ def _saveFig(plt, saveToFilePath=None, dpi=None):
         The resolution in dots per inch. (the default is None.)
     """
 
-    if (saveToFilePath is not None):
+    if saveToFilePath is not None:
         plt.savefig(saveToFilePath, dpi=dpi)
         plt.close()
     else:
@@ -200,8 +230,7 @@ def _getCCDBoundInDeg(sourProc, sensorName):
 
     for ii in range(len(pixelXlist)):
 
-        fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii],
-                                                 pixelYlist[ii])
+        fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii], pixelYlist[ii])
         fieldXinDegList.append(fieldX)
         fieldYinDeglist.append(fieldY)
 
@@ -234,7 +263,7 @@ def plotFwhmOfIters(pssnFiles, saveToFilePath=None, dpi=None):
     for pssnFile in pssnFiles:
 
         fwhmData = np.loadtxt(pssnFile)[1, :]
-        if (numOfFwhmData == 0):
+        if numOfFwhmData == 0:
             numOfFwhmData = len(fwhmData)
 
         fwhmDataAll = np.append(fwhmDataAll, fwhmData)

@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import shutil
 import numpy as np
@@ -36,9 +57,13 @@ class TestTeleFacade(unittest.TestCase):
         boresight = (0.2, 0.3)
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
-        cls.tele.setSurveyParam(obsId=obsId, filterType=cls.filterType,
-                                boresight=boresight, zAngleInDeg=zAngleInDeg,
-                                rotAngInDeg=rotAngInDeg)
+        cls.tele.setSurveyParam(
+            obsId=obsId,
+            filterType=cls.filterType,
+            boresight=boresight,
+            zAngleInDeg=zAngleInDeg,
+            rotAngInDeg=rotAngInDeg,
+        )
 
     def tearDown(self):
 
@@ -101,9 +126,13 @@ class TestTeleFacade(unittest.TestCase):
         rotAngInDeg = 11.0
 
         tele = TeleFacade()
-        tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                            boresight=boresight, zAngleInDeg=zAngleInDeg,
-                            rotAngInDeg=rotAngInDeg)
+        tele.setSurveyParam(
+            obsId=obsId,
+            filterType=filterType,
+            boresight=boresight,
+            zAngleInDeg=zAngleInDeg,
+            rotAngInDeg=rotAngInDeg,
+        )
 
         self.assertEqual(tele.surveyParam["obsId"], obsId)
         self.assertEqual(tele.surveyParam["filterType"], filterType)
@@ -127,8 +156,9 @@ class TestTeleFacade(unittest.TestCase):
         wfSensorOn = False
         guidSensorOn = True
 
-        self.tele.setSensorOn(sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn,
-                              guidSensorOn=guidSensorOn)
+        self.tele.setSensorOn(
+            sciSensorOn=sciSensorOn, wfSensorOn=wfSensorOn, guidSensorOn=guidSensorOn
+        )
         self.assertEqual(self.tele.sensorOn["sciSensorOn"], sciSensorOn)
         self.assertEqual(self.tele.sensorOn["wfSensorOn"], wfSensorOn)
         self.assertEqual(self.tele.sensorOn["guidSensorOn"], guidSensorOn)
@@ -157,11 +187,9 @@ class TestTeleFacade(unittest.TestCase):
 
     def testSetInstNameWithNegativeDefocalDist(self):
 
-        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam,
-                          -1.5)
+        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam, -1.5)
 
-        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam,
-                          0)
+        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam, 0)
 
     def testSetDofInUm(self):
 
@@ -217,8 +245,12 @@ class TestTeleFacade(unittest.TestCase):
 
         iSim = 6
         pertCmdFilePath = self.tele.writePertBaseOnConfigFile(
-            outputDir, seedNum=iSim, m1m3ForceError=0.05, saveResMapFig=True,
-            pertCmdFileName="pert.cmd")
+            outputDir,
+            seedNum=iSim,
+            m1m3ForceError=0.05,
+            saveResMapFig=True,
+            pertCmdFileName="pert.cmd",
+        )
 
         return pertCmdFilePath
 
@@ -229,13 +261,15 @@ class TestTeleFacade(unittest.TestCase):
 
     def testWriteCmdFile(self):
 
-        starCmdSettingFile = os.path.join(self.configDir, "cmdFile",
-                                          "starDefault.cmd")
+        starCmdSettingFile = os.path.join(self.configDir, "cmdFile", "starDefault.cmd")
 
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
         cmdFilePath = self.tele.writeCmdFile(
-            self.outputDir, cmdSettingFile=starCmdSettingFile,
-            pertFilePath=pertCmdFilePath, cmdFileName="star.cmd")
+            self.outputDir,
+            cmdSettingFile=starCmdSettingFile,
+            pertFilePath=pertCmdFilePath,
+            cmdFileName="star.cmd",
+        )
 
         numOfLineInFile = self._getNumOfLineInFile(cmdFilePath)
         self.assertEqual(numOfLineInFile, 268)
@@ -245,8 +279,7 @@ class TestTeleFacade(unittest.TestCase):
         camSurfName = "L1S2zer"
         surfaceType = self.tele._getPhoSimCamSurf(camSurfName)
         self.assertEqual(surfaceType.name, "L1B")
-        self.assertRaises(ValueError, self.tele._getPhoSimCamSurf,
-                          "L4S2zer")
+        self.assertRaises(ValueError, self.tele._getPhoSimCamSurf, "L4S2zer")
 
     def testWriteOpdInstFile(self):
 
@@ -254,7 +287,8 @@ class TestTeleFacade(unittest.TestCase):
 
         with self.assertWarns(UserWarning):
             instFilePath = self.tele.writeOpdInstFile(
-                self.outputDir, metr, instSettingFile=opdInstSettingFile)
+                self.outputDir, metr, instSettingFile=opdInstSettingFile
+            )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
@@ -266,7 +300,8 @@ class TestTeleFacade(unittest.TestCase):
         metr, opdInstSettingFile = self._generateOpd()
         with self.assertWarns(UserWarning):
             instFilePath = self.tele.writeOpdInstFile(
-                self.outputDir, metr, instSettingFile=opdInstSettingFile)
+                self.outputDir, metr, instSettingFile=opdInstSettingFile
+            )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 59)
@@ -275,8 +310,7 @@ class TestTeleFacade(unittest.TestCase):
 
         metr = OpdMetrology()
         metr.addFieldXYbyDeg(0, 0)
-        opdInstSettingFile = os.path.join(self.configDir, "instFile",
-                                          "opdDefault.inst")
+        opdInstSettingFile = os.path.join(self.configDir, "instFile", "opdDefault.inst")
 
         return metr, opdInstSettingFile
 
@@ -285,7 +319,8 @@ class TestTeleFacade(unittest.TestCase):
         skySim, starInstSettingFile = self._generateFakeSky()
 
         instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, instSettingFile=starInstSettingFile)
+            self.outputDir, skySim, instSettingFile=starInstSettingFile
+        )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 63)
@@ -297,7 +332,8 @@ class TestTeleFacade(unittest.TestCase):
         skySim, starInstSettingFile = self._generateFakeSky()
         with self.assertWarns(UserWarning):
             instFilePath = self.tele.writeStarInstFile(
-                self.outputDir, skySim, instSettingFile=starInstSettingFile)
+                self.outputDir, skySim, instSettingFile=starInstSettingFile
+            )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLineInFile, 63)
@@ -307,8 +343,9 @@ class TestTeleFacade(unittest.TestCase):
         skySim = SkySim()
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
 
-        starInstSettingFile = os.path.join(self.configDir, "instFile",
-                                           "starDefault.inst")
+        starInstSettingFile = os.path.join(
+            self.configDir, "instFile", "starDefault.inst"
+        )
 
         return skySim, starInstSettingFile
 

@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -13,11 +34,10 @@ class TestPlotUtil(unittest.TestCase):
 
         modulePath = getModulePath()
         self.testData = os.path.join(modulePath, "tests", "testData")
-        self.outFigFilePath = os.path.join(modulePath, "output", "img",
-                                           "testFig.png")
+        self.outFigFilePath = os.path.join(modulePath, "output", "img", "testFig.png")
 
     def tearDown(self):
-        if (os.path.exists(self.outFigFilePath)):
+        if os.path.exists(self.outFigFilePath):
             os.remove(self.outFigFilePath)
 
     def testShowFieldMap(self):
@@ -25,15 +45,16 @@ class TestPlotUtil(unittest.TestCase):
         fieldX = np.array([0, 0])
         fieldY = np.array([0, 1])
 
-        showFieldMap(fieldX=fieldX, fieldY=fieldY,
-                     saveToFilePath=self.outFigFilePath)
+        showFieldMap(fieldX=fieldX, fieldY=fieldY, saveToFilePath=self.outFigFilePath)
         self.assertTrue(os.path.exists(self.outFigFilePath))
 
     def testPlotFwhmOfIters(self):
 
         iterDataDir = os.path.join(self.testData, "iterData")
-        pssnFiles = [os.path.join(iterDataDir, "iter%d" % num, "img", "PSSN.txt")
-                     for num in range(5)]
+        pssnFiles = [
+            os.path.join(iterDataDir, "iter%d" % num, "img", "PSSN.txt")
+            for num in range(5)
+        ]
 
         plotFwhmOfIters(pssnFiles, saveToFilePath=self.outFigFilePath)
         self.assertTrue(os.path.exists(self.outFigFilePath))

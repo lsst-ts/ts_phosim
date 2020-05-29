@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import shutil
 import numpy as np
@@ -41,8 +62,7 @@ class TestPhosimCmpt(unittest.TestCase):
 
         cls.tele = TeleFacade()
         cls.tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
-        cls.tele.setSensorOn(sciSensorOn=True, wfSensorOn=False,
-                             guidSensorOn=False)
+        cls.tele.setSensorOn(sciSensorOn=True, wfSensorOn=False, guidSensorOn=False)
 
         # Use the "lsst" instead of "comcam" in the PhoSim simulation
         with warnings.catch_warnings():
@@ -55,9 +75,13 @@ class TestPhosimCmpt(unittest.TestCase):
         boresight = (0.2, 0.3)
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
-        cls.tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                                boresight=boresight, zAngleInDeg=zAngleInDeg,
-                                rotAngInDeg=rotAngInDeg)
+        cls.tele.setSurveyParam(
+            obsId=obsId,
+            filterType=filterType,
+            boresight=boresight,
+            zAngleInDeg=zAngleInDeg,
+            rotAngInDeg=rotAngInDeg,
+        )
 
         # Set up the phosim directory
         phosimDir = "phosimDir"
@@ -156,7 +180,8 @@ class TestPhosimCmpt(unittest.TestCase):
         instFileName = "opd.inst"
         with self.assertWarns(UserWarning):
             argString = self.phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
-                instFileName=instFileName)
+                instFileName=instFileName
+            )
 
         self.assertTrue(isinstance(argString, str))
         self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 11)
@@ -167,8 +192,13 @@ class TestPhosimCmpt(unittest.TestCase):
 
     def _getNumOfFileInFolder(self, folder):
 
-        return len([name for name in os.listdir(folder)
-                   if os.path.isfile(os.path.join(folder, name))])
+        return len(
+            [
+                name
+                for name in os.listdir(folder)
+                if os.path.isfile(os.path.join(folder, name))
+            ]
+        )
 
     def _getNumOfLineInFile(self, filePath):
 
@@ -182,7 +212,8 @@ class TestPhosimCmpt(unittest.TestCase):
         instFileName = "star.inst"
         with self.assertWarns(UserWarning):
             argString = self.phosimCmpt.getStarArgsAndFilesForPhoSim(
-                skySim, instFileName=instFileName)
+                skySim, instFileName=instFileName
+            )
 
         self.assertTrue(isinstance(argString, str))
         self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 11)
@@ -203,7 +234,8 @@ class TestPhosimCmpt(unittest.TestCase):
         dofInUm = np.arange(50)
         dofInUmFileName = "dofPertInNextIter.mat"
         self.phosimCmpt.saveDofInUmFileForNextIter(
-            dofInUm, dofInUmFileName=dofInUmFileName)
+            dofInUm, dofInUmFileName=dofInUmFileName
+        )
 
         filePath = os.path.join(self.outputDir, dofInUmFileName)
         self.assertTrue(os.path.exists(filePath))
@@ -222,8 +254,9 @@ class TestPhosimCmpt(unittest.TestCase):
         self.assertTrue(os.path.exists(pssnFilePath))
 
         zk = np.loadtxt(zkFilePath)
-        ansZkFilePath = os.path.join(self._getOpdFileDirOfComCam(),
-                                     "sim7_iter0_opd.zer")
+        ansZkFilePath = os.path.join(
+            self._getOpdFileDirOfComCam(), "sim7_iter0_opd.zer"
+        )
         ansZk = np.loadtxt(ansZkFilePath)
 
         delta = np.sum(np.abs(zk - ansZk[:, 3:]))
@@ -231,8 +264,9 @@ class TestPhosimCmpt(unittest.TestCase):
 
         pssnData = np.loadtxt(pssnFilePath)
         pssn = pssnData[0, :]
-        ansPssnFilePath = os.path.join(self._getOpdFileDirOfComCam(),
-                                       "sim7_iter0_PSSN.txt")
+        ansPssnFilePath = os.path.join(
+            self._getOpdFileDirOfComCam(), "sim7_iter0_PSSN.txt"
+        )
         ansPssnData = np.loadtxt(ansPssnFilePath)
         ansPssn = ansPssnData[0, :]
 
@@ -243,8 +277,10 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self._copyOpdToImgDirFromTestData()
         self.phosimCmpt.analyzeComCamOpdData(
-            zkFileName=self.zkFileName, rotOpdInDeg=rotOpdInDeg,
-            pssnFileName=self.pssnFileName)
+            zkFileName=self.zkFileName,
+            rotOpdInDeg=rotOpdInDeg,
+            pssnFileName=self.pssnFileName,
+        )
 
     def _copyOpdToImgDirFromTestData(self):
 
@@ -255,8 +291,9 @@ class TestPhosimCmpt(unittest.TestCase):
 
     def _getOpdFileDirOfComCam(self):
 
-        opdFileDir = os.path.join(getModulePath(), "tests", "testData",
-                                  "comcamOpdFile", "iter0")
+        opdFileDir = os.path.join(
+            getModulePath(), "tests", "testData", "comcamOpdFile", "iter0"
+        )
 
         return opdFileDir
 
@@ -267,8 +304,7 @@ class TestPhosimCmpt(unittest.TestCase):
         zkFilePath = os.path.join(self.outputImgDir, self.zkFileName)
         zk = np.loadtxt(zkFilePath)
 
-        ansZkFilePath = os.path.join(self._getOpdFileDirOfComCam(),
-                                     "zkRot30.txt")
+        ansZkFilePath = os.path.join(self._getOpdFileDirOfComCam(), "zkRot30.txt")
         ansZk = np.loadtxt(ansZkFilePath)
 
         delta = np.sum(np.abs(zk - ansZk))
@@ -280,7 +316,8 @@ class TestPhosimCmpt(unittest.TestCase):
 
         refSensorNameList = self._getRefSensorNameList()
         listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
-            self.zkFileName, refSensorNameList)
+            self.zkFileName, refSensorNameList
+        )
 
         self.assertEqual(len(listOfWfErr), len(refSensorNameList))
 
@@ -298,9 +335,17 @@ class TestPhosimCmpt(unittest.TestCase):
 
     def _getRefSensorNameList(self):
 
-        refSensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10",
-                             "R22_S11", "R22_S12", "R22_S20", "R22_S21",
-                             "R22_S22"]
+        refSensorNameList = [
+            "R22_S00",
+            "R22_S01",
+            "R22_S02",
+            "R22_S10",
+            "R22_S11",
+            "R22_S12",
+            "R22_S20",
+            "R22_S21",
+            "R22_S22",
+        ]
 
         return refSensorNameList
 
@@ -326,8 +371,7 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self._analyzeComCamOpdData()
 
-        gqEffFwhm = self.phosimCmpt.getOpdGqEffFwhmFromFile(
-            self.pssnFileName)
+        gqEffFwhm = self.phosimCmpt.getOpdGqEffFwhmFromFile(self.pssnFileName)
         self.assertAlmostEqual(gqEffFwhm, 0.5534, places=3)
 
     def testGetListOfFwhmSensorData(self):
@@ -336,7 +380,8 @@ class TestPhosimCmpt(unittest.TestCase):
         refSensorNameList = self._getRefSensorNameList()
 
         listOfFWHMSensorData = self.phosimCmpt.getListOfFwhmSensorData(
-            self.pssnFileName, refSensorNameList)
+            self.pssnFileName, refSensorNameList
+        )
         self.assertEqual(len(listOfFWHMSensorData), len(refSensorNameList))
 
         mapSensorNameAndId = MapSensorNameAndId()
@@ -345,8 +390,9 @@ class TestPhosimCmpt(unittest.TestCase):
         ansData = self.phosimCmpt._getDataOfPssnFile(self.pssnFileName)
         ansFwhmData = ansData[1, :-1]
 
-        for fwhmSensorData, sensorId, fwhm in zip(listOfFWHMSensorData,
-                                                  ansSensorIdList, ansFwhmData):
+        for fwhmSensorData, sensorId, fwhm in zip(
+            listOfFWHMSensorData, ansSensorIdList, ansFwhmData
+        ):
             self.assertEqual(fwhmSensorData.getSensorId(), sensorId)
             self.assertEqual(fwhmSensorData.getFwhmValues()[0], fwhm)
 
@@ -402,16 +448,19 @@ class TestPhosimCmpt(unittest.TestCase):
 
         with self.assertWarns(UserWarning):
             argStringList = self.phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
-                extraObsId, intraObsId, skySim, simSeed=1000,
+                extraObsId,
+                intraObsId,
+                skySim,
+                simSeed=1000,
                 cmdSettingFileName="starDefault.cmd",
-                instSettingFileName="starSingleExp.inst")
+                instSettingFileName="starSingleExp.inst",
+            )
 
         self.assertEqual(len(argStringList), 2)
         self.assertTrue(isinstance(argStringList[0], str))
         self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 12)
 
-        instFilePath = os.path.join(self.phosimCmpt.getOutputDir(),
-                                    "starExtra.inst")
+        instFilePath = os.path.join(self.phosimCmpt.getOutputDir(), "starExtra.inst")
         numOfLine = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLine, 63)
 
@@ -419,8 +468,8 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self._copyComCamFiles()
         intraFileFolderPath = os.path.join(
-            self.phosimCmpt.getOutputImgDir(),
-            self.phosimCmpt.getIntraFocalDirName())
+            self.phosimCmpt.getOutputImgDir(), self.phosimCmpt.getIntraFocalDirName()
+        )
         intraFileNum = self._getNumOfFileInFolder(intraFileFolderPath)
         self.assertEqual(intraFileNum, 17)
 
@@ -433,22 +482,23 @@ class TestPhosimCmpt(unittest.TestCase):
         intraFocalDirName = self.phosimCmpt.getIntraFocalDirName()
         extraFocalDirName = self.phosimCmpt.getExtraFocalDirName()
         for imgType in (intraFocalDirName, extraFocalDirName):
-            imgDirPath = os.path.join(getModulePath(), "tests", "testData",
-                                      "comcamPhosimData", imgType)
+            imgDirPath = os.path.join(
+                getModulePath(), "tests", "testData", "comcamPhosimData", imgType
+            )
             dst = os.path.join(self.phosimCmpt.getOutputImgDir(), imgType)
             shutil.copytree(imgDirPath, dst)
 
     def _checkNumOfFilesAfterRepackage(self):
 
         intraFileFolderPath = os.path.join(
-            self.phosimCmpt.getOutputImgDir(),
-            self.phosimCmpt.getIntraFocalDirName())
+            self.phosimCmpt.getOutputImgDir(), self.phosimCmpt.getIntraFocalDirName()
+        )
         intraFileNum = self._getNumOfFileInFolder(intraFileFolderPath)
         self.assertEqual(intraFileNum, 1)
 
         extraFileFolderPath = os.path.join(
-            self.phosimCmpt.getOutputImgDir(),
-            self.phosimCmpt.getExtraFocalDirName())
+            self.phosimCmpt.getOutputImgDir(), self.phosimCmpt.getExtraFocalDirName()
+        )
         extraFileNum = self._getNumOfFileInFolder(extraFileFolderPath)
         self.assertEqual(extraFileNum, 1)
 
@@ -466,25 +516,22 @@ class TestPhosimCmpt(unittest.TestCase):
         refSensorNameList = ["R00_S12", "R00_S21", "R01_S00", "R01_S01"]
         zkFileName = "testZk.zer"
         self.phosimCmpt.reorderAndSaveWfErrFile(
-            listOfWfErr, refSensorNameList, zkFileName=zkFileName)
+            listOfWfErr, refSensorNameList, zkFileName=zkFileName
+        )
 
-        zkFilePath = os.path.join(self.phosimCmpt.getOutputImgDir(),
-                                  zkFileName)
+        zkFilePath = os.path.join(self.phosimCmpt.getOutputImgDir(), zkFileName)
         zkInFile = np.loadtxt(zkFilePath)
 
         numOfZk = self.phosimCmpt.getNumOfZk()
-        self.assertEqual(zkInFile.shape,
-                         (len(refSensorNameList), numOfZk))
+        self.assertEqual(zkInFile.shape, (len(refSensorNameList), numOfZk))
 
         self.assertEqual(np.sum(zkInFile[0, :]), 0)
         self.assertEqual(np.sum(zkInFile[3, :]), 0)
 
-        delta = np.sum(np.abs(
-            zkInFile[1, :] - listOfWfErr[2].getAnnularZernikePoly()))
+        delta = np.sum(np.abs(zkInFile[1, :] - listOfWfErr[2].getAnnularZernikePoly()))
         self.assertLess(delta, 1e-10)
 
-        delta = np.sum(np.abs(
-            zkInFile[2, :] - listOfWfErr[1].getAnnularZernikePoly()))
+        delta = np.sum(np.abs(zkInFile[2, :] - listOfWfErr[1].getAnnularZernikePoly()))
         self.assertLess(delta, 1e-10)
 
     def _prapareListOfWfErr(self):
@@ -507,8 +554,7 @@ class TestPhosimCmpt(unittest.TestCase):
     def testGetWfErrValuesAndStackToMatrix(self):
 
         wfErrMap, wfsValueMatrix = self._prepareWfErrMap()
-        valueMatrix = \
-            self.phosimCmpt._getWfErrValuesAndStackToMatrix(wfErrMap)
+        valueMatrix = self.phosimCmpt._getWfErrValuesAndStackToMatrix(wfErrMap)
 
         delta = np.sum(np.abs(valueMatrix - wfsValueMatrix))
         self.assertEqual(delta, 0)

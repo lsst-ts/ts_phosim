@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import unittest
 import numpy as np
@@ -12,8 +33,9 @@ class TestM1M3Sim(unittest.TestCase):
 
     def setUp(self):
 
-        self.testM3Data = os.path.join(getModulePath(), "tests", "testData",
-                                       "testM1M3Func")
+        self.testM3Data = os.path.join(
+            getModulePath(), "tests", "testData", "testM1M3Func"
+        )
         self.outputDir = os.path.join(getModulePath(), "output")
 
     @classmethod
@@ -79,8 +101,9 @@ class TestM1M3Sim(unittest.TestCase):
         m1m3TyGrad = -0.1973
         m1m3TzGrad = -0.0316
         m1m3TrGrad = 0.0187
-        tempCorrInUm = self.m1m3.getTempCorr(m1m3TBulk, m1m3TxGrad, m1m3TyGrad,
-                                             m1m3TzGrad, m1m3TrGrad)
+        tempCorrInUm = self.m1m3.getTempCorr(
+            m1m3TBulk, m1m3TxGrad, m1m3TyGrad, m1m3TzGrad, m1m3TrGrad
+        )
 
         return tempCorrInUm
 
@@ -92,7 +115,7 @@ class TestM1M3Sim(unittest.TestCase):
 
         ansFilePath = os.path.join(self.testM3Data, "M1M3surfRand.txt")
         ansRandSurfInM = np.loadtxt(ansFilePath)
-        self.assertLess(np.sum(np.abs(randSurfInM-ansRandSurfInM)), 1e-10)
+        self.assertLess(np.sum(np.abs(randSurfInM - ansRandSurfInM)), 1e-10)
 
     def _getRandSurfInM(self, iSim, zAngleInDeg):
 
@@ -108,11 +131,10 @@ class TestM1M3Sim(unittest.TestCase):
 
         ansFilePath = os.path.join(self.testM3Data, "sim6_M1M3zlist.txt")
         ansZcInUmInZemax = np.loadtxt(ansFilePath)
-        ansZcInMmInZemax = ansZcInUmInZemax*1e-3
+        ansZcInMmInZemax = ansZcInUmInZemax * 1e-3
 
         numTerms = self.m1m3.getNumTerms()
-        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] -
-                              ansZcInMmInZemax[0:numTerms]))
+        delta = np.sum(np.abs(zcInMmInZemax[0:numTerms] - ansZcInMmInZemax[0:numTerms]))
         self.assertLess(delta, 1e-9)
 
     def _setSurfAlongZ(self):
@@ -124,8 +146,8 @@ class TestM1M3Sim(unittest.TestCase):
         randSurfInM = self._getRandSurfInM(iSim, zAngleInDeg)
         tempCorrInUm = self._getTempCorrInUm()
 
-        printthzInUm = printthzInM*1e6
-        randSurfInUm = randSurfInM*1e6
+        printthzInUm = printthzInM * 1e6
+        randSurfInUm = randSurfInM * 1e6
         mirrorSurfInUm = printthzInUm + randSurfInUm + tempCorrInUm
 
         self.m1m3.setSurfAlongZ(mirrorSurfInUm)
@@ -178,8 +200,7 @@ class TestM1M3Sim(unittest.TestCase):
         writeToResMapFilePath1 = os.path.join(self.outputDir, "M1resMap.png")
         writeToResMapFilePath3 = os.path.join(self.outputDir, "M3resMap.png")
         writeToResMapFilePath = [writeToResMapFilePath1, writeToResMapFilePath3]
-        self.m1m3.showMirResMap(resFile,
-                                writeToResMapFilePath=writeToResMapFilePath)
+        self.m1m3.showMirResMap(resFile, writeToResMapFilePath=writeToResMapFilePath)
         self.assertTrue(os.path.isfile(writeToResMapFilePath1))
         self.assertTrue(os.path.isfile(writeToResMapFilePath3))
 

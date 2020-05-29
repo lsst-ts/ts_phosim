@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -29,8 +50,7 @@ class TestPhosimCommu(unittest.TestCase):
 
     def testGetFilterIdWithFilterRef(self):
 
-        self.assertRaises(ValueError, self.phosimCom.getFilterId,
-                          FilterType.REF)
+        self.assertRaises(ValueError, self.phosimCom.getFilterId, FilterType.REF)
 
     def testGetSurfaceId(self):
 
@@ -82,8 +102,9 @@ class TestPhosimCommu(unittest.TestCase):
         fieldXInDeg = 1.0
         fieldYInDeg = 2.0
         wavelengthInNm = 500
-        content = self.phosimCom.generateOpd(opdId, fieldXInDeg, fieldYInDeg,
-                                             wavelengthInNm)
+        content = self.phosimCom.generateOpd(
+            opdId, fieldXInDeg, fieldYInDeg, wavelengthInNm
+        )
         ansContent = "opd  0\t 1.000000\t 2.000000 500.0 \n"
         self.assertEqual(content, ansContent)
 
@@ -94,8 +115,7 @@ class TestPhosimCommu(unittest.TestCase):
         dec = 1.0
         magNorm = 2.0
         sedName = "flat.txt"
-        content = self.phosimCom.generateStar(starId, ra, dec, magNorm,
-                                              sedName)
+        content = self.phosimCom.generateStar(starId, ra, dec, magNorm, sedName)
         ansContent = "object  0\t 1.000000\t 1.000000  2.000000 "
         ansContent += "../sky/flat.txt 0.0 0.0 0.0 0.0 0.0 0.0 star 0.0 "
         ansContent += "none none \n"
@@ -143,8 +163,7 @@ class TestPhosimCommu(unittest.TestCase):
 
         instFile = "temp.inst"
         sensorName = "R22_S11"
-        argString = self.phosimCom.getPhoSimArgs(instFile,
-                                                 sensorName=sensorName)
+        argString = self.phosimCom.getPhoSimArgs(instFile, sensorName=sensorName)
 
         absFilePath = os.path.abspath(instFile)
         ansArgString = "%s -i lsst -e 1 -s %s" % (absFilePath, sensorName)
