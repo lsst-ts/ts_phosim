@@ -394,12 +394,13 @@ class PhosimCmpt(object):
 
 
 
-    def getLsstCamOpdArgsAndFilesForPhoSim(
+    def getLsstFamCamOpdArgsAndFilesForPhoSim(
             self, cmdFileName="opd.cmd", instFileName="opd.inst",
             logFileName="opdPhoSim.log", cmdSettingFileName="opdDefault.cmd",
             instSettingFileName="opdDefault.inst"):
-        """Get the OPD calculation arguments and files of LsstCam for the PhoSim
-        calculation.
+        """Get the OPD calculation arguments and files of LsstFamCam for the PhoSim
+        calculation - it evaluates OPD in 31 locations 
+        in the focal plane 
 
         OPD: optical path difference.
         ComCam: commissioning camera.
