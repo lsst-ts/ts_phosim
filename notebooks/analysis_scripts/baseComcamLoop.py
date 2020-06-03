@@ -21,64 +21,6 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-class AnalysisPhosimCmpt(PhosimCmpt):
-
-    def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
-        """Write the OPD in zk file.
-        OPD: optical path difference.
-        Parameters
-        ----------
-        zkFileName : str
-            OPD in zk file name.
-        rotOpdInDeg : float
-            Rotate OPD in degree in the counter-clockwise direction.
-        """
-
-        testOutputDir = os.environ["closeLoopTestDir"]
-        filePath = os.path.join(testOutputDir, zkFileName)
-        opdData = self._mapOpdToZk(rotOpdInDeg)
-        header = "The following are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
-            rotOpdInDeg)
-        np.savetxt(filePath, opdData, header=header)
-
-    # def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
-    #                             zkFileName="wfs.zer"):
-    #     """Reorder the wavefront error in the wavefront error list according to
-    #     the reference sensor name list and save to a file.
-    #     The unexisted wavefront error will be a numpy zero array. The unit is
-    #     um.
-    #     Parameters
-    #     ----------
-    #     listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
-    #         List of SensorWavefrontData object.
-    #     refSensorNameList : list
-    #         Reference sensor name list.
-    #     zkFileName : str, optional
-    #         Wavefront error file name. (the default is "wfs.zer".)
-    #     """
-
-    #     # Get the sensor name that in the wavefront error map
-    #     wfErrMap = self._transListOfWfErrToMap(listOfWfErr)
-    #     nameListInWfErrMap = list(wfErrMap.keys())
-
-    #     # Reorder the wavefront error map based on the reference sensor name
-    #     # list.
-    #     reorderedWfErrMap = dict()
-    #     for sensorName in refSensorNameList:
-    #         if sensorName in nameListInWfErrMap:
-    #             wfErr = wfErrMap[sensorName]
-    #         else:
-    #             numOfZk = self.getNumOfZk()
-    #             wfErr = np.zeros(numOfZk)
-    #         reorderedWfErrMap[sensorName] = wfErr
-
-    #     # Save the file
-    #     testOutputDir = os.environ["closeLoopTestDir"]
-    #     filePath = os.path.join(testOutputDir, zkFileName)
-    #     wfsData = self._getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
-    #     header = "The following are ZK in um from z4 to z22:"
-    #     np.savetxt(filePath, wfsData, header=header)
-
 class baseComcamLoop():
 
     def main(self, phosimDir, numPro, iterNum, baseOutputDir, 
@@ -240,36 +182,9 @@ class baseComcamLoop():
 
 
         # decide which args should be added to PhoSim 
-        # they are prepended 
-        # this applies both to OPD and to star image 
-
+        # they are prepended  - we add only working dir at this point 
         # just prepend the working directory by default 
         argPrepend = '-w ' + baseOutputDir+ ' ' 
-       
-
-        # then prepend argument to run PhoSim only on R22 
-        if selectSensors is 'comcam':  
-            rafts = ['22']
-            chips  = ['00','01','02', 
-                      '10','11','12',
-                      '20','21','22']
-            sensors = ''
-            for r in rafts:
-                for c in chips:
-                    s = "R%s_S%s|"%(r,c) 
-                    sensors += s 
-            sensors = ' "%s" '%sensors
-
-        if selectSensors is 'wfs':
-            sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
-            #rafts = ['00','04', '40', '44']
-            #chips  = ['00','01','02', 
-            #          '10','11','12',
-            #          '20','21','22']
-
-        if selectSensors is not None: 
-            argPrepend +=  '-s ' + sensors+ ' '
-
         print('PhoSim added argPrepend is %s'%argPrepend)
 
 
@@ -366,6 +281,34 @@ class baseComcamLoop():
 
             # Generate the defocal images
             if genDefocalImg is True:
+
+                # just prepend the working directory by default 
+                argPrepend = '-w ' + baseOutputDir+ ' ' 
+               
+
+                # then prepend argument to run PhoSim only on R22 
+                # for defocal images 
+                if selectSensors is 'comcam':  
+                    rafts = ['22']
+                    chips  = ['00','01','02', 
+                              '10','11','12',
+                              '20','21','22']
+                    sensors = ''
+                    for r in rafts:
+                        for c in chips:
+                            s = "R%s_S%s|"%(r,c) 
+                            sensors += s 
+                    sensors = ' "%s" '%sensors
+
+                if selectSensors is 'wfs':
+                    sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
+
+                if selectSensors is not None: 
+                    argPrepend +=  '-s ' + sensors+ ' '
+
+                print('PhoSim added argPrepend is %s'%argPrepend)
+
+
                 simSeed = 1000
                 argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
                   extraObsId, intraObsId, skySim, simSeed=simSeed,
@@ -373,7 +316,6 @@ class baseComcamLoop():
                   instSettingFileName="starSingleExp.inst")
 
                 for argString in argStringList:
-                    #argString = '-w $AOCLCOUTPUTPATH ' + argString
                     argString = argPrepend + argString
                     print('Generating defocal images with Phosim\n')
                     print(argString)
@@ -546,17 +488,7 @@ class baseComcamLoop():
         return sensorNameList
     
     def _getWfsSensorNameList(self):
-        chips  = ['00','01','02', 
-              '10','11','12',
-              '20','21','22']
-        rafts = ['00','04', '40', '44']
-        sensors = []
-        for r in rafts:
-            for c in chips:
-                s = "R%s_S%s"%(r,c) 
-                sensors.append(s)
-
-        sensorNameList = sensors
+        sensorNameList = ["R00_S22","R04_S20","R44_S00","R40_S02"]
 
         return sensorNameList
 
@@ -617,7 +549,7 @@ class baseComcamLoop():
         print('Using phosim.py located in %s'%phosimDir)
 
         # Prepare the phosim component
-        phosimCmpt = AnalysisPhosimCmpt(tele)
+        phosimCmpt = PhosimCmpt(tele)
 
         # Set the telescope survey parameters
         boresight = (raInDeg, decInDeg)
