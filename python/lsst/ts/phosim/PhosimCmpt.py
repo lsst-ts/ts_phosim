@@ -715,15 +715,16 @@ class PhosimCmpt(object):
         self._writeOpdZkFile(zkFileName, rotOpdInDeg)
         self._writeOpdPssnFile(pssnFileName, sensor='comcam')
 
-    def analyzeLsstCamOpdData(self, zkFileName="opd.zer",
+    def analyzeLsstFamCamOpdData(self, zkFileName="opd.zer",
                              rotOpdInDeg=0.0,
                              pssnFileName="PSSN.txt"):
-        """Analyze the LsstCam OPD data.
+        """Analyze the LsstFamCam OPD data.
 
         Rotate OPD to simulate the output by rotated camera. When analyzing the
         PSSN, the unrotated OPD is used.
 
-        LsstCam: The corner wavefront sensors R00_S22, R04_S20, R44_S00, R40_S02
+        LsstFamCam: The LSST full array mode OPD, calculated in 31 locations 
+            specified by metr.setDefaultLsstGQ()
         OPD: Optical path difference.
         PSSN: Normalized point source sensitivity.
 
@@ -739,7 +740,7 @@ class PhosimCmpt(object):
         """
 
         self._writeOpdZkFile(zkFileName, rotOpdInDeg)
-        self._writeOpdPssnFile(pssnFileName,sensor='wfs')
+        self._writeOpdPssnFile(pssnFileName,sensor='LsstFamCam')
 
     def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
         """Write the OPD in zk file.
@@ -876,12 +877,12 @@ class PhosimCmpt(object):
             # Calculate the FWHM
             effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
 
-        elif sensor is 'wfs':
+        elif sensor is 'LsstFamCam':
             # Calculate the PSSN
-            pssnList, gqEffPssn = self._calcLsstCamOpdPssn()
+            pssnList, gqEffPssn = self._calcLsstFamCamOpdPssn()
 
             # Calculate the FWHM
-            effFwhmList, gqEffFwhm = self._calcLsstCamOpdEffFwhm(pssnList)
+            effFwhmList, gqEffFwhm = self._calcLsstFamCamOpdEffFwhm(pssnList)
              
 
         # Append the list to write the data into file
@@ -925,61 +926,46 @@ class PhosimCmpt(object):
 
         return pssnList, gqEffPssn
 
-    # def _calcLsstCamOpdPssn(self):
-    #     """Calculate the LsstCam PSSN of OPD.
+    def _calcLsstFamCamOpdPssn(self):
+        """Calculate the LsstFamCam PSSN from OPD.
 
-    #     LsstCam: The corner wavefront sensors R00_S22, R04_S20, R44_S00, R40_S02
-    #     OPD: Optical path difference.
-    #     PSSN: Normalized point source sensitivity.
-    #     GQ: Gaussian quadrature.
+        LsstCam: The The LSST full array mode camera,
+            with OPD calculated in 31 locations 
+            specified by metr.setDefaultLsstGQ()
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
 
-    #     Returns
-    #     -------
-    #     list
-    #         PSSN list.
-    #     float
-    #         GQ effective PSSN.
-    #     """
+        Returns
+        -------
+        list
+            PSSN list.
+        float
+            GQ effective PSSN.
+        """
 
-    #     opdFileList = self._getOpdFileInDir(self.outputImgDir)
+        opdFileList = self._getOpdFileInDir(self.outputImgDir)
 
-    #     wavelengthInUm = self.tele.getRefWaveLength() * 1e-3
-    #     pssnList = []
-    #     for opdFile in opdFileList:
-    #         pssn = self.metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFile)
-    #         pssnList.append(pssn)
+        wavelengthInUm = self.tele.getRefWaveLength() * 1e-3
+        pssnList = []
+        for opdFile in opdFileList:
+            pssn = self.metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFile)
+            pssnList.append(pssn)
 
-    #     # Calculate the GQ effectice PSSN
-    #     self._setLsstCamWgtRatio()
-    #     gqEffPssn = self.metr.calcGQvalue(pssnList)
+        # Calculate the GQ effectice PSSN
+        # part of that is  self.setWeightingRatio(wt)
+        # it was already called when setting up PhosimCmpt
+        # but setting weighting ratio explicitly here 
+        # won't hurt 
+        # otherwise the _setComCamWgtRatio() here 
+        # is completely obsolete if self.metr.setDefaultComcamGQ()
+        # is always called as part of 
+        # getComCamOpdArgsAndFilesForPhoSim() above...
+        self.metr.setDefaultLsstGQ() 
+        gqEffPssn = self.metr.calcGQvalue(pssnList)
 
-    #     return pssnList, gqEffPssn
+        return pssnList, gqEffPssn
     
-    # def _setLsstCamWgtRatio(self):
-    #      """Set the LsstCam weighting ratio.
-
-    #     LsstCam: The corner wavefront sensors R00_S22, R04_S20, R44_S00, R40_S02
-    #     """
-
-    #     # from ts.phosim.OpdMetrology.setDefaultLsstGQ()
-    #     # The distance of point xi (used in Gaussian quadrature plane) to the
-    #     # origin
-    #     # This value is in [-1.75, 1.75]
-    #     armLen = [0.379, 0.841, 1.237, 1.535, 1.708]
-
-    #     # Weighting of point xi (used in Gaussian quadrature plane) for each
-    #     # ring
-    #     armW = [0.2369, 0.4786, 0.5689, 0.4786, 0.2369]
-
-    #     # Number of points on each ring
-    #     nArm = 6
-
-    #     # Get the weighting for all field points (31 for lsst camera)
-    #     # Consider the first element is center (0)
-    #     wt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
-    #     self.metr.setWeightingRatio(wt)
-
-
 
     def _setComCamWgtRatio(self):
         """Set the ComCam weighting ratio.
@@ -1024,37 +1010,42 @@ class PhosimCmpt(object):
 
         return effFwhmList, gqEffFwhm
 
- # def _calcLsstCamOpdEffFwhm(self, pssnList):
- #        """Calculate the LsstCam effective FWHM of OPD.
+    def _calcLsstFamCamOpdEffFwhm(self, pssnList):
+        """Calculate the LsstFamCam effective FWHM of OPD.
 
- #        LsstCam: WFS sensors
- #        FWHM: Full width and half maximum.
- #        PSSN: Normalized point source sensitivity.
- #        GQ: Gaussian quadrature.
+        LsstCam: The LSST full array mode camera,
+            with OPD calculated in 31 locations 
+            specified by self.metr.setDefaultLsstGQ()
+        FWHM: Full width and half maximum.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
 
- #        Parameters
- #        ----------
- #        pssnList : list of PSSN.
+        Parameters
+        ----------
+        pssnList : list of PSSN.
 
- #        Returns
- #        -------
- #        list
- #            Effective FWHM list.
- #        float
- #            GQ effective FWHM of ComCam.
- #        """
+        Returns
+        -------
+        list
+            Effective FWHM list.
+        float
+            GQ effective FWHM of ComCam.
+        """
 
- #        # Calculate the list of effective FWHM
- #        effFwhmList = []
- #        for pssn in pssnList:
- #            effFwhm = self.metr.calcFWHMeff(pssn)
- #            effFwhmList.append(effFwhm)
+        # Calculate the list of effective FWHM
+        effFwhmList = []
+        for pssn in pssnList:
+            effFwhm = self.metr.calcFWHMeff(pssn)
+            effFwhmList.append(effFwhm)
 
- #        # Calculate the GQ effectice FWHM
- #        self._setLsstCamWgtRatio()
- #        gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
+        # Calculate the GQ effectice FWHM
+        #self._setLsstCamWgtRatio() # this is already done step above in 
+        # _calcLsstFamCamOpdPssn()
+        # by calling (again)
+        # self.metr.setDefaultLsstGQ()  
+        gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
 
- #        return effFwhmList, gqEffFwhm
+        return effFwhmList, gqEffFwhm
 
 
     def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList):
