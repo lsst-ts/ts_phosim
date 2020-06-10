@@ -21,64 +21,6 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
-class AnalysisPhosimCmpt(PhosimCmpt):
-
-    def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
-        """Write the OPD in zk file.
-        OPD: optical path difference.
-        Parameters
-        ----------
-        zkFileName : str
-            OPD in zk file name.
-        rotOpdInDeg : float
-            Rotate OPD in degree in the counter-clockwise direction.
-        """
-
-        testOutputDir = os.environ["closeLoopTestDir"]
-        filePath = os.path.join(testOutputDir, zkFileName)
-        opdData = self._mapOpdToZk(rotOpdInDeg)
-        header = "The followings are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
-            rotOpdInDeg)
-        np.savetxt(filePath, opdData, header=header)
-
-    def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
-                                zkFileName="wfs.zer"):
-        """Reorder the wavefront error in the wavefront error list according to
-        the reference sensor name list and save to a file.
-        The unexisted wavefront error will be a numpy zero array. The unit is
-        um.
-        Parameters
-        ----------
-        listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
-            List of SensorWavefrontData object.
-        refSensorNameList : list
-            Reference sensor name list.
-        zkFileName : str, optional
-            Wavefront error file name. (the default is "wfs.zer".)
-        """
-
-        # Get the sensor name that in the wavefront error map
-        wfErrMap = self._transListOfWfErrToMap(listOfWfErr)
-        nameListInWfErrMap = list(wfErrMap.keys())
-
-        # Reorder the wavefront error map based on the reference sensor name
-        # list.
-        reorderedWfErrMap = dict()
-        for sensorName in refSensorNameList:
-            if sensorName in nameListInWfErrMap:
-                wfErr = wfErrMap[sensorName]
-            else:
-                numOfZk = self.getNumOfZk()
-                wfErr = np.zeros(numOfZk)
-            reorderedWfErrMap[sensorName] = wfErr
-
-        # Save the file
-        testOutputDir = os.environ["closeLoopTestDir"]
-        filePath = os.path.join(testOutputDir, zkFileName)
-        wfsData = self._getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
-        header = "The followings are ZK in um from z4 to z22:"
-        np.savetxt(filePath, wfsData, header=header)
-
 class baseWfsWep():
 
     def main(self, phosimDir, numPro, iterNum, baseOutputDir, 
@@ -87,11 +29,13 @@ class baseWfsWep():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd', selectSensors = 'wfs'):
+            cmdSettingsFile='starBoWfsExample.cmd', 
+            instSettingFile='starBoWfsExample.inst',
+            selectSensors = 'wfs'):
 
         # get the list of sensors  - by default it's comCam...
         # sensorNameList = self._getComCamSensorNameList()
-
+        
         # # ... but it may be the wavefront sensing corner sensors ... 
         if selectSensors is 'wfs':
             sensorNameList = self._getWfsSensorNameList()
@@ -143,7 +87,12 @@ class baseWfsWep():
 
         tele = phosimCmpt.getTele()
 
-        # this step only possible for ComCam, where WepCalc 
+        # NOTE : this step:
+        
+        # defocalDisInMm = tele.getDefocalDistInMm()
+        # wepCalc.setDefocalDisInMm(defocalDisInMm)
+        
+        # is only possible for ComCam, where WepCalc 
         # is a nested instance of WEPCalculationOfComCam(WEPCalculationOfPiston),
         # WepCalculationOfPiston adds that method,
         # and WEPCalculationOfPiston(WEPCalculation)
@@ -151,8 +100,7 @@ class baseWfsWep():
         # WEPCalculationOfLsstCam(WEPCalculation),
         # so there is no such method 
 
-        #defocalDisInMm = tele.getDefocalDistInMm()
-        #wepCalc.setDefocalDisInMm(defocalDisInMm)
+
         print('\nPreparing OfcCalc')
         ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
@@ -169,44 +117,12 @@ class baseWfsWep():
         phosimCmpt.setDofInUm(state0)
 
 
-        # decide which args should be added to PhoSim 
-        # they are prepended 
-        # this applies both to OPD and to star image 
-
-        # just prepend the working directory by default 
-        argPrepend = '-w ' + baseOutputDir+ ' ' 
-       
-
-        # then prepend argument to run PhoSim only on R22 
-        # if selectSensors is 'comcam':  
-        #     rafts = ['22']
-        #     chips  = ['00','01','02', 
-        #               '10','11','12',
-        #               '20','21','22']
-        #     sensors = ''
-        #     for r in rafts:
-        #         for c in chips:
-        #             s = "R%s_S%s|"%(r,c) 
-        #             sensors += s 
-
-        if selectSensors is 'wfs':
-            sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
-            #rafts = ['00','04', '40', '44']
-            #chips  = ['00','01','02', 
-            #          '10','11','12',
-            #          '20','21','22']
-            
-
-        if selectSensors is not None: 
-            sensors = ' "%s" '%sensors # needed to pass the argument in 
-            # comment signs 
-            argPrepend +=  '-s ' + sensors+ ' '
-        print('PhoSim added argPrepend is %s'%argPrepend)
+     
 
 
         # Do the iteration
         obsId = 9006000
-        # opdZkFileName = str("opd.zer" + '.' + testName)
+        opdZkFileName = str("opd.zer" + '.' + testName)
         wfsZkFileName = str("wfs.zer" + '.' + testName)
         opdPssnFileName = "PSSN.txt"
         outputDirName = "pert"
@@ -233,7 +149,19 @@ class baseWfsWep():
             print('PhoSim outputImgDir is %s'%outputImgDir)
 
 
+           
+
+            # decide which args should be prepended to PhoSim 
+            # just prepend the working directory by default 
+            argPrepend = '-w ' + baseOutputDir+ ' ' 
+            print('PhoSim added argPrepend is %s'%argPrepend)
+
             # Generate the OPD image
+            # this makes iter0/img/opd_9006000_*.gz files,
+            # each contains 255x255 array characterizing OPD 
+            # in various locations (eg. for ComCam it was 
+            # 1 per CCD, so 9 files,   for LSST Full Array Mode Cam - 
+            # LsstFamCam, it is 31 locations in a ring, so 31 files )
             if genOpd is True:
                 
                 if selectSensors is 'comcam':
@@ -241,44 +169,56 @@ class baseWfsWep():
                          cmdSettingFileName=opdCmdSettingsFile)
                     
                 elif selectSensors is 'wfs':
-                    argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
+                    argString = phosimCmpt.getLsstFamCamOpdArgsAndFilesForPhoSim(
                         cmdSettingFileName=opdCmdSettingsFile)
 
                 argString = argPrepend + argString
-                #argString = '-w $AOCLCOUTPUTPATH ' + argString
+
                 print('Generating OPD with Phosim, argString is \n')
                 print(argString)
                 phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
-            # Do we need to  analyze the OPD data ? 
-            # --> only if need to compare to the WFS results ... 
-            # if selectSensors is 'comcam':
-            #     phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
-            #                                 pssnFileName=opdPssnFileName)
-            # elif selectSensors is 'wfs':
-            #     phosimCmpt.analyzeLsstCamOpdData(zkFileName=opdZkFileName,
-            #                                 pssnFileName=opdPssnFileName)
+
+            # --> this takes the iter0/img/opd_**.gz files 
+
+            # --> this makes the iter0/img/PSSN.txt  file that characterizes
+            #     the OPD in point source sensitivity  - it contains 
+            #     PSSN (one number per OPD file - for ComCam, it's 1 PSSN
+            #     per CCD) , and Gaussian Quadrature  - derived FWHM (1 per 
+            #     OPD file). 
+
+            # --> this makes the opd.zer.xxx that characterizes OPD in 
+            #     Zernikes  z4 to z22,  one row per input OPD file - for ComCam 
+            #     that's 9 rows (one per CCD) ,  but for LsstFamCam - 31 rows 
+
+
+            if selectSensors is 'comcam':
+                phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
+                                            pssnFileName=opdPssnFileName)
+            elif selectSensors is 'wfs':
+                phosimCmpt.analyzeLsstFamCamOpdData(zkFileName=opdZkFileName,
+                                            pssnFileName=opdPssnFileName)
 
             # Get the PSSN from file
-            # pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
-            # print("Calculated PSSN is %s." % pssn)
+            pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
+            print("Calculated PSSN is %s." % pssn)
 
             # # Get the GQ effective FWHM from file
-            # gqEffFwhm = phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
-            # print("GQ effective FWHM is %.4f." % gqEffFwhm)
+            gqEffFwhm = phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
+            print("GQ effective FWHM is %.4f." % gqEffFwhm)
 
-            # Set the FWHM data - can't do since they 
-            # haven't been calculated ... 
-            #listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
-            #                                opdPssnFileName, sensorNameList)
-            #ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
+            # Set the FWHM data
+            listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
+                                           opdPssnFileName, sensorNameList)
+            ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
             # Use the input sky catalog .... 
             skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
 
             # Output the sky information
-            skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName, skySim, wepCalc)
+            skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName, 
+                skySim, wepCalc)
 
             # Assign the entra- and intra-focal observation Id
             extraObsId = obsId + 1
@@ -287,17 +227,58 @@ class baseWfsWep():
             # Generate the defocal images
             simSeed = 1000
             if selectSensors is 'wfs':
-                # I actually don't see here anything specific to comCam.... 
+                # There is actually nothing (that I can see) that is comcam - specific
+                # here :  getComCamStarArgsAndFilesForPhoSim()
+                # it gets self.tele.getDefocalDistInMm()  
+
+                # We prepare OFC to be for LsstCam , 
+                # and we ensure that phosim  has setDofInUm() as ofcCalc
+                # thus I think that tele.getDefocalDistInMm() should have the 
+                # WFS corner sensors values ... 
+                
+                print('Using %s and %s for cmd and inst PhoSim files '%(cmdSettingsFile,
+                        instSettingFile))
                 argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
-                    extraObsId, intraObsId, skySim, simSeed=simSeed,
-                    cmdSettingFileName=comcamCmdSettingsFile,
-                instSettingFileName="starSingleExp.inst")
+                     extraObsId, intraObsId, skySim, simSeed=simSeed,
+                     cmdSettingFileName=cmdSettingsFile,
+                     instSettingFileName=instSettingFile)
+
+                # Note, at this point PhosimCmpt.py  uses TeleFacade.py  
+                # self.tele.writeStarInstFile() , which writes the 
+                # camera configuration parameter 
+                # camconfig  using the default 
+                # self.sensorOn = {"sciSensorOn": True,
+                #                  "wfSensorOn": True,
+                #                  "guidSensorOn": False} 
+                # i.e.  camconfig is 3, 
+                # unless self.tele.sensorOn['sciSensorOn'] = False 
+                # in which case camconfig is 2 ... 
+
 
             if genDefocalImg is True:
+
+                # for running PhoSim on the defocal image on the selected WFS sensors
+                # we prepend the sensors explicitly ... 
+
+                # start again - prepend the working directory first 
+                argPrepend = '-w ' + baseOutputDir+ ' ' 
+
+                # if selectSensors is 'wfs':
+                #     sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
+              
+
+                # if selectSensors is not None: 
+                #     sensors = ' "%s" '%sensors # needed to pass the argument in 
+                #     # comment signs 
+                #     argPrepend +=  '-s ' + sensors+ ' '
+
+                print('For generating defocal images with PhoSim, the argPrepend is ')
+                print(argPrepend)
+
+
                 for argString in argStringList:
-                    #argString = '-w $AOCLCOUTPUTPATH ' + argString
                     argString = argPrepend + argString
-                    print('Generating defocal images with Phosim\n')
+                    print('\n\nGenerating defocal images with Phosim, argString is ')
                     print(argString)
                     phosimCmpt.runPhoSim(argString)
 
@@ -322,14 +303,37 @@ class baseWfsWep():
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
+
+
+            # before ingesting images by WEP,  make sure that the previously ingested 
+            # ones are erased, especially in WFS-only mode !
+            ingestedDir = os.path.join(isrDir, 'raw')
+            if os.path.exists(ingestedDir):
+                print('Removing the previously ingested raw images directory  %s \
+                    before re-ingesting the images from iter0/img/...'%ingestedDir)
+                argString = '-rf %s/'%ingestedDir
+                runProgram("rm", argstring=argString)
+            
+            # also erase previously existing registry since this would mess the ingest process
+            registryFile= os.path.join(isrDir,'registry.sqlite3')
+            if os.path.exists(registryFile):
+                print('Removing image registry file  %s '%registryFile)
+                runProgram("rm", argstring=registryFile)
+
+
+
             # Calculate the wavefront error and DOF
+            if selectSensors is 'wfs' : 
+                sensorNameToIdFileName='sensorNameToIdWfs.yaml'
+            else:
+                sensorNameToIdFileName='sensorNameToId.yaml'
+            print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
+            
             listOfWfErr = wepCalc.calculateWavefrontErrors(
                 intraRawExpData, extraRawExpData=extraRawExpData,
-                postageImg=postageImg, postageImgDir = postageImgDir)
-
-            # We won't calculate corrections 
-            # since we 
-            #ofcCalc.calculateCorrections(listOfWfErr)
+                postageImg=postageImg, postageImgDir = postageImgDir,
+                sensorNameToIdFileName=sensorNameToIdFileName)
+            ofcCalc.calculateCorrections(listOfWfErr)
 
             # Record the wfs error with the same order as OPD for the comparison
             phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
@@ -347,10 +351,10 @@ class baseWfsWep():
             obsId += 10
 
         # Summarize the FWHM
-        #pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
+        # pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
         #            outputImgDirName, opdPssnFileName) for num in range(iterNum)]
-        #saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
-        #plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
+        # saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
+        # plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
 
     def _outputSkyInfo(self, outputDir, skyInfoFileName, skySim, wepCalc):
 
@@ -378,17 +382,7 @@ class baseWfsWep():
         return sensorNameList
     
     def _getWfsSensorNameList(self):
-        chips  = ['00','01','02', 
-              '10','11','12',
-              '20','21','22']
-        rafts = ['00','04', '40', '44']
-        sensors = []
-        for r in rafts:
-            for c in chips:
-                s = "R%s_S%s"%(r,c) 
-                sensors.append(s)
-
-        sensorNameList = sensors
+        sensorNameList = ["R00_S22","R04_S20","R44_S00","R40_S02"]
 
         return sensorNameList
 
@@ -448,7 +442,7 @@ class baseWfsWep():
         tele.setPhoSimDir(phosimDir)
 
         # Prepare the phosim component
-        phosimCmpt = AnalysisPhosimCmpt(tele)
+        phosimCmpt = PhosimCmpt(tele)
 
         # Set the telescope survey parameters
         boresight = (raInDeg, decInDeg)
@@ -475,23 +469,29 @@ class baseWfsWep():
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors):
-        
+        print('selectSensors is ',selectSensors, ',  setting ')
         if selectSensors is None: # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
+            print('WEPCalculationFactory.getCalculator(CamType.ComCam,...')
+
         elif selectSensors is 'wfs': # use LsstCam 
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
+            print('WEPCalculationFactory.getCalculator(CamType.LsstCam,...')
 
         wepCalc.setFilter(filterType)
         wepCalc.setBoresight(raInDeg, decInDeg)
         wepCalc.setRotAng(rotAngInDeg)
 
-        if (isEimg):
+        if (isEimg):  # amp by default 
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
 
-        if (doDeblending):
+        if (doDeblending): # True by default in the file 
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("doDeblending", "True") 
+        else: 
+            settingFile = wepCalc.getSettingFile()
+            settingFile.updateSetting("doDeblending", "False") 
             
         if camDimOffset  is not None : 
             settingFile = wepCalc.getSettingFile()
