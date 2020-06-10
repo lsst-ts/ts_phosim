@@ -48,6 +48,7 @@ class createPhosimCatalog():
         metr = OpdMetrology()
 
         if selectSensors is 'comcam':
+            print('Adding stars to ComCam\n')
             metr.setDefaultComcamGQ()
         
             # here starSep is in percentage of ra span
