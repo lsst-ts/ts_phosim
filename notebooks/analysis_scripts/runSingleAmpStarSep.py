@@ -103,9 +103,11 @@ for starSep in np.arange(1,11)[::-1] :
     skyFilePath = os.path.join(topDir,expDir,'starCat_%d.txt'%starSep)
     print(skyFilePath)
     createCat = createPhosimCatalog()
-    createCat.createPhosimCatalog(numStars, starSep, magList,skyFilePath,numFields=numFields,
-                                 addStarsInAmp=True)
-
+    createCat.createPhosimCatalog(outputFilePath=skyFilePath,
+                                  numStars=numStars, numFields=numFields,
+                                  addStarsInAmp=True, starSep=starSep, 
+                                  magList=magList, selectSensors='comcam' ) 
+                        
     # #initialize the baseComcamLoop.py Class 
     ccLoop = comcamLoop() 
 
