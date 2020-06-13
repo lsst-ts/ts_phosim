@@ -280,9 +280,12 @@ def sepInPercToRadii(sepInPerc):
 
 
 def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=2,
-                     cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],sepInRadii=3
+                     cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],sepInPerc=3
                      ):
 
+    sepInRadii = sepInPercToRadii(sepInPerc)
+    print(sepInRadii)
+    
     imgType = ['singleSciImg','imgDeblend_full', 'imgDeblend_resized']
     postage_dir = os.path.join(data_dir, 'postage')
     print('Using postage images from %s'%postage_dir)
@@ -318,6 +321,6 @@ def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=2,
     cbar = fig.colorbar(mappable, cax = cbar_ax,  orientation='horizontal')                    
     cbar.set_label(label='counts',weight='normal', fontsize=17)
 
-    fig.suptitle(suptitle)
+    fig.suptitle(suptitle, fontsize=17)
     plt.savefig('img_AOS_singleAmpSep_'+sensor+'_'+focalType+'_postageImg.png', 
                 bbox_inches='tight', dpi=100)
