@@ -392,6 +392,49 @@ class PhosimCmpt(object):
 
         return argString
 
+
+
+    def getLsstFamCamOpdArgsAndFilesForPhoSim(
+            self, cmdFileName="opd.cmd", instFileName="opd.inst",
+            logFileName="opdPhoSim.log", cmdSettingFileName="opdDefault.cmd",
+            instSettingFileName="opdDefault.inst"):
+        """Get the OPD calculation arguments and files of LsstFamCam for the PhoSim
+        calculation - it evaluates OPD in 31 locations 
+        in the focal plane 
+
+        OPD: optical path difference.
+        ComCam: commissioning camera.
+
+        Parameters
+        ----------
+        cmdFileName : str, optional
+            Physical command file name. (the default is "opd.cmd".)
+        instFileName : str, optional
+            OPD instance file name. (the default is "opd.inst".)
+        logFileName : str, optional
+            Log file name. (the default is "opdPhoSim.log".)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "opdDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "opdDefault.inst".)
+
+        Returns
+        -------
+        str
+            Arguments to run the PhoSim.
+        """
+
+        # Set the default LsstCam OPD field positions
+        self.metr.setDefaultLsstGQ()
+
+        argString = self._getOpdArgsAndFilesForPhoSim(
+            cmdFileName, instFileName, logFileName, cmdSettingFileName,
+            instSettingFileName)
+
+        return argString
+
+
     def _getOpdArgsAndFilesForPhoSim(self, cmdFileName, instFileName,
                                      logFileName, cmdSettingFileName,
                                      instSettingFileName):
@@ -670,7 +713,34 @@ class PhosimCmpt(object):
         """
 
         self._writeOpdZkFile(zkFileName, rotOpdInDeg)
-        self._writeOpdPssnFile(pssnFileName)
+        self._writeOpdPssnFile(pssnFileName, sensor='comcam')
+
+    def analyzeLsstFamCamOpdData(self, zkFileName="opd.zer",
+                             rotOpdInDeg=0.0,
+                             pssnFileName="PSSN.txt"):
+        """Analyze the LsstFamCam OPD data.
+
+        Rotate OPD to simulate the output by rotated camera. When analyzing the
+        PSSN, the unrotated OPD is used.
+
+        LsstFamCam: The LSST full array mode OPD, calculated in 31 locations 
+            specified by metr.setDefaultLsstGQ()
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+
+        Parameters
+        ----------
+        zkFileName : str, optional
+            OPD in zk file name. (the default is "opd.zer".)
+        rotOpdInDeg : float, optional
+            Rotate OPD in degree in the counter-clockwise direction. (the
+            default is 0.0.)
+        pssnFileName : str, optional
+            PSSN file name. (the default is "PSSN.txt".)
+        """
+
+        self._writeOpdZkFile(zkFileName, rotOpdInDeg)
+        self._writeOpdPssnFile(pssnFileName,sensor='LsstFamCam')
 
     def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
         """Write the OPD in zk file.
@@ -682,12 +752,12 @@ class PhosimCmpt(object):
         zkFileName : str
             OPD in zk file name.
         rotOpdInDeg : float
-            Rotate OPD in degree in the counter-clockwise direction.
+            Rotate OPD in degrees in the counter-clockwise direction.
         """
 
         filePath = os.path.join(self.outputImgDir, zkFileName)
         opdData = self._mapOpdToZk(rotOpdInDeg)
-        header = "The followings are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
+        header = "The following are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
             rotOpdInDeg)
         np.savetxt(filePath, opdData, header=header)
 
@@ -786,7 +856,7 @@ class PhosimCmpt(object):
 
         return fileList
 
-    def _writeOpdPssnFile(self, pssnFileName):
+    def _writeOpdPssnFile(self, pssnFileName,sensor='comcam'):
         """Write the OPD PSSN in file.
 
         OPD: Optical path difference.
@@ -800,11 +870,20 @@ class PhosimCmpt(object):
 
         filePath = os.path.join(self.outputImgDir, pssnFileName)
 
-        # Calculate the PSSN
-        pssnList, gqEffPssn = self._calcComCamOpdPssn()
+        if sensor is 'comcam':
+            # Calculate the PSSN
+            pssnList, gqEffPssn = self._calcComCamOpdPssn()
 
-        # Calculate the FWHM
-        effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
+            # Calculate the FWHM
+            effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
+
+        elif sensor is 'LsstFamCam':
+            # Calculate the PSSN
+            pssnList, gqEffPssn = self._calcLsstFamCamOpdPssn()
+
+            # Calculate the FWHM
+            effFwhmList, gqEffFwhm = self._calcLsstFamCamOpdEffFwhm(pssnList)
+             
 
         # Append the list to write the data into file
         pssnList.append(gqEffPssn)
@@ -814,7 +893,7 @@ class PhosimCmpt(object):
         data = np.vstack((pssnList, effFwhmList))
 
         # Write to file
-        header = "The followings are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
+        header = "The following are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
         np.savetxt(filePath, data, header=header)
 
     def _calcComCamOpdPssn(self):
@@ -847,6 +926,47 @@ class PhosimCmpt(object):
 
         return pssnList, gqEffPssn
 
+    def _calcLsstFamCamOpdPssn(self):
+        """Calculate the LsstFamCam PSSN from OPD.
+
+        LsstCam: The The LSST full array mode camera,
+            with OPD calculated in 31 locations 
+            specified by metr.setDefaultLsstGQ()
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
+
+        Returns
+        -------
+        list
+            PSSN list.
+        float
+            GQ effective PSSN.
+        """
+
+        opdFileList = self._getOpdFileInDir(self.outputImgDir)
+
+        wavelengthInUm = self.tele.getRefWaveLength() * 1e-3
+        pssnList = []
+        for opdFile in opdFileList:
+            pssn = self.metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFile)
+            pssnList.append(pssn)
+
+        # Calculate the GQ effectice PSSN
+        # part of that is  self.setWeightingRatio(wt)
+        # it was already called when setting up PhosimCmpt
+        # but setting weighting ratio explicitly here 
+        # won't hurt 
+        # otherwise the _setComCamWgtRatio() here 
+        # is completely obsolete if self.metr.setDefaultComcamGQ()
+        # is always called as part of 
+        # getComCamOpdArgsAndFilesForPhoSim() above...
+        self.metr.setDefaultLsstGQ() 
+        gqEffPssn = self.metr.calcGQvalue(pssnList)
+
+        return pssnList, gqEffPssn
+    
+
     def _setComCamWgtRatio(self):
         """Set the ComCam weighting ratio.
 
@@ -855,6 +975,7 @@ class PhosimCmpt(object):
 
         comcamWtRatio = np.ones(9)
         self.metr.setWeightingRatio(comcamWtRatio)
+
 
     def _calcComCamOpdEffFwhm(self, pssnList):
         """Calculate the ComCam effective FWHM of OPD.
@@ -888,6 +1009,44 @@ class PhosimCmpt(object):
         gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
 
         return effFwhmList, gqEffFwhm
+
+    def _calcLsstFamCamOpdEffFwhm(self, pssnList):
+        """Calculate the LsstFamCam effective FWHM of OPD.
+
+        LsstCam: The LSST full array mode camera,
+            with OPD calculated in 31 locations 
+            specified by self.metr.setDefaultLsstGQ()
+        FWHM: Full width and half maximum.
+        PSSN: Normalized point source sensitivity.
+        GQ: Gaussian quadrature.
+
+        Parameters
+        ----------
+        pssnList : list of PSSN.
+
+        Returns
+        -------
+        list
+            Effective FWHM list.
+        float
+            GQ effective FWHM of ComCam.
+        """
+
+        # Calculate the list of effective FWHM
+        effFwhmList = []
+        for pssn in pssnList:
+            effFwhm = self.metr.calcFWHMeff(pssn)
+            effFwhmList.append(effFwhm)
+
+        # Calculate the GQ effectice FWHM
+        #self._setLsstCamWgtRatio() # this is already done step above in 
+        # _calcLsstFamCamOpdPssn()
+        # by calling (again)
+        # self.metr.setDefaultLsstGQ()  
+        gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
+
+        return effFwhmList, gqEffFwhm
+
 
     def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList):
         """Map the OPD data to the list of wavefront error.

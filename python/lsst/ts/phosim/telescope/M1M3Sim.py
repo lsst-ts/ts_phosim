@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from scipy.interpolate import Rbf
 
 from lsst.ts.phosim.telescope.MirrorSim import MirrorSim
 
@@ -386,53 +385,25 @@ class M1M3Sim(MirrorSim):
         normY = by/R
 
         # Fit the bulk
-        tbdz = self._fitData(tx, ty, data[:, 2], normX, normY)
+        tbdz = self.fitData(tx, ty, data[:, 2], normX, normY)
 
         # Fit the x-grad
-        txdz = self._fitData(tx, ty, data[:, 3], normX, normY)
+        txdz = self.fitData(tx, ty, data[:, 3], normX, normY)
 
         # Fit the y-grad
-        tydz = self._fitData(tx, ty, data[:, 4], normX, normY)
+        tydz = self.fitData(tx, ty, data[:, 4], normX, normY)
 
         # Fit the z-grad
-        tzdz = self._fitData(tx, ty, data[:, 5], normX, normY)
+        tzdz = self.fitData(tx, ty, data[:, 5], normX, normY)
 
         # Fit the r-gradß
-        trdz = self._fitData(tx, ty, data[:, 6], normX, normY)
+        trdz = self.fitData(tx, ty, data[:, 6], normX, normY)
 
         # Get the temprature correction
         tempCorrInUm = m1m3TBulk*tbdz + m1m3TxGrad*txdz + m1m3TyGrad*tydz + \
             m1m3TzGrad*tzdz + m1m3TrGrad*trdz
 
         return tempCorrInUm
-
-    def _fitData(self, dataX, dataY, data, x, y):
-        """Fit the data by radial basis function.
-
-        Parameters
-        ----------
-        dataX : numpy.ndarray
-            Data x.
-        dataY : numpy.ndarray
-            Data y.
-        data : numpy.ndarray
-            Data to fit.
-        x : numpy.ndarray
-            x coordinate.
-        y : numpy.ndarray
-            y coordinate.
-
-        Returns
-        -------
-        numpy.ndarray
-            Fitted data.
-        """
-
-        # Construct the fitting model
-        rbfi = Rbf(dataX, dataY, data)
-
-        # Return the fitted data
-        return rbfi(x, y)
 
     def getMirrorResInMmInZemax(self, writeZcInMnToFilePath=None):
         """Get the residue of surface (mirror print along z-axis) in mm under

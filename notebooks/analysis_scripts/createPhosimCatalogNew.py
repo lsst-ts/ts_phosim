@@ -15,12 +15,13 @@ from lsst.ts.phosim.Utility import getAoclcOutputPath, getConfigDir
 
 class createPhosimCatalog():
 
-    def createPhosimCatalog(self, numStars, starMag, numFields, 
-                             outputFilePath,
-                             addStarsCcdEdge = True, 
+    def createPhosimCatalog(self,  outputFilePath, starMag=16, 
+                             numStars= 1,
+                             numFields=9,
+                             addStarsCcdEdge = False, 
                              addStarsInAmp = False,
-                             addStarsAcrossAmps = False,
-                             starSep = None, magList = None):
+                             starSep = None, magList = None,
+                             selectSensors='comcam'):
 
         """
         numStars: number of stars per field
@@ -41,45 +42,61 @@ class createPhosimCatalog():
         raInDeg = surveySettings.getSetting("raInDeg")
         decInDeg = surveySettings.getSetting("decInDeg")
         rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
-
-        ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg)
+     
+        ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
         skySim = SkySim()
         metr = OpdMetrology()
-        metr.setDefaultComcamGQ()
+
+        if selectSensors is 'comcam':
+            print('Adding stars to ComCam\n')
+            metr.setDefaultComcamGQ()
         
-        # here starSep is in percentage of ra span
-        if addStarsInAmp :  
-            print('Making single amp PhoSim cat\n')
-            skySim = self._addStarsInAmp(skySim, metr, numStars,
-                                     starSep, magList, numFields)
-
-
-        if addStarsCcdEdge:
-            print('Adding stars close to CCD edge\n')
-            skySim = self._addStarsCcdEdge(skySim, metr, numStars,
-                starMag, numFields)
+            # here starSep is in percentage of ra span
+            if addStarsInAmp :  
+                print('Making single amp PhoSim cat\n')
+                skySim = self._addStarsInAmp(skySim, metr, numStars,
+                                         starSep, magList, numFields)
+            if addStarsCcdEdge:
+                print('Adding stars close to CCD edge\n')
+                skySim = self._addStarsCcdEdge(skySim, metr, numStars,
+                    starMag, numFields)
             
-
-        # here starSep is in number of amps separating the stars: 
-        # minimum is 1, maximum is 7 
-        # unlike _addStarsInField()
-        # this ensures that the stars do not get created  on the 
-        # amplifier edges 
-        elif addStarsAcrossAmps:
-            skySim = self._addStarsAcrossAmps(skySim, metr, numStars,
-                                     starSep, magList, numFields)
+        elif selectSensors is 'wfs':
+            print('Adding stars on positions of WFS sensors\n')
+            skySim = self._addStarsWfsSensors(skySim,metr,starMag)
 
         skySim.exportSkyToFile(outputFilePath)
 
 
-    def _prepareOfcCalc(self, filterType, rotAngInDeg):
+    def _prepareOfcCalc(self, filterType, rotAngInDeg,selectSensors):
+        if selectSensors is 'comcam':
+            ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
+        elif selectSensors is 'wfs':
+            ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
 
-        ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
         ofcCalc.setFilter(filterType)
         ofcCalc.setRotAng(rotAngInDeg)
         ofcCalc.setGainByPSSN()
 
         return ofcCalc
+    
+    def _addStarsWfsSensors(self, skySim, opdMetr, starMag):
+
+        raWfsDegList,  declWfsDegList = opdMetr.getDefaultLsstWfsGQ()
+        raCatalog = []
+        decCatalog = []
+        for ra,dec in zip(raWfsDegList, declWfsDegList):     
+            if ra< 0:
+                ra += 360.0
+            raCatalog.append(ra)
+            decCatalog.append(dec)
+
+        for i in range(len(raCatalog)):
+            starId = i 
+            skySim.addStarByRaDecInDeg(starId, raCatalog[i],
+                           decCatalog[i], starMag)
+
+        return skySim
 
 
     def _addStarsCcdEdge(self, skySim, opdMetr, numStars=5, 
