@@ -74,7 +74,7 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = 'R22',
 
 
 
-def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00', obsId=9006002):
+def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00'):
     ''' Read the centroid file info 
 
     Parameters:
@@ -89,18 +89,23 @@ def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00', obs
     centFlag:  a flag that is False if the file is not found , True  otherwise
     '''
     # read centroid info 
-    centr_dir = os.path.join(data_dir, 'iter0','img',focalType)
+    centr_dir = os.path.join(data_dir, 'iter0','img',focalType)      
     print('Reading centroid files from %s'%centr_dir)
-    fname = 'centroid_lsst_e_%d_f1_%s_%s_E000.txt'%(obsId,raft,detector)
-    path = os.path.join(centr_dir,fname)
-    try:
-        print('Using  %s'%fname)
-        centroid = Table.read(centr_dir+'/'+fname, format='ascii')
-        centFlag = True
-    except FileNotFoundError as fnf_error:
-        print(fnf_error)
-        centFlag = False
-        centroid = []
+    print('The following files are available:')
+    raft = 'R22'; detector = 'S00'
+    pattern = 'centroid_lsst_'
+    word = '%s_%s'%(raft,detector)
+    for x in os.listdir(centr_dir):
+        if x.startswith(pattern): 
+            print(x)
+            loc = x.find(word)
+            if loc>0:
+                fname = x 
+    print('Using %s '%fname)
+
+    centroid = Table.read(centr_dir+'/'+fname, format='ascii')
+    centFlag = True
+   
     return centroid, centFlag    
 
 def readPostageStars(data_dir, ):
