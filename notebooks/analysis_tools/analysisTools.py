@@ -74,7 +74,7 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = 'R22',
 
 
 
-def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00'):
+def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00', obsId=9006002):
     ''' Read the centroid file info 
 
     Parameters:
@@ -118,7 +118,7 @@ def readPostageStars(data_dir, ):
 
 # helper funtion for the colorbar 
 # from https://joseph-long.com/writing/colorbars/
-def colorbar(mappable):
+def colorbar(mappable,ax):
     last_axes = plt.gca()
     fig = ax.figure
     divider = make_axes_locatable(ax)
@@ -149,7 +149,7 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
 
     '''
     
-    if not ax:
+    if ax is None:
         fig, ax = plt.subplots(1,1,figsize=(10,10))
         
     # plot the image 
@@ -163,7 +163,7 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
     
         img = ax.imshow(plottable,# vmin = 2.45, vmax=2.75,
                   origin='lower')
-        cbar= colorbar(mappable=img)
+        cbar= colorbar(mappable=img, ax=ax)
         cbar.set_label(label=cbar_label, weight='normal', )
         ax.set_xlabel('x [px]')
         ax.set_ylabel('y [px]')
@@ -211,8 +211,8 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
     
     
     
-def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, xlims=[1525,2025], ylims=[750,1250],
-                      sensor = 'R22_S00'):
+def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, testLabel='sep', xlims=[1525,2025], ylims=[750,1250],
+                      sensor = 'R22_S00', savefig=True, magPrimary=16, mag=15):
     '''  Function to plot both rms zernike errors and CCD image as a two-panel plot,
     restricting the CCD image to show only the relevant donut 
     
@@ -230,9 +230,24 @@ def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, xlims=[1525,2025], ylims=
 
     fig, ax = plt.subplots(1,2,figsize=(16,6))
     
-    sepInRadii = sepInPercToRadii(sepInPerc)
     
-    
+    figtitle = 'img_AOS_'
+    if testLabel is 'sep':
+        sepInRadii = sepInPercToRadii(sepInPerc)
+        print(sepInRadii)
+        suptitle += 'sep=%.1f donut radii'%sepInRadii
+        figtitle += 'singleAmpSep_'
+        
+    if testLabel is 'mag':
+        suptitle += r'$\Delta =%d$ mag' % (magPrimary-mag)
+        figtitle += 'singleAmpMag_'
+        
+    if testLabel is 'gaia':
+        suptitle += 'GAIA DR2'
+        figtitle += 'gaia_'
+        
+    figtitle += sensor+'_'+focalType+'_ZerCCD.png'
+        
     if np.shape(rmsErrors)[0] == 19 : 
         ax[0].plot(np.arange(19)+4, rmsErrors, 
          '-o', lw=3, )# color = cmap(colors[i]))
@@ -240,9 +255,8 @@ def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, xlims=[1525,2025], ylims=
         print('Need the Zernike rms errors to be an array with 19 elements')
 
     ax[0].set_xlabel('Zernike Number', size=18)
-    ax[0].set_ylabel('RMS WFS vs OPD (microns)', size=18)
-    ax[0].set_title('%s, Star Sep = %.1f radii' % (sensor,sepInRadii), 
-                    size=18)
+    ax[0].set_ylabel('RMS WFS vs OPD (microns)', size=18)  
+    ax[0].set_title(suptitle,  size=18)
 
     # plot the postage stamp
     img = ax[1].imshow(np.log10(image[ymin:ymax, xmin:xmax]), vmin = 0.01,
@@ -254,7 +268,8 @@ def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, xlims=[1525,2025], ylims=
     ax[1].set_ylabel('y [px]')
     ax[1].set_title('postISR image')
     plt.tight_layout()
-    plt.savefig('img_AOS_singleAmpSep_postIsr_sep%d.png'%sepInPerc,
+    if savefig:
+        plt.savefig(figtitle,
                 bbox_inches='tight', dpi=150)
 
     
@@ -280,17 +295,35 @@ def sepInPercToRadii(sepInPerc):
 
 
 def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=2,
-                     cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],sepInPerc=3
+                     cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],sepInPerc=3, testLabel='sep',
+                      magPrimary=16, mag = 15
                      ):
 
-    sepInRadii = sepInPercToRadii(sepInPerc)
-    print(sepInRadii)
+    
     
     imgType = ['singleSciImg','imgDeblend_full', 'imgDeblend_resized']
     postage_dir = os.path.join(data_dir, 'postage')
     print('Using postage images from %s'%postage_dir)
-    suptitle = '%s %s-focal, sep=%.1f donut radii'%(sensor,focalType,sepInRadii)
-     
+    
+    suptitle = '%s %s-focal, '%(sensor,focalType)
+    figtitle = 'img_AOS_'
+    
+    if testLabel is 'sep':
+        sepInRadii = sepInPercToRadii(sepInPerc)
+        print(sepInRadii)
+        suptitle += 'sep=%.1f donut radii'%sepInRadii
+        figtitle += 'singleAmpSep_'
+        
+    if testLabel is 'mag':
+        suptitle += r'$\Delta =%d$ mag' % (magPrimary-mag)
+        figtitle += 'singleAmpMag_'
+        
+    if testLabel is 'gaia':
+        suptitle += 'GAIA DR2'
+        figtitle += 'gaia_'
+        
+    figtitle += sensor+'_'+focalType+'_postageImg.png'
+    
     fig,ax = plt.subplots(Nstars,len(imgType),figsize=(12,4*Nstars))
 
     for col in range(len(imgType)): # columns : each imgType is one column 
@@ -322,5 +355,5 @@ def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=2,
     cbar.set_label(label='counts',weight='normal', fontsize=17)
 
     fig.suptitle(suptitle, fontsize=17)
-    plt.savefig('img_AOS_singleAmpSep_'+sensor+'_'+focalType+'_postageImg.png', 
+    plt.savefig(figtitle, 
                 bbox_inches='tight', dpi=100)
