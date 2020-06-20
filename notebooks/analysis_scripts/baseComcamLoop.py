@@ -23,80 +23,80 @@ from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 class baseComcamLoop():
 
-    def main(self, phosimDir, numPro, iterNum, baseOutputDir, 
+    def main(self, phosimDir, numPro, iterNum, baseOutputDir,
             testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
-            surveyFilter=None, starMag=15, 
+            surveyFilter=None, starMag=15,
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
             comcamCmdSettingsFile='starDefault.cmd', selectSensors = 'comcam',
             splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
-            templateType='model'):
+            centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage'):
         '''
         Code to run the full AOS loop on ComCam (or other sensors)
 
         Parameters:
         ------------
-        phosimDir : str, a directory with phosim.py,  returned by 
-            lsst.ts.phosim.Utility.getPhoSimPath . For UW, it is 
+        phosimDir : str, a directory with phosim.py,  returned by
+            lsst.ts.phosim.Utility.getPhoSimPath . For UW, it is
             '/epyc/projects/lsst_comm/phosim_syseng4/'
-        numPro : int , 10 by default - number of processors used for 
+        numPro : int , 10 by default - number of processors used for
             parallel calculation by PhoSim
             NB. - since each raytrace is itself massively parallel, using eg. 10
             cores may use 35 in effect (%use often shows eg. 350% per CPU...)
 
-        baseOutputDir: str, the base output directory path for all output, eg. 
+        baseOutputDir: str, the base output directory path for all output, eg.
             'results_gaia/gMagGt11_w_2020_15_test'
         testName: str , a label for the test appended to wfs.zer , opd.zer  files,
-             eg 'gaia' yields  `wfs.zer.gaia',  'opd.zer.gaia'.... 
-        
-        genOpd: boolean,  True/False  - whether to generate the Optical 
+             eg 'gaia' yields  `wfs.zer.gaia',  'opd.zer.gaia'....
+
+        genOpd: boolean,  True/False  - whether to generate the Optical
             Path Difference files, in  /iter0/img/opd_9006000_*.fits.gz
-        genDefocalImg: boolean,  True/False  - whether to generate with PhoSim 
+        genDefocalImg: boolean,  True/False  - whether to generate with PhoSim
             the defocal images, in /iter0/img/extra/   /intra/
-        genFlats: boolean,  True/False  - whether to generate with PhoSim the 
+        genFlats: boolean,  True/False  - whether to generate with PhoSim the
             calibration files, in /fake_flats/
 
-        inputSkyFilePath: str, path to the input star catalog (with 
-            ID | RA | DEC |  MAG  ),  eg.  '/results_gaia/starCatalog.txt'  
-        postageImg: bool, True by default  - whether to save postage stamp 
-            images of stars during the ts_wep  calcuation of wavefront error. 
+        inputSkyFilePath: str, path to the input star catalog (with
+            ID | RA | DEC |  MAG  ),  eg.  '/results_gaia/starCatalog.txt'
+        postageImg: bool, True by default  - whether to save postage stamp
+            images of stars during the ts_wep  calcuation of wavefront error.
             They are saved in eg.  /results_gaia/gMagGt11/postage/
 
-        opdCmdSettingsFile: str, name of .cmd setting file for PhoSim when 
-            simulating the OPD images, should be located in 
+        opdCmdSettingsFile: str, name of .cmd setting file for PhoSim when
+            simulating the OPD images, should be located in
             /ts_phosim/policy/cmdFile/
-        comcamCmdSettingsFile: str, name of .cmd setting file for PhoSim when 
-            simulating the comcam images, should be located in 
+        comcamCmdSettingsFile: str, name of .cmd setting file for PhoSim when
+            simulating the comcam images, should be located in
             /ts_phosim/policy/cmdFile/
 
         selectSensors: str, 'comcam'  for R22, or 'wfs' for corner wavefront sensors,
             a setting to pass explicitly to PhoSim  , also passed to _prepareOfcCalc,
-            _prepareWepCalc  
-        splitWfsByMag: bool, whether to calculate the wfs for subsets of stars 
-            based on magnitude ranges, or not 
+            _prepareWepCalc
+        splitWfsByMag: bool, whether to calculate the wfs for subsets of stars
+            based on magnitude ranges, or not
 
         Parameters changing    ts_wep/policy/default.yaml  :
         --------------------------------------------------
-        doDeblending : bool,  True by default 
-        camDimOffset : -150 , offset that is used to ignore stars that are that 
-            close to the CCD edge 
+        doDeblending : bool,  True by default
+        camDimOffset : -150 , offset that is used to ignore stars that are that
+            close to the CCD edge
         deblendDonutAlgo : str, a deblending algorithm to use if doDeblending=True,
             currently 'adapt' (old, pre-2020) or 'convolveTemplate' (new, May2020)
         templateType: str, which type of template to use with new centroid algorithms,
-            'model', or 'phosim' 
+            'model', or 'phosim'
 
         Parameters not often changed (legacy):
         --------------------------------------
-        starMag: int, a magnitude of a test star, if there isn't a catalog of 
+        starMag: int, a magnitude of a test star, if there isn't a catalog of
             sources provided
         iterNum: int, number of iterations - 1 by default ... I've never changed that
-        m1m3ForceError: int, 0.05 by default (why?) 
-        isEimg: bool, False by default - whether to make an electronic or amplifier 
-                image. 
-        surveyFilter: str, by default: None, which defaults to g-filter as 
-            defined in PhoSim  surveySettings.yaml  file (in /ts_phosim/policy/ ) 
-        useMinDofIdx: bool, True by default - whether to only use 10 hexapod 
+        m1m3ForceError: int, 0.05 by default (why?)
+        isEimg: bool, False by default - whether to make an electronic or amplifier
+                image.
+        surveyFilter: str, by default: None, which defaults to g-filter as
+            defined in PhoSim  surveySettings.yaml  file (in /ts_phosim/policy/ )
+        useMinDofIdx: bool, True by default - whether to only use 10 hexapod
             positions and first 3 bending modes of M1M3 and M2
 
 
@@ -105,14 +105,15 @@ class baseComcamLoop():
         # get the list of sensors  - by default it's comCam...
         sensorNameList = self._getComCamSensorNameList()
 
-        # ... but it may be the wavefront sensing corner sensors ... 
+        # ... but it may be the wavefront sensing corner sensors ...
         if selectSensors is 'wfs':
             sensorNameList = self._getWfsSensorNameList()
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             print('Making the calibration products ')
-            # by default only make calibs for comcam 
+            # by default only make calibs for comcam
+
             if selectSensors is 'comcam':
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
@@ -155,7 +156,8 @@ class baseComcamLoop():
         print('Preparing the wepCalc component ')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
-                                selectSensors,deblendDonutAlgo,templateType)
+                                selectSensors,deblendDonutAlgo,centroidTemplateType,
+                                deblendTemplateType)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -165,8 +167,8 @@ class baseComcamLoop():
         ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
         # Ingest the calibration products (only for the amplifier images)
-        # this step executes  
-        # xxx 
+        # this step executes
+        # xxx
         if ((not isEimg) & (genFlats is True)):
             print('Ingesting calibration products')
             wepCalc.ingestCalibs(fakeFlatDir)
@@ -181,10 +183,11 @@ class baseComcamLoop():
         phosimCmpt.setDofInUm(state0)
 
 
-        # decide which args should be added to PhoSim 
-        # they are prepended  - we add only working dir at this point 
-        # just prepend the working directory by default 
-        argPrepend = '-w ' + baseOutputDir+ ' ' 
+        # decide which args should be added to PhoSim
+        # they are prepended  - we add only working dir at this point
+        # just prepend the working directory by default
+        argPrepend = '-w ' + baseOutputDir+ ' '
+
         print('PhoSim added argPrepend is %s'%argPrepend)
 
 
@@ -206,7 +209,7 @@ class baseComcamLoop():
             # The iteration directory
             iterDirName = "%s%d" % (iterDefaultDirName, iterCount)
 
-            # Set the output directory :   iter0/pert 
+            # Set the output directory :   iter0/pert
             outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
             phosimCmpt.setOutputDir(outputDir)
             print('PhoSim outputDir is %s'%outputDir)
@@ -220,12 +223,12 @@ class baseComcamLoop():
 
             # Generate the OPD image
             if genOpd is True:
-                
+
                 if selectSensors is 'comcam':
                     argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                          cmdSettingFileName=opdCmdSettingsFile)
-                 
-                # for LsstFamCam   == science sensors 
+
+                # for LsstFamCam   == science sensors
                 elif selectSensors is 'wfs':
                     argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
                         cmdSettingFileName=opdCmdSettingsFile)
@@ -237,10 +240,11 @@ class baseComcamLoop():
                 phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
-            # this step creates iter0/img/PSSN.txt, 
-            # as well as opd.zer.xxx file 
-            # that describe the OPD 
+            # this step creates iter0/img/PSSN.txt,
+            # as well as opd.zer.xxx file
+            # that describe the OPD
             print('Analyzing the OPD data ')
+
             if selectSensors is 'comcam':
                 phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
                                             pssnFileName=opdPssnFileName)
@@ -272,7 +276,7 @@ class baseComcamLoop():
                 skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
 
             # Output the sky information
-            skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName, 
+            skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName,
                 skySim, wepCalc)
 
             # Assign the entra- and intra-focal observation Id
@@ -282,28 +286,28 @@ class baseComcamLoop():
             # Generate the defocal images
             if genDefocalImg is True:
 
-                # just prepend the working directory by default 
-                argPrepend = '-w ' + baseOutputDir+ ' ' 
-               
+                # just prepend the working directory by default
+                argPrepend = '-w ' + baseOutputDir+ ' '
 
-                # then prepend argument to run PhoSim only on R22 
-                # for defocal images 
-                if selectSensors is 'comcam':  
+
+                # then prepend argument to run PhoSim only on R22
+                # for defocal images
+                if selectSensors is 'comcam':
                     rafts = ['22']
-                    chips  = ['00','01','02', 
+                    chips  = ['00','01','02',
                               '10','11','12',
                               '20','21','22']
                     sensors = ''
                     for r in rafts:
                         for c in chips:
-                            s = "R%s_S%s|"%(r,c) 
-                            sensors += s 
+                            s = "R%s_S%s|"%(r,c)
+                            sensors += s
                     sensors = ' "%s" '%sensors
 
                 if selectSensors is 'wfs':
                     sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
 
-                if selectSensors is not None: 
+                if selectSensors is not None:
                     argPrepend +=  '-s ' + sensors+ ' '
 
                 print('PhoSim added argPrepend is %s'%argPrepend)
@@ -328,7 +332,7 @@ class baseComcamLoop():
                     phosimCmpt.repackageComCamAmpImgFromPhoSim()
 
             # Collect the defocal images
-            intraRawExpData = RawExpData()  
+            intraRawExpData = RawExpData()
 
             # it is iter0/img/intra/
             intraRawExpDir = os.path.join(outputImgDir,
@@ -341,9 +345,7 @@ class baseComcamLoop():
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
-
-
-            # before ingesting images by WEP,  make sure that the previously ingested 
+            # before ingesting images by WEP,  make sure that the previously ingested
             # ones are erased, especially in WFS-only mode !
             ingestedDir = os.path.join(isrDir, 'raw')
             if os.path.exists(ingestedDir):
@@ -351,24 +353,24 @@ class baseComcamLoop():
                     before re-ingesting the images from iter0/img/...'%ingestedDir)
                 argString = '-rf %s/'%ingestedDir
                 runProgram("rm", argstring=argString)
-            
+
             # also erase previously existing registry since this would mess the ingest process
             registryFile= os.path.join(isrDir,'registry.sqlite3')
             if os.path.exists(registryFile):
                 print('Removing image registry file  %s '%registryFile)
                 runProgram("rm", argstring=registryFile)
-            
 
-            if splitWfsByMag :  
+
+            if splitWfsByMag :
                 print('Running WFS ingest and ISR once in split-stars-by-mag mode ')
-                # an option to calculate WFS only 
-                # for stars of certain magnitude range  by 
+                # an option to calculate WFS only
+                # for stars of certain magnitude range  by
                 # feeding the mag limits explicitly ...
                 # Calculate the wavefront error and DOF
 
                 ##############################
                 #####   BEGIN PART 1    ######
-                # wepCalc.calculateWavefrontErrors() 
+                # wepCalc.calculateWavefrontErrors()
 
                 # first, ingest files just once ...
                 rawExpData = intraRawExpData
@@ -400,9 +402,9 @@ class baseComcamLoop():
 
                     #############################
                     #####   BEGIN PART 2   ######
-                    # wepCalc.calculateWavefrontErrors() 
+                    # wepCalc.calculateWavefrontErrors()
                     # Get the target stars map neighboring stars
-                    neighborStarMap = wepCalc._getTargetStar(lowMagnitude=lowMagnitude, 
+                    neighborStarMap = wepCalc._getTargetStar(lowMagnitude=lowMagnitude,
                                                           highMagnitude=highMagnitude)
 
                     # Calculate the wavefront error
@@ -423,14 +425,14 @@ class baseComcamLoop():
                     ###########################
 
                     ofcCalc.calculateCorrections(listOfWfErr)
-              
+
                     zkFilenameAppend  = str(lowMagnitude)+'-'+str(highMagnitude)
-                    
+
                     # Record the wfs error with the same order as OPD for the comparison
                     phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
                                                    zkFileName=wfsZkFileName+zkFilenameAppend)
-            
-            else: # the original code ... 
+
+            else: # the original code ...
                 print('Calculating the wavefront error ')
                   # Calculate the wavefront error and DOF
                 listOfWfErr = wepCalc.calculateWavefrontErrors(
@@ -443,7 +445,7 @@ class baseComcamLoop():
                                                zkFileName=wfsZkFileName)
 
 
-           
+
 
             # Set the new aggregated DOF to phosimCmpt
             dofInUm = ofcCalc.getStateAggregated()
@@ -475,18 +477,18 @@ class baseComcamLoop():
         #sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10", "R22_S11",
         #                "R22_S12", "R22_S20", "R22_S21", "R22_S22"]
 
-        chips  = ['00','01','02', 
+        chips  = ['00','01','02',
               '10','11','12',
               '20','21','22']
         rafts = ['22']
         sensors = []
         for r in rafts:
             for c in chips:
-                s = "R%s_S%s"%(r,c) 
+                s = "R%s_S%s"%(r,c)
                 sensors.append(s)
         sensorNameList = sensors
         return sensorNameList
-    
+
     def _getWfsSensorNameList(self):
         sensorNameList = ["R00_S22","R04_S20","R44_S00","R40_S02"]
 
@@ -537,7 +539,7 @@ class baseComcamLoop():
         command = "makeGainImages.py"
         argstring = "--detector_list %s" % detector
         runProgram(command, argstring=argstring)
-        
+
 
     def _preparePhosimCmpt(self, phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
                         numPro, isEimg, m1m3ForceError):
@@ -576,11 +578,11 @@ class baseComcamLoop():
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
-                        templateType):
-        
+                        centroidTemplateType, deblendTemplateType):
+
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
-        elif selectSensors is 'wfs': # use LsstCam 
+        elif selectSensors is 'wfs': # use LsstCam
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
 
         wepCalc.setFilter(filterType)
@@ -593,15 +595,17 @@ class baseComcamLoop():
 
         if (doDeblending):
             settingFile = wepCalc.getSettingFile()
-            settingFile.updateSetting("doDeblending", "True") 
+            settingFile.updateSetting("doDeblending", "True")
             settingFile.updateSetting("deblendDonutAlgo",deblendDonutAlgo)
-            settingFile.updateSetting("templateType", templateType)
+            settingFile.updateSetting("centroidTemplateType", centroidTemplateType)
+            settingFile.updateSetting("deblendTemplateType", deblendTemplateType)
             print('Using following settings in ts_wep/policy/default.yaml:')
             print("doDeblending:  True")
             print("deblendDonutAlgo: %s"%deblendDonutAlgo)
-            print("templateType: %s"%templateType)
+            print("centroidTemplateType: %s"%centroidTemplateType)
+            print("deblendTemplateType: %s"%deblendTemplateType)
 
-        if camDimOffset  is not None : 
+        if camDimOffset  is not None :
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("camDimOffset", camDimOffset)
             print('camDimOffset is ', settingFile.getSetting("camDimOffset"))
@@ -614,7 +618,7 @@ class baseComcamLoop():
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-        elif selectSensors is 'wfs': # use LsstCam 
+        elif selectSensors is 'wfs': # use LsstCam
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
 
         ofcCalc.setFilter(filterType)
