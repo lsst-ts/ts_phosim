@@ -24,12 +24,15 @@ from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 class baseComcamLoop():
 
     def main(self, phosimDir, numPro, iterNum, baseOutputDir,
-            testName, isEimg=False, genOpd=True, genDefocalImg=True, genFlats=True,
+            testName, isEimg=False, genOpd=True, genDefocalImg=True, 
+            genFocalImg =True, genFlats=True,
             surveyFilter=None, starMag=15,
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd', selectSensors = 'comcam',
+            comcamCmdSettingsFile='starDefault.cmd', 
+            instSettingFileName='starSingleExp.inst',
+            selectSensors = 'comcam',
             splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage'):
         '''
@@ -53,7 +56,9 @@ class baseComcamLoop():
         genOpd: boolean,  True/False  - whether to generate the Optical
             Path Difference files, in  /iter0/img/opd_9006000_*.fits.gz
         genDefocalImg: boolean,  True/False  - whether to generate with PhoSim
-            the defocal images, in /iter0/img/extra/   /intra/
+            the defocal images, in /iter0/img/extra/  and  iter0/img/intra/
+        genFocalImg: boolean, True/False  - whether to generate with PhoSim
+            the in-focus images, in /iter0/img/focal/   
         genFlats: boolean,  True/False  - whether to generate with PhoSim the
             calibration files, in /fake_flats/
 
@@ -69,7 +74,8 @@ class baseComcamLoop():
         comcamCmdSettingsFile: str, name of .cmd setting file for PhoSim when
             simulating the comcam images, should be located in
             /ts_phosim/policy/cmdFile/
-
+        instSettingFileName : str, name of .inst setting file for PhoSim when 
+            simulating images, should be located in /ts_phosim/policy/instFile/
         selectSensors: str, 'comcam'  for R22, or 'wfs' for corner wavefront sensors,
             a setting to pass explicitly to PhoSim  , also passed to _prepareOfcCalc,
             _prepareWepCalc
@@ -280,9 +286,10 @@ class baseComcamLoop():
                 skySim, wepCalc)
 
             # Assign the entra- and intra-focal observation Id
+            focalObsId = obsId
             extraObsId = obsId + 1
             intraObsId = obsId + 2
-
+            
             # Generate the defocal images
             if genDefocalImg is True:
 
@@ -317,7 +324,7 @@ class baseComcamLoop():
                 argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
                   extraObsId, intraObsId, skySim, simSeed=simSeed,
                   cmdSettingFileName=comcamCmdSettingsFile,
-                  instSettingFileName="starSingleExp.inst")
+                  instSettingFileName=instSettingFileName)
 
                 for argString in argStringList:
                     argString = argPrepend + argString
@@ -344,6 +351,71 @@ class baseComcamLoop():
             extraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
+
+
+
+            if genFocalImages is True : 
+
+               # just prepend the working directory by default
+                argPrepend = '-w ' + baseOutputDir+ ' '
+
+
+                # then prepend argument to run PhoSim only on R22
+                # just in case some stars provided to PhoSim
+                # had streaks or extended 
+                if selectSensors is 'comcam':
+                    rafts = ['22']
+                    chips  = ['00','01','02',
+                              '10','11','12',
+                              '20','21','22']
+                    sensors = ''
+                    for r in rafts:
+                        for c in chips:
+                            s = "R%s_S%s|"%(r,c)
+                            sensors += s
+                    sensors = ' "%s" '%sensors
+
+                if selectSensors is not None:
+                    argPrepend +=  '-s ' + sensors+ ' '
+
+                print('PhoSim added argPrepend is %s'%argPrepend)
+
+
+                simSeed = 1000
+                argStringList = phosimCmpt.getComCamStarFocalPlaneArgsAndFilesForPhoSim(
+                  obsId, skySim, simSeed=simSeed,
+                  cmdSettingFileName=comcamCmdSettingsFile,
+                  instSettingFileName=instSettingFileName)
+
+                for argString in argStringList:
+                    argString = argPrepend + argString
+                    print('Generating focal plane images with Phosim\n')
+                    print(argString)
+                    phosimCmpt.runPhoSim(argString)
+
+                # Repackage the images : these are amp images 
+                # so  I only make a  function for amp images 
+                if isEimg:
+                    print("Repackaging function for in-focus e-images \
+                           doesn't exist yet")
+                    pass 
+                else: 
+                    phosimCmpt.repackageComCamAmpFocalImgFromPhoSim()
+
+
+            # Collect the in-focus images
+            focalRawExpData = RawExpData()
+
+            # it is iter0/img/focal/
+            focalRawExpDir = os.path.join(outputImgDir,
+                                        phosimCmpt.getFocalDirName())
+            focalRawExpData.append(obsId, 0, focalRawExpDir)
+
+           
+
+
+
+
 
             # before ingesting images by WEP,  make sure that the previously ingested
             # ones are erased, especially in WFS-only mode !
