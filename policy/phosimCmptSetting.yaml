@@ -13,6 +13,10 @@ intraDirName: intra
 # camera piston.
 extraDirName: extra
 
+
+# In-focus directory name. This is needed for the in-focus image 
+focalDirName: focal
+
 # PhoSim-related default parameters
 
 # Number of processors. The value should be >= 1.
