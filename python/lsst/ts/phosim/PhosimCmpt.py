@@ -573,7 +573,7 @@ class PhosimCmpt(object):
         return argString
 
 
-  def getComCamStarFocalPlaneArgsAndFilesForPhoSim(
+    def getComCamStarFocalPlaneArgsAndFilesForPhoSim(
             self, obsId, skySim, simSeed=1000,
             cmdSettingFileName="starDefault.cmd",
             instSettingFileName="starSingleExp.inst"):
