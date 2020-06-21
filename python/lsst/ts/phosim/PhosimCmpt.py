@@ -616,6 +616,7 @@ class PhosimCmpt(object):
         self.setSurveyParam(obsId=obsId)
         self.setOutputImgDir(outputImgDir)
 
+        
         # Get the argument to run the phosim
         argString = self.getStarArgsAndFilesForPhoSim(
             skySim, cmdFileName=cmdFileName,
@@ -623,12 +624,11 @@ class PhosimCmpt(object):
             logFileName=logFileName, simSeed=simSeed,
             cmdSettingFileName=cmdSettingFileName,
             instSettingFileName=instSettingFileName)
-            argStringList.append(argString)
 
         # Put the internal state back to the focal plane condition
         self.setOutputImgDir(onFocalOutputImgDir)
 
-        return argStringList
+        return argString
 
 
 
