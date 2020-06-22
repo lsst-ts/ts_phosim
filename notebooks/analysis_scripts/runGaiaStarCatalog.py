@@ -1,20 +1,22 @@
 import os
+import datetime
 import numpy as np
 from baseComcamLoop import baseComcamLoop as comcamLoop
 from baseComcamLoop import _eraseFolderContent
 from createPhosimCatalogNew import createPhosimCatalog
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigDir
-from lsst.ts.wep.Utility import runProgram
+    
 
 # initial setting whether  to calculate opd, etc. 
 flats = False
 opd = False
 defocalImg = False  
+focalImg  = True
 
 copy = True
 
 
-justWfs = True # switch to only re-do wfs,  
+justWfs = False # switch to only re-do wfs,  
 splitWfsByMag = False # whether to calculate the wfs for subsets of stars 
                      # based on magnitude ranges, or not ...
                      # the ranges are 11-16 mag, as the normal
@@ -41,6 +43,7 @@ if justWfs:
     flats=  False
     opd = False
     defocalImg = False # don't re-generate opd
+    focalImg = False
     # if just calculating wfs ... 
 
 # Load directory paths
@@ -59,7 +62,7 @@ numFields = 9 # 9 for all CCDs,  3 to get the result quicker...
  
 # since at such small separations the donuts overlap, we need to 
 # turn on the deblending ....
-doDeblending = True 
+doDeblending = False 
 
 
 # change the camDimOffset  setting in ts_wep/policy
@@ -75,7 +78,7 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'gMagGt11_w_2020_15_convolveTemplate' # name of the experiment dir 
+expDir = 'focalTest' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
@@ -99,7 +102,8 @@ if justWfs:
     print('Just calculating WFS ')
 
 if copy : 
-    print('Copying content of %s ...'%copyDir)
+    print('Copying entire content of %s ...'%copyDir)
+    print('This includes calibs, OPD, defocal images, ingest, etc.')
     #first copy the old results...
     argString = '-a '+copyDir+'/. '+outputDir+'/'
     runProgram("cp", argstring=argString)
@@ -112,13 +116,16 @@ if copy :
     #         notebooks/analysis_scripts/results_gaia/
     #         gMagGt11_w_2020_15/input
     argString = '-rf  '+ os.path.join(outputDir,'input', 'rerun')
+    print('Removing entire /input/rerun/* (-rf)')
     runProgram("rm", argstring=argString)
-
-    # remove files that are remade
+    
+    # remove files that are remade - this 
+    # prevents problems with the registry ... 
     argString = os.path.join(outputDir, 'input')
-    runProgram("rm", argstring=argString+'/isr*')
-    runProgram("rm", argstring=argString+'/registry*')
-    runProgram("rm", argstring=argString+'/_mappe*')
+    for remove in ['/isr*','/registry*' ,'/_mappe*']:
+        print('Removing following files from input/%s'%remove)
+        runProgram("rm", argstring=argString+remove)
+   
 
  # only do all that if not trying to just rerun the WFS ... 
 # if not justWfs :  
@@ -191,7 +198,7 @@ if copy :
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
 if selectSensors is 'comcam':
-    skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
+    skyFilePath = os.path.join(topDir,'test.txt')#starCatGAIA_gt11.txt')
 
 if selectSensors is 'wfs':
     skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
@@ -208,7 +215,7 @@ print('For PhoSim using /policy/cmdFile/%s and %s'%(opdCmd,comcamCmd))
 # initialize the baseComcamLoop.py Class 
 ccLoop = comcamLoop() 
 ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel, 
-            isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, 
+            isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, genFocalImg=focalImg,
             genFlats=flats, useMinDofIdx=False,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
             doDeblending=doDeblending, camDimOffset=camDimOffset, 
@@ -217,3 +224,13 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             splitWfsByMag =splitWfsByMag
             )
 print('Done running ccLoop for GAIA \n\n')
+
+# move the screenlog generated  by screen -LS  if it exists ... 
+screenlog_default = 'screenlog.0'
+if os.path.exists(screenlog_default):
+    now = datetime.datetime.now()
+    date = now.strftime("%Y-%m-%d_%H:%M:%S")
+    screenlog = 'screenlog_%s_%s_%s.txt'%(topDir,expDir,date)
+    argString = screenlog_default + ' '+outputDir+'/'+screenlog
+    runProgram("cp", argstring=argString)
+    print('Screenlog saved as %s'%screenlog)
