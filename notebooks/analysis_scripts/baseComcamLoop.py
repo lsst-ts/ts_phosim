@@ -281,7 +281,9 @@ class baseComcamLoop():
             else:
                 skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
 
-            # Output the sky information
+            # Output the sky information 
+            # xxx perhaps need to change that 
+            # especially if using a star catalog ?? 
             skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName,
                 skySim, wepCalc)
 
@@ -290,6 +292,12 @@ class baseComcamLoop():
             extraObsId = obsId + 1
             intraObsId = obsId + 2
             
+
+            #########################################
+            # DEFOCAL IMAGES : GENERATE AND COLLECT
+            ########################################
+
+
             # Generate the defocal images
             if genDefocalImg is True:
 
@@ -338,6 +346,8 @@ class baseComcamLoop():
                 else:
                     phosimCmpt.repackageComCamAmpImgFromPhoSim()
 
+
+            
             # Collect the defocal images
             intraRawExpData = RawExpData()
 
@@ -353,8 +363,11 @@ class baseComcamLoop():
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
 
 
+            #########################################
+            # IN-FOCUS IMAGES : GENERATE AND COLLECT
+            ########################################
 
-            if genFocalImages is True : 
+            if genFocalImg is True : 
 
                # just prepend the working directory by default
                 argPrepend = '-w ' + baseOutputDir+ ' '
@@ -382,16 +395,15 @@ class baseComcamLoop():
 
 
                 simSeed = 1000
-                argStringList = phosimCmpt.getComCamStarFocalPlaneArgsAndFilesForPhoSim(
+                argString = phosimCmpt.getComCamStarFocalPlaneArgsAndFilesForPhoSim(
                   obsId, skySim, simSeed=simSeed,
                   cmdSettingFileName=comcamCmdSettingsFile,
                   instSettingFileName=instSettingFileName)
 
-                for argString in argStringList:
-                    argString = argPrepend + argString
-                    print('Generating focal plane images with Phosim\n')
-                    print(argString)
-                    phosimCmpt.runPhoSim(argString)
+                argString = argPrepend + argString
+                print('Generating focal plane images with Phosim\n')
+                print(argString)
+                phosimCmpt.runPhoSim(argString)
 
                 # Repackage the images : these are amp images 
                 # so  I only make a  function for amp images 
@@ -402,7 +414,7 @@ class baseComcamLoop():
                 else: 
                     phosimCmpt.repackageComCamAmpFocalImgFromPhoSim()
 
-
+           
             # Collect the in-focus images
             focalRawExpData = RawExpData()
 
@@ -411,13 +423,12 @@ class baseComcamLoop():
                                         phosimCmpt.getFocalDirName())
             focalRawExpData.append(obsId, 0, focalRawExpDir)
 
-           
 
+            ################################
+            # CLEAR REGISTRY BEFORE INGEST 
+            ################################
 
-
-
-
-            # before ingesting images by WEP,  make sure that the previously ingested
+            # before ingesting ANY  images by WEP,  make sure that the previously ingested
             # ones are erased, especially in WFS-only mode !
             ingestedDir = os.path.join(isrDir, 'raw')
             if os.path.exists(ingestedDir):
@@ -426,13 +437,50 @@ class baseComcamLoop():
                 argString = '-rf %s/'%ingestedDir
                 runProgram("rm", argstring=argString)
 
-            # also erase previously existing registry since this would mess the ingest process
+            # also erase previously existing registry since this would mess the 
+            # ingest process
             registryFile= os.path.join(isrDir,'registry.sqlite3')
             if os.path.exists(registryFile):
                 print('Removing image registry file  %s '%registryFile)
                 runProgram("rm", argstring=registryFile)
 
 
+            ##################################
+            # IN-FOCUS IMAGES : INGEST AND ISR   
+            #################################
+
+            # do the ingest and ISR on in-focus images : this is using 
+            # just the beginning of     
+            # wepCalc.calculateWavefrontErrors
+         
+            # When evaluating the eimage, the calibration products are not needed.
+            # Therefore, need to make sure the camera mapper file exists.
+            wepCalc._genCamMapperIfNeed()
+
+            # Ingest the exposure data 
+            print('Ingesting the in-focus images ')
+            wepCalc._ingestImg(focalRawExpData)
+
+            # Only the amplifier image needs to do the ISR
+            # but we're only doing amplifier images for 
+            # in-focus images ... 
+            if isEimg:
+                print("No need to do the ISR on in-focus e-images ")
+                pass 
+            else: 
+                print('Performing the ISR on in-focus amp images ')
+                wepCalc._doIsr(isrConfigfileName="isr_config.py")
+
+        
+            ########################################
+            # DEFOCAL IMAGES : INGEST, ISR, WEPCALC
+            ########################################
+
+            # Branch#1 : if we calculate wavefront errors 
+            # for stars in magnitude bins,
+            # first ingest and  do ISR on all images,
+            # and then perform WFS calculation for each 
+            # subset of target stars 
             if splitWfsByMag :
                 print('Running WFS ingest and ISR once in split-stars-by-mag mode ')
                 # an option to calculate WFS only
@@ -442,7 +490,8 @@ class baseComcamLoop():
 
                 ##############################
                 #####   BEGIN PART 1    ######
-                # wepCalc.calculateWavefrontErrors()
+                # calculateWavefrontErrors() in ts/wep/ctrlIntf/WEPCalculation.py , 
+                # i.e. wepCalc.calculateWavefrontErrors()
 
                 # first, ingest files just once ...
                 rawExpData = intraRawExpData
@@ -504,7 +553,16 @@ class baseComcamLoop():
                     phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
                                                    zkFileName=wfsZkFileName+zkFilenameAppend)
 
-            else: # the original code ...
+
+
+            # Branch #2 : if we want to calculate wavefront errors 
+            # for all stars in the image, then use the 
+            # built-in  wepCalc code, which performs 
+            # ingest and  do ISR on all images, and 
+            # then performs WFS calculation using all 
+            # stars that fit selection criteria
+            # 
+            else: 
                 print('Calculating the wavefront error ')
                   # Calculate the wavefront error and DOF
                 listOfWfErr = wepCalc.calculateWavefrontErrors(
