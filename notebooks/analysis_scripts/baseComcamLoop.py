@@ -4,6 +4,7 @@ import os
 import argparse
 import numpy as np
 import shutil
+import datetime
 
 from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.Utility import FilterType, CamType, runProgram, ImageType
@@ -117,7 +118,7 @@ class baseComcamLoop():
 
 
         '''
-
+        
         # get the list of sensors  - by default it's comCam...
         sensorNameList = self._getComCamSensorNameList()
 
@@ -242,7 +243,7 @@ class baseComcamLoop():
 
             # Generate the OPD image
             if genOpd is True:
-
+                t1 = datetime.datetime.now()
                 if selectSensors is 'comcam':
                     argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                          cmdSettingFileName=opdCmdSettingsFile)
@@ -257,7 +258,9 @@ class baseComcamLoop():
                 print('Generating OPD with Phosim, argString is \n')
                 print(argString)
                 phosimCmpt.runPhoSim(argString)
-
+                
+                t2 = datetime.datetime.now()
+                _print_duration(t2-t1)
             # Analyze the OPD data
             # this step creates iter0/img/PSSN.txt,
             # as well as opd.zer.xxx file
@@ -348,10 +351,15 @@ class baseComcamLoop():
                   instSettingFileName=instSettingFileName)
 
                 for argString in argStringList:
+                    t1 = datetime.datetime.now()    
+
                     argString = argPrepend + argString
                     print('Generating defocal images with Phosim\n')
                     print(argString)
                     phosimCmpt.runPhoSim(argString)
+
+                    t2 = datetime.datetime.now()
+                    _print_duration(t2-t1)
 
                 # Repackage the images based on the image type
                 if (isEimg):
@@ -404,7 +412,7 @@ class baseComcamLoop():
                 if selectSensors is not None:
                     argPrepend +=  '-s ' + sensors+ ' '
 
-                print('PhoSim added argPrepend is %s'%argPrepend)
+                print('\nPhoSim added argPrepend is %s'%argPrepend)
 
 
                 simSeed = 1000
@@ -416,11 +424,14 @@ class baseComcamLoop():
                 argString = argPrepend + argString
                 print('Generating focal plane images with Phosim\n')
                 print(argString)
+                t1 = datetime.datetime.now()
                 phosimCmpt.runPhoSim(argString)
+                t2 = datetime.datetime.now()
+                _print_duration(t2-t1)
 
                 # Repackage the images : these are amp images 
                 # so  I only make a  function for amp images 
-                if isEimg:
+                if (isEimg):
                     print("Repackaging function for in-focus e-images \
                            doesn't exist yet")
                     pass 
@@ -434,7 +445,7 @@ class baseComcamLoop():
             # it is iter0/img/focal/
             focalRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getFocalDirName())
-            focalRawExpData.append(obsId, 0, focalRawExpDir)
+            focalRawExpData.append(focalObsId, 0, focalRawExpDir)
 
 
             ################################
@@ -470,9 +481,12 @@ class baseComcamLoop():
             # Therefore, need to make sure the camera mapper file exists.
             wepCalc._genCamMapperIfNeed()
 
+            t1 = datetime.datetime.now()
             # Ingest the exposure data 
             print('Ingesting the in-focus images ')
             wepCalc._ingestImg(focalRawExpData)
+            t2 =datetime.datetime.now()
+            _print_duration(t2-t1)
 
             # Only the amplifier image needs to do the ISR
             # but we're only doing amplifier images for 
@@ -578,16 +592,21 @@ class baseComcamLoop():
             else: 
                 print('Calculating the wavefront error ')
                   # Calculate the wavefront error and DOF
+                t1 =datetime.datetime.now()
+                _print_duration(t2-t1)
+
                 listOfWfErr = wepCalc.calculateWavefrontErrors(
                     intraRawExpData, extraRawExpData=extraRawExpData,
                     postageImg=postageImg, postageImgDir = postageImgDir)
                 ofcCalc.calculateCorrections(listOfWfErr)
+                t2 =datetime.datetime.now()
+                _print_duration(t2-t1)
 
                 # Record the wfs error with the same order as OPD for the comparison
                 phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
                                                zkFileName=wfsZkFileName)
 
-
+               
 
 
             # Set the new aggregated DOF to phosimCmpt
@@ -818,6 +837,29 @@ def _eraseFolderContent(targetDir):
             os.unlink(filePath)
         elif os.path.isdir(filePath):
             shutil.rmtree(filePath)
+
+
+def _print_duration(delta):
+    ''' Convenience function to print execution time 
+    between time1 and time2. 
+    
+    Parameters:
+    ----------
+    delta : datetime.timedelta() object,
+    result of eg. 
+    time1 = datetime.datetime.now()
+    time2 = datetime.datetime.now()
+    delta = time2 - time1 
+    
+    Returns:
+    --------
+    None
+
+    '''
+    delta_sec = delta.total_seconds()
+    delta_min = delta_sec / 60
+    delta_hr = delta_min / 60
+    print('    It took %.3f minutes, i.e. %.5f hours ' % (delta_min, delta_hr))
 
 
 if __name__ == "__main__":
