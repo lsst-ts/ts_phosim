@@ -296,5 +296,5 @@ if os.path.exists(screenlog_default):
     date = now.strftime("%Y-%m-%d_%H:%M:%S")
     screenlog = 'screenlog_%s_%s_%s.txt'%(topDir,expDir,date)
     argString = screenlog_default + ' '+outputDir+'/'+screenlog
-    runProgram("cp", argstring=argString)
+    runProgram("mv ", argstring=argString)
     print('Screenlog saved as %s'%screenlog)
