@@ -34,7 +34,8 @@ class baseComcamLoop():
             instSettingFileName='starSingleExp.inst',
             selectSensors = 'comcam',
             splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
-            centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage'):
+            centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
+            raInDeg=None,decInDeg=None, rotAngInDeg=None):
         '''
         Code to run the full AOS loop on ComCam (or other sensors)
 
@@ -92,6 +93,16 @@ class baseComcamLoop():
         templateType: str, which type of template to use with new centroid algorithms,
             'model', or 'phosim'
 
+        Parameters changing ts_phosim/policy/surveySettings.yaml : 
+        --------------------------------------------------------
+        surveyFilter: str, by default: None, which means that we read the value from
+            surveySettings.yaml for "filterType : ref", which means reference filter,
+            and in this context its LSST g-filter 
+        raInDeg: float, by default: None, which means that 0.0 is read from setting file 
+        decInDeg: float, by default: None, which means that 0.0 is read from setting file
+        rotAngInDeg: float, by default: None, which means that 0.0 is read from setting file
+
+
         Parameters not often changed (legacy):
         --------------------------------------
         starMag: int, a magnitude of a test star, if there isn't a catalog of
@@ -100,8 +111,7 @@ class baseComcamLoop():
         m1m3ForceError: int, 0.05 by default (why?)
         isEimg: bool, False by default - whether to make an electronic or amplifier
                 image.
-        surveyFilter: str, by default: None, which defaults to g-filter as
-            defined in PhoSim  surveySettings.yaml  file (in /ts_phosim/policy/ )
+
         useMinDofIdx: bool, True by default - whether to only use 10 hexapod
             positions and first 3 bending modes of M1M3 and M2
 
@@ -141,7 +151,7 @@ class baseComcamLoop():
         # Test star magnitude
         #starMag = starMag
 
-        # Survey parameters
+        # Survey parameters, taken from ts_phosim/policy/surveySettings.yaml
         surveySettingFilePath = os.path.join(getConfigDir(),
                                             "surveySettings.yaml")
         surveySettings = ParamReader(filePath=surveySettingFilePath)
@@ -150,10 +160,15 @@ class baseComcamLoop():
                 surveySettings.getSetting("filterType"))
         else:
             filterType = FilterType.fromString(surveyFilter)
-        raInDeg = surveySettings.getSetting("raInDeg")
-        decInDeg = surveySettings.getSetting("decInDeg")
-        rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
-
+        if raInDeg is None:
+            raInDeg = surveySettings.getSetting("raInDeg")
+        if decInDeg is None:
+            decInDeg = surveySettings.getSetting("decInDeg")
+        if rotAngInDeg is None :
+            rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
+        print('Using the following settings for the telescope:')
+        print('boresight (ra,dec) = %.3f,%.3f [deg]'%(raInDeg,decInDeg))
+        print('rotation angle = %.3f [deg] '%rotAngInDeg)
         # Prepare the components
         print('Preparing the PhoSim component ')
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
@@ -173,8 +188,6 @@ class baseComcamLoop():
         ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
         # Ingest the calibration products (only for the amplifier images)
-        # this step executes
-        # xxx
         if ((not isEimg) & (genFlats is True)):
             print('Ingesting calibration products')
             wepCalc.ingestCalibs(fakeFlatDir)
@@ -208,7 +221,7 @@ class baseComcamLoop():
         dofInUmFileName = "dofPertInNextIter.mat"
         skyInfoFileName = "skyComCamInfo.txt"
         for iterCount in range(iterNum):
-
+            print('Starting iteration %d of %d'%(iterCount,iterNum))
             # Set the observation Id
             phosimCmpt.setSurveyParam(obsId=obsId)
 
