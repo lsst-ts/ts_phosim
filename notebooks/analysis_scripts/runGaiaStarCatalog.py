@@ -13,7 +13,7 @@ opd = False
 defocalImg = True  
 focalImg  = True
 
-copy = True
+copy = False
 
 
 justWfs = False # switch to only re-do wfs,  
@@ -78,7 +78,15 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'highLatitude_gt11' # name of the experiment dir 
+
+# simulating four galactic locations:  
+field = 'high' #'med' 'low' 'Baade'
+catalogType = 'gt11' # 'full'
+
+expDir = 'dr2_%s_%s'%(field,catalogType) # name of the experiment dir 
+# 'dr2_med_gt11'
+# 'dr2_low_gt11'
+# 'dr2_baade_gt11'
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
@@ -104,6 +112,11 @@ if justWfs:
 if copy : 
     print('Copying entire content of %s ...'%copyDir)
     print('This includes calibs, OPD, defocal images, ingest, etc.')
+    print('NB: if phosim /LSST stack were recently updated,\
+         you need to make sure that OPD, calibs were made and \
+         ingested with the same version ! Otherwise you may see errors \
+         with eg. phosim_repackager.py ')
+
     #first copy the old results...
     argString = '-a '+copyDir+'/. '+outputDir+'/'
     runProgram("cp", argstring=argString)
@@ -126,6 +139,9 @@ if copy :
         print('Removing following files from input%s'%remove)
         runProgram("rm", argstring=argString+remove)
    
+if not opd and not flats and not copy:
+    print('Since copy=opd=flats=False, \
+        we expect to see opd and calibs already there ... ') 
 
  # only do all that if not trying to just rerun the WFS ... 
 # if not justWfs :  
@@ -198,12 +214,12 @@ if copy :
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
 if selectSensors is 'comcam':
-    skyFilePath = os.path.join(topDir,'starCatGAIA_high_gt11.txt')#starCatGAIA_gt11.txt')
+    skyFile = 'starCatGAIA_%s_%s.txt'%((field,catalogType))
+    skyFilePath = os.path.join(topDir,skyFile)#starCatGAIA_gt11.txt')
 
-if selectSensors is 'wfs':
-    skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
+# if selectSensors is 'wfs':
+#     skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
  
-
 print('Using %s sensors and %s sky catalog'%(selectSensors,skyFilePath))
        
 # set the opd.cmd and star.cmd files ...
@@ -212,7 +228,30 @@ comcamCmd = 'starQuickBackground.cmd'
 
 print('For PhoSim using /policy/cmdFile/%s and %s'%(opdCmd,comcamCmd))
 
+# set the raInDeg,  decInDeg : 
+
+# the center of field coords were first defined as 
+# Galactic: 
+from astropy.table import Table
+from astropy.coordinates import SkyCoord
+gt = Table(data=[['high','med','low','Baade'],
+                            [0,0,0,1.02],
+                           [85,40,10,-3.92 ]], 
+                      names=['name', 'l_deg','b_deg'])
+
+gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
+                       frame='galactic', unit='deg')
+# convert them to equatorial 
+gt['ra_deg']= gaia_coords.icrs.ra.deg
+gt['dec_deg'] = gaia_coords.icrs.dec.deg
+
+raInDeg = gt['ra_deg'][gt['name'] == field][0]
+decInDeg = gt['dec_deg'][gt['name'] == field][0]
+print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
+
+
 # initialize the baseComcamLoop.py Class 
+print('Starting baseComcamLoop : ')
 ccLoop = comcamLoop() 
 ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel, 
             isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, genFocalImg=focalImg,
@@ -221,7 +260,7 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             doDeblending=doDeblending, camDimOffset=camDimOffset, 
             postageImg=postageImg, opdCmdSettingsFile=opdCmd,
             comcamCmdSettingsFile=comcamCmd, selectSensors=selectSensors,
-            splitWfsByMag =splitWfsByMag
+            splitWfsByMag =splitWfsByMag,raInDeg=raInDeg,decInDeg=decInDeg
             )
 print('Done running ccLoop for GAIA \n\n')
 
