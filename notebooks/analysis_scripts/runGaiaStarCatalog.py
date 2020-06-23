@@ -5,12 +5,12 @@ from baseComcamLoop import baseComcamLoop as comcamLoop
 from baseComcamLoop import _eraseFolderContent
 from createPhosimCatalogNew import createPhosimCatalog
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigDir
-    
+from lsst.ts.wep.Utility import runProgram
 
 # initial setting whether  to calculate opd, etc. 
 flats = False
 opd = False
-defocalImg = False  
+defocalImg = True  
 focalImg  = True
 
 copy = True
@@ -62,7 +62,7 @@ numFields = 9 # 9 for all CCDs,  3 to get the result quicker...
  
 # since at such small separations the donuts overlap, we need to 
 # turn on the deblending ....
-doDeblending = False 
+doDeblending = True 
 
 
 # change the camDimOffset  setting in ts_wep/policy
@@ -78,7 +78,7 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'focalTest' # name of the experiment dir 
+expDir = 'highLatitude_gt11' # name of the experiment dir 
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
@@ -123,7 +123,7 @@ if copy :
     # prevents problems with the registry ... 
     argString = os.path.join(outputDir, 'input')
     for remove in ['/isr*','/registry*' ,'/_mappe*']:
-        print('Removing following files from input/%s'%remove)
+        print('Removing following files from input%s'%remove)
         runProgram("rm", argstring=argString+remove)
    
 
@@ -198,7 +198,7 @@ if copy :
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
 if selectSensors is 'comcam':
-    skyFilePath = os.path.join(topDir,'test.txt')#starCatGAIA_gt11.txt')
+    skyFilePath = os.path.join(topDir,'starCatGAIA_high_gt11.txt')#starCatGAIA_gt11.txt')
 
 if selectSensors is 'wfs':
     skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
