@@ -13,7 +13,7 @@ opd = False
 defocalImg = True  
 focalImg  = True
 
-copy = False
+copy = True
 
 
 justWfs = False # switch to only re-do wfs,  
@@ -80,7 +80,7 @@ postageImg = True
 topDir = 'results_gaia'
 
 # simulating four galactic locations:  
-field = 'high' #'med' 'low' 'Baade'
+field = 'med' #'med' 'low' 'Baade'
 catalogType = 'gt11' # 'full'
 
 expDir = 'dr2_%s_%s'%(field,catalogType) # name of the experiment dir 
@@ -91,7 +91,7 @@ expDir = 'dr2_%s_%s'%(field,catalogType) # name of the experiment dir
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
 #copyDir = 'results_before_centroid_update/singleAmpSep/sep_10'
-copyDir = 'results_gaia/gMagGt11_w_2020_15'
+copyDir = 'results_gaia/dr2_high_gt11'
 
 # the opd and wfs are stored here 
 os.environ["closeLoopTestDir"] = os.path.join(topDir, expDir) 
@@ -112,10 +112,10 @@ if justWfs:
 if copy : 
     print('Copying entire content of %s ...'%copyDir)
     print('This includes calibs, OPD, defocal images, ingest, etc.')
-    print('NB: if phosim /LSST stack were recently updated,\
-         you need to make sure that OPD, calibs were made and \
-         ingested with the same version ! Otherwise you may see errors \
-         with eg. phosim_repackager.py ')
+    #print('NB: if phosim /LSST stack were recently updated,\
+    #     you need to make sure that OPD, calibs were made and \
+    #     ingested with the same version ! Otherwise you may see errors \
+    #     with eg. phosim_repackager.py ')
 
     #first copy the old results...
     argString = '-a '+copyDir+'/. '+outputDir+'/'
@@ -128,8 +128,15 @@ if copy :
     # _root: /data/epyc/users/suberlak/Commissioning/aos/ts_phosim/
     #         notebooks/analysis_scripts/results_gaia/
     #         gMagGt11_w_2020_15/input
+
+
+    # ensure that input/raw and input/rerun are empty 
     argString = '-rf  '+ os.path.join(outputDir,'input', 'rerun')
     print('Removing entire /input/rerun/* (-rf)')
+    runProgram("rm", argstring=argString)
+
+    argString = '-rf  '+ os.path.join(outputDir,'input', 'raw')
+    print('Removing entire /input/raw/* (-rf)')
     runProgram("rm", argstring=argString)
     
     # remove files that are remade - this 
@@ -139,6 +146,24 @@ if copy :
         print('Removing following files from input%s'%remove)
         runProgram("rm", argstring=argString+remove)
    
+    # ensure that input/raw and input/rerun are empty 
+    # print('Deleting content of input/raw/ and input/rerun/')
+    # _eraseFolderContent(os.path.join(outputDir, 'input','raw'))
+    # _eraseFolderContent(os.path.join(outputDir, 'input','rerun'))
+
+
+    if defocalImg is True:
+        print('We will make new defocal images in this run ')
+        intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
+        extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
+        if os.path.exists(intraPath):
+            _eraseFolderContent(intraPath)
+        if os.path.exists(extraPath):
+            _eraseFolderContent(extraPath)
+
+
+
+
 if not opd and not flats and not copy:
     print('Since copy=opd=flats=False, \
         we expect to see opd and calibs already there ... ') 
