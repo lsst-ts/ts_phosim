@@ -317,6 +317,21 @@ class baseComcamLoop():
             # Generate the defocal images
             if genDefocalImg is True:
 
+
+                # Ensure that the folder is empty 
+                # especially if copying some files 
+                intraRawExpDir = os.path.join(outputImgDir,
+                                        phosimCmpt.getIntraFocalDirName())
+                if os.path.exists(intraRawExpDir): # iter0/img/extra/
+                    _eraseFolderContent(intraRawExpDir)
+                
+                extraRawExpDir = os.path.join(outputImgDir,
+                                        phosimCmpt.getExtraFocalDirName())
+                if os.path.exists(extraRawExpDir): # iter0/img/extra/
+                    _eraseFolderContent(extraRawExpDir)
+
+
+
                 # just prepend the working directory by default
                 argPrepend = '-w ' + baseOutputDir+ ' '
 
@@ -389,6 +404,14 @@ class baseComcamLoop():
             ########################################
 
             if genFocalImg is True : 
+
+                # Ensure that the folder is empty 
+                # especially if copying some files 
+                focalRawExpDir = os.path.join(outputImgDir,
+                                        phosimCmpt.getFocalDirName())
+                if os.path.exists(focalRawExpDir): # iter0/img/extra/
+                    _eraseFolderContent(focalRawExpDir)
+
 
                # just prepend the working directory by default
                 argPrepend = '-w ' + baseOutputDir+ ' '
