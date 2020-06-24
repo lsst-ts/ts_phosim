@@ -323,11 +323,13 @@ class baseComcamLoop():
                 intraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getIntraFocalDirName())
                 if os.path.exists(intraRawExpDir): # iter0/img/extra/
+                    print('Before proceeding, cleaned up %s '%intraRawExpDir)
                     _eraseFolderContent(intraRawExpDir)
                 
                 extraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getExtraFocalDirName())
                 if os.path.exists(extraRawExpDir): # iter0/img/extra/
+                    print('Before proceeding, cleaned up %s '%extraRawExpDir)
                     _eraseFolderContent(extraRawExpDir)
 
 
@@ -409,7 +411,8 @@ class baseComcamLoop():
                 # especially if copying some files 
                 focalRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getFocalDirName())
-                if os.path.exists(focalRawExpDir): # iter0/img/extra/
+                if os.path.exists(focalRawExpDir): # iter0/img/focal/
+                    print('Before proceeding, cleaned up %s '%focalRawExpDir)
                     _eraseFolderContent(focalRawExpDir)
 
 
