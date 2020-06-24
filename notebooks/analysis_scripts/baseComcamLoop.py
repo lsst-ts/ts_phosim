@@ -369,13 +369,14 @@ class baseComcamLoop():
 
                 for argString in argStringList:
                     t1 = datetime.datetime.now()    
-
+                    print('Start time', t1.strftime("%Y-%m-%d_%H:%M:%S"))
                     argString = argPrepend + argString
                     print('Generating defocal images with Phosim\n')
                     print(argString)
                     phosimCmpt.runPhoSim(argString)
 
                     t2 = datetime.datetime.now()
+                    print('End time', t2.strftime("%Y-%m-%d_%H:%M:%S"))
                     _print_duration(t2-t1)
 
                 # Repackage the images based on the image type
@@ -450,9 +451,12 @@ class baseComcamLoop():
                 argString = argPrepend + argString
                 print('Generating focal plane images with Phosim\n')
                 print(argString)
+                
                 t1 = datetime.datetime.now()
+                print('Start time', t1.strftime("%Y-%m-%d_%H:%M:%S"))
                 phosimCmpt.runPhoSim(argString)
                 t2 = datetime.datetime.now()
+                print('End time', t2.strftime("%Y-%m-%d_%H:%M:%S"))
                 _print_duration(t2-t1)
 
                 # Repackage the images : these are amp images 
