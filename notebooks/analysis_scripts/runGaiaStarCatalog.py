@@ -80,7 +80,7 @@ postageImg = True
 topDir = 'results_gaia'
 
 # simulating four galactic locations:  
-field = 'med' #'med' 'low' 'Baade'
+field = 'Baade' # 'med' lBaade'
 catalogType = 'gt11' # 'full'
 
 expDir = 'dr2_%s_%s'%(field,catalogType) # name of the experiment dir 
@@ -93,16 +93,17 @@ expDir = 'dr2_%s_%s'%(field,catalogType) # name of the experiment dir
 #copyDir = 'results_before_centroid_update/singleAmpSep/sep_10'
 copyDir = 'results_gaia/dr2_high_gt11'
 
-# the opd and wfs are stored here 
-os.environ["closeLoopTestDir"] = os.path.join(topDir, expDir) 
-
 print('\nStarting ccLoop for GAIA catalog')
 
 outputDir = os.path.join(topDir,expDir)
 print('The outputDir is %s'%outputDir)
+
+# the opd and wfs are stored here 
+os.environ["closeLoopTestDir"] = outputDir
+
+
 if (not os.path.exists(outputDir)):
     os.makedirs(outputDir)
-
 
 
 if justWfs:
@@ -156,10 +157,13 @@ if copy :
         print('We will make new defocal images in this run ')
         intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
         extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
+        pertPath = os.path.join(outputDir, 'iter0','pert')
         if os.path.exists(intraPath):
             _eraseFolderContent(intraPath)
         if os.path.exists(extraPath):
             _eraseFolderContent(extraPath)
+        if os.path.exists(pertPath):
+            _eraseFolderContent(pertPath)
 
 
 
@@ -290,7 +294,11 @@ ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
 print('Done running ccLoop for GAIA \n\n')
 
 # move the screenlog generated  by screen -LS  if it exists ... 
-screenlog_default = 'screenlog.0'
+# it should be wherever the screen to run this code 
+# got made ... 
+screenlog_path = '/astro/store/epyc/users/suberlak/Commissioning/aos/ts_phosim/notebooks/analysis_scripts'
+screenlog_default = os.path.join(screenlog_path,'screenlog.0')
+
 if os.path.exists(screenlog_default):
     now = datetime.datetime.now()
     date = now.strftime("%Y-%m-%d_%H:%M:%S")
