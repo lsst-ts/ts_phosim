@@ -630,6 +630,81 @@ class PhosimCmpt(object):
 
         return argString
 
+    def getLsstCamStarArgsAndFilesForPhosim(
+            self, extraObsId, intraObsId, skySim, simSeed=1000,
+            cmdSettingFileName="starDefault.cmd",
+            instSettingFileName="starSingleExp.inst"):
+        """Get the star calculation arguments and files of WFS corner sensors
+        for the PhoSim calculation. For corner sensors, they are defocal by default.
+        The PhoSim model itself has already split the corner wavefront sensor 
+        on the focal plane. Hence we do not need the camera piston to generate 
+        the defocal image.
+
+
+        Parameters
+        ----------
+        extraObsId : int
+            Extra-focal observation Id.
+        intraObsId : int
+            Intra-focal observation Id.
+        skySim : SkySim
+            Sky simulator
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "starDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "starSingleExp.inst".)
+
+        Returns
+        -------
+        list[str]
+            List of arguments to run the PhoSim.
+        """
+
+        # Set the intra- and extra-focal related information
+        obsIdList = {"-1": extraObsId,
+                     "1": intraObsId}
+        instFileNameList = {"-1": "starExtra.inst",
+                            "1": "starIntra.inst"}
+        logFileNameList = {"-1": "starExtraPhoSim.log",
+                           "1": "starIntraPhoSim.log"}
+
+        extraFocalDirName = self.getExtraFocalDirName()
+        intraFocalDirName = self.getIntraFocalDirName()
+        outImgDirNameList = {"-1": extraFocalDirName,
+                             "1": intraFocalDirName}
+
+        # Write the instance and command files of defocal conditions
+        cmdFileName = "star.cmd"
+        
+        onFocalOutputImgDir = self.outputImgDir
+        argStringList = []
+        for ii in (-1, 1):
+
+            # Set the observation ID
+            self.setSurveyParam(obsId=obsIdList[str(ii)])
+
+            # Update the output image directory
+            outputImgDir = os.path.join(onFocalOutputImgDir,
+                                        outImgDirNameList[str(ii)])
+            self.setOutputImgDir(outputImgDir)
+
+            # Get the argument to run the phosim
+            argString = self.getStarArgsAndFilesForPhoSim(
+                skySim, cmdFileName=cmdFileName,
+                instFileName=instFileNameList[str(ii)],
+                logFileName=logFileNameList[str(ii)], simSeed=simSeed,
+                cmdSettingFileName=cmdSettingFileName,
+                instSettingFileName=instSettingFileName)
+            argStringList.append(argString)
+
+        # Put the internal state back to the focal plane condition
+        self.setOutputImgDir(onFocalOutputImgDir)
+
+        return argStringList
+
 
 
     def getComCamStarArgsAndFilesForPhoSim(
