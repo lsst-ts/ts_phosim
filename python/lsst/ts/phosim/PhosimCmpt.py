@@ -637,7 +637,13 @@ class PhosimCmpt(object):
             cmdSettingFileName="starDefault.cmd",
             instSettingFileName="starSingleExp.inst"):
         """Get the star calculation arguments and files of ComCam for the
-        PhoSim calculation.
+        PhoSim calculation of the defocal images.  The defocal images 
+        are achieved by movement of the camera piston by 1.5 mm  - this is 
+        set by the "defocalDist" parameter in policy/teleSetting.yaml 
+        The camera piston movement is needed to simulate the defocal 
+        images for  (1) ComCam,  (2) high-speed CMOS, and (3) LSST camera 
+        full array mode (in effect using 189 CCD as the wavefront sensor).
+
 
         Parameters
         ----------
