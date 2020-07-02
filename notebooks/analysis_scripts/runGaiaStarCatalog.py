@@ -1,4 +1,5 @@
 import os
+import datetime
 import numpy as np
 from baseComcamLoop import baseComcamLoop as comcamLoop
 from baseComcamLoop import _eraseFolderContent
@@ -9,12 +10,13 @@ from lsst.ts.wep.Utility import runProgram
 # initial setting whether  to calculate opd, etc. 
 flats = False
 opd = False
-defocalImg = False  
+defocalImg = True  
+focalImg  = True
 
 copy = True
 
 
-justWfs = True # switch to only re-do wfs,  
+justWfs = False # switch to only re-do wfs,  
 splitWfsByMag = False # whether to calculate the wfs for subsets of stars 
                      # based on magnitude ranges, or not ...
                      # the ranges are 11-16 mag, as the normal
@@ -41,6 +43,7 @@ if justWfs:
     flats=  False
     opd = False
     defocalImg = False # don't re-generate opd
+    focalImg = False
     # if just calculating wfs ... 
 
 # Load directory paths
@@ -75,23 +78,32 @@ postageImg = True
 # dir from /analysis_scripts/ level
 # - that's where we save the results:
 topDir = 'results_gaia'
-expDir = 'gMagGt11_w_2020_15_convolveTemplate' # name of the experiment dir 
+
+# simulating four galactic locations:  
+field = 'Baade' # 'med' lBaade'
+catalogType = 'gt11' # 'full'
+
+expDir = 'dr2_%s_%s'%(field,catalogType) # name of the experiment dir 
+# 'dr2_med_gt11'
+# 'dr2_low_gt11'
+# 'dr2_baade_gt11'
 
 # dir from /analysis_scripts/ level 
 # - that's where we copy the flats, opd from:
 #copyDir = 'results_before_centroid_update/singleAmpSep/sep_10'
-copyDir = 'results_gaia/gMagGt11_w_2020_15'
-
-# the opd and wfs are stored here 
-os.environ["closeLoopTestDir"] = os.path.join(topDir, expDir) 
+copyDir = 'results_gaia/dr2_high_gt11'
 
 print('\nStarting ccLoop for GAIA catalog')
 
 outputDir = os.path.join(topDir,expDir)
 print('The outputDir is %s'%outputDir)
+
+# the opd and wfs are stored here 
+os.environ["closeLoopTestDir"] = outputDir
+
+
 if (not os.path.exists(outputDir)):
     os.makedirs(outputDir)
-
 
 
 if justWfs:
@@ -99,7 +111,13 @@ if justWfs:
     print('Just calculating WFS ')
 
 if copy : 
-    print('Copying content of %s ...'%copyDir)
+    print('Copying entire content of %s ...'%copyDir)
+    print('This includes calibs, OPD, defocal images, ingest, etc.')
+    #print('NB: if phosim /LSST stack were recently updated,\
+    #     you need to make sure that OPD, calibs were made and \
+    #     ingested with the same version ! Otherwise you may see errors \
+    #     with eg. phosim_repackager.py ')
+
     #first copy the old results...
     argString = '-a '+copyDir+'/. '+outputDir+'/'
     runProgram("cp", argstring=argString)
@@ -111,14 +129,48 @@ if copy :
     # _root: /data/epyc/users/suberlak/Commissioning/aos/ts_phosim/
     #         notebooks/analysis_scripts/results_gaia/
     #         gMagGt11_w_2020_15/input
+
+
+    # ensure that input/raw and input/rerun are empty 
     argString = '-rf  '+ os.path.join(outputDir,'input', 'rerun')
+    print('Removing entire /input/rerun/* (-rf)')
     runProgram("rm", argstring=argString)
 
-    # remove files that are remade
+    argString = '-rf  '+ os.path.join(outputDir,'input', 'raw')
+    print('Removing entire /input/raw/* (-rf)')
+    runProgram("rm", argstring=argString)
+    
+    # remove files that are remade - this 
+    # prevents problems with the registry ... 
     argString = os.path.join(outputDir, 'input')
-    runProgram("rm", argstring=argString+'/isr*')
-    runProgram("rm", argstring=argString+'/registry*')
-    runProgram("rm", argstring=argString+'/_mappe*')
+    for remove in ['/isr*','/registry*' ,'/_mappe*']:
+        print('Removing following files from input%s'%remove)
+        runProgram("rm", argstring=argString+remove)
+   
+    # ensure that input/raw and input/rerun are empty 
+    # print('Deleting content of input/raw/ and input/rerun/')
+    # _eraseFolderContent(os.path.join(outputDir, 'input','raw'))
+    # _eraseFolderContent(os.path.join(outputDir, 'input','rerun'))
+
+
+    if defocalImg is True:
+        print('We will make new defocal images in this run ')
+        intraPath = os.path.join(outputDir, 'iter0', 'img', 'intra')
+        extraPath = os.path.join(outputDir, 'iter0', 'img', 'extra')
+        pertPath = os.path.join(outputDir, 'iter0','pert')
+        if os.path.exists(intraPath):
+            _eraseFolderContent(intraPath)
+        if os.path.exists(extraPath):
+            _eraseFolderContent(extraPath)
+        if os.path.exists(pertPath):
+            _eraseFolderContent(pertPath)
+
+
+
+
+if not opd and not flats and not copy:
+    print('Since copy=opd=flats=False, \
+        we expect to see opd and calibs already there ... ') 
 
  # only do all that if not trying to just rerun the WFS ... 
 # if not justWfs :  
@@ -191,12 +243,12 @@ if copy :
 # it conforms to the format expected by PhoSim 
 # mv /data/epyc/users/suberlak/starCatGAIA.txt analysis_scripts/results_gaia
 if selectSensors is 'comcam':
-    skyFilePath = os.path.join(topDir,'starCatGAIA_gt11.txt')
+    skyFile = 'starCatGAIA_%s_%s.txt'%((field,catalogType))
+    skyFilePath = os.path.join(topDir,skyFile)#starCatGAIA_gt11.txt')
 
-if selectSensors is 'wfs':
-    skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
+# if selectSensors is 'wfs':
+#     skyFilePath  = os.path.join(topDir, 'starCatGAIA_gt11_wfs.txt')
  
-
 print('Using %s sensors and %s sky catalog'%(selectSensors,skyFilePath))
        
 # set the opd.cmd and star.cmd files ...
@@ -205,15 +257,52 @@ comcamCmd = 'starQuickBackground.cmd'
 
 print('For PhoSim using /policy/cmdFile/%s and %s'%(opdCmd,comcamCmd))
 
+# set the raInDeg,  decInDeg : 
+
+# the center of field coords were first defined as 
+# Galactic: 
+from astropy.table import Table
+from astropy.coordinates import SkyCoord
+gt = Table(data=[['high','med','low','Baade'],
+                            [0,0,0,1.02],
+                           [85,40,10,-3.92 ]], 
+                      names=['name', 'l_deg','b_deg'])
+
+gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
+                       frame='galactic', unit='deg')
+# convert them to equatorial 
+gt['ra_deg']= gaia_coords.icrs.ra.deg
+gt['dec_deg'] = gaia_coords.icrs.dec.deg
+
+raInDeg = gt['ra_deg'][gt['name'] == field][0]
+decInDeg = gt['dec_deg'][gt['name'] == field][0]
+print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
+
+
 # initialize the baseComcamLoop.py Class 
+print('Starting baseComcamLoop : ')
 ccLoop = comcamLoop() 
 ccLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel, 
-            isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, 
+            isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, genFocalImg=focalImg,
             genFlats=flats, useMinDofIdx=False,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
             doDeblending=doDeblending, camDimOffset=camDimOffset, 
             postageImg=postageImg, opdCmdSettingsFile=opdCmd,
             comcamCmdSettingsFile=comcamCmd, selectSensors=selectSensors,
-            splitWfsByMag =splitWfsByMag
+            splitWfsByMag =splitWfsByMag,raInDeg=raInDeg,decInDeg=decInDeg
             )
 print('Done running ccLoop for GAIA \n\n')
+
+# move the screenlog generated  by screen -LS  if it exists ... 
+# it should be wherever the screen to run this code 
+# got made ... 
+screenlog_path = '/astro/store/epyc/users/suberlak/Commissioning/aos/ts_phosim/notebooks/analysis_scripts'
+screenlog_default = os.path.join(screenlog_path,'screenlog.0')
+
+if os.path.exists(screenlog_default):
+    now = datetime.datetime.now()
+    date = now.strftime("%Y-%m-%d_%H:%M:%S")
+    screenlog = 'screenlog_%s_%s_%s.txt'%(topDir,expDir,date)
+    argString = screenlog_default + ' '+outputDir+'/'+screenlog
+    runProgram("mv ", argstring=argString)
+    print('Screenlog saved as %s'%screenlog)
