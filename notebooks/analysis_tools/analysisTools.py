@@ -7,8 +7,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm 
 
-def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = 'R22',
-                     detector = 'S00', detNum = None, verbose=True):
+def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
+                     detector = None, detNum = None, verbose=True,
+                     data_id = None):
     ''' A function to read the post ISR image for a given CCD (sensor) 
     using Butler (so it has to be a butler repository). 
 
@@ -32,28 +33,43 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = 'R22',
 
     '''
     # Read in the postISR image using the Butler 
-    obsIdDic = {'intra':9006001,  'extra':9006002} 
+   
     
-    if not obsId: # if not provided, reading it from a dict
-        obsId = obsIdDic[focalType]
-    
-    detectors = ['S00', 'S01', 'S02','S10', 'S11', 'S12', 'S20', 'S21', 'S22']
-    sensor = raft+'_'+detector 
+    # if Butler args are no provided, attempting to 
+    # guess based on the following:
+    if data_id is None:
+        try:
+            assert (raft is not None) and (detector is not None)
+            sensor = raft+'_'+detector 
+        except AssertionError:
+            print(assert_err)
+            print('\n raft (eg. R22) is None, or detector (eg. S00) is None')
+            return 
 
-    detNumDict = {'S00':90, 'S01':91, 'S02':92, 'S10':93, 'S11':94, 
-                  'S12':95, 'S20':96, 'S21':97, 'S22':98}
-    if not detNum:
-        detNum = detNumDict[detector]
+        # this applies to ComCam ...
+        detNumDict = {'R22_S00':90, 'R22_S01':91, 'R22_S02':92,   # ComCam detector ids 
+                          'R22_S10':93, 'R22_S11':94, 'R22_S12':95, 
+                          'R22_S20':96, 'R22_S21':97, 'R22_S22':98,
+                          'R00_S22':197,  'R04_S20':204,    # WFS detector ids 
+                          'R40_S02':209, 'R44_S00':216
+                      }
+        if not detNum:
+            detNum = detNumDict[sensor]    
 
-    data_id = {'visit': obsId, 'filter': 'g', 'raftName': raft, 
-               'detectorName': detector, 'detector': detNum
-              }
-
-
+        obsIdDic = {'focal':9006000, 'intra':9006001,  'extra':9006002}
+        if not obsId: # if not provided, reading it from a dict, based on the focal type
+            obsId = obsIdDic[focalType]
+        
+        # assemble data_id arguments for Butler 
+        data_id = {'visit': obsId, 'filter': 'g', 'raftName': raft, 
+                   'detectorName': detector, 'detector': detNum
+                  }
+    else:
+        print('Using provided data_id for Butler')
+    print('data_id is')
+    print(data_id)
     # Read each figure as a postage stamp, store data to an array 
-    if verbose: 
-        print('\nReading data from %s'%data_dir)
-        print('For sensor %s '%sensor)
+
     repo_dir = os.path.join(data_dir, 'input/rerun/run1')
     butler = dafPersist.Butler(repo_dir)
 
@@ -92,7 +108,6 @@ def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00'):
     centr_dir = os.path.join(data_dir, 'iter0','img',focalType)      
     print('Reading centroid files from %s'%centr_dir)
     print('The following files are available:')
-    raft = 'R22'; detector = 'S00'
     pattern = 'centroid_lsst_'
     word = '%s_%s'%(raft,detector)
     for x in os.listdir(centr_dir):
@@ -109,8 +124,20 @@ def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00'):
     return centroid, centFlag    
 
 def readPostageStars(data_dir, ):
-    # read postage stars info
-    # Read in the postage image catalog
+    '''
+    Read the postage image stars catalog. 
+    While the postage stamps are saved in 
+    WepController.py, getDonutMap(), 
+ 
+    the catalog is saved at the next stage, when 
+    WepController.py, calcWfErr(), 
+    calculates the wavefront error based on the donut map 
+
+    So if there is an error in that stage, the catalog is 
+    not made.
+
+
+    '''
     try:
         fname = 'postagedonutStarsExtraIntra.txt'
         postage = Table.read(os.path.join(data_dir,fname), format='ascii')
@@ -119,6 +146,7 @@ def readPostageStars(data_dir, ):
     except FileNotFoundError as fnf_error:
         print(fnf_error)
         postFlag = False
+        postage = None
     return postage, postFlag
 
 # helper funtion for the colorbar 
@@ -135,9 +163,9 @@ def colorbar(mappable,ax):
 
 def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
              postage=None,postFlag=False, centroid=None, centFlag=False, 
-              Nstars=2,starMarker='redCross',starMarkerArgs=None,
+              Nstars=2, starMarker='redCross',starMarkerArgs=None,
              centMarkerArgs = None,centMarker='redCross',
-             starLabelArgs=None):
+             starLabelArgs=None, plotArgs=None):
     ''' A function  to plot a CCD image
 
     Parameters:
@@ -166,13 +194,15 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
         plottable = image.T
         cbar_label = r'$\mathrm{counts}$'
     
-        img = ax.imshow(plottable,# vmin = 2.45, vmax=2.75,
-                  origin='lower')
-        cbar= colorbar(mappable=img, ax=ax)
-        cbar.set_label(label=cbar_label, weight='normal', )
-        ax.set_xlabel('x [px]')
-        ax.set_ylabel('y [px]')
-        ax.set_title('postISR image, sensor %s, %s-focal'%(sensor,focalType))
+
+    if plotArgs is None:
+        plotArgs = {}
+    img = ax.imshow(plottable, origin='lower', **plotArgs)
+    cbar= colorbar(mappable=img, ax=ax)
+    cbar.set_label(label=cbar_label, weight='normal', )
+    ax.set_xlabel('x [px]')
+    ax.set_ylabel('y [px]')
+    ax.set_title('postISR image, sensor %s, %s-focal'%(sensor,focalType))
 
     # try to figure out how many stars there are from postage file 
     if postFlag: 
@@ -194,7 +224,8 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
         centMarkerArgs = starMarkerArgDict[centMarker]
     if starLabelArgs  is None:
         starLabelArgs = {'fontsize':16, 'color':'white'}
-        
+   
+
     for i in range(Nstars):
         if postFlag:
             x,y = postage[mask]['xpos'][i], postage[mask]['ypos'][i]
@@ -217,7 +248,7 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
     
     
 def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, testLabel='sep', xlims=[1525,2025], ylims=[750,1250],
-                      sensor = 'R22_S00', savefig=True, magPrimary=16, mag=15):
+                      sensor = 'R22_S00', focalType='extra',savefig=True, magPrimary=16, mag=15):
     '''  Function to plot both rms zernike errors and CCD image as a two-panel plot,
     restricting the CCD image to show only the relevant donut 
     
@@ -235,12 +266,14 @@ def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, testLabel='sep', xlims=[1
 
     fig, ax = plt.subplots(1,2,figsize=(16,6))
     
-    
+
     figtitle = 'img_AOS_'
+    suptitle = '%s,   '%sensor
+    
     if testLabel is 'sep':
         sepInRadii = sepInPercToRadii(sepInPerc)
         print(sepInRadii)
-        suptitle += 'sep=%.1f donut radii'%sepInRadii
+        suptitle += 'Star Sep=%.1f donut radii'%sepInRadii
         figtitle += 'singleAmpSep_'
         
     if testLabel is 'mag':
@@ -265,10 +298,7 @@ def plotZernikesAndCCD(image, rmsErrors, sepInPerc=10, testLabel='sep', xlims=[1
 
     # plot the postage stamp
     img = ax[1].imshow(np.log10(image[ymin:ymax, xmin:xmax]), vmin = 0.01,
-                       cmap=cm.get_cmap('Greys'),
-              origin='lower')
-    #cbar= colorbar(mappable=img)
-    #cbar.set_label(label=r'$\log_{10}(\mathrm{counts})$', weight='normal', )
+                       cmap=cm.get_cmap('Greys'),origin='lower')     
     ax[1].set_xlabel('x [px]')
     ax[1].set_ylabel('y [px]')
     ax[1].set_title('postISR image')
@@ -299,14 +329,15 @@ def sepInPercToRadii(sepInPerc):
     return sepInRadii             
 
 
-def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=2,
-                     cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],sepInPerc=3, testLabel='sep',
+def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=3,
+                      cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],
+                      sepInPerc=3, testLabel=None,
                       magPrimary=16, mag = 15
                      ):
 
     
     
-    imgType = ['singleSciImg','imgDeblend_full', 'imgDeblend_resized']
+    imgTypes = ['singleSciImg','imgDeblend_full', 'imgDeblend_resized']
     postage_dir = os.path.join(data_dir, 'postage')
     print('Using postage images from %s'%postage_dir)
     
@@ -329,31 +360,69 @@ def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=2,
         
     figtitle += sensor+'_'+focalType+'_postageImg.png'
     
-    fig,ax = plt.subplots(Nstars,len(imgType),figsize=(12,4*Nstars))
+   
+    print('Searching in %s directory'%postage_dir)
+    print('\nAvailable postage stamp images for sensor %s: '%sensor)
+    available = {}
+    for imgType in imgTypes:
+        available[imgType] = []
+        # filename pattern to test how many are available ...
+        pattern = focalType+'_'+imgType
+        # i.e. eg. 'extra_imgDeblend...'
+        print('\nLooking for files that start with "%s" and contain "%s"...'%(pattern, sensor))
+        for x in os.listdir(postage_dir):
+            if x.startswith(pattern) and (x.rfind(sensor)>0):
+                #print(x)
+                available[imgType].append(x)
+                
+        #print summary of what we found
+        Nfound =len(available[imgType]) 
+        if  Nfound > 5:
+            print('\nFound %d %s postage stamp images '%(Nfound, imgType))
+            print('first 5: ')
+            print(available[imgType][:5])
+        else:
+            print('\nFound %d %s postage stamp images '%(Nfound, imgType))
+            print(available[imgType])
 
-    for col in range(len(imgType)): # columns : each imgType is one column 
-        ax[0,col].set_title(imgType[col], fontsize=17)
+
+    # revise the number of stars available vs those requested ... 
+    Navailable = min([len(available[key]) for key in available.keys()])
+    if Nstars is None:
+        Nstars = Navailable
+    if Nstars > Nfound:
+        print('Only found %d '%Nfound)
+        Nstars = Navailable
+
+    # start plotting
+    fig,ax = plt.subplots(Nstars,len(imgTypes),figsize=(12,4*Nstars))
+    
+    # handle the case of only 1 star with postage stamp image 
+    # artificially adding a row of ones,
+    # so that the minimal shape of [row,col] is preserved 
+    if Nstars<2: 
+        ax = np.append(ax,[1,1,1])
+        ax = ax.reshape(2,3)
+    
+    for col in range(len(imgTypes)): # columns : each imgType is one column 
+        imgType = imgTypes[col]
+        ax[0,col].set_title(imgTypes[col], fontsize=17)
         for row in range(Nstars): # Nstars   rows : one per star
-            fname = focalType+'_'+imgType[col]+"_sensor-"+sensor+"_star-"+str(row)+'_'
-            #print(fname)
-            for x in os.listdir(postage_dir):
-                if x.startswith(fname): 
-                    print(x)
-                    fname = x
-                    word = 'id'
-                    loc = fname.find(word)
-                    starId = fname[loc+len(word)+1]
-            image = np.loadtxt(postage_dir+'/'+fname)
+            fname = available[imgType][row]
+            word = 'id' ; loc = fname.find(word)
+            starId = fname[loc+len(word)+1]
+            print('Loading %s'%fname)
+            image = np.loadtxt(os.path.join(postage_dir,fname))
             if image.ndim == 2  :
-                mappable = ax[row,col].imshow(image)
+                mappable = ax[row,col].imshow(image, origin='lower')
                 ax[row,col].text(0.1,0.1,'star %d, id %s'%(row,starId) , 
                                  fontsize=17, color='white', 
                                  transform=ax[row,col].transAxes)
-            else:
+            else: 
                 ax[row,col].remove()
                 ax[row,col].text(0.2,0.5, 'image.ndim < 2 ',fontsize=15,
                             transform=ax[row,col].transAxes)
-
+     
     # that's for horizontal cbar on the bottom 
     cbar_ax = fig.add_axes(cbarX0Y0DxDy)     #  (x0 ,y0  , dx,  dy )  
     cbar = fig.colorbar(mappable, cax = cbar_ax,  orientation='horizontal')                    
