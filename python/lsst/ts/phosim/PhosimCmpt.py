@@ -596,8 +596,8 @@ class PhosimCmpt(object):
 
         Returns
         -------
-        list[str]
-            List of arguments to run the PhoSim.
+        str:
+            a string of arguments to run PhoSim.
         """
 
 
@@ -645,8 +645,6 @@ class PhosimCmpt(object):
         ----------
         extraObsId : int
             Extra-focal observation Id.
-        intraObsId : int
-            Intra-focal observation Id.
         skySim : SkySim
             Sky simulator
         simSeed : int, optional
@@ -659,8 +657,8 @@ class PhosimCmpt(object):
 
         Returns
         -------
-        list[str]
-            List of arguments to run the PhoSim.
+        str:
+            a string of arguments to run PhoSim.
         """
 
         # Set the intra- and extra-focal related information
