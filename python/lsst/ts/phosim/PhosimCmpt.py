@@ -1374,6 +1374,44 @@ class PhosimCmpt(object):
         # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
 
+    def repackageLsstCamAmpImgFromPhosim(keepOriginal=False):
+        """Repackage the LsstCam amplifier images from PhoSim to the single 
+        16 extension multi-extension frames (MEFs) for processing. There is 
+        only extra-focal dir used 
+        """
+        # Make a temporary directory
+        tmpDirPath = os.path.join(self.outputImgDir, "tmp")
+        self._makeDir(tmpDirPath)
+
+        extraFocalDirName = self.getExtraFocalDirName()
+    
+        # Repackage the images to the temporary directory
+        command = "phosim_repackager.py"
+        phosimImgDir = os.path.join(self.outputImgDir, extraFocalDirName)
+        argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
+        runProgram(command, argstring=argstring)
+
+
+        # if keeping originals, copy them to  a dir 
+        if keepOriginal:
+            origDirPath = os.path.join(self.outputImgDir, 'orig')
+            self._makeDir(origDirPath)
+
+            argString = '-a %s/. %s/'%(phosimImgDir,origDirPath)
+            runProgram("cp", argstring=argString)
+            print('We keep the original PhoSim output images in %s'%origDirPath)
+
+          
+        # Remove the image data in the original directory
+        argString = "-rf %s/*.fits*" % phosimImgDir
+        runProgram("rm", argstring=argString)
+
+        # Put the repackaged data back into the image directory
+        argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
+        runProgram("mv", argstring=argstring)
+
+        # Remove the temporary directory
+        shutil.rmtree(tmpDirPath)
 
     def repackageComCamAmpImgFromPhoSim(self):
         """Repackage the ComCam amplifier images from PhoSim to the single 16
