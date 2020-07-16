@@ -1380,17 +1380,17 @@ class PhosimCmpt(object):
     def repackageLsstCamAmpImgFromPhosim(self,keepOriginal=False):
         """Repackage the LsstCam amplifier images from PhoSim to the single 
         16 extension multi-extension frames (MEFs) for processing. There is 
-        only extra-focal dir used 
+        only intra-focal dir used 
         """
         # Make a temporary directory
         tmpDirPath = os.path.join(self.outputImgDir, "tmp")
         self._makeDir(tmpDirPath)
 
-        extraFocalDirName = self.getExtraFocalDirName()
+        intraFocalDirName = self.getIntraFocalDirName()
     
         # Repackage the images to the temporary directory
         command = "phosim_repackager.py"
-        phosimImgDir = os.path.join(self.outputImgDir, extraFocalDirName)
+        phosimImgDir = os.path.join(self.outputImgDir, intraFocalDirName)
         argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
         runProgram(command, argstring=argstring)
 
