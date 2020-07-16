@@ -676,7 +676,7 @@ class PhosimCmpt(object):
         onFocalOutputImgDir = self.outputImgDir
 
         # Set the observation ID
-        self.setSurveyParam(obsId=obsId)
+        self.setSurveyParam(obsId=intraObsId)
 
         # Update the output image directory
         outputImgDir = os.path.join(onFocalOutputImgDir, 
