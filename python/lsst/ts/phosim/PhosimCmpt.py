@@ -631,20 +631,23 @@ class PhosimCmpt(object):
         return argString
 
     def getLsstCamStarArgsAndFilesForPhosim(
-            self, extraObsId, skySim, simSeed=1000,
+            self, intraObsId, skySim, simSeed=1000,
             cmdSettingFileName="starDefault.cmd",
             instSettingFileName="starSingleExp.inst"):
         """Get the star calculation arguments and files of WFS corner sensors
         for the PhoSim calculation. For corner sensors, they are defocal by default.
         The PhoSim model itself has already split the corner wavefront sensor 
         on the focal plane. Hence we do not need the camera piston to generate 
-        the defocal image. We'll just use extraObsId. 
+        the defocal image. 
 
+        We'll just use  intraObsId, since ts_wep 
+        WEPCalculation.calculateWavefrontError() can run with only intraRawExpData,
+        and treats extraRawExpData as optional. 
 
         Parameters
         ----------
-        extraObsId : int
-            Extra-focal observation Id.
+        obsId : int
+            observation Id
         skySim : SkySim
             Sky simulator
         simSeed : int, optional
@@ -661,11 +664,11 @@ class PhosimCmpt(object):
             a string of arguments to run PhoSim.
         """
 
-        # Set the intra- and extra-focal related information
-        instFileName =  "starExtra.inst"
-        logFileName = "starExtraPhoSim.log"
+        # Set the extra-focal related information
+        instFileName =  "starIntra.inst"
+        logFileName = "starIntraPhoSim.log"
 
-        extraFocalDirName = self.getExtraFocalDirName()
+        intraFocalDirName = self.getIntraFocalDirName()
 
         # Write the instance and command files of defocal conditions
         cmdFileName = "star.cmd"
@@ -673,11 +676,11 @@ class PhosimCmpt(object):
         onFocalOutputImgDir = self.outputImgDir
 
         # Set the observation ID
-        self.setSurveyParam(obsId=extraObsId)
+        self.setSurveyParam(obsId=obsId)
 
         # Update the output image directory
         outputImgDir = os.path.join(onFocalOutputImgDir, 
-            extraFocalDirName)
+            intraFocalDirName)
         self.setOutputImgDir(outputImgDir)
 
         # Get the argument to run the phosim
@@ -1374,7 +1377,7 @@ class PhosimCmpt(object):
         # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
 
-    def repackageLsstCamAmpImgFromPhosim(keepOriginal=False):
+    def repackageLsstCamAmpImgFromPhosim(self,keepOriginal=False):
         """Repackage the LsstCam amplifier images from PhoSim to the single 
         16 extension multi-extension frames (MEFs) for processing. There is 
         only extra-focal dir used 
