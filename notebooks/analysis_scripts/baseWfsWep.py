@@ -29,9 +29,12 @@ class baseWfsWep():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            cmdSettingsFile='starBoWfsExample.cmd', 
-            instSettingFile='starBoWfsExample.inst',
-            selectSensors = 'wfs'):
+            cmdSettingsFile='starDefault.cmd', 
+            instSettingFile='starSingleExp.inst',
+            selectSensors = 'wfs', 
+            phosimRepackagerKeepOriginal=False,deblendDonutAlgo='convolveTemplate',
+            centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
+            raInDeg=None,decInDeg=None, rotAngInDeg=None):
 
         # get the list of sensors  - by default it's comCam...
         # sensorNameList = self._getComCamSensorNameList()
@@ -42,6 +45,7 @@ class baseWfsWep():
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
+            print('\nMaking calibration products ... ')
             #  make calibs for wfs 
             # if selectSensors is 'comcam':
             #     fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
@@ -70,9 +74,16 @@ class baseWfsWep():
                 surveySettings.getSetting("filterType"))
         else:
             filterType = FilterType.fromString(surveyFilter)
-        raInDeg = surveySettings.getSetting("raInDeg")
-        decInDeg = surveySettings.getSetting("decInDeg")
-        rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
+
+        if raInDeg is None:
+            raInDeg = surveySettings.getSetting("raInDeg")
+        if decInDeg is None:
+            decInDeg = surveySettings.getSetting("decInDeg")
+        if rotAngInDeg is None :
+            rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
+        print('Using the following settings for the telescope:')
+        print('boresight (ra,dec) = %.3f,%.3f [deg]'%(raInDeg,decInDeg))
+        print('rotation angle = %.3f [deg] '%rotAngInDeg)
 
         # Prepare the components
         print('\nPreparing PhosimCmpt...')
@@ -83,7 +94,8 @@ class baseWfsWep():
         print('\nPreparing WepCalc...')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
-                                selectSensors)
+                                selectSensors,deblendDonutAlgo,centroidTemplateType,
+                                deblendTemplateType)
 
         tele = phosimCmpt.getTele()
 
@@ -106,6 +118,7 @@ class baseWfsWep():
 
         # Ingest the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
+            print('\nIngesting calibration products ... ')
             wepCalc.ingestCalibs(fakeFlatDir)
 
         # Only use 10 hexapod positions and first 3 bending modes of M1M3 and M2
@@ -115,9 +128,6 @@ class baseWfsWep():
         # Set the telescope state to be the same as the OFC
         state0 = ofcCalc.getStateAggregated()
         phosimCmpt.setDofInUm(state0)
-
-
-     
 
 
         # Do the iteration
@@ -164,12 +174,8 @@ class baseWfsWep():
             # LsstFamCam, it is 31 locations in a ring, so 31 files )
             if genOpd is True:
                 
-                if selectSensors is 'comcam':
-                    argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
-                         cmdSettingFileName=opdCmdSettingsFile)
-                    
-                elif selectSensors is 'wfs':
-                    argString = phosimCmpt.getLsstFamCamOpdArgsAndFilesForPhoSim(
+                #elif selectSensors is 'wfs':
+                argString = phosimCmpt.getLsstFamCamOpdArgsAndFilesForPhoSim(
                         cmdSettingFileName=opdCmdSettingsFile)
 
                 argString = argPrepend + argString
@@ -193,11 +199,11 @@ class baseWfsWep():
             #     that's 9 rows (one per CCD) ,  but for LsstFamCam - 31 rows 
 
 
-            if selectSensors is 'comcam':
-                phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
-                                            pssnFileName=opdPssnFileName)
-            elif selectSensors is 'wfs':
-                phosimCmpt.analyzeLsstFamCamOpdData(zkFileName=opdZkFileName,
+            # if selectSensors is 'comcam':
+            #     phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
+            #                                 pssnFileName=opdPssnFileName)
+            #elif selectSensors is 'wfs':
+            phosimCmpt.analyzeLsstFamCamOpdData(zkFileName=opdZkFileName,
                                             pssnFileName=opdPssnFileName)
 
             # Get the PSSN from file
@@ -222,37 +228,39 @@ class baseWfsWep():
 
             # Assign the entra- and intra-focal observation Id
             extraObsId = obsId + 1
-            intraObsId = obsId + 2
+            #intraObsId = obsId + 2
 
             # Generate the defocal images
             simSeed = 1000
-            if selectSensors is 'wfs':
-                # There is actually nothing (that I can see) that is comcam - specific
-                # here :  getComCamStarArgsAndFilesForPhoSim()
-                # it gets self.tele.getDefocalDistInMm()  
 
-                # We prepare OFC to be for LsstCam , 
-                # and we ensure that phosim  has setDofInUm() as ofcCalc
-                # thus I think that tele.getDefocalDistInMm() should have the 
-                # WFS corner sensors values ... 
-                
-                print('Using %s and %s for cmd and inst PhoSim files '%(cmdSettingsFile,
-                        instSettingFile))
-                argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
-                     extraObsId, intraObsId, skySim, simSeed=simSeed,
-                     cmdSettingFileName=cmdSettingsFile,
-                     instSettingFileName=instSettingFile)
+            #if selectSensors is 'wfs':
 
-                # Note, at this point PhosimCmpt.py  uses TeleFacade.py  
-                # self.tele.writeStarInstFile() , which writes the 
-                # camera configuration parameter 
-                # camconfig  using the default 
-                # self.sensorOn = {"sciSensorOn": True,
-                #                  "wfSensorOn": True,
-                #                  "guidSensorOn": False} 
-                # i.e.  camconfig is 3, 
-                # unless self.tele.sensorOn['sciSensorOn'] = False 
-                # in which case camconfig is 2 ... 
+            # There is actually nothing (that I can see) that is comcam - specific
+            # here :  getComCamStarArgsAndFilesForPhoSim()
+            # it gets self.tele.getDefocalDistInMm()  
+
+            # We prepare OFC to be for LsstCam , 
+            # and we ensure that phosim  has setDofInUm() as ofcCalc
+            # thus I think that tele.getDefocalDistInMm() should have the 
+            # WFS corner sensors values ... 
+            
+            print('Using %s and %s for cmd and inst PhoSim files '%(cmdSettingsFile,
+                    instSettingFile))
+            argString = phosimCmpt.getLsstCamStarArgsAndFilesForPhosim(
+                 extraObsId=extraObsId, skySim=skySim, simSeed=simSeed,
+                 cmdSettingFileName=cmdSettingsFile,
+                 instSettingFileName=instSettingFile)
+
+            # Note, at this point PhosimCmpt.py  uses TeleFacade.py  
+            # self.tele.writeStarInstFile() , which writes the 
+            # camera configuration parameter 
+            # camconfig  using the default 
+            # self.sensorOn = {"sciSensorOn": True,
+            #                  "wfSensorOn": True,
+            #                  "guidSensorOn": False} 
+            # i.e.  camconfig is 3, 
+            # unless self.tele.sensorOn['sciSensorOn'] = False 
+            # in which case camconfig is 2 ... 
 
 
             if genDefocalImg is True:
@@ -263,46 +271,36 @@ class baseWfsWep():
                 # start again - prepend the working directory first 
                 argPrepend = '-w ' + baseOutputDir+ ' ' 
 
-                # if selectSensors is 'wfs':
-                #     sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
-              
+                if selectSensors is 'wfs':
+                    # note : need to select each half-chip ... 
+                    sensors = "R00_S22_C0|R00_S22_C1|R04_S20_C0|R04_S20_C1|R44_S00_C0|R44_S00_C1|R40_S02_C0|R40_S02_C1"
 
-                # if selectSensors is not None: 
-                #     sensors = ' "%s" '%sensors # needed to pass the argument in 
-                #     # comment signs 
-                #     argPrepend +=  '-s ' + sensors+ ' '
+                if selectSensors is not None: 
+                    sensors = ' "%s" '%sensors # needed to pass the argument in comment signs 
+                    argPrepend +=  '-s ' + sensors+ ' '
 
-                print('For generating defocal images with PhoSim, the argPrepend is ')
+                print('\nFor generating defocal images with PhoSim, the argPrepend is ')
                 print(argPrepend)
 
-
-                for argString in argStringList:
-                    argString = argPrepend + argString
-                    print('\n\nGenerating defocal images with Phosim, argString is ')
-                    print(argString)
-                    phosimCmpt.runPhoSim(argString)
+                argString = argPrepend + argString
+                print('\n\nGenerating defocal images with Phosim, argString is ')
+                print(argString)
+                phosimCmpt.runPhoSim(argString)
 
                 # Repackage the images based on the image type
                 # Again, I don't see here anything comCam - specific...
                 # the repackaging calls 
                 # /epyc/projects/lsst_comm/phosim_utils/python/lsst/phosim/utils/phosim_repackager.py
-
-                if (isEimg):
-                    phosimCmpt.repackageComCamEimgFromPhoSim()
-                else:
-                    phosimCmpt.repackageComCamAmpImgFromPhoSim()
+            
+                # just extra - focal : wrote a new function ...
+                phosimCmpt.repackageLsstCamAmpImgFromPhosim(keepOriginal=phosimRepackagerKeepOriginal) 
 
             # Collect the defocal images
-            intraRawExpData = RawExpData()
-            intraRawExpDir = os.path.join(outputImgDir,
-                                        phosimCmpt.getIntraFocalDirName())
-            intraRawExpData.append(intraObsId, 0, intraRawExpDir)
-
+          
             extraRawExpData = RawExpData()
             extraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getExtraFocalDirName())
             extraRawExpData.append(extraObsId, 0, extraRawExpDir)
-
 
 
             # before ingesting images by WEP,  make sure that the previously ingested 
@@ -467,39 +465,46 @@ class baseWfsWep():
         return phosimCmpt
 
 
-    def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        isEimg,doDeblending, camDimOffset, selectSensors):
-        print('selectSensors is ',selectSensors, ',  setting ')
-        if selectSensors is None: # by default
-            wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
-            print('WEPCalculationFactory.getCalculator(CamType.ComCam,...')
 
-        elif selectSensors is 'wfs': # use LsstCam 
+
+    def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
+                        isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
+                        centroidTemplateType, deblendTemplateType):
+
+        if (selectSensors is None) or (selectSensors is 'comcam'): # by default
+            wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
+
+        elif selectSensors is 'wfs': # use LsstCam
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
-            print('WEPCalculationFactory.getCalculator(CamType.LsstCam,...')
 
         wepCalc.setFilter(filterType)
         wepCalc.setBoresight(raInDeg, decInDeg)
         wepCalc.setRotAng(rotAngInDeg)
 
-        if (isEimg):  # amp by default 
+        if (isEimg):
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
 
-        if (doDeblending): # True by default in the file 
+        if (doDeblending):
             settingFile = wepCalc.getSettingFile()
-            settingFile.updateSetting("doDeblending", "True") 
-        else: 
-            settingFile = wepCalc.getSettingFile()
-            settingFile.updateSetting("doDeblending", "False") 
-            
-        if camDimOffset  is not None : 
+            settingFile.updateSetting("doDeblending", "True")
+            settingFile.updateSetting("deblendDonutAlgo",deblendDonutAlgo)
+            settingFile.updateSetting("centroidTemplateType", centroidTemplateType)
+            settingFile.updateSetting("deblendTemplateType", deblendTemplateType)
+            print('Using following settings in ts_wep/policy/default.yaml:')
+            print("doDeblending:  True")
+            print("deblendDonutAlgo: %s"%deblendDonutAlgo)
+            print("centroidTemplateType: %s"%centroidTemplateType)
+            print("deblendTemplateType: %s"%deblendTemplateType)
+
+        if camDimOffset  is not None :
             settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("camDimOffset", camDimOffset)
             print('camDimOffset is ', settingFile.getSetting("camDimOffset"))
 
 
         return wepCalc
+
 
 
     def _prepareOfcCalc(self, filterType, rotAngInDeg, selectSensors):
