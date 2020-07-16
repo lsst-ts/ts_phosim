@@ -139,7 +139,7 @@ class baseWfsWep():
         outputImgDirName = "img"
         iterDefaultDirName = "iter"
         dofInUmFileName = "dofPertInNextIter.mat"
-        skyInfoFileName = "skyComCamInfo.txt"
+        skyInfoFileName = "skyLsstCamInfo.txt"
         for iterCount in range(iterNum):
 
             # Set the observation Id
@@ -223,12 +223,14 @@ class baseWfsWep():
             skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
 
             # Output the sky information
+            # this ensures that the star catalog
+            # is always preserved in the directory with results 
             skySim, wepCalc = self._outputSkyInfo(outputDir, skyInfoFileName, 
                 skySim, wepCalc)
 
             # Assign the entra- and intra-focal observation Id
-            extraObsId = obsId + 1
-            #intraObsId = obsId + 2
+            #extraObsId = obsId + 1
+            intraObsId = obsId + 2
 
             # Generate the defocal images
             simSeed = 1000
@@ -247,7 +249,7 @@ class baseWfsWep():
             print('Using %s and %s for cmd and inst PhoSim files '%(cmdSettingsFile,
                     instSettingFile))
             argString = phosimCmpt.getLsstCamStarArgsAndFilesForPhosim(
-                 extraObsId=extraObsId, skySim=skySim, simSeed=simSeed,
+                 intraObsId=intraObsId, skySim=skySim, simSeed=simSeed,
                  cmdSettingFileName=cmdSettingsFile,
                  instSettingFileName=instSettingFile)
 
@@ -292,15 +294,15 @@ class baseWfsWep():
                 # the repackaging calls 
                 # /epyc/projects/lsst_comm/phosim_utils/python/lsst/phosim/utils/phosim_repackager.py
             
-                # just extra - focal : wrote a new function ...
+                # just intra - focal : wrote a new function ...
                 phosimCmpt.repackageLsstCamAmpImgFromPhosim(keepOriginal=phosimRepackagerKeepOriginal) 
 
-            # Collect the defocal images
+            # Collect the defocal images : only intra-focal...
           
-            extraRawExpData = RawExpData()
-            extraRawExpDir = os.path.join(outputImgDir,
-                                        phosimCmpt.getExtraFocalDirName())
-            extraRawExpData.append(extraObsId, 0, extraRawExpDir)
+            intraRawExpData = RawExpData() # instatiate the container class 
+            IntraRawExpDir = os.path.join(outputImgDir,
+                                        phosimCmpt.getIntraFocalDirName())
+            intraRawExpData.append(intraObsId, 0, intraRawExpDir)
 
 
             # before ingesting images by WEP,  make sure that the previously ingested 
@@ -328,8 +330,7 @@ class baseWfsWep():
             print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
             
             listOfWfErr = wepCalc.calculateWavefrontErrors(
-                intraRawExpData, extraRawExpData=extraRawExpData,
-                postageImg=postageImg, postageImgDir = postageImgDir,
+                intraRawExpData, postageImg=postageImg, postageImgDir = postageImgDir,
                 sensorNameToIdFileName=sensorNameToIdFileName)
             ofcCalc.calculateCorrections(listOfWfErr)
 
