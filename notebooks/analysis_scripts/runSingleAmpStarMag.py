@@ -53,7 +53,7 @@ parser.add_argument("--copyDir", type=str, default='mag_16',
                    loop over star separations.')
 
 args = parser.parse_args()
-
+    
 # Load directory paths
 phosimDir = getPhoSimPath()
 testLabel = args.testLabel
@@ -81,6 +81,14 @@ postageImg = args.postageImg
 topDir = args.topDir # dir from /analysis_scripts/ level... 
 expDir = args.expDir # name of the experiment dir 
 copyDir = args.copyDir # name of dir to copy calibs and OPD from 
+
+# make the experiment dir if needed ...
+# this would be if we chose something different
+# than /results_after_centroid_update/..
+expPath = os.path.join(topDir,expDir)
+if (not os.path.exists(expPath)):
+  os.makedirs(expPath)
+  print('Created %s directory'%expPath)
 
 # the opd and wfs are stored here 
 os.environ["closeLoopTestDir"] = os.path.join(topDir, expDir) 
