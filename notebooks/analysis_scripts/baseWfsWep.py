@@ -203,6 +203,7 @@ class baseWfsWep():
             #     phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
             #                                 pssnFileName=opdPssnFileName)
             #elif selectSensors is 'wfs':
+
             phosimCmpt.analyzeLsstFamCamOpdData(zkFileName=opdZkFileName,
                                             pssnFileName=opdPssnFileName)
 
@@ -300,7 +301,7 @@ class baseWfsWep():
             # Collect the defocal images : only intra-focal...
           
             intraRawExpData = RawExpData() # instatiate the container class 
-            IntraRawExpDir = os.path.join(outputImgDir,
+            intraRawExpDir = os.path.join(outputImgDir,
                                         phosimCmpt.getIntraFocalDirName())
             intraRawExpData.append(intraObsId, 0, intraRawExpDir)
 
