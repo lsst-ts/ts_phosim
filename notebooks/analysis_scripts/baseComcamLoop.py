@@ -149,9 +149,6 @@ class baseComcamLoop():
         else:
             postageImgDir = None
 
-        # Test star magnitude
-        #starMag = starMag
-
         # Survey parameters, taken from ts_phosim/policy/surveySettings.yaml
         surveySettingFilePath = os.path.join(getConfigDir(),
                                             "surveySettings.yaml")
@@ -170,6 +167,7 @@ class baseComcamLoop():
         print('Using the following settings for the telescope:')
         print('boresight (ra,dec) = %.3f,%.3f [deg]'%(raInDeg,decInDeg))
         print('rotation angle = %.3f [deg] '%rotAngInDeg)
+        
         # Prepare the components
         print('Preparing the PhoSim component ')
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
@@ -222,7 +220,7 @@ class baseComcamLoop():
         dofInUmFileName = "dofPertInNextIter.mat"
         skyInfoFileName = "skyComCamInfo.txt"
         for iterCount in range(iterNum):
-            print('Starting iteration %d of %d'%(iterCount,iterNum))
+            print('Starting iteration %d of %d'%(iterCount+1,iterNum))
             # Set the observation Id
             phosimCmpt.setSurveyParam(obsId=obsId)
 
@@ -244,6 +242,7 @@ class baseComcamLoop():
             # Generate the OPD image
             if genOpd is True:
                 t1 = datetime.datetime.now()
+
                 if selectSensors is 'comcam':
                     argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                          cmdSettingFileName=opdCmdSettingsFile)
@@ -352,9 +351,6 @@ class baseComcamLoop():
                             sensors += s
                     sensors = ' "%s" '%sensors
 
-                if selectSensors is 'wfs':
-                    sensors = "R00_S22|R04_S20|R44_S00|R40_S02"
-
                 if selectSensors is not None:
                     argPrepend +=  '-s ' + sensors+ ' '
 
@@ -449,12 +445,14 @@ class baseComcamLoop():
                   instSettingFileName=instSettingFileName)
 
                 argString = argPrepend + argString
-                print('Generating focal plane images with Phosim\n')
-                print(argString)
+                print('\nGenerating focal plane images with Phosim\n')
                 
                 t1 = datetime.datetime.now()
                 print('Start time', t1.strftime("%Y-%m-%d_%H:%M:%S"))
+                print(argString)
+                
                 phosimCmpt.runPhoSim(argString)
+
                 t2 = datetime.datetime.now()
                 print('End time', t2.strftime("%Y-%m-%d_%H:%M:%S"))
                 _print_duration(t2-t1)
