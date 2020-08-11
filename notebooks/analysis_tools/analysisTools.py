@@ -9,7 +9,7 @@ import matplotlib.cm as cm
 
 def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
                      detector = None, detNum = None, verbose=True,
-                     data_id = None):
+                     data_id = None, rerun='run1'):
     ''' A function to read the post ISR image for a given CCD (sensor) 
     using Butler (so it has to be a butler repository). 
 
@@ -50,13 +50,13 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
         detNumDict = {'R22_S00':90, 'R22_S01':91, 'R22_S02':92,   # ComCam detector ids 
                           'R22_S10':93, 'R22_S11':94, 'R22_S12':95, 
                           'R22_S20':96, 'R22_S21':97, 'R22_S22':98,
-                          'R00_S22':197,  'R04_S20':204,    # WFS detector ids 
+                          'R00_S22':197,'R04_S20':204,    # WFS detector ids 
                           'R40_S02':209, 'R44_S00':216
                       }
         if not detNum:
             detNum = detNumDict[sensor]    
-
-        obsIdDic = {'focal':9006000, 'intra':9006001,  'extra':9006002}
+        # these are decided in baseComcamLoop.py or baseWfsLoop.py 
+        obsIdDic = {'focal':9006000, 'extra':9006001,  'intra':9006002}
         if not obsId: # if not provided, reading it from a dict, based on the focal type
             obsId = obsIdDic[focalType]
         
@@ -70,7 +70,10 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
     print(data_id)
     # Read each figure as a postage stamp, store data to an array 
 
-    repo_dir = os.path.join(data_dir, 'input/rerun/run1')
+    repo_dir = os.path.join(data_dir, 'input/rerun/', rerun)
+    print('Reading postISR images from the following repo_dir:')
+    print(repo_dir)
+    
     butler = dafPersist.Butler(repo_dir)
 
     # show what keys are needed by the `postISRCCD` data type.... 
@@ -431,3 +434,73 @@ def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=3,
     fig.suptitle(suptitle, fontsize=17)
     plt.savefig(figtitle, 
                 bbox_inches='tight', dpi=100)
+    
+    
+    
+    
+def make_healpix_table(r_max=24.5):
+    ''' A convenience function 
+    to read in the MAF simulation data,
+    and given the limiting r magnitude, 
+    return stellar density per healpixel,
+    and the fraction of healpixels with higher
+    density , together with ra,dec coord 
+    of each healpixel. We use the constraint 
+    r < r_max, with  65 magnitude bins between 
+    15 and 28 mag every 0.2 mag. 
+    
+    '''
+    # the data consists of 
+    # data['starDensity'],  expressed as stars / sq. deg  ,  per pixel, per magnitude
+    # data['bins'], defining the magnitude ranges for each of the 65 magnitude bins 
+    # data['overMaxMask'], which tells where there are more than 1e6 stars 
+    data = np.load('starDensity_r_nside_64.npz')
+
+
+    # Cumulative number counts, units of stars/sq deg. Array at healpix locations
+    # magnitude bins 
+    mag_bins = data['bins'].copy()
+    # pixels where there were so many  (1e6 ) stars some were skipped
+    mask = data['overMaxMask'].copy()
+    # in this simulation none were skipped : 
+    # np.sum(mask) = 0
+
+    # select only bins up to r_max - then selecting the final bin will 
+    # give us the source count up to depth of r_max mag 
+    bright_mag_idx, = np.where(mag_bins<r_max)
+    print('Selecting only the source density up \
+    to the depth of ', r_max, ' mag')
+    faintest_mag_idx = bright_mag_idx[-1]
+
+    # Since the data is already cumulative, just choose the  last bin: 
+    # this will have the number of stars up to the faintest magnitude 
+    # bin in a given  healpixel 
+    starDensity_lt_245 = data['starDensity'][:,faintest_mag_idx]
+    # len(starDensity_lt_245) = len(data['starDensity]) = 49142
+
+    # Generate the ra, dec array from healpy
+    nside = hp.npix2nside(np.size(mask))
+    lat,ra = hp.pix2ang(nside, np.arange(np.size(mask)))
+    dec = np.pi/2-lat
+
+    # only select those healpixels for which we have any simulation data ...
+    m = starDensity_lt_245 > 0
+
+    density = starDensity_lt_245[m]
+    ra = ra[m]
+    dec = dec[m]
+
+    # For each pixel calculate how many pixels have a higher or equal density 
+    N_px_greater  = np.zeros_like(density)
+    for i in range(len(density)):
+        N_px_greater[i]=np.sum(density>=density[i])
+
+    # calculate the fraction of pixels that have a higher density (by area)
+    frac_greater  = N_px_greater /  len(density)
+
+    # Make an AstroPy table with healpix data...
+
+    healpix_table = Table([density, ra,dec, N_px_greater, frac_greater], 
+                          names=('source_density','ra_rad','dec_rad', 'N_px_greater', 
+                                 'frac_greater'))
+    return healpix_table , nside
