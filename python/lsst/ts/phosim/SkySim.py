@@ -316,12 +316,12 @@ class SkySim(object):
         pixelDmX, pixelDmY = self._sourProc.camXY2DmXY(xInpixelInCam,
                                                        yInPixelInCam)
 
-        # Expend the sensor name
-        expendedSensorName = expandDetectorName(sensorName)
+        # Expand the sensor name
+        expandedSensorName = expandDetectorName(sensorName)
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = raDecFromPixelCoords(
-            pixelDmX, pixelDmY, expendedSensorName, camera=self._camera,
+            pixelDmX, pixelDmY, expandedSensorName, camera=self._camera,
             obs_metadata=self._obs, epoch=epoch,
             includeDistortion=includeDistortion)
 
