@@ -29,29 +29,57 @@ args = parser.parse_args()
 # Try setting the origin and destination 
 # directories from the field name 
 field = args.field 
+# if len(field)>0:
+#     print('Based on provided field name %s, we are assuming the following:'%field)
+#     # Set origin directory 
+#     inputDir = 'results_gaia/dr2_%s_gt11'%field
+
+#     # a directory in which we store the rerun
+#     outputDir = 'results_gaia/dr2_%s_gt11_reingest'%field
+# else:
+
+if (len(args.inputDir)>0) and (len(args.outputDir)>0) : 
+    print("\nUsing the following as the inputDir and outputDir")
+    inputDir = 'results_gaia/%s'%args.inputDir
+    outputDir = 'results_gaia/%s'%args.outputDir
+    print(inputDir)
+    print(outputDir)
+     
+else:
+	print("Need to provide inputDir and outputDir names relative to results_gaia/")
+
+
 if len(field)>0:
     print('Based on provided field name %s, we are assuming the following:'%field)
-    # Set origin directory 
-    inputDir = 'results_gaia/dr2_%s_gt11'%field
+    
+    # set the raInDeg,  decInDeg ,
+    # if the field name is provided 
+    # the center of field coords were first defined as 
+    # Galactic: 
+    print('\nCalculating raInDeg, decInDeg based on field name ')
+    gt = Table(data=[['high','med','low','Baade'],
+                                [0,0,0,1.02],
+                               [85,40,10,-3.92 ]], 
+                          names=['name', 'l_deg','b_deg'])
 
-    # a directory in which we store the rerun
-    outputDir = 'results_gaia/dr2_%s_gt11_reingest'%field
+    gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
+                           frame='galactic', unit='deg')
+    # convert them to equatorial 
+    gt['ra_deg']= gaia_coords.icrs.ra.deg
+    gt['dec_deg'] = gaia_coords.icrs.dec.deg
+
+    raInDeg = gt['ra_deg'][gt['name'] == field][0]
+    decInDeg = gt['dec_deg'][gt['name'] == field][0]
+    print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
+
+elif abs(args.raInDeg - 0.0) > 1e-3  :
+	    print("Reading the raInDeg, decInDeg for the field center from parser")
+	    raInDeg = args.raInDeg
+	    decInDeg =args.decInDeg 
+
 else:
 
-    if (len(args.inputDir)>0) and (len(args.outputDir)>0) : 
-        print("\nReading the inputDir and outputDir")
-        inputDir = 'results_gaia/%s'%args.inputDir
-        outputDir = 'results_gaia/%s'%args.outputDir
-
-        print("Reading the raInDeg, decInDeg for the field center from parser")
-        raInDeg = args.raInDeg
-        decInDeg =args.decInDeg 
-
-    else:
-        print('Need to provide a named field, or full name of inputDir, outputDir')
-
-
-print('inputDir=%s,  outputDir=%s'%(inputDir, outputDir))
+    raise ValueError('Need to provide a named field, or the input raInDeg and declInDeg ')
 
 # Copy the results of the prior PhoSim run
 if not os.path.exists(outputDir):
@@ -74,27 +102,6 @@ print('\nStarting reingest  ')
 
 print('The outputDir is %s'%outputDir)
 
-
-if len(args.field)>0:
-    # set the raInDeg,  decInDeg ,
-    # if the field name is provided 
-    # the center of field coords were first defined as 
-    # Galactic: 
-    print('\nCalculating raInDeg, decInDeg based on field name ')
-    gt = Table(data=[['high','med','low','Baade'],
-                                [0,0,0,1.02],
-                               [85,40,10,-3.92 ]], 
-                          names=['name', 'l_deg','b_deg'])
-
-    gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
-                           frame='galactic', unit='deg')
-    # convert them to equatorial 
-    gt['ra_deg']= gaia_coords.icrs.ra.deg
-    gt['dec_deg'] = gaia_coords.icrs.dec.deg
-
-    raInDeg = gt['ra_deg'][gt['name'] == field][0]
-    decInDeg = gt['dec_deg'][gt['name'] == field][0]
-    print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
 
 
 # initialize the reingestCloseLoop.py Class 
