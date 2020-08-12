@@ -107,10 +107,8 @@ print('The outputDir is %s'%outputDir)
 # initialize the reingestCloseLoop.py Class 
 print('Starting reingestCloseLoop : ')
 reingest = baseReingest() 
-reingest.main(baseOutputDir = outputDir, genFlats=True,  isEimg=False, 
-                  ingestDefocal=True, ingestFocal=True,
-                  raInDeg=raInDeg,decInDeg=decInDeg
-                  )
+reingest.main(baseOutputDir = outputDir, genFlats=True, 
+            ingestDefocal=True, ingestFocal=True)
 print('Done running reingest for %s \n\n'%outputDir)
 
 # # move the screenlog generated  by screen -LS  if it exists ... 
