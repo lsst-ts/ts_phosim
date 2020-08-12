@@ -11,101 +11,53 @@ from lsst.ts.wep.Utility import FilterType, CamType, runProgram, ImageType
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
 
-from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
-
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
-from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
                                    getConfigDir
-from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 
 
 class baseReingest():
 
-    def main(self, baseOutputDir, genFlats=True,  isEimg=False, ingestDefocal=True, ingestFocal=True,
-            raInDeg=None,decInDeg=None, rotAngInDeg=None):
+    def main(self, baseOutputDir, genFlats=True, ingestRawDefocal=True, isrDefocal = True,
+             ingestRawFocal=True, isrFocal = True, isrConfigFileName = "isr_config.py",
+             rerunName = 'run1'):
         '''
-        Code to run the full AOS loop on ComCam (or other sensors)
+        Code to redo the ingestion process for the AOS loop products. This assumes that eg. 
+        there was an AOS loop run with one version of the stack (eg. 2020_15),
+        and we want to remake the calibs, ingest them to make butler calibRegistry  and input/flats,
+        ingest the raw images to input/raw,  making butler registry , 
+        and perform the ISR, making input/rerun/run1 ...
+        
+        Another scenario is if we first run the AOS loop with certain ISR settings, 
+        and want to rerun the ISR with different settings. With the update of 
+        makeGainImages.py, which makes fake_flats, it is recommended 
+        to remake the calibs, ingest them, and then re-do the ISR. 
+
 
         Parameters:
         ------------
-        phosimDir : str, a directory with phosim.py,  returned by
-            lsst.ts.phosim.Utility.getPhoSimPath . For UW, it is
-            '/epyc/projects/lsst_comm/phosim_syseng4/'
-        numPro : int , 10 by default - number of processors used for
-            parallel calculation by PhoSim
-            NB. - since each raytrace is itself massively parallel, using eg. 10
-            cores may use 35 in effect (%use often shows eg. 350% per CPU...)
-
+     
         baseOutputDir: str, the base output directory path for all output, eg.
             'results_gaia/gMagGt11_w_2020_15_test'
-        testName: str , a label for the test appended to wfs.zer , opd.zer  files,
-             eg 'gaia' yields  `wfs.zer.gaia',  'opd.zer.gaia'....
+    
 
-        genOpd: boolean,  True/False  - whether to generate the Optical
-            Path Difference files, in  /iter0/img/opd_9006000_*.fits.gz
-        genDefocalImg: boolean,  True/False  - whether to generate with PhoSim
-            the defocal images, in /iter0/img/extra/  and  iter0/img/intra/
-        genFocalImg: boolean, True/False  - whether to generate with PhoSim
-            the in-focus images, in /iter0/img/focal/   
         genFlats: boolean,  True/False  - whether to generate with PhoSim the
             calibration files, in /fake_flats/
 
-        inputSkyFilePath: str, path to the input star catalog (with
-            ID | RA | DEC |  MAG  ),  eg.  '/results_gaia/starCatalog.txt'
-        postageImg: bool, True by default  - whether to save postage stamp
-            images of stars during the ts_wep  calcuation of wavefront error.
-            They are saved in eg.  /results_gaia/gMagGt11/postage/
+        ingestRawDefocal : boolean,  True/False  - whether to ingest the raw defocal images
+        isrDefocal :  boolean,  True/False  - whether to redo the ISR on raw defocal images 
+      
+        ingestRawFocal : boolean,  True/False  - whether to ingest the raw in-focus images
+        isrFocal :  boolean,  True/False  - whether to redo the ISR on raw in-focus images 
 
-        opdCmdSettingsFile: str, name of .cmd setting file for PhoSim when
-            simulating the OPD images, should be located in
-            /ts_phosim/policy/cmdFile/
-        comcamCmdSettingsFile: str, name of .cmd setting file for PhoSim when
-            simulating the comcam images, should be located in
-            /ts_phosim/policy/cmdFile/
-        instSettingFileName : str, name of .inst setting file for PhoSim when 
-            simulating images, should be located in /ts_phosim/policy/instFile/
-        selectSensors: str, 'comcam'  for R22, or 'wfs' for corner wavefront sensors,
-            a setting to pass explicitly to PhoSim  , also passed to _prepareOfcCalc,
-            _prepareWepCalc
-        splitWfsByMag: bool, whether to calculate the wfs for subsets of stars
-            based on magnitude ranges, or not
+        isrConfigFileName : str, 'isr_config.py' by default : filename where the ISR 
+            settings should be saved 
 
-        Parameters changing    ts_wep/policy/default.yaml  :
-        --------------------------------------------------
-        doDeblending : bool,  True by default
-        camDimOffset : -150 , offset that is used to ignore stars that are that
-            close to the CCD edge
-        deblendDonutAlgo : str, a deblending algorithm to use if doDeblending=True,
-            currently 'adapt' (old, pre-2020) or 'convolveTemplate' (new, May2020)
-        templateType: str, which type of template to use with new centroid algorithms,
-            'model', or 'phosim'
-
-        Parameters changing ts_phosim/policy/surveySettings.yaml : 
-        --------------------------------------------------------
-        surveyFilter: str, by default: None, which means that we read the value from
-            surveySettings.yaml for "filterType : ref", which means reference filter,
-            and in this context its LSST g-filter 
-        raInDeg: float, by default: None, which means that 0.0 is read from setting file 
-        decInDeg: float, by default: None, which means that 0.0 is read from setting file
-        rotAngInDeg: float, by default: None, which means that 0.0 is read from setting file
-
-
-        Parameters not often changed (legacy):
-        --------------------------------------
-        starMag: int, a magnitude of a test star, if there isn't a catalog of
-            sources provided
-        iterNum: int, number of iterations - 1 by default ... I've never changed that
-        m1m3ForceError: int, 0.05 by default (why?)
-        isEimg: bool, False by default - whether to make an electronic or amplifier
-                image.
-
-        useMinDofIdx: bool, True by default - whether to only use 10 hexapod
-            positions and first 3 bending modes of M1M3 and M2
-
-
+        rerunName : str, 'run1' is the default, this kwarg is passed to wep_calc._doIsr(), and 
+            supersedes the settingFile.getSetting("rerunName") - if we want to keep the 
+            original postISR image products,  use eg. 'run2' 
+    
         '''
         
         # get the list of sensors  - by default it's comCam...
@@ -118,50 +70,19 @@ class baseReingest():
             fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
 
-        # Make the ISR directory ( it was cleaned before )
+        # Make the ISR directory ( if needed )
         isrDirName = "input"
         isrDir = os.path.join(baseOutputDir, isrDirName)
         self._makeDir(isrDir)
 
-     
-        # Survey parameters, taken from ts_phosim/policy/surveySettings.yaml
-        surveySettingFilePath = os.path.join(getConfigDir(),
-                                            "surveySettings.yaml")
-        surveySettings = ParamReader(filePath=surveySettingFilePath)
-  
-        filterType = FilterType.fromString(
-                surveySettings.getSetting("filterType"))
-       
-        if raInDeg is None:
-            raInDeg = surveySettings.getSetting("raInDeg")
-        if decInDeg is None:
-            decInDeg = surveySettings.getSetting("decInDeg")
-        if rotAngInDeg is None :
-            rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
-        print('Using the following settings for the telescope:')
-        print('boresight (ra,dec) = %.3f,%.3f [deg]'%(raInDeg,decInDeg))
-        print('rotation angle = %.3f [deg] '%rotAngInDeg)
-        # Prepare the components
-        # print('Preparing the PhoSim component ')
-        # phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
-        #                                 rotAngInDeg, numPro, isEimg,
-        #                                 m1m3ForceError)
+        # initialize wep calc      
         print('Preparing the wepCalc component ')
-        wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
-                                rotAngInDeg, isEimg)
-
-        # tele = phosimCmpt.getTele()
-        # defocalDisInMm = tele.getDefocalDistInMm()
-        # wepCalc.setDefocalDisInMm(defocalDisInMm)
-
+        wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDir)
    
         # Ingest the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             print('Ingesting calibration products')
             wepCalc.ingestCalibs(fakeFlatDir)
-
-     
-
 
         ####################
         #     ITERATION 
@@ -194,7 +115,7 @@ class baseReingest():
         # DEFOCAL IMAGES: COLLECT, INGEST AND ISR 
         ########################################
 
-        if ingestDefocal : 
+        if ingestRawDefocal : 
             print('Collecting defocal images')
 
             # Collect the defocal images
@@ -217,12 +138,14 @@ class baseReingest():
             # Ingest the exposure data and do the ISR
             wepCalc._ingestImg(intraRawExpData)
             wepCalc._ingestImg(extraRawExpData)
-
+        
+        if isrDefocal:
             # Only the amplifier image needs to do the ISR
-            imgType = wepCalc._getImageType()
-            if (imgType == ImageType.Amp):
-                print('Performing ISR on defocal images ')
-                wepCalc._doIsr(isrConfigfileName="isr_config.py")
+            #imgType = wepCalc._getImageType()
+            #if (imgType == ImageType.Amp):
+            print('Performing ISR on defocal amplifier images ')
+            wepCalc._doIsr(isrConfigfileName=isrConfigfileName,
+                           rerunName = rerunName)
 
 
 
@@ -230,7 +153,7 @@ class baseReingest():
         # IN-FOCUS IMAGES :  COLLECT, INGEST AND ISR  
         ########################################
 
-        if ingestFocal : 
+        if ingestRawFocal : 
             # Collect the in-focus images
             focalRawExpData = RawExpData()
 
@@ -246,31 +169,18 @@ class baseReingest():
             print('Ingesting the in-focus images ')
             wepCalc._ingestImg(focalRawExpData)
         
-
-        # Only the amplifier image needs to do the ISR
-        # but we're only doing amplifier images for 
-        # in-focus images ... 
-        if isEimg:
-            print("No need to do the ISR on in-focus e-images ")
-            pass 
-        else: 
+        if isrFocal:
+            # Only the amplifier image needs to do the ISR
+            # but we're only doing amplifier images for 
+            # in-focus images ... 
+            # if isEimg:
+            #     print("No need to do the ISR on in-focus e-images ")
+            #     pass 
+            # else: 
             print('Performing the ISR on in-focus amp images ')
-            wepCalc._doIsr(isrConfigfileName="isr_config.py")
+            wepCalc._doIsr(isrConfigfileName=isrConfigfileName,
+                           rerunName = rerunName)
 
-    
-          
-
-
-
-               
-
-    def _outputSkyInfo(self, outputDir, skyInfoFileName, skySim, wepCalc):
-
-        outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
-        skySim.exportSkyToFile(outputSkyInfoFilePath)
-        wepCalc.setSkyFile(outputSkyInfoFilePath)
-
-        return skySim, wepCalc
 
     def _getComCamSensorNameList(self):
 
@@ -287,11 +197,6 @@ class baseReingest():
                 s = "R%s_S%s"%(r,c)
                 sensors.append(s)
         sensorNameList = sensors
-        return sensorNameList
-
-    def _getWfsSensorNameList(self):
-        sensorNameList = ["R00_S22","R04_S20","R44_S00","R40_S02"]
-
         return sensorNameList
 
     def _makeCalibs(self, outputDir, sensorNameList):
@@ -340,110 +245,6 @@ class baseReingest():
         argstring = "--detector_list %s" % detector
         runProgram(command, argstring=argstring)
 
-
-    def _preparePhosimCmpt(self, phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        numPro, isEimg, m1m3ForceError):
-
-        # Set the Telescope facade class
-        tele = TeleFacade()
-        tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
-        tele.setPhoSimDir(phosimDir)
-        print('Using phosim.py located in %s'%phosimDir)
-
-        # Prepare the phosim component
-        phosimCmpt = PhosimCmpt(tele)
-
-        # Set the telescope survey parameters
-        boresight = (raInDeg, decInDeg)
-        zAngleInDeg = 27.0912
-        phosimCmpt.setSurveyParam(filterType=filterType, boresight=boresight,
-                                zAngleInDeg=zAngleInDeg, rotAngInDeg=rotAngInDeg)
-
-        # Update the setting file if needed
-        settingFile = phosimCmpt.getSettingFile()
-        if (numPro > 1):
-            settingFile.updateSetting("numPro", numPro)
-        if isEimg:
-            settingFile.updateSetting("e2ADC", 0)
-
-        # Set the seed number for M1M3 surface
-        seedNum = 6
-        phosimCmpt.setSeedNum(seedNum)
-
-        # Set the M1M3 force error
-        phosimCmpt.setM1M3ForceError(m1m3ForceError)
-
-        return phosimCmpt
-
-
-    def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        isEimg):
-
-        wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
-
-        wepCalc.setFilter(filterType)
-        wepCalc.setBoresight(raInDeg, decInDeg)
-        wepCalc.setRotAng(rotAngInDeg)
-
-        if (isEimg):
-            settingFile = wepCalc.getSettingFile()
-            settingFile.updateSetting("imageType", "eimage")
-
-        return wepCalc
-
-
-    def _prepareOfcCalc(self, filterType, rotAngInDeg, selectSensors):
-
-        if (selectSensors is None) or (selectSensors is 'comcam'): # by default
-            ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-        elif selectSensors is 'wfs': # use LsstCam
-            ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
-
-        ofcCalc.setFilter(filterType)
-        ofcCalc.setRotAng(rotAngInDeg)
-        ofcCalc.setGainByPSSN()
-
-        return ofcCalc
-
-
-    def _prepareSkySim(self, opdMetr, starMag):
-
-        skySim = SkySim()
-
-        starId = 0
-        raInDegList, declInDegList = opdMetr.getFieldXY()
-        for raInDeg, declInDeg in zip(raInDegList, declInDegList):
-            # It is noted that the field position might be < 0. But it is not the
-            # same case for ra (0 <= ra <= 360).
-            if (raInDeg < 0):
-                raInDeg += 360.0
-            skySim.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
-            starId += 1
-
-        return skySim
-
-
-    def _prepareSkySimBySkyFile(self, inputSkyFilePath):
-
-        skySim = SkySim()
-
-        absSkyFilePath = os.path.abspath(inputSkyFilePath)
-        skySim.addStarByFile(absSkyFilePath)
-
-        return skySim
-
-
-    def _useMinDofIdx(self, ofcCalc):
-
-        ztaac = ofcCalc.getZtaac()
-
-        m1m3Bend = np.zeros(20, dtype=int)
-        m1m3Bend[0: 3] = 1
-
-        m2Bend = np.zeros(20, dtype=int)
-        m2Bend[0: 3] = 1
-
-        ztaac.setZkAndDofInGroups(m1m3Bend=m1m3Bend, m2Bend=m2Bend)
 
 def _eraseFolderContent(targetDir):
 
