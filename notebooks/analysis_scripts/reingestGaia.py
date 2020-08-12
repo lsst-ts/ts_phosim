@@ -17,10 +17,10 @@ parser.add_argument("--inputDir", type=str, default="",
                     help='input directory' )
 parser.add_argument("--outputDir", type=str, default="",
                     help='output directory' )
-parser.add_argument("--raInDeg", type=float, default=0, 
-                    help='RA of the field center in degrees')
-parser.add_argument("--decInDeg", type=float, default=0, 
-                    help='DEC of the field center in degrees')
+# parser.add_argument("--raInDeg", type=float, default=0, 
+#                     help='RA of the field center in degrees')
+# parser.add_argument("--decInDeg", type=float, default=0, 
+#                     help='DEC of the field center in degrees')
 
 args = parser.parse_args()
 
@@ -49,37 +49,37 @@ else:
 	print("Need to provide inputDir and outputDir names relative to results_gaia/")
 
 
-if len(field)>0:
-    print('Based on provided field name %s, we are assuming the following:'%field)
+# if len(field)>0:
+#     print('Based on provided field name %s, we are assuming the following:'%field)
     
-    # set the raInDeg,  decInDeg ,
-    # if the field name is provided 
-    # the center of field coords were first defined as 
-    # Galactic: 
-    print('\nCalculating raInDeg, decInDeg based on field name ')
-    gt = Table(data=[['high','med','low','Baade'],
-                                [0,0,0,1.02],
-                               [85,40,10,-3.92 ]], 
-                          names=['name', 'l_deg','b_deg'])
+#     # set the raInDeg,  decInDeg ,
+#     # if the field name is provided 
+#     # the center of field coords were first defined as 
+#     # Galactic: 
+#     print('\nCalculating raInDeg, decInDeg based on field name ')
+#     gt = Table(data=[['high','med','low','Baade'],
+#                                 [0,0,0,1.02],
+#                                [85,40,10,-3.92 ]], 
+#                           names=['name', 'l_deg','b_deg'])
 
-    gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
-                           frame='galactic', unit='deg')
-    # convert them to equatorial 
-    gt['ra_deg']= gaia_coords.icrs.ra.deg
-    gt['dec_deg'] = gaia_coords.icrs.dec.deg
+#     gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
+#                            frame='galactic', unit='deg')
+#     # convert them to equatorial 
+#     gt['ra_deg']= gaia_coords.icrs.ra.deg
+#     gt['dec_deg'] = gaia_coords.icrs.dec.deg
 
-    raInDeg = gt['ra_deg'][gt['name'] == field][0]
-    decInDeg = gt['dec_deg'][gt['name'] == field][0]
-    print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
+#     raInDeg = gt['ra_deg'][gt['name'] == field][0]
+#     decInDeg = gt['dec_deg'][gt['name'] == field][0]
+#     print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
 
-elif abs(args.raInDeg - 0.0) > 1e-3  :
-	    print("Reading the raInDeg, decInDeg for the field center from parser")
-	    raInDeg = args.raInDeg
-	    decInDeg =args.decInDeg 
+# elif abs(args.raInDeg - 0.0) > 1e-3  :
+# 	    print("Reading the raInDeg, decInDeg for the field center from parser")
+# 	    raInDeg = args.raInDeg
+# 	    decInDeg =args.decInDeg 
 
-else:
+# else:
 
-    raise ValueError('Need to provide a named field, or the input raInDeg and declInDeg ')
+#     raise ValueError('Need to provide a named field, or the input raInDeg and declInDeg ')
 
 # Copy the results of the prior PhoSim run
 if not os.path.exists(outputDir):
