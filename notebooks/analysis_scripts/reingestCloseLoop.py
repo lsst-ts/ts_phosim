@@ -6,21 +6,15 @@ import numpy as np
 import shutil
 import datetime
 
-from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.Utility import FilterType, CamType, runProgram, ImageType
+from lsst.ts.wep.Utility import FilterType, CamType, runProgram
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
-
-from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
-from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
-from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
-                                   getConfigDir
 
 
 class baseReingest():
 
     def main(self, baseOutputDir, genFlats=True, ingestRawDefocal=True, isrDefocal = True,
-             ingestRawFocal=True, isrFocal = True, isrConfigFileName = "isr_config.py",
+             ingestRawFocal=True, isrFocal = True, isrConfigfileName = "isr_config.py",
              rerunName = 'run1'):
         '''
         Code to redo the ingestion process for the AOS loop products. This assumes that eg. 
@@ -51,7 +45,7 @@ class baseReingest():
         ingestRawFocal : boolean,  True/False  - whether to ingest the raw in-focus images
         isrFocal :  boolean,  True/False  - whether to redo the ISR on raw in-focus images 
 
-        isrConfigFileName : str, 'isr_config.py' by default : filename where the ISR 
+        isrConfigfileName : str, 'isr_config.py' by default : filename where the ISR 
             settings should be saved 
 
         rerunName : str, 'run1' is the default, this kwarg is passed to wep_calc._doIsr(), and 
@@ -64,11 +58,13 @@ class baseReingest():
         sensorNameList = self._getComCamSensorNameList()
 
         # Prepare the calibration products (only for the amplifier images)
-        if ((not isEimg) & (genFlats is True)):
+        if genFlats :
             print('Making the calibration products ')
             # by default only make calibs for comcam
+            t1 = datetime.datetime.now()
             fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
-
+            t2 = datetime.datetime.now() 
+            _print_duration(t2-t1)
 
         # Make the ISR directory ( if needed )
         isrDirName = "input"
@@ -80,9 +76,12 @@ class baseReingest():
         wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDir)
    
         # Ingest the calibration products (only for the amplifier images)
-        if ((not isEimg) & (genFlats is True)):
+        if genFlats  :
             print('Ingesting calibration products')
+            t1 = datetime.datetime.now() 
             wepCalc.ingestCalibs(fakeFlatDir)
+            t2 = datetime.datetime.now() 
+            _print_duration(t2-t1)
 
         ####################
         #     ITERATION 
@@ -136,16 +135,22 @@ class baseReingest():
 
             print('Ingesting defocal images')
             # Ingest the exposure data and do the ISR
+            t1 = datetime.datetime.now() 
             wepCalc._ingestImg(intraRawExpData)
             wepCalc._ingestImg(extraRawExpData)
-        
+            t2= datetime.datetime.now() 
+            _print_duration(t2-t1)
+
         if isrDefocal:
             # Only the amplifier image needs to do the ISR
             #imgType = wepCalc._getImageType()
             #if (imgType == ImageType.Amp):
             print('Performing ISR on defocal amplifier images ')
+            t1 = datetime.datetime.now()
             wepCalc._doIsr(isrConfigfileName=isrConfigfileName,
                            rerunName = rerunName)
+            t2 = datetime.datetime.now()
+            _print_duration(t2-t1)
 
 
 
@@ -167,7 +172,10 @@ class baseReingest():
 
             # Ingest the exposure data 
             print('Ingesting the in-focus images ')
+            t1 = datetime.datetime.now() 
             wepCalc._ingestImg(focalRawExpData)
+            t2 = datetime.datetime.now() 
+            _print_duration(t2-t1)
         
         if isrFocal:
             # Only the amplifier image needs to do the ISR
@@ -178,8 +186,11 @@ class baseReingest():
             #     pass 
             # else: 
             print('Performing the ISR on in-focus amp images ')
+            t1 = datetime.datetime.now() 
             wepCalc._doIsr(isrConfigfileName=isrConfigfileName,
                            rerunName = rerunName)
+            t2 = datetime.datetime.now() 
+            _print_duration(t2-t1)
 
 
     def _getComCamSensorNameList(self):
