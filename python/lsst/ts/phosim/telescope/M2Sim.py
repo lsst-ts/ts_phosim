@@ -52,9 +52,9 @@ class M2Sim(MirrorSim):
         # Mirror FEA model with gradient temperature data
         self._feaFile = ParamReader()
 
-        self._config("M2_1um_force.yaml", "", "M2_1um_grid.yaml", "M2_GT_FEA.yaml")
+        self._config("", "M2_1um_grid.yaml", "M2_GT_FEA.yaml")
 
-    def _config(self, actForceFileName, lutFileName, gridFileName, feaFileName):
+    def _config(self, lutFileName, gridFileName, feaFileName):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -62,8 +62,6 @@ class M2Sim(MirrorSim):
 
         Parameters
         ----------
-        actForceFileName : str
-            Actuator force file name.
         lutFileName : str
             LUT file name.
         gridFileName : str
@@ -75,9 +73,7 @@ class M2Sim(MirrorSim):
         numTerms = self._m2SettingFile.getSetting("numTerms")
 
         super(M2Sim, self).config(
-            numTerms=numTerms,
-            actForceFileName=actForceFileName,
-            lutFileName=lutFileName,
+            numTerms=numTerms, lutFileName=lutFileName,
         )
 
         mirrorDataDir = self.getMirrorDataDir()
