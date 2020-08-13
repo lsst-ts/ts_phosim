@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.2.4:
+
+-------------
+1.2.4
+-------------
+
+Use the sims_w_2020_28. Removed the unused force files.
+
 .. _lsst.ts.phosim-1.2.3:
 
 -------------
