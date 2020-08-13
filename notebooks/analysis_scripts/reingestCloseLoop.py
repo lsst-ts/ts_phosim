@@ -57,14 +57,16 @@ class baseReingest():
         # get the list of sensors  - by default it's comCam...
         sensorNameList = self._getComCamSensorNameList()
 
+        content = _init_timing_file()
+   
         # Prepare the calibration products (only for the amplifier images)
         if genFlats :
-            print('Making the calibration products ')
+            action = 'Making the calibration products '
             # by default only make calibs for comcam
             t1 = datetime.datetime.now()
             fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
             t2 = datetime.datetime.now() 
-            _print_duration(t2-t1)
+            content = _print_duration(t2-t1,action,content)
 
         # Make the ISR directory ( if needed )
         isrDirName = "input"
@@ -77,11 +79,11 @@ class baseReingest():
    
         # Ingest the calibration products (only for the amplifier images)
         if genFlats  :
-            print('Ingesting calibration products')
+            action = 'Ingesting calibration products'
             t1 = datetime.datetime.now() 
             wepCalc.ingestCalibs(fakeFlatDir)
             t2 = datetime.datetime.now() 
-            _print_duration(t2-t1)
+            content = _print_duration(t2-t1,action,content)
 
         ####################
         #     ITERATION 
@@ -133,24 +135,24 @@ class baseReingest():
             # Therefore, need to make sure the camera mapper file exists.
             wepCalc._genCamMapperIfNeed()
 
-            print('Ingesting defocal images')
+            action = 'Ingesting defocal images'
             # Ingest the exposure data and do the ISR
             t1 = datetime.datetime.now() 
             wepCalc._ingestImg(intraRawExpData)
             wepCalc._ingestImg(extraRawExpData)
             t2= datetime.datetime.now() 
-            _print_duration(t2-t1)
+            content = _print_duration(t2-t1,action,content)
 
         if isrDefocal:
             # Only the amplifier image needs to do the ISR
             #imgType = wepCalc._getImageType()
             #if (imgType == ImageType.Amp):
-            print('Performing ISR on defocal amplifier images ')
+            action = 'Performing ISR on defocal images'
             t1 = datetime.datetime.now()
             wepCalc._doIsr(isrConfigfileName=isrConfigfileName,
                            rerunName = rerunName)
             t2 = datetime.datetime.now()
-            _print_duration(t2-t1)
+            content = _print_duration(t2-t1,action,content)
 
 
 
@@ -171,11 +173,11 @@ class baseReingest():
             wepCalc._genCamMapperIfNeed()
 
             # Ingest the exposure data 
-            print('Ingesting the in-focus images ')
+            action = 'Ingesting the in-focus images'
             t1 = datetime.datetime.now() 
             wepCalc._ingestImg(focalRawExpData)
             t2 = datetime.datetime.now() 
-            _print_duration(t2-t1)
+            content = _print_duration(t2-t1,action,content)
         
         if isrFocal:
             # Only the amplifier image needs to do the ISR
@@ -185,13 +187,15 @@ class baseReingest():
             #     print("No need to do the ISR on in-focus e-images ")
             #     pass 
             # else: 
-            print('Performing the ISR on in-focus amp images ')
+            action = 'Performing ISR on in-focus images'
             t1 = datetime.datetime.now() 
             wepCalc._doIsr(isrConfigfileName=isrConfigfileName,
                            rerunName = rerunName)
             t2 = datetime.datetime.now() 
-            _print_duration(t2-t1)
-
+            content = _print_duration(t2-t1,action, content)
+        
+        filePath = os.path.join(baseOutputDir, 'timing_file.txt')
+        _save_file(content, filePath)
 
     def _getComCamSensorNameList(self):
 
@@ -267,7 +271,7 @@ def _eraseFolderContent(targetDir):
             shutil.rmtree(filePath)
 
 
-def _print_duration(delta):
+def _print_duration(delta,action,content):
     ''' Convenience function to print execution time 
     between time1 and time2. 
     
@@ -287,5 +291,20 @@ def _print_duration(delta):
     delta_sec = delta.total_seconds()
     delta_min = delta_sec / 60
     delta_hr = delta_min / 60
+    print(action)
     print('    It took %.3f minutes, i.e. %.5f hours ' % (delta_min, delta_hr))
+    content += "%s\t  %10.2f\t  %10.2f\t  %10.2f\n"%(action,delta_sec, delta_min, delta_hr )
+    return content
+
+
+def _init_timing_file():
+    content = "# Action\t Seconds\t\t Minutes\t\t Hours\n" 
+    return content 
+
+def _save_file(content,filePath):
+    fid = open(filePath, "w")
+    fid.write(content)
+    fid.close()
+
+
 
