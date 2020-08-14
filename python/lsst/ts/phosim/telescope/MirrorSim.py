@@ -50,9 +50,6 @@ class MirrorSim(object):
         # Configuration data directory
         self.mirrorDataDir = mirrorDataDir
 
-        # Mirror actuator force
-        self._actForceFile = ParamReader()
-
         # Look-up table (LUT) file
         self._lutFile = ParamReader()
 
@@ -62,7 +59,7 @@ class MirrorSim(object):
         # Number of Zernike terms to fit.
         self._numTerms = 0
 
-    def config(self, numTerms=28, actForceFileName="", lutFileName=""):
+    def config(self, numTerms=28, lutFileName=""):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -71,17 +68,11 @@ class MirrorSim(object):
         ----------
         numTerms : int, optional
             Number of Zernike terms to fit. (the default is 28.)
-        actForceFileName : str
-            Actuator force file name. (the default is "".)
         lutFileName : str, optional
             LUT file name. (the default is "".)
         """
 
         self._numTerms = int(numTerms)
-
-        if actForceFileName != "":
-            actForceFilePath = os.path.join(self.mirrorDataDir, actForceFileName)
-            self._actForceFile.setFilePath(actForceFilePath)
 
         if lutFileName != "":
             lutFilePath = os.path.join(self.mirrorDataDir, lutFileName)
@@ -210,19 +201,6 @@ class MirrorSim(object):
             lutForce = w1 * lut[1:, p1] + w2 * lut[1:, p2]
 
         return lutForce
-
-    def getActForce(self):
-        """Get the mirror actuator forces in N.
-
-        Returns
-        ------
-        numpy.ndarray
-            Actuator forces in N.
-        """
-
-        forceInN = self._actForceFile.getMatContent()[:, 3:]
-
-        return forceInN
 
     def _gridSampInMnInZemax(
         self, zfInMm, xfInMm, yfInMm, innerRinMm, outerRinMm, nx, ny, resFile=None

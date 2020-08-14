@@ -40,9 +40,7 @@ class TestMirrorSim(unittest.TestCase):
 
         configDir = os.path.join(getConfigDir(), "M2")
         cls.mirror = MirrorSim(cls.innerRinM, cls.outerRinM, configDir)
-        cls.mirror.config(
-            numTerms=28, actForceFileName="M2_1um_force.yaml", lutFileName=""
-        )
+        cls.mirror.config(numTerms=28, lutFileName="")
 
     def testInit(self):
 

@@ -49,11 +49,6 @@ class TestM1M3Sim(unittest.TestCase):
         self.assertEqual(self.m1m3.getInnerRinM(), (2.558, 0.550))
         self.assertEqual(self.m1m3.getOuterRinM(), (4.180, 2.508))
 
-    def testGetActForce(self):
-
-        forceInN = self.m1m3.getActForce()
-        self.assertEqual(forceInN.shape, (156, 156))
-
     def testGetPrintthz(self):
 
         zAngleInDeg = 27.0912

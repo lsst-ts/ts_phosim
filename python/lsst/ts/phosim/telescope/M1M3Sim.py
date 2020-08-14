@@ -75,7 +75,6 @@ class M1M3Sim(MirrorSim):
         self._forceInflFile = ParamReader()
 
         self._config(
-            "M1M3_1um_156_force.yaml",
             "M1M3_LUT.yaml",
             "M1M3_1um_156_grid.yaml",
             "M1M3_thermal_FEA.yaml",
@@ -88,7 +87,6 @@ class M1M3Sim(MirrorSim):
 
     def _config(
         self,
-        actForceFileName,
         lutFileName,
         gridFileName,
         feaFileName,
@@ -105,8 +103,6 @@ class M1M3Sim(MirrorSim):
 
         Parameters
         ----------
-        actForceFileName : str
-            Actuator force file name.
         lutFileName : str
             LUT file name.
         gridFileName : str
@@ -128,9 +124,7 @@ class M1M3Sim(MirrorSim):
         numTerms = self._m1m3SettingFile.getSetting("numTerms")
 
         super(M1M3Sim, self).config(
-            numTerms=numTerms,
-            actForceFileName=actForceFileName,
-            lutFileName=lutFileName,
+            numTerms=numTerms, lutFileName=lutFileName,
         )
 
         mirrorDataDir = self.getMirrorDataDir()
