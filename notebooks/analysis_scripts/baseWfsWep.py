@@ -4,6 +4,7 @@ import os
 import argparse
 import numpy as np
 import shutil
+import datetime
 
 from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.Utility import FilterType, CamType, runProgram
@@ -97,7 +98,7 @@ class baseWfsWep():
                                 selectSensors,deblendDonutAlgo,centroidTemplateType,
                                 deblendTemplateType)
 
-        tele = phosimCmpt.getTele()
+        #tele = phosimCmpt.getTele()
 
         # NOTE : this step:
         
@@ -471,11 +472,10 @@ class baseWfsWep():
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
-                        centroidTemplateType, deblendTemplateType):
+                        centroidTemplateType, deblendTemplateType,bscDbType):
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
-
         elif selectSensors is 'wfs': # use LsstCam
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
 
@@ -483,27 +483,34 @@ class baseWfsWep():
         wepCalc.setBoresight(raInDeg, decInDeg)
         wepCalc.setRotAng(rotAngInDeg)
 
+        # call settingFile just once 
+        settingFile = wepCalc.getSettingFile()
+        
+        # do all updates in order of appearance in policy/default.yaml
         if (isEimg):
-            settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
 
+        if bscDbType is not None:
+            settingFile.updateSetting("bscDbType", bscDbType)
+
         if (doDeblending):
-            settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("doDeblending", "True")
             settingFile.updateSetting("deblendDonutAlgo",deblendDonutAlgo)
             settingFile.updateSetting("centroidTemplateType", centroidTemplateType)
             settingFile.updateSetting("deblendTemplateType", deblendTemplateType)
-            print('Using following settings in ts_wep/policy/default.yaml:')
-            print("doDeblending:  True")
-            print("deblendDonutAlgo: %s"%deblendDonutAlgo)
-            print("centroidTemplateType: %s"%centroidTemplateType)
-            print("deblendTemplateType: %s"%deblendTemplateType)
 
         if camDimOffset  is not None :
-            settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("camDimOffset", camDimOffset)
-            print('camDimOffset is ', settingFile.getSetting("camDimOffset"))
-
+            
+        # print info in order of appearance in policy/default.yaml
+        print('Using following settings in ts_wep/policy/default.yaml:')
+        print("imageType: %s"%settingFile.getSetting("imageType"))
+        print("bscDbType: %s"%settingFile.getSetting("bscDbType"))
+        print('camDimOffset: %s'% settingFile.getSetting("camDimOffset"))
+        print("doDeblending:  %s"%settingFile.getSetting("doDeblending"))
+        print("deblendDonutAlgo: %s"%settingFile.getSetting("deblendDonutAlgo"))
+        print("centroidTemplateType: %s"%settingFile.getSetting("centroidTemplateType"))
+        print("deblendTemplateType: %s"%settingFile.getSetting("deblendTemplateType"))
 
         return wepCalc
 

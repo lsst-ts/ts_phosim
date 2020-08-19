@@ -779,27 +779,34 @@ class baseComcamLoop():
         wepCalc.setBoresight(raInDeg, decInDeg)
         wepCalc.setRotAng(rotAngInDeg)
 
+        # call settingFile just once 
+        settingFile = wepCalc.getSettingFile()
+        
+        # do all updates in order of appearance in policy/default.yaml
         if (isEimg):
-            settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
 
+        if bscDbType is not None:
+            settingFile.updateSetting("bscDbType", bscDbType)
+
         if (doDeblending):
-            settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("doDeblending", "True")
             settingFile.updateSetting("deblendDonutAlgo",deblendDonutAlgo)
             settingFile.updateSetting("centroidTemplateType", centroidTemplateType)
             settingFile.updateSetting("deblendTemplateType", deblendTemplateType)
-            print('Using following settings in ts_wep/policy/default.yaml:')
-            print("doDeblending:  True")
-            print("deblendDonutAlgo: %s"%deblendDonutAlgo)
-            print("centroidTemplateType: %s"%centroidTemplateType)
-            print("deblendTemplateType: %s"%deblendTemplateType)
 
         if camDimOffset  is not None :
-            settingFile = wepCalc.getSettingFile()
             settingFile.updateSetting("camDimOffset", camDimOffset)
-            print('camDimOffset is ', settingFile.getSetting("camDimOffset"))
-
+            
+        # print info in order of appearance in policy/default.yaml
+        print('Using following settings in ts_wep/policy/default.yaml:')
+        print("imageType: %s"%settingFile.getSetting("imageType"))
+        print("bscDbType: %s"%settingFile.getSetting("bscDbType"))
+        print('camDimOffset: %s'% settingFile.getSetting("camDimOffset"))
+        print("doDeblending:  %s"%settingFile.getSetting("doDeblending"))
+        print("deblendDonutAlgo: %s"%settingFile.getSetting("deblendDonutAlgo"))
+        print("centroidTemplateType: %s"%settingFile.getSetting("centroidTemplateType"))
+        print("deblendTemplateType: %s"%settingFile.getSetting("deblendTemplateType"))
 
         return wepCalc
 
