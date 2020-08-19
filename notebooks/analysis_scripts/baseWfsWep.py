@@ -35,6 +35,7 @@ class baseWfsWep():
             selectSensors = 'wfs', 
             phosimRepackagerKeepOriginal=False,deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
+            bscDbType=None,
             raInDeg=None,decInDeg=None, rotAngInDeg=None):
 
         # get the list of sensors  - by default it's comCam...
@@ -96,7 +97,7 @@ class baseWfsWep():
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
                                 selectSensors,deblendDonutAlgo,centroidTemplateType,
-                                deblendTemplateType)
+                                deblendTemplateType,bscDbType)
 
         #tele = phosimCmpt.getTele()
 

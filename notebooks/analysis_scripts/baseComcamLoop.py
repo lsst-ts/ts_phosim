@@ -36,6 +36,7 @@ class baseComcamLoop():
             selectSensors = 'comcam',
             splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
+            bscDbType = None,
             raInDeg=None,decInDeg=None, rotAngInDeg=None):
         '''
         Code to run the full AOS loop on ComCam (or other sensors)
@@ -177,7 +178,7 @@ class baseComcamLoop():
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
                                 selectSensors,deblendDonutAlgo,centroidTemplateType,
-                                deblendTemplateType)
+                                deblendTemplateType,bscDbType)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -768,7 +769,7 @@ class baseComcamLoop():
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
-                        centroidTemplateType, deblendTemplateType):
+                        centroidTemplateType, deblendTemplateType,bscDbType):
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
