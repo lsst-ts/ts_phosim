@@ -6,6 +6,36 @@ import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm 
+from astropy.coordinates import SkyCoord
+
+def getRaDecFromGaiaField(field='high'):
+    ''' A helper function to translate the GAIA field name to
+    field  ICRS  coordinates  in degrees 
+
+    Parameters:
+    ----------
+    field : str, field name, default 'high'. Other possible 
+        names include 'med', 'low', 'Baade', 'Pleiades'
+
+    Returns:
+    --------
+    raInDeg, decInDeg : floats, field coordinates in degrees
+    '''
+    path_to_ts_phosim = '/astro/store/epyc/users/suberlak/Commissioning/aos/ts_phosim/'
+    path_to_notebooks = 'notebooks/analysis_notebooks/'
+    path_to_field_desc = os.path.join(path_to_ts_phosim,path_to_notebooks,
+        'GAIA_DR2_Galactic_fields.txt' )
+    gt = Table.read(path_to_field_desc, format='ascii')
+    gaia_coords = SkyCoord(l=gt['l_deg'],b=gt['b_deg'], 
+                       frame='galactic', unit='deg')
+    # convert them to equatorial 
+    gt['ra_deg']= gaia_coords.icrs.ra.deg
+    gt['dec_deg'] = gaia_coords.icrs.dec.deg
+    # return just the floats
+    raInDeg = gt['ra_deg'][gt['name'] == field][0]
+    decInDeg = gt['dec_deg'][gt['name'] == field][0]
+    print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
+    return raInDeg, decInDeg
 
 def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
                      detector = None, detNum = None, verbose=True,
