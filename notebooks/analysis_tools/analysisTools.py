@@ -156,7 +156,7 @@ def readCentroidInfo(data_dir, focalType='extra', raft='R22',detector='S00'):
    
     return centroid, centFlag    
 
-def readPostageStars(data_dir, ):
+def readPostageStars(postage_dir,fname='postagedonutStarsExtraIntra.txt'):
     '''
     Read the postage image stars catalog. 
     While the postage stamps are saved in 
@@ -172,8 +172,7 @@ def readPostageStars(data_dir, ):
 
     '''
     try:
-        fname = 'postagedonutStarsExtraIntra.txt'
-        postage = Table.read(os.path.join(data_dir,fname), format='ascii')
+        postage = Table.read(os.path.join(postage_dir,fname), format='ascii')
         print('Reading info about postage-stamp images from %s'%fname)
         postFlag = True
     except FileNotFoundError as fnf_error:
