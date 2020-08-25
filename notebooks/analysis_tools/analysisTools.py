@@ -361,7 +361,7 @@ def sepInPercToRadii(sepInPerc):
     return sepInRadii             
 
 
-def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=3,
+def plotPostageStamps(postage_dir, sensor='R22_S00', focalType='extra', Nstars=3,
                       cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],
                       sepInPerc=3, testLabel=None,
                       magPrimary=16, mag = 15
@@ -370,7 +370,6 @@ def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=3,
     
     
     imgTypes = ['singleSciImg','imgDeblend_full', 'imgDeblend_resized']
-    postage_dir = os.path.join(data_dir, 'postage')
     print('Using postage images from %s'%postage_dir)
     
     suptitle = '%s %s-focal, '%(sensor,focalType)
@@ -442,7 +441,7 @@ def plotPostageStamps(data_dir, sensor='R22_S00', focalType='extra', Nstars=3,
         for row in range(Nstars): # Nstars   rows : one per star
             fname = available[imgType][row]
             word = 'id' ; loc = fname.find(word)
-            starId = fname[loc+len(word)+1]
+            starId = fname[loc+len(word)+2]
             print('Loading %s'%fname)
             image = np.loadtxt(os.path.join(postage_dir,fname))
             if image.ndim == 2  :
