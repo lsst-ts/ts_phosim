@@ -1377,7 +1377,7 @@ class PhosimCmpt(object):
         # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
 
-    def repackageLsstCamAmpImgFromPhosim(self,keepOriginal=False):
+    def repackageLsstCamAmpImgFromPhosim(self,keepOriginal=False,verbose=False):
         """Repackage the LsstCam amplifier images from PhoSim to the single 
         16 extension multi-extension frames (MEFs) for processing. There is 
         only intra-focal dir used 
@@ -1393,6 +1393,10 @@ class PhosimCmpt(object):
         phosimImgDir = os.path.join(self.outputImgDir, intraFocalDirName)
         argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
         runProgram(command, argstring=argstring)
+        if verbose:
+            print('\nRunning')
+            print(command, argstring)
+        
 
 
         # if keeping originals, copy them to  a dir 
@@ -1400,18 +1404,27 @@ class PhosimCmpt(object):
             origDirPath = os.path.join(self.outputImgDir, 'orig')
             self._makeDir(origDirPath)
 
-            argString = '-a %s/. %s/'%(phosimImgDir,origDirPath)
-            runProgram("cp", argstring=argString)
-            print('We keep the original PhoSim output images in %s'%origDirPath)
+            argstring = '-a %s/. %s/'%(phosimImgDir,origDirPath)
+            runProgram("cp", argstring=argstring)
+            if verbose:
+                print('\nRunning')
+                print("cp ",argstring)
+                print('We keep the original PhoSim output images in %s'%origDirPath)
 
           
         # Remove the image data in the original directory
-        argString = "-rf %s/*.fits*" % phosimImgDir
-        runProgram("rm", argstring=argString)
+        argstring = "-rf %s/*.fits*" % phosimImgDir
+        runProgram("rm", argstring=argstring)
+        if verbose:
+            print('\nRunning')
+            print("rm ", argstring)
 
         # Put the repackaged data back into the image directory
         argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
         runProgram("mv", argstring=argstring)
+        if verbose:
+            print('\nRunning')
+            print("mv ", argstring)
 
         # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
