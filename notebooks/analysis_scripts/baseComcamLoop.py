@@ -178,7 +178,7 @@ class baseComcamLoop():
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
                                 selectSensors,deblendDonutAlgo,centroidTemplateType,
-                                deblendTemplateType,bscDbType)
+                                deblendTemplateType)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -249,9 +249,9 @@ class baseComcamLoop():
                          cmdSettingFileName=opdCmdSettingsFile)
 
                 # for LsstFamCam   == science sensors
-                elif selectSensors is 'wfs':
-                    argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
-                        cmdSettingFileName=opdCmdSettingsFile)
+                # elif selectSensors is 'wfs':
+                #     argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
+                #         cmdSettingFileName=opdCmdSettingsFile)
 
                 argString = argPrepend + argString
                 #argString = '-w $AOCLCOUTPUTPATH ' + argString
@@ -364,6 +364,7 @@ class baseComcamLoop():
                   cmdSettingFileName=comcamCmdSettingsFile,
                   instSettingFileName=instSettingFileName)
 
+                # iterate over extra and intra-focal images 
                 for argString in argStringList:
                     t1 = datetime.datetime.now()    
                     print('Start time', t1.strftime("%Y-%m-%d_%H:%M:%S"))
@@ -769,7 +770,7 @@ class baseComcamLoop():
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
-                        centroidTemplateType, deblendTemplateType,bscDbType):
+                        centroidTemplateType, deblendTemplateType):
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
@@ -786,9 +787,6 @@ class baseComcamLoop():
         # do all updates in order of appearance in policy/default.yaml
         if (isEimg):
             settingFile.updateSetting("imageType", "eimage")
-
-        if bscDbType is not None:
-            settingFile.updateSetting("bscDbType", bscDbType)
 
         if (doDeblending):
             settingFile.updateSetting("doDeblending", "True")
