@@ -38,10 +38,7 @@ class baseLsstCamLoop():
             bscDbType=None,
             raInDeg=None,decInDeg=None, rotAngInDeg=None):
 
-        # get the list of sensors  - by default it's comCam...
-        # sensorNameList = self._getComCamSensorNameList()
-        
-        # # ... but it may be the wavefront sensing corner sensors ... 
+        # get the list of sensors -  here the wavefront sensing corner sensors ... 
         if selectSensors is 'wfs':
             sensorNameList = self._getWfsSensorNameList()
 
@@ -49,8 +46,6 @@ class baseLsstCamLoop():
         if ((not isEimg) & (genFlats is True)):
             print('\nMaking calibration products ... ')
             #  make calibs for wfs 
-            # if selectSensors is 'comcam':
-            #     fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
             if selectSensors is 'wfs':
                 fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
 
@@ -159,9 +154,6 @@ class baseLsstCamLoop():
                                         outputImgDirName)
             phosimCmpt.setOutputImgDir(outputImgDir)
             print('PhoSim outputImgDir is %s'%outputImgDir)
-
-
-           
 
             # decide which args should be prepended to PhoSim 
             # just prepend the working directory by default 
@@ -535,7 +527,6 @@ def _eraseFolderContent(targetDir):
             os.unlink(filePath)
         elif os.path.isdir(filePath):
             shutil.rmtree(filePath)
-
 
 
 def _print_duration(delta):
