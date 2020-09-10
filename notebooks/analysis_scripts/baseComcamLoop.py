@@ -31,7 +31,7 @@ class baseComcamLoop():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            comcamCmdSettingsFile='starDefault.cmd', 
+            starCmdSettingsFile='starDefault.cmd', 
             instSettingFileName='starSingleExp.inst',
             selectSensors = 'comcam',
             splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
@@ -74,7 +74,7 @@ class baseComcamLoop():
         opdCmdSettingsFile: str, name of .cmd setting file for PhoSim when
             simulating the OPD images, should be located in
             /ts_phosim/policy/cmdFile/
-        comcamCmdSettingsFile: str, name of .cmd setting file for PhoSim when
+        starCmdSettingsFile: str, name of .cmd setting file for PhoSim when
             simulating the comcam images, should be located in
             /ts_phosim/policy/cmdFile/
         instSettingFileName : str, name of .inst setting file for PhoSim when 
@@ -361,7 +361,7 @@ class baseComcamLoop():
                 simSeed = 1000
                 argStringList = phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
                   extraObsId, intraObsId, skySim, simSeed=simSeed,
-                  cmdSettingFileName=comcamCmdSettingsFile,
+                  cmdSettingFileName=starCmdSettingsFile,
                   instSettingFileName=instSettingFileName)
 
                 # iterate over extra and intra-focal images 
@@ -443,7 +443,7 @@ class baseComcamLoop():
                 simSeed = 1000
                 argString = phosimCmpt.getComCamStarFocalPlaneArgsAndFilesForPhoSim(
                   obsId, skySim, simSeed=simSeed,
-                  cmdSettingFileName=comcamCmdSettingsFile,
+                  cmdSettingFileName=starCmdSettingsFile,
                   instSettingFileName=instSettingFileName)
 
                 argString = argPrepend + argString
