@@ -30,7 +30,7 @@ class baseLsstCamLoop():
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
             doDeblending=False, camDimOffset = None, postageImg=False,
             opdCmdSettingsFile='opdDefault.cmd',
-            cmdSettingsFile='starDefault.cmd', 
+            starCmdSettingsFile='starDefault.cmd', 
             instSettingFile='starSingleExp.inst',
             selectSensors = 'wfs', 
             phosimRepackagerKeepOriginal=False,deblendDonutAlgo='convolveTemplate',
@@ -241,11 +241,11 @@ class baseLsstCamLoop():
             # thus I think that tele.getDefocalDistInMm() should have the 
             # WFS corner sensors values ... 
             
-            print('Using %s and %s for cmd and inst PhoSim files '%(cmdSettingsFile,
+            print('Using %s and %s for cmd and inst PhoSim files '%(starCmdSettingsFile,
                     instSettingFile))
             argString = phosimCmpt.getLsstCamStarArgsAndFilesForPhosim(
                  intraObsId=intraObsId, skySim=skySim, simSeed=simSeed,
-                 cmdSettingFileName=cmdSettingsFile,
+                 cmdSettingFileName=starCmdSettingsFile,
                  instSettingFileName=instSettingFile)
 
             # Note, at this point PhosimCmpt.py  uses TeleFacade.py  
