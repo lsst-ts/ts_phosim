@@ -34,7 +34,7 @@ class baseComcamLoop():
             starCmdSettingsFile='starDefault.cmd', 
             instSettingFileName='starSingleExp.inst',
             selectSensors = 'comcam',
-            splitWfsByMag=False, deblendDonutAlgo='convolveTemplate',
+            deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
             bscDbType = None,
             raInDeg=None,decInDeg=None, rotAngInDeg=None):
@@ -82,8 +82,6 @@ class baseComcamLoop():
         selectSensors: str, 'comcam'  for R22, or 'wfs' for corner wavefront sensors,
             a setting to pass explicitly to PhoSim  , also passed to _prepareOfcCalc,
             _prepareWepCalc
-        splitWfsByMag: bool, whether to calculate the wfs for subsets of stars
-            based on magnitude ranges, or not
 
         Parameters changing    ts_wep/policy/default.yaml  :
         --------------------------------------------------
@@ -469,13 +467,13 @@ class baseComcamLoop():
                     phosimCmpt.repackageComCamAmpFocalImgFromPhoSim()
 
            
-            # Collect the in-focus images
-            focalRawExpData = RawExpData()
+                # Collect the in-focus images
+                focalRawExpData = RawExpData()
 
-            # it is iter0/img/focal/
-            focalRawExpDir = os.path.join(outputImgDir,
-                                        phosimCmpt.getFocalDirName())
-            focalRawExpData.append(focalObsId, 0, focalRawExpDir)
+                # it is iter0/img/focal/
+                focalRawExpDir = os.path.join(outputImgDir,
+                                            phosimCmpt.getFocalDirName())
+                focalRawExpData.append(focalObsId, 0, focalRawExpDir)
 
 
             ################################
@@ -486,7 +484,7 @@ class baseComcamLoop():
             # ones are erased, especially in WFS-only mode !
             ingestedDir = os.path.join(isrDir, 'raw')
             if os.path.exists(ingestedDir):
-                print('Removing the previously ingested raw images directory  %s \
+                print('\nRemoving the previously ingested raw images directory  %s \
                     before re-ingesting the images from iter0/img/...'%ingestedDir)
                 argString = '-rf %s/'%ingestedDir
                 runProgram("rm", argstring=argString)
@@ -495,150 +493,59 @@ class baseComcamLoop():
             # ingest process
             registryFile= os.path.join(isrDir,'registry.sqlite3')
             if os.path.exists(registryFile):
-                print('Removing image registry file  %s '%registryFile)
+                print('\nRemoving image registry file  %s '%registryFile)
                 runProgram("rm", argstring=registryFile)
 
 
             ##################################
             # IN-FOCUS IMAGES : INGEST AND ISR   
             #################################
+            if genFocalImg is True 
+                # do the ingest and ISR on in-focus images : this is using 
+                # just the beginning of     
+                # wepCalc.calculateWavefrontErrors
+             
+                # When evaluating the eimage, the calibration products are not needed.
+                # Therefore, need to make sure the camera mapper file exists.
+                wepCalc._genCamMapperIfNeed()
 
-            # do the ingest and ISR on in-focus images : this is using 
-            # just the beginning of     
-            # wepCalc.calculateWavefrontErrors
-         
-            # When evaluating the eimage, the calibration products are not needed.
-            # Therefore, need to make sure the camera mapper file exists.
-            wepCalc._genCamMapperIfNeed()
+                t1 = datetime.datetime.now()
+                # Ingest the exposure data 
+                print('\nIngesting the in-focus images ')
+                wepCalc._ingestImg(focalRawExpData)
+                t2 =datetime.datetime.now()
+                _print_duration(t2-t1)
 
-            t1 = datetime.datetime.now()
-            # Ingest the exposure data 
-            print('Ingesting the in-focus images ')
-            wepCalc._ingestImg(focalRawExpData)
-            t2 =datetime.datetime.now()
-            _print_duration(t2-t1)
-
-            # Only the amplifier image needs to do the ISR
-            # but we're only doing amplifier images for 
-            # in-focus images ... 
-            if isEimg:
-                print("No need to do the ISR on in-focus e-images ")
-                pass 
-            else: 
-                print('Performing the ISR on in-focus amp images ')
-                wepCalc._doIsr(isrConfigfileName="isr_config.py")
+                # Only the amplifier image needs to do the ISR
+                # but we're only doing amplifier images for 
+                # in-focus images ... 
+                if isEimg:
+                    print("No need to do the ISR on in-focus e-images ")
+                    pass 
+                else: 
+                    print('Performing the ISR on in-focus amp images ')
+                    wepCalc._doIsr(isrConfigfileName="isr_config.py")
 
         
             ########################################
             # DEFOCAL IMAGES : INGEST, ISR, WEPCALC
             ########################################
 
-            # Branch#1 : if we calculate wavefront errors 
-            # for stars in magnitude bins,
-            # first ingest and  do ISR on all images,
-            # and then perform WFS calculation for each 
-            # subset of target stars 
-            if splitWfsByMag :
-                print('Running WFS ingest and ISR once in split-stars-by-mag mode ')
-                # an option to calculate WFS only
-                # for stars of certain magnitude range  by
-                # feeding the mag limits explicitly ...
-                # Calculate the wavefront error and DOF
+            print('\nCalculating the wavefront error ')
+            t1 =datetime.datetime.now()
 
-                ##############################
-                #####   BEGIN PART 1    ######
-                # calculateWavefrontErrors() in ts/wep/ctrlIntf/WEPCalculation.py , 
-                # i.e. wepCalc.calculateWavefrontErrors()
+            listOfWfErr = wepCalc.calculateWavefrontErrors(
+                intraRawExpData, extraRawExpData=extraRawExpData,
+                postageImg=postageImg, postageImgDir = postageImgDir)
+            ofcCalc.calculateCorrections(listOfWfErr)
+            t2 =datetime.datetime.now()
+            _print_duration(t2-t1)
 
-                # first, ingest files just once ...
-                rawExpData = intraRawExpData
+            # Record the wfs error with the same order as OPD for the comparison
+            phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
+                                           zkFileName=wfsZkFileName)
 
-                # When evaluating the eimage, the calibration products are not needed.
-                # Therefore, need to make sure the camera mapper file exists.
-                wepCalc._genCamMapperIfNeed()
-
-                # Ingest the exposure data and do the ISR
-                wepCalc._ingestImg(rawExpData)
-                wepCalc._ingestImg(extraRawExpData)
-
-                # Only the amplifier image needs to do the ISR
-                imgType = wepCalc._getImageType()
-                if (imgType == ImageType.Amp):
-                    wepCalc._doIsr(isrConfigfileName="isr_config.py")
-
-                # Set the butler inputs path to get the images
-                butlerRootPath = wepCalc._getButlerRootPath()
-                wepCalc.wepCntlr.setPostIsrCcdInputs(butlerRootPath)
-
-                #####   END PART 1    ######
-                ############################
-
-                for lowMagnitude in [11,12,13,14,15]:
-                    highMagnitude = lowMagnitude+1
-                    print('    Calculating wavefront errors for stars between ')
-                    print('    %d and %d magnitude'%(lowMagnitude,highMagnitude))
-
-                    #############################
-                    #####   BEGIN PART 2   ######
-                    # wepCalc.calculateWavefrontErrors()
-                    # Get the target stars map neighboring stars
-                    neighborStarMap = wepCalc._getTargetStar(lowMagnitude=lowMagnitude,
-                                                          highMagnitude=highMagnitude)
-
-                    # Calculate the wavefront error
-                    intraObsIdList = rawExpData.getVisit()
-                    intraObsId = intraObsIdList[0]
-                    if (extraRawExpData is None):
-                        obsIdList = [intraObsId]
-                    else:
-                        extraObsIdList = extraRawExpData.getVisit()
-                        extraObsId = extraObsIdList[0]
-                        obsIdList = [intraObsId, extraObsId]
-
-                    donutMap = wepCalc._calcWfErr(neighborStarMap, obsIdList,postageImg,postageImgDir)
-
-                    listOfWfErr = wepCalc._populateListOfSensorWavefrontData(donutMap)
-
-                    #####   END PART 2   ######
-                    ###########################
-
-                    ofcCalc.calculateCorrections(listOfWfErr)
-
-                    zkFilenameAppend  = str(lowMagnitude)+'-'+str(highMagnitude)
-
-                    # Record the wfs error with the same order as OPD for the comparison
-                    phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
-                                                   zkFileName=wfsZkFileName+zkFilenameAppend)
-
-
-
-            # Branch #2 : if we want to calculate wavefront errors 
-            # for all stars in the image, then use the 
-            # built-in  wepCalc code, which performs 
-            # ingest and  do ISR on all images, and 
-            # then performs WFS calculation using all 
-            # stars that fit selection criteria
-            # 
-            else: 
-                print('Calculating the wavefront error ')
-                  # Calculate the wavefront error and DOF
-                t1 =datetime.datetime.now()
-                _print_duration(t2-t1)
-
-                listOfWfErr = wepCalc.calculateWavefrontErrors(
-                    intraRawExpData, extraRawExpData=extraRawExpData,
-                    postageImg=postageImg, postageImgDir = postageImgDir)
-                ofcCalc.calculateCorrections(listOfWfErr)
-                t2 =datetime.datetime.now()
-                _print_duration(t2-t1)
-
-                # Record the wfs error with the same order as OPD for the comparison
-                phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
-                                               zkFileName=wfsZkFileName)
-
-               
-
-
+           
             # Set the new aggregated DOF to phosimCmpt
             dofInUm = ofcCalc.getStateAggregated()
             phosimCmpt.setDofInUm(dofInUm)
@@ -901,22 +808,23 @@ if __name__ == "__main__":
     # Set the parser
     parser = argparse.ArgumentParser(
         description="Run AOS closed-loop simulation (default is amp files).")
-    parser.add_argument("--numOfProc", type=int, default=1,
-                        help="number of processor to run PhoSim (default: 1)")
+    parser.add_argument("--numPro", type=int, default=1,
+                        help="number of processors to run PhoSim (default: 1)")
     parser.add_argument("--iterNum", type=int, default=5,
                         help="number of closed-loop iteration (default: 5)")
-    parser.add_argument("--output", type=str, default="",
+    parser.add_argument("--outputDir", type=str, default="",
                         help="output directory")
-    parser.add_argument("--testOutput", type=str, default="", help="test output directory")
     parser.add_argument("--testLabel", type=str, default="1",
                         help="filename identifier for test files")
-    parser.add_argument('--eimage', default=False, action='store_true',
+    parser.add_argument('--isEimg', default=False, action='store_true',
                         help='Use the eimage files')
-    parser.add_argument('--minDof', default=False, action='store_true',
+    parser.add_argument('--genFocalImg', default=False, action='store_true',
+                        help='Generate in-focus images')
+    parser.add_argument('--useMinDofIdx', default=False, action='store_true',
                         help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
     parser.add_argument("--skyFile", type=str, default="",
                         help="Star Id, ra, dec, and magnitude")
-    parser.add_argument("--m1m3FErr", type=float, default=0.05,
+    parser.add_argument("--m1m3ForceError", type=float, default=0.05,
                         help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
     parser.add_argument('--clobber', default=False, action='store_true',
                         help='Delete existing output directory')
@@ -925,23 +833,13 @@ if __name__ == "__main__":
     # Run the simulation
     phosimDir = getPhoSimPath()
 
-    if (args.output == ""):
-        outputDir = getAoclcOutputPath()
-    else:
-        outputDir = args.output
-
     os.makedirs(outputDir, exist_ok=True)
     if (args.clobber == True):
         _eraseFolderContent(outputDir)
 
-    if (args.testOutput == ""):
-        testOutputDir = os.path.dirname(os.path.realpath(__file__))
-    else:
-        testOutputDir = args.testOutput
-
-    os.environ["closeLoopTestDir"] = testOutputDir
-
     ccLoop = baseComcamLoop()
-    ccLoop.main(phosimDir, args.numOfProc, args.iterNum, outputDir, args.testLabel,
-                isEimg=args.eimage, useMinDofIdx=args.minDof,
-                inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3FErr)
+    ccLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
+                isEimg=args.isEimg, genFocalImg = args.genFocalImg, 
+                useMinDofIdx=args.useMinDofIdx,
+                inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError)
+    
