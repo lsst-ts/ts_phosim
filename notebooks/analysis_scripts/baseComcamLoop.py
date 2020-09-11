@@ -20,6 +20,7 @@ from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
                                    getConfigDir
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
+from lsst.utils import getPackageDir
 
 
 class baseComcamLoop():
@@ -36,7 +37,7 @@ class baseComcamLoop():
             selectSensors = 'comcam',
             deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
-            bscDbType = None,
+            bscDbType = 'file', db_filename  = 'bsc2.db3',
             raInDeg=None,decInDeg=None, rotAngInDeg=None):
         '''
         Code to run the full AOS loop on ComCam (or other sensors)
@@ -118,6 +119,34 @@ class baseComcamLoop():
 
         '''
         
+        # NB : the bscDbType has to be 
+        # updated before wep_calc gets initialized.
+        # Once wep_calc is called , there is no way 
+        # to change bscDbType (any .updateSetting("bscDbType") call 
+        # will not take desired effect)
+        path_to_ts_wep = getPackageDir("ts_wep")
+        setting_filename = 'default.yaml'
+        path_to_setting_file = os.path.join(path_to_ts_wep, 'policy',setting_filename)
+        settingFile = ParamReader(filePath=path_to_setting_file)
+        bscDbTypeInFile = settingFile.getSetting("bscDbType")
+        print('%s contains : '%path_to_setting_file, 
+              bscDbTypeInFile)
+        if bscDbTypeInFile != bscDbType:
+            # In the following we update the setting for bscDbType,
+            # saving the change in the default.yaml file 
+            settingFile.updateSetting("bscDbType", bscDbType)
+            settingFile.saveSetting(filePath=path_to_setting_file)
+
+            # check that the change indeed x`took place 
+            settingFile = ParamReader(filePath=path_to_setting_file)
+            print('After change: ', settingFile.getSetting("bscDbType"))
+        
+        bscDataDir = os.path.join(path_to_ts_wep, 'tests/testData')
+        if db_filename  in os.listdir(bscDataDir):
+            os.remove(os.path.join(bscDataDir,db_filename))
+            print('Removed old %s file'%db_filename)
+
+
         # get the list of sensors  - by default it's comCam...
         sensorNameList = self._getComCamSensorNameList()
 
@@ -176,7 +205,7 @@ class baseComcamLoop():
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
                                 selectSensors,deblendDonutAlgo,centroidTemplateType,
-                                deblendTemplateType)
+                                deblendTemplateType, db_filename)
 
         tele = phosimCmpt.getTele()
         defocalDisInMm = tele.getDefocalDistInMm()
@@ -500,7 +529,7 @@ class baseComcamLoop():
             ##################################
             # IN-FOCUS IMAGES : INGEST AND ISR   
             #################################
-            if genFocalImg is True 
+            if genFocalImg is True :
                 # do the ingest and ISR on in-focus images : this is using 
                 # just the beginning of     
                 # wepCalc.calculateWavefrontErrors
@@ -677,7 +706,7 @@ class baseComcamLoop():
 
     def _prepareWepCalc(self, isrDirPath, filterType, raInDeg, decInDeg, rotAngInDeg,
                         isEimg,doDeblending, camDimOffset, selectSensors,deblendDonutAlgo,
-                        centroidTemplateType, deblendTemplateType):
+                        centroidTemplateType, deblendTemplateType, db_filename):
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
@@ -700,6 +729,8 @@ class baseComcamLoop():
             settingFile.updateSetting("deblendDonutAlgo",deblendDonutAlgo)
             settingFile.updateSetting("centroidTemplateType", centroidTemplateType)
             settingFile.updateSetting("deblendTemplateType", deblendTemplateType)
+        dbRelativePath = 'tests/testData/%s'%db_filename
+        settingFile.updateSetting("defaultBscPath", dbRelativePath)
 
         if camDimOffset  is not None :
             settingFile.updateSetting("camDimOffset", camDimOffset)
@@ -713,7 +744,8 @@ class baseComcamLoop():
         print("deblendDonutAlgo: %s"%settingFile.getSetting("deblendDonutAlgo"))
         print("centroidTemplateType: %s"%settingFile.getSetting("centroidTemplateType"))
         print("deblendTemplateType: %s"%settingFile.getSetting("deblendTemplateType"))
-
+        print("defaultBscPath: %s"%settingFile.getSetting("defaultBscPath"))
+        
         return wepCalc
 
 
@@ -833,9 +865,9 @@ if __name__ == "__main__":
     # Run the simulation
     phosimDir = getPhoSimPath()
 
-    os.makedirs(outputDir, exist_ok=True)
+    os.makedirs(args.outputDir, exist_ok=True)
     if (args.clobber == True):
-        _eraseFolderContent(outputDir)
+        _eraseFolderContent(args.outputDir)
 
     ccLoop = baseComcamLoop()
     ccLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
