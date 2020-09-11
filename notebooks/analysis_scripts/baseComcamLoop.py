@@ -129,7 +129,7 @@ class baseComcamLoop():
         path_to_setting_file = os.path.join(path_to_ts_wep, 'policy',setting_filename)
         settingFile = ParamReader(filePath=path_to_setting_file)
         bscDbTypeInFile = settingFile.getSetting("bscDbType")
-        print('%s contains : '%path_to_setting_file, 
+        print('\n%s contains : '%path_to_setting_file, 
               bscDbTypeInFile)
         if bscDbTypeInFile != bscDbType:
             # In the following we update the setting for bscDbType,
@@ -144,7 +144,7 @@ class baseComcamLoop():
         bscDataDir = os.path.join(path_to_ts_wep, 'tests/testData')
         if db_filename  in os.listdir(bscDataDir):
             os.remove(os.path.join(bscDataDir,db_filename))
-            print('Removed old %s file'%db_filename)
+            print('\nRemoved old %s file'%db_filename)
 
 
         # get the list of sensors  - by default it's comCam...
@@ -156,7 +156,7 @@ class baseComcamLoop():
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
-            print('Making the calibration products ')
+            print('\nMaking the calibration products ')
             # by default only make calibs for comcam
 
             if selectSensors is 'comcam':
@@ -192,16 +192,16 @@ class baseComcamLoop():
             decInDeg = surveySettings.getSetting("decInDeg")
         if rotAngInDeg is None :
             rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
-        print('Using the following settings for the telescope:')
+        print('\nUsing the following settings for the telescope:')
         print('boresight (ra,dec) = %.3f,%.3f [deg]'%(raInDeg,decInDeg))
         print('rotation angle = %.3f [deg] '%rotAngInDeg)
         
         # Prepare the components
-        print('Preparing the PhoSim component ')
+        print('\nPreparing the PhoSim component ')
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
                                         rotAngInDeg, numPro, isEimg,
                                         m1m3ForceError)
-        print('Preparing the wepCalc component ')
+        print('\nPreparing the wepCalc component ')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
                                 selectSensors,deblendDonutAlgo,centroidTemplateType,
@@ -211,12 +211,12 @@ class baseComcamLoop():
         defocalDisInMm = tele.getDefocalDistInMm()
         wepCalc.setDefocalDisInMm(defocalDisInMm)
 
-        print('Preparing the ofcCalc component ')
+        print('\nPreparing the ofcCalc component ')
         ofcCalc = self._prepareOfcCalc(filterType, rotAngInDeg,selectSensors)
 
         # Ingest the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
-            print('Ingesting calibration products')
+            print('\nIngesting calibration products')
             wepCalc.ingestCalibs(fakeFlatDir)
 
         # Only use 10 hexapod positions and first 3 bending modes of M1M3 and M2
@@ -224,7 +224,7 @@ class baseComcamLoop():
             self._useMinDofIdx(ofcCalc)
 
         # Set the telescope state to be the same as the OFC
-        print('Setting the telescope state to be the same as OFC')
+        print('\nSetting the telescope state to be the same as OFC')
         state0 = ofcCalc.getStateAggregated()
         phosimCmpt.setDofInUm(state0)
 
@@ -234,7 +234,7 @@ class baseComcamLoop():
         # just prepend the working directory by default
         argPrepend = '-w ' + baseOutputDir+ ' '
 
-        print('PhoSim added argPrepend is %s'%argPrepend)
+        print('\nPhoSim added argPrepend is %s'%argPrepend)
 
 
         # Do the iteration
@@ -248,7 +248,7 @@ class baseComcamLoop():
         dofInUmFileName = "dofPertInNextIter.mat"
         skyInfoFileName = "skyComCamInfo.txt"
         for iterCount in range(iterNum):
-            print('Starting iteration %d of %d'%(iterCount+1,iterNum))
+            print('\nStarting iteration %d of %d'%(iterCount+1,iterNum))
             # Set the observation Id
             phosimCmpt.setSurveyParam(obsId=obsId)
 
@@ -258,19 +258,19 @@ class baseComcamLoop():
             # Set the output directory :   iter0/pert
             outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
             phosimCmpt.setOutputDir(outputDir)
-            print('PhoSim outputDir is %s'%outputDir)
+            print('\nPhoSim outputDir is %s'%outputDir)
 
             # Set the output image directory:    iter0/img/
             outputImgDir = os.path.join(baseOutputDir, iterDirName,
                                         outputImgDirName)
             phosimCmpt.setOutputImgDir(outputImgDir)
-            print('PhoSim outputImgDir is %s'%outputImgDir)
+            print('\nPhoSim outputImgDir is %s'%outputImgDir)
 
 
             # Generate the OPD image
             if genOpd is True:
                 t1 = datetime.datetime.now()
-
+                print('Start time', t1.strftime("%Y-%m-%d_%H:%M:%S"))
                 if selectSensors is 'comcam':
                     argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                          cmdSettingFileName=opdCmdSettingsFile)
@@ -287,12 +287,13 @@ class baseComcamLoop():
                 phosimCmpt.runPhoSim(argString)
                 
                 t2 = datetime.datetime.now()
+                print('End time', t2.strftime("%Y-%m-%d_%H:%M:%S"))
                 _print_duration(t2-t1)
             # Analyze the OPD data
             # this step creates iter0/img/PSSN.txt,
             # as well as opd.zer.xxx file
             # that describe the OPD
-            print('Analyzing the OPD data ')
+            print('\nAnalyzing the OPD data ')
 
             if selectSensors is 'comcam':
                 phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
@@ -319,7 +320,7 @@ class baseComcamLoop():
                 # According to the OPD field positions
                 metr = phosimCmpt.getOpdMetr()
                 skySim = self._prepareSkySim(metr, starMag)
-                print("Use the default OPD field positions to be star positions.")
+                print("\nUse the default OPD field positions to be star positions.")
                 print("The star magnitude is chosen to be %.2f." % starMag)
             else:
                 skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
@@ -736,7 +737,7 @@ class baseComcamLoop():
             settingFile.updateSetting("camDimOffset", camDimOffset)
             
         # print info in order of appearance in policy/default.yaml
-        print('Using following settings in ts_wep/policy/default.yaml:')
+        print('\nUsing following settings in ts_wep/policy/default.yaml:')
         print("imageType: %s"%settingFile.getSetting("imageType"))
         print("bscDbType: %s"%settingFile.getSetting("bscDbType"))
         print('camDimOffset: %s'% settingFile.getSetting("camDimOffset"))
@@ -745,7 +746,7 @@ class baseComcamLoop():
         print("centroidTemplateType: %s"%settingFile.getSetting("centroidTemplateType"))
         print("deblendTemplateType: %s"%settingFile.getSetting("deblendTemplateType"))
         print("defaultBscPath: %s"%settingFile.getSetting("defaultBscPath"))
-        
+
         return wepCalc
 
 
