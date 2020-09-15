@@ -7,7 +7,7 @@ from baseLsstFamCamLoop import baseLsstFamCamLoop
 
 from baseComcamLoop import _eraseFolderContent
 from createPhosimCatalogNew import createPhosimCatalog
-from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigDir,
+from lsst.ts.phosim.Utility import getPhoSimPath, getConfigDir
 from lsst.ts.wep.Utility import runProgram
 from astropy.table import Table
 from astropy.coordinates import SkyCoord
@@ -18,7 +18,7 @@ justWfs = False # switch to only re-do wfs,
 flats = True
 opd = True
 defocalImg = True  
-focalImg  = False # this is only for comcam  or lsstfamcam 
+focalImg  = True # this is only for comcam  or lsstfamcam 
 
 copy = False
 
@@ -302,7 +302,7 @@ phosimPolicyDirAbsPath = getConfigDir()
 for fname in [opdCmd, starCmd]:
 	fpath  = os.path.join(phosimPolicyDirAbsPath, 'cmdFile', fname)
 	print('\n%s'%fpath)
-    print(open(fpath,"r").read()) 
+	print(open(fpath,"r").read())
 
 
 if selectSensors is 'comcam':
@@ -320,13 +320,12 @@ if selectSensors is 'comcam':
                 starCmdSettingsFile=starCmd, selectSensors=selectSensors,
                 splitWfsByMag =splitWfsByMag,raInDeg=raInDeg,decInDeg=decInDeg
                 )
-    print('Done running ccLoop for GAIA \n\n')
+    print('Done running comcamLoop for GAIA \n\n')
 
 
 
 elif selectSensors is 'wfs': 
 
-    # initialize the baseWfsWep.py Class 
     wfsLoop = baseLsstCamLoop() 
     testName  = '%s' % (testLabel)
     print('The testName is %s'%testName)
@@ -338,10 +337,11 @@ elif selectSensors is 'wfs':
                 doDeblending=doDeblending, camDimOffset=camDimOffset, 
                 postageImg=postageImg, opdCmdSettingsFile=opdCmd, 
                 starCmdSettingsFile=starCmd,raInDeg=raInDeg,decInDeg=decInDeg )
+    print('Done running lsstCamLoop for GAIA \n\n')
+
 
 elif selectSensors is 'lsstfamcam':
 
-    # initialize the lsstfamcam.py class 
     fcLoop = baseLsstFamCamLoop()
     testName = '%s' % (testLabel)
     print('The testName is %s'%testName)
@@ -354,9 +354,6 @@ elif selectSensors is 'lsstfamcam':
                 raInDeg=raInDeg,decInDeg=decInDeg
                 )
     print('Done running lsstFamCam loop for GAIA  \n\n')
-
-
-
 
 
 # move the screenlog generated  by screen -LS  if it exists ... 
