@@ -316,9 +316,9 @@ class baseLsstFamCamLoop():
                 # so better be explicit about sensors at this stage 
 
                 if selectSensors is 'lsstfamcam':
-                    sensorNameList = _getLsstFamCamSensorNameList()
+                    sensorNameList = self._getLsstFamCamSensorNameList()
 
-                sensorNameString =  _sensorNameListToString(sensorNameList)
+                sensorNameString =  self._sensorNameListToString(sensorNameList)
 
                 if selectSensors is not None:
                     argPrepend +=  '-s  "%s"  '%sensorsNameString
@@ -390,9 +390,9 @@ class baseLsstFamCamLoop():
                 # and prepend the sensors names explicitly to 
                 # avoid photons falling on guiders or corner sensors 
                 if selectSensors is 'lsstfamcam':
-                    sensorNameList = _getLsstFamCamSensorNameList()
+                    sensorNameList = self._getLsstFamCamSensorNameList()
                     
-                sensorNameString =  _sensorNameListToString(sensorNameList)
+                sensorNameString =  self._sensorNameListToString(sensorNameList)
 
                 if selectSensors is not None:
                     argPrepend +=  '-s  "%s"  '%sensorsNameString
@@ -443,20 +443,20 @@ class baseLsstFamCamLoop():
             ################################
 
             # before ingesting ANY  images by WEP,  make sure that the previously ingested
-            # ones are erased, especially in WFS-only mode !
-            ingestedDir = os.path.join(isrDir, 'raw')
-            if os.path.exists(ingestedDir):
-                print('Removing the previously ingested raw images directory  %s \
-                    before re-ingesting the images from iter0/img/...'%ingestedDir)
-                argString = '-rf %s/'%ingestedDir
-                runProgram("rm", argstring=argString)
+            # # ones are erased, especially in WFS-only mode !
+            # ingestedDir = os.path.join(isrDir, 'raw')
+            # if os.path.exists(ingestedDir):
+            #     print('Removing the previously ingested raw images directory  %s \
+            #         before re-ingesting the images from iter0/img/...'%ingestedDir)
+            #     argString = '-rf %s/'%ingestedDir
+            #     runProgram("rm", argstring=argString)
 
-            # also erase previously existing registry since this would mess the 
-            # ingest process
-            registryFile= os.path.join(isrDir,'registry.sqlite3')
-            if os.path.exists(registryFile):
-                print('Removing image registry file  %s '%registryFile)
-                runProgram("rm", argstring=registryFile)
+            # # also erase previously existing registry since this would mess the 
+            # # ingest process
+            # registryFile= os.path.join(isrDir,'registry.sqlite3')
+            # if os.path.exists(registryFile):
+            #     print('Removing image registry file  %s '%registryFile)
+            #     runProgram("rm", argstring=registryFile)
 
 
             ##################################
