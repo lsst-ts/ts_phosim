@@ -229,12 +229,7 @@ class baseComcamLoop():
         phosimCmpt.setDofInUm(state0)
 
 
-        # decide which args should be added to PhoSim
-        # they are prepended  - we add only working dir at this point
-        # just prepend the working directory by default
-        argPrepend = '-w ' + baseOutputDir+ ' '
-
-        print('\nPhoSim added argPrepend is %s'%argPrepend)
+   
 
 
         # Do the iteration
@@ -267,6 +262,13 @@ class baseComcamLoop():
             print('\nPhoSim outputImgDir is %s'%outputImgDir)
 
 
+            # decide which args should be added to PhoSim
+            # they are prepended  - we add only working dir at this point
+            # just prepend the working directory by default
+            argPrepend = '-w ' + baseOutputDir+ ' '
+
+            print('\nPhoSim added argPrepend is %s'%argPrepend) 
+
             # Generate the OPD image
             if genOpd is True:
                 t1 = datetime.datetime.now()
@@ -274,11 +276,6 @@ class baseComcamLoop():
                 if selectSensors is 'comcam':
                     argString = phosimCmpt.getComCamOpdArgsAndFilesForPhoSim(
                          cmdSettingFileName=opdCmdSettingsFile)
-
-                # for LsstFamCam   == science sensors
-                # elif selectSensors is 'wfs':
-                #     argString = phosimCmpt.getLsstCamOpdArgsAndFilesForPhoSim(
-                #         cmdSettingFileName=opdCmdSettingsFile)
 
                 argString = argPrepend + argString
                 #argString = '-w $AOCLCOUTPUTPATH ' + argString
@@ -383,7 +380,7 @@ class baseComcamLoop():
                 if selectSensors is not None:
                     argPrepend +=  '-s ' + sensors+ ' '
 
-                print('PhoSim added argPrepend is %s'%argPrepend)
+                print('\n PhoSim added argPrepend is %s'%argPrepend)
 
 
                 simSeed = 1000
@@ -512,19 +509,19 @@ class baseComcamLoop():
 
             # before ingesting ANY  images by WEP,  make sure that the previously ingested
             # ones are erased, especially in WFS-only mode !
-            ingestedDir = os.path.join(isrDir, 'raw')
-            if os.path.exists(ingestedDir):
-                print('\nRemoving the previously ingested raw images directory  %s \
-                    before re-ingesting the images from iter0/img/...'%ingestedDir)
-                argString = '-rf %s/'%ingestedDir
-                runProgram("rm", argstring=argString)
+            # ingestedDir = os.path.join(isrDir, 'raw')
+            # if os.path.exists(ingestedDir):
+            #     print('\nRemoving the previously ingested raw images directory  %s \
+            #         before re-ingesting the images from iter0/img/...'%ingestedDir)
+            #     argString = '-rf %s/'%ingestedDir
+            #     runProgram("rm", argstring=argString)
 
             # also erase previously existing registry since this would mess the 
             # ingest process
-            registryFile= os.path.join(isrDir,'registry.sqlite3')
-            if os.path.exists(registryFile):
-                print('\nRemoving image registry file  %s '%registryFile)
-                runProgram("rm", argstring=registryFile)
+            # registryFile= os.path.join(isrDir,'registry.sqlite3')
+            # if os.path.exists(registryFile):
+            #     print('\nRemoving image registry file  %s '%registryFile)
+            #     runProgram("rm", argstring=registryFile)
 
 
             ##################################
