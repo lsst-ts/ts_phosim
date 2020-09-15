@@ -148,7 +148,7 @@ class baseLsstCamLoop():
             # Set the output directory
             outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
             phosimCmpt.setOutputDir(outputDir)
-            print('PhoSim outputDir is %s'%outputDir)
+            print('\nPhoSim outputDir is %s'%outputDir)
             # Set the output image directory
             outputImgDir = os.path.join(baseOutputDir, iterDirName,
                                         outputImgDirName)
@@ -173,7 +173,7 @@ class baseLsstCamLoop():
                             cmdSettingFileName=opdCmdSettingsFile)
                 argString = argPrepend + argString
 
-                print('Generating OPD with Phosim, argString is \n')
+                print('\nGenerating OPD with Phosim, argString is \n')
                 print(argString)
                 phosimCmpt.runPhoSim(argString)
                 t2 = datetime.datetime.now()
@@ -203,7 +203,7 @@ class baseLsstCamLoop():
 
             # Get the PSSN from file
             pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
-            print("Calculated PSSN is %s." % pssn)
+            print("\nCalculated PSSN is %s." % pssn)
 
             # # Get the GQ effective FWHM from file
             gqEffFwhm = phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
@@ -241,7 +241,7 @@ class baseLsstCamLoop():
             # thus I think that tele.getDefocalDistInMm() should have the 
             # WFS corner sensors values ... 
             
-            print('Using %s and %s for cmd and inst PhoSim files '%(starCmdSettingsFile,
+            print('\nUsing %s and %s for cmd and inst PhoSim files '%(starCmdSettingsFile,
                     instSettingFile))
             argString = phosimCmpt.getLsstCamStarArgsAndFilesForPhosim(
                  intraObsId=intraObsId, skySim=skySim, simSeed=simSeed,
