@@ -321,7 +321,7 @@ class baseLsstFamCamLoop():
                 sensorNameString =  self._sensorNameListToString(sensorNameList)
 
                 if selectSensors is not None:
-                    argPrepend +=  '-s  "%s"  '%sensorsNameString
+                    argPrepend +=  '-s  "%s"  '%sensorNameString
 
                 print('PhoSim added argPrepend is %s'%argPrepend)
 
@@ -395,7 +395,7 @@ class baseLsstFamCamLoop():
                 sensorNameString =  self._sensorNameListToString(sensorNameList)
 
                 if selectSensors is not None:
-                    argPrepend +=  '-s  "%s"  '%sensorsNameString
+                    argPrepend +=  '-s  "%s"  '%sensorNameString
 
                 print('\nPhoSim added argPrepend is %s'%argPrepend)
 
