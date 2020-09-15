@@ -310,21 +310,18 @@ class baseLsstFamCamLoop():
                 argPrepend = '-w ' + baseOutputDir+ ' '
 
 
-                # since running on entire lsstfamcam no need to prepend the sensors ... 
-                # if selectSensors is 'comcam':
-                #     rafts = ['22']
-                #     chips  = ['00','01','02',
-                #               '10','11','12',
-                #               '20','21','22']
-                #     sensors = ''
-                #     for r in rafts:
-                #         for c in chips:
-                #             s = "R%s_S%s|"%(r,c)
-                #             sensors += s
-                #     sensors = ' "%s" '%sensors
+                # we are running on lsstFamCam - using all science sensors,
+                # but we don't want to simulate the photons that fall on 
+                # corner sensors ... 
+                # so better be explicit about sensors at this stage 
 
-                # if selectSensors is not None:
-                #     argPrepend +=  '-s ' + sensors+ ' '
+                if selectSensors is 'lsstfamcam':
+                    sensorNameList = _getLsstFamCamSensorNameList()
+
+                sensorNameString =  _sensorNameListToString(sensorNameList)
+
+                if selectSensors is not None:
+                    argPrepend +=  '-s  "%s"  '%sensorsNameString
 
                 print('PhoSim added argPrepend is %s'%argPrepend)
 
@@ -377,36 +374,28 @@ class baseLsstFamCamLoop():
 
             if genFocalImg is True : 
 
-                # Ensure that the folder is empty 
-                # especially if copying some files 
-                focalRawExpDir = os.path.join(outputImgDir,
-                                        phosimCmpt.getFocalDirName())
-                if os.path.exists(focalRawExpDir): # iter0/img/focal/
-                    print('Before proceeding, cleaned up %s '%focalRawExpDir)
-                    _eraseFolderContent(focalRawExpDir)
+                # # Ensure that the folder is empty 
+                # # especially if copying some files 
+                # focalRawExpDir = os.path.join(outputImgDir,
+                #                         phosimCmpt.getFocalDirName())
+                # if os.path.exists(focalRawExpDir): # iter0/img/focal/
+                #     print('Before proceeding, cleaned up %s '%focalRawExpDir)
+                #     _eraseFolderContent(focalRawExpDir)
 
 
                # just prepend the working directory by default
                 argPrepend = '-w ' + baseOutputDir+ ' '
 
+                
+                # and prepend the sensors names explicitly to 
+                # avoid photons falling on guiders or corner sensors 
+                if selectSensors is 'lsstfamcam':
+                    sensorNameList = _getLsstFamCamSensorNameList()
+                    
+                sensorNameString =  _sensorNameListToString(sensorNameList)
 
-                # then prepend argument to run PhoSim only on R22
-                # just in case some stars provided to PhoSim
-                # had streaks or extended 
-                # if selectSensors is 'comcam':
-                #     rafts = ['22']
-                #     chips  = ['00','01','02',
-                #               '10','11','12',
-                #               '20','21','22']
-                #     sensors = ''
-                #     for r in rafts:
-                #         for c in chips:
-                #             s = "R%s_S%s|"%(r,c)
-                #             sensors += s
-                #     sensors = ' "%s" '%sensors
-
-                # if selectSensors is not None:
-                #     argPrepend +=  '-s ' + sensors+ ' '
+                if selectSensors is not None:
+                    argPrepend +=  '-s  "%s"  '%sensorsNameString
 
                 print('\nPhoSim added argPrepend is %s'%argPrepend)
 
@@ -572,6 +561,13 @@ class baseLsstFamCamLoop():
                 sensors.append(s)
         sensorNameList = sensors
         return sensorNameList
+
+    
+    def _sensorNameListToString(self,sensorNameList):
+        sensors  = ''
+        for sensor in sensorNameList:
+            sensors += "%s|"%sensor
+        return sensors
 
 
     def _makeCalibs(self, outputDir, sensorNameList):
