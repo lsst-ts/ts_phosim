@@ -5,7 +5,7 @@ This module is a high-level module to use PhoSim.
 ## Platform
 
 - CentOS 7
-- python: 3.7.6
+- python: 3.7.8
 - [phosim_syseng4](https://github.com/lsst-ts/phosim_syseng4) (branch: aos, tag: firstdonuts)
 
 ## Needed Package
@@ -58,7 +58,11 @@ To enable this:
 
 ## Build the Document
 
-The user can use `package-docs build` to build the documentation. The packages of documenteer, plantuml, and sphinxcontrib-plantuml are needed. The path of plantuml.jar in doc/conf.py needs to be updated to the correct path. To clean the built documents, use `package-docs clean`. See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.
+The user can use `package-docs build` to build the documentation.
+The packages of **documenteer**, **plantuml**, and **sphinxcontrib-plantuml** are needed.
+The path of `plantuml.jar` in `doc/conf.py` needs to be updated to the correct path.
+To clean the built documents, use `package-docs clean`.
+See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.
 
 ## Reference of PhoSim with active optics (AOS)
 
