@@ -378,10 +378,10 @@ class baseLsstCamLoop():
             obsId += 10
 
         # Summarize the FWHM
-        # pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
-        #            outputImgDirName, opdPssnFileName) for num in range(iterNum)]
-        # saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
-        # plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
+        pssnFiles = [os.path.join(baseOutputDir, "%s%d" % (iterDefaultDirName, num),
+                   outputImgDirName, opdPssnFileName) for num in range(iterNum)]
+        saveToFilePath = os.path.join(baseOutputDir, "fwhmIters.png")
+        plotFwhmOfIters(pssnFiles, saveToFilePath=saveToFilePath)
 
     def _outputSkyInfo(self, outputDir, skyInfoFileName, skySim, wepCalc):
 
