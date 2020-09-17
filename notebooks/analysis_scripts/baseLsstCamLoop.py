@@ -20,7 +20,7 @@ from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
                                    getConfigDir
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
-
+from lsst.utils import getPackageDir
 
 class baseLsstCamLoop():
 
@@ -35,8 +35,36 @@ class baseLsstCamLoop():
             selectSensors = 'wfs', 
             phosimRepackagerKeepOriginal=False,deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
-            bscDbType=None,
+            bscDbType = 'file', db_filename  = 'bsc3.db3',
             raInDeg=None,decInDeg=None, rotAngInDeg=None):
+
+        # NB : the bscDbType has to be 
+        # updated before wep_calc gets initialized.
+        # Once wep_calc is called , there is no way 
+        # to change bscDbType (any .updateSetting("bscDbType") call 
+        # will not take desired effect)
+        path_to_ts_wep = getPackageDir("ts_wep")
+        setting_filename = 'default.yaml'
+        path_to_setting_file = os.path.join(path_to_ts_wep, 'policy',setting_filename)
+        settingFile = ParamReader(filePath=path_to_setting_file)
+        bscDbTypeInFile = settingFile.getSetting("bscDbType")
+        print('\n%s contains : '%path_to_setting_file, 
+              bscDbTypeInFile)
+        if bscDbTypeInFile != bscDbType:
+            # In the following we update the setting for bscDbType,
+            # saving the change in the default.yaml file 
+            settingFile.updateSetting("bscDbType", bscDbType)
+            settingFile.saveSetting(filePath=path_to_setting_file)
+
+            # check that the change indeed x`took place 
+            settingFile = ParamReader(filePath=path_to_setting_file)
+            print('After change: ', settingFile.getSetting("bscDbType"))
+        
+        bscDataDir = os.path.join(path_to_ts_wep, 'tests/testData')
+        if db_filename  in os.listdir(bscDataDir):
+            os.remove(os.path.join(bscDataDir,db_filename))
+            print('\nRemoved old %s file'%db_filename)
+
 
         # get the list of sensors -  here the wavefront sensing corner sensors ... 
         if selectSensors is 'wfs':
