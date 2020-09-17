@@ -210,7 +210,7 @@ class baseLsstFamCamLoop():
         outputImgDirName = "img"
         iterDefaultDirName = "iter"
         dofInUmFileName = "dofPertInNextIter.mat"
-        skyInfoFileName = "skyComCamInfo.txt"
+        skyInfoFileName = "skyInfo.txt"
         for iterCount in range(iterNum):
             print('Starting iteration %d of %d'%(iterCount+1,iterNum))
             # Set the observation Id

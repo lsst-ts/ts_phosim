@@ -136,7 +136,7 @@ class baseLsstCamLoop():
         outputImgDirName = "img"
         iterDefaultDirName = "iter"
         dofInUmFileName = "dofPertInNextIter.mat"
-        skyInfoFileName = "skyLsstCamInfo.txt"
+        skyInfoFileName = "skyInfo.txt"
         for iterCount in range(iterNum):
 
             # Set the observation Id
