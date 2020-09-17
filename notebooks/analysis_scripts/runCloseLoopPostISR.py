@@ -8,6 +8,12 @@ from lsst.ts.wep.WepController import WepController
 from lsst.ts.wep.Utility import CamType, FilterType, getModulePath, mapFilterRefToG, DefocalType
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 
+from lsst.ts.ofc.Utility import InstName
+from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
+from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
+from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
+
+
 import sys
 sys.path.append('../analysis_tools/')
 import analysisTools as at
@@ -153,9 +159,20 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     print('\nCalculating wavefront error')
     donutMap = wep_calc.wepCntlr.calcWfErr(donut_map, postage_img_dir)
 
-    
-    listOfWfErr = wep_calc._populateListOfSensorWavefrontData(donutMap)
+    if selectSensors is 'lsstcam' : 
+        sensorNameToIdFileName='sensorNameToIdWfs.yaml'
+    else:
+        sensorNameToIdFileName='sensorNameToId.yaml'
+    print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
 
+    listOfWfErr = wep_calc._populateListOfSensorWavefrontData(donutMap,
+        sensorNameToIdFileName=sensorNameToIdFileName)
+
+    
+    # Record the wfs error with the same order as OPD for the comparison
+    # lines below taken from 
+    # phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
+    #                                      zkFileName=wfsZkFileName)
     zerDict = {}
     for wfErrObj in listOfWfErr:
         zerDict[wfErrObj.getSensorId()] = wfErrObj.getAnnularZernikePoly()
@@ -171,6 +188,48 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     wfs_output_path = os.path.join(closed_loop_input_dir, wfs_zer_output)
     print('\nSaving the list of wavefront errors as %s'%wfs_output_path)
     np.savetxt( wfs_output_path , zerArray, header='The following are ZK in um from z4 to z22:')
+
+
+    # calculate corrections with OFC calc...
+    # OFC is converting wavefront errors into corrections
+    # utilized by M1M3 (figure), M2 (position and figure), and Hexapod (position).
+    if selectSensors == 'comcam':
+        ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
+    if (selectSensors == 'lsstcam' ) or (selectSensors == 'lsstfamcam'): # is this true ? 
+        ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
+
+    ofcCalc.setFilter(FilterType.REF)
+    ofcCalc.setRotAng(rotAngInDeg)
+    ofcCalc.setGainByPSSN()
+
+    # below comes from a call to  PhosimCmpt.py that 
+    # returns the list of FWHM per sensorId from the PSSN file 
+    #listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
+    #                                         opdPssnFileName, sensorNameList)
+    pssnFileName = "PSSN.txt"
+    outputImgDir  = os.path.join(baseOutputDir, 'iter0','img')
+    filePath = os.path.join(outputImgDir, pssnFileName)
+    data = np.loadtxt(filePath)
+    fwhmData = data[1, :-1]
+
+    sensorNameToIdFileName  = 'sensorNameToIdWfs.yaml'
+    mapSensorNameAndId = MapSensorNameAndId(sensorNameToIdFileName)
+
+    refSensorNameList  = ["R00_S22_C0","R00_S22_C1", 
+                      "R04_S20_C0","R04_S20_C1",
+                      "R40_S02_C0","R40_S02_C1",
+                      "R44_S00_C0","R44_S00_C0"
+                     ]
+    sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+    listOfFWHMSensorData = []
+    for sensorId, fwhm in zip(sensorIdList, fwhmData):
+        fwhmSensorData = FWHMSensorData(sensorId, np.array([fwhm]))
+        listOfFWHMSensorData.append(fwhmSensorData)
+
+    ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
+    ofcCalc.calculateCorrections(listOfWfErr)
+
+
 
 if __name__ == '__main__':
 
