@@ -173,11 +173,13 @@ if __name__ == '__main__':
                         help='Choose sensor family: comcam, lsstcam, or lsstfamcam')
     parser.add_argument("--rerun", default='run1', help='The postISR rerun dir')
     parser.add_argument("--db_filename", default='bsc1.db', help='The database filename')
-    parser.add_argument("--gaia_field_name", default='med', help='The name of GAIA field')
+    parser.add_argument("--gaia_field_name", default='', help='The name of GAIA field')
     parser.add_argument("--bscDbType", default='file',
                         help='desired database type: refCat, file, or image' )
     parser.add_argument("--setting_filename", default='default.yaml')
     parser.add_argument("--rotAngInDeg", default=0, help='rotation angle in degrees')
+    parser.add_argument("--raInDeg", default=0, help='boresight right ascension in degrees')
+    parser.add_argument("--decInDeg", default=0, help='boresight declination in degrees')
     args = parser.parse_args()
 
     # detector_list = ['R:2,2 S:0,0', 'R:2,2 S:0,1', 'R:2,2 S:0,2']
@@ -187,5 +189,6 @@ if __name__ == '__main__':
     run_deblender=args.run_deblender,select_sensor = args.select_sensor, rerun=args.rerun,
     db_filename = args.db_filename, gaia_field_name=args.gaia_field_name,
         setting_filename=args.setting_filename,
-         bscDbType = args.bscDbType,rotAngInDeg=args.rotAngInDeg
+         bscDbType = args.bscDbType,rotAngInDeg=args.rotAngInDeg, raInDeg=args.raInDeg,
+         decInDeg=args.decInDeg
         )
