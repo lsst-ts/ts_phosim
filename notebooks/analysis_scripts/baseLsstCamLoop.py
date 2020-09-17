@@ -32,7 +32,7 @@ class baseLsstCamLoop():
             opdCmdSettingsFile='opdDefault.cmd',
             starCmdSettingsFile='starDefault.cmd', 
             instSettingFile='starSingleExp.inst',
-            selectSensors = 'wfs', 
+            selectSensors = 'lsstcam', 
             phosimRepackagerKeepOriginal=False,deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
             bscDbType = 'file', db_filename  = 'bsc3.db3',
@@ -67,14 +67,28 @@ class baseLsstCamLoop():
 
 
         # get the list of sensors -  here the wavefront sensing corner sensors ... 
-        if selectSensors is 'wfs':
+        # it's not used for PhoSim simulation
+        # but later for reading FWHM from PSSN file,
+        # and storing it as a list for OFC with 
+        # [sensorId,  FWHM ]
+        # sensorId is taken from  lsst.ts.wep.ctrlIntf.MapSensorNameAndId
+        # which uses sensorNameToId.yaml file , but the Ids there are 
+        # inconsistent with sensorIds produced by PhoSim,
+        # so I made a separate file sensorNameToIdWfs.yaml
+        # 
+        # Here the sensorId  is only a placeholder, i.e. 
+        # as long as its consistent between ts_phosim and ts_ofc 
+        # it would work, since OFC doesn't read the postISR 
+        # image FITS files as ts_wep does  
+        # 
+        if selectSensors is 'lsstcam': 
             sensorNameList = self._getWfsSensorNameList()
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             print('\nMaking calibration products ... ')
-            #  make calibs for wfs 
-            if selectSensors is 'wfs':
+            #  make calibs for lsstcam  
+            if selectSensors is 'lsstcam':
                 fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
 
         # Make the ISR directory
@@ -115,7 +129,7 @@ class baseLsstCamLoop():
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
                                         rotAngInDeg, numPro, isEimg,
                                         m1m3ForceError)
-        # here selectSensors =  'wfs'
+        # here selectSensors =  'lsstcam'
         print('\nPreparing WepCalc...')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
                                 rotAngInDeg, isEimg, doDeblending, camDimOffset,
@@ -196,7 +210,7 @@ class baseLsstCamLoop():
             # LsstFamCam, it is 31 locations in a ring, so 31 files )
             if genOpd is True:
                 t1 = datetime.datetime.now()
-                if selectSensors is 'wfs':
+                if selectSensors is 'lsstcam':
                     argString = phosimCmpt.getLsstFamCamOpdArgsAndFilesForPhoSim(
                             cmdSettingFileName=opdCmdSettingsFile)
                 argString = argPrepend + argString
@@ -225,7 +239,7 @@ class baseLsstCamLoop():
             # if selectSensors is 'comcam':
             #     phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
             #                                 pssnFileName=opdPssnFileName)
-            if selectSensors is 'wfs':
+            if selectSensors is 'lsstcam':
                 phosimCmpt.analyzeLsstFamCamOpdData(zkFileName=opdZkFileName,
                                             pssnFileName=opdPssnFileName)
 
@@ -238,8 +252,10 @@ class baseLsstCamLoop():
             print("GQ effective FWHM is %.4f." % gqEffFwhm)
 
             # Set the FWHM data
+
             listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
-                                           opdPssnFileName, sensorNameList)
+                                           opdPssnFileName, sensorNameList,
+                                           sensorNameToIdFileName )
             ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
             # Use the input sky catalog .... 
@@ -258,7 +274,7 @@ class baseLsstCamLoop():
             # Generate the defocal images
             simSeed = 1000
 
-            #if selectSensors is 'wfs':
+            #if selectSensors is 'lsstcam':
 
             # There is actually nothing (that I can see) that is comcam - specific
             # here :  getComCamStarArgsAndFilesForPhoSim()
@@ -296,7 +312,7 @@ class baseLsstCamLoop():
                 # start again - prepend the working directory first 
                 argPrepend = '-w ' + baseOutputDir+ ' ' 
 
-                if selectSensors is 'wfs':
+                if selectSensors is 'lsstcam':
                     # note : need to select each half-chip ... 
                     sensors = "R00_S22_C0|R00_S22_C1|R04_S20_C0|R04_S20_C1|R44_S00_C0|R44_S00_C1|R40_S02_C0|R40_S02_C1"
 
@@ -351,7 +367,7 @@ class baseLsstCamLoop():
 
 
             # Calculate the wavefront error and DOF
-            if selectSensors is 'wfs' : 
+            if selectSensors is 'lsstcam' : 
                 sensorNameToIdFileName='sensorNameToIdWfs.yaml'
             else:
                 sensorNameToIdFileName='sensorNameToId.yaml'
@@ -392,7 +408,11 @@ class baseLsstCamLoop():
         return skySim, wepCalc
 
     def _getWfsSensorNameList(self):
-        sensorNameList = ["R00_S22","R04_S20","R44_S00","R40_S02"]
+        sensorNameList = ["R00_S22_C0","R00_S22_C1", 
+                          "R04_S20_C0","R04_S20_C1",
+                          "R40_S02_C0","R40_S02_C1",
+                          "R44_S00_C0","R44_S00_C0"
+                         ]
 
         return sensorNameList
 
@@ -474,7 +494,7 @@ class baseLsstCamLoop():
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
-        elif selectSensors is 'wfs': # use LsstCam
+        elif selectSensors is 'lsstcam': # use LsstCam
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
 
         wepCalc.setFilter(filterType)
@@ -515,7 +535,7 @@ class baseLsstCamLoop():
 
         if selectSensors is None: # by default
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-        elif selectSensors is 'wfs': # use LsstCam 
+        elif selectSensors is 'lsstcam': # use LsstCam 
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
 
         ofcCalc.setFilter(filterType)
