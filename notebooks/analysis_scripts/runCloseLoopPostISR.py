@@ -79,7 +79,10 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
         os.remove(os.path.join(bscDataDir,db_filename))
         print('Removed old %s file'%db_filename)
     
-    
+ 
+
+
+        print('Setting sky')
     ########################
     # Initialize wep_calc
     ########################
@@ -91,6 +94,21 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     elif select_sensor == 'lsstfamcam':
         wep_calc = WEPCalculationFactory.getCalculator(CamType.LsstFamCam, closed_loop_input_dir)
     
+    #if bscDbType == 'file':
+    skyInfoFileName = 'skyInfo.txt'
+    baseOutputDir = closed_loop_input_dir[:-len('input')]
+    # the iteration directory 
+    iterCount = 0
+    iterDirName = "%s%d" % ("iter", iterCount)
+
+    # Set the output directory :   iter0/pert
+    outputDirName = "pert"
+    outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
+
+    outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
+    print('Setting sky file as %s'%outputSkyInfoFilePath)
+    wep_calc.setSkyFile(outputSkyInfoFilePath)
+
     # update name of bscDbFile ... 
     #settingFilePath = os.path.join(path_to_ts_wep, 'policy/default.yaml')
     #settingFile = ParamReader(filePath=settingFilePath)
