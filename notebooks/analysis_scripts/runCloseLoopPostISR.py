@@ -13,10 +13,9 @@ sys.path.append('../analysis_tools/')
 import analysisTools as at
 
 def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
-         save_postage_stamps=True, run_deblender=True,select_sensor = 'comcam', rerun='run1',
-         db_filename = 'bsc1.db3', gaia_field_name='med', rotAngInDeg = 0, bscDbType='file',
-         setting_filename = 'default.yaml'
-          ):
+         save_postage_stamps=True, run_deblender=True, select_sensor = 'comcam', rerun='run1',
+         db_filename = 'bsc1.db3', gaia_field_name='', rotAngInDeg = 0, bscDbType='file',
+         setting_filename = 'default.yaml', raInDeg=0, decInDeg=0):
 
     """
     closed_loop_input_dir: string
@@ -99,10 +98,15 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     dbRelativePath = 'tests/testData/%s'%db_filename
     settingFile.updateSetting("defaultBscPath", dbRelativePath)
     
-    # update wep_calc pointing 
+    # update wep_calc pointing based  on the GAIA field name 
     if len(gaia_field_name)>0:
         raInDeg, decInDeg = at.getRaDecFromGaiaField(gaia_field_name)
-        wep_calc.setBoresight(raInDeg, decInDeg)
+    
+    # if GAIA field name is not provided, we assume raInDeg, decInDeg as boresight 
+    print('\nSetting telescope boresight as (%.2f, %.2f)'%(raInDeg,decInDeg))
+    wep_calc.setBoresight(raInDeg, decInDeg)
+
+    print('\nSetting telescope rotation angle as %.2f'%rotAngInDeg)
     wep_calc.setRotAng(rotAngInDeg)
 
     wep_calc.wepCntlr.setPostIsrCcdInputs(os.path.join(closed_loop_input_dir, 'rerun/%s'%rerun))
