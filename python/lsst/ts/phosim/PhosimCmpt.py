@@ -696,6 +696,92 @@ class PhosimCmpt(object):
 
         return argString
 
+    # this is the same as 
+    # getComCamStarArgsAndFilesForPhosim()
+    def getLsstFamCamStarArgsAndFilesForPhoSim(
+            self, extraObsId, intraObsId, skySim, simSeed=1000,
+            cmdSettingFileName="starDefault.cmd",
+            instSettingFileName="starSingleExp.inst"):
+        """Get the star calculation arguments and files of LsstFamCam for the
+        PhoSim calculation of the defocal images.  The defocal images 
+        are achieved by movement of the camera piston by 1.5 mm  - this is 
+        set by the "defocalDist" parameter in policy/teleSetting.yaml 
+        The camera piston movement is needed to simulate the defocal 
+        images for  (1) ComCam,  (2) high-speed CMOS, and (3) LSST camera 
+        full array mode (in effect using 189 CCD as the wavefront sensor).
+
+        Parameters
+        ----------
+        extraObsId : int
+            Extra-focal observation Id.
+        intraObsId : int
+            Intra-focal observation Id.
+        skySim : SkySim
+            Sky simulator
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "starDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "starSingleExp.inst".)
+
+        Returns
+        -------
+        list[str]
+            List of arguments to run the PhoSim.
+        """
+
+        # Set the intra- and extra-focal related information
+        obsIdList = {"-1": extraObsId,
+                     "1": intraObsId}
+        instFileNameList = {"-1": "starExtra.inst",
+                            "1": "starIntra.inst"}
+        logFileNameList = {"-1": "starExtraPhoSim.log",
+                           "1": "starIntraPhoSim.log"}
+
+        extraFocalDirName = self.getExtraFocalDirName()
+        intraFocalDirName = self.getIntraFocalDirName()
+        outImgDirNameList = {"-1": extraFocalDirName,
+                             "1": intraFocalDirName}
+
+        # Write the instance and command files of defocal conditions
+        cmdFileName = "star.cmd"
+        onFocalDofInUm = self.getDofInUm()
+        onFocalOutputImgDir = self.outputImgDir
+        argStringList = []
+        for ii in (-1, 1):
+
+            # Set the observation ID
+            self.setSurveyParam(obsId=obsIdList[str(ii)])
+
+            # Camera piston (Change the unit from mm to um)
+            pistonInUm = np.zeros(len(onFocalDofInUm))
+            pistonInUm[5] = ii * self.tele.getDefocalDistInMm() * 1e3
+
+            # Set the new DOF that considers the piston motion
+            self.setDofInUm(onFocalDofInUm + pistonInUm)
+
+            # Update the output image directory
+            outputImgDir = os.path.join(onFocalOutputImgDir,
+                                        outImgDirNameList[str(ii)])
+            self.setOutputImgDir(outputImgDir)
+
+            # Get the argument to run the phosim
+            argString = self.getStarArgsAndFilesForPhoSim(
+                skySim, cmdFileName=cmdFileName,
+                instFileName=instFileNameList[str(ii)],
+                logFileName=logFileNameList[str(ii)], simSeed=simSeed,
+                cmdSettingFileName=cmdSettingFileName,
+                instSettingFileName=instSettingFileName)
+            argStringList.append(argString)
+
+        # Put the internal state back to the focal plane condition
+        self.setDofInUm(onFocalDofInUm)
+        self.setOutputImgDir(onFocalOutputImgDir)
+
+        return argStringList
+
 
 
     def getComCamStarArgsAndFilesForPhoSim(
@@ -1191,7 +1277,8 @@ class PhosimCmpt(object):
         return effFwhmList, gqEffFwhm
 
 
-    def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList):
+    def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList,
+        sensorNameToIdFileName='sensorNameToId.yaml'):
         """Map the OPD data to the list of wavefront error.
 
         OPD: Optical path difference.
@@ -1211,7 +1298,7 @@ class PhosimCmpt(object):
 
         opdZk = self._getZkFromFile(opdZkFileName)
 
-        mapSensorNameAndId = MapSensorNameAndId()
+        mapSensorNameAndId = MapSensorNameAndId(sensorNameToIdFileName)
         sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
         listOfWfErr = []
@@ -1312,7 +1399,8 @@ class PhosimCmpt(object):
 
         return gqEffFwhm
 
-    def getListOfFwhmSensorData(self, pssnFileName, refSensorNameList):
+    def getListOfFwhmSensorData(self, pssnFileName, refSensorNameList,
+        sensorNameToIdFileName='sensorNameToId.yaml'):
         """Get the list of FWHM sensor data based on the OPD PSSN file.
 
         FWHM: Full width at half maximum.
@@ -1338,7 +1426,7 @@ class PhosimCmpt(object):
         data = self._getDataOfPssnFile(pssnFileName)
         fwhmData = data[1, :-1]
 
-        mapSensorNameAndId = MapSensorNameAndId()
+        mapSensorNameAndId = MapSensorNameAndId(sensorNameToIdFileName)
         sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
         listOfFWHMSensorData = []
@@ -1519,10 +1607,11 @@ class PhosimCmpt(object):
         # Save the file
         filePath = os.path.join(self.outputImgDir, zkFileName)
         wfsData = self._getWfErrValuesAndStackToMatrix(reorderedWfErrMap)
-        header = "The followings are ZK in um from z4 to z22:"
+        header = "The following are ZK in um from z4 to z22:"
         np.savetxt(filePath, wfsData, header=header)
 
-    def _transListOfWfErrToMap(self, listOfWfErr):
+    def _transListOfWfErrToMap(self, listOfWfErr,
+        sensorNameToIdFileName='sensorNameToId.yaml'):
         """Transform the list of wavefront error to map.
 
         Parameters
@@ -1538,7 +1627,7 @@ class PhosimCmpt(object):
             [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
         """
 
-        mapSensorNameAndId = MapSensorNameAndId()
+        mapSensorNameAndId = MapSensorNameAndId(sensorNameToIdFileName)
 
         wfErrMap = dict()
         for sensorWavefrontData in listOfWfErr:
