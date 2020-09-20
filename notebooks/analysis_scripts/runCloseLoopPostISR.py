@@ -86,9 +86,6 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
         print('Removed old %s file'%db_filename)
     
  
-
-
-        print('Setting sky')
     ########################
     # Initialize wep_calc
     ########################
@@ -101,8 +98,9 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
         wep_calc = WEPCalculationFactory.getCalculator(CamType.LsstFamCam, closed_loop_input_dir)
     
     #if bscDbType == 'file':
-    skyInfoFileName = 'skyInfo.txt'
-    baseOutputDir = closed_loop_input_dir[:-len('input')]
+
+    baseOutputDir = closed_loop_input_dir[:-len('/input/')]
+    print('\nbaseOutputDir = %s'%baseOutputDir)
     # the iteration directory 
     iterCount = 0
     iterDirName = "%s%d" % ("iter", iterCount)
@@ -110,9 +108,9 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     # Set the output directory :   iter0/pert
     outputDirName = "pert"
     outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
-
+    skyInfoFileName = 'skyInfo.txt'
     outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
-    print('Setting sky file as %s'%outputSkyInfoFilePath)
+    print('\nSetting sky file as %s'%outputSkyInfoFilePath)
     wep_calc.setSkyFile(outputSkyInfoFilePath)
 
     # update name of bscDbFile ... 
@@ -159,14 +157,26 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     print('\nCalculating wavefront error')
     donutMap = wep_calc.wepCntlr.calcWfErr(donut_map, postage_img_dir)
 
-    if selectSensors is 'lsstcam' : 
-        sensorNameToIdFileName='sensorNameToIdWfs.yaml'
-    else:
-        sensorNameToIdFileName='sensorNameToId.yaml'
-    print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
+    # if select_sensor is 'lsstcam' : 
+    #     sensorNameToIdFileName='sensorNameToIdWfs.yaml'
+    # else:
+    #     sensorNameToIdFileName='sensorNameToId.yaml'
+    # print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
 
-    listOfWfErr = wep_calc._populateListOfSensorWavefrontData(donutMap,
-        sensorNameToIdFileName=sensorNameToIdFileName)
+    # I just make a new dictionary, and since I know from above that 
+    # error for R:0,0 S:2,2,A is the same as for R:0,0 S:2,2,B,
+    # I keep just one of these 
+    if select_sensor == 'lsstcam':
+        donutMapAbbrev  = {}
+        detectors = list(donutMap.keys())
+
+        for detector in detectors:
+            #raft,sensor = parseAbbrevDetectorName(abbrevDetectorName(detector))
+            #detect = '%s_%s'%(raft,sensor)
+            donutMapAbbrev[detector[:-2]] = donutMap[detector]
+        donutMap = donutMapAbbrev.copy()
+
+    listOfWfErr = wep_calc._populateListOfSensorWavefrontData(donutMap)
 
     
     # Record the wfs error with the same order as OPD for the comparison
@@ -193,9 +203,9 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     # calculate corrections with OFC calc...
     # OFC is converting wavefront errors into corrections
     # utilized by M1M3 (figure), M2 (position and figure), and Hexapod (position).
-    if selectSensors == 'comcam':
+    if select_sensor == 'comcam':
         ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-    if (selectSensors == 'lsstcam' ) or (selectSensors == 'lsstfamcam'): # is this true ? 
+    if (select_sensor == 'lsstcam' ) or (select_sensor == 'lsstfamcam'): # is this true ? 
         ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
 
     ofcCalc.setFilter(FilterType.REF)
@@ -212,22 +222,99 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     data = np.loadtxt(filePath)
     fwhmData = data[1, :-1]
 
-    sensorNameToIdFileName  = 'sensorNameToIdWfs.yaml'
+    sensorNameToIdFileName  = 'sensorNameToId.yaml'
     mapSensorNameAndId = MapSensorNameAndId(sensorNameToIdFileName)
+     
+    # if comcam , sensorIdList is just comcam sensors:
+    if select_sensor  == 'comcam': 
+	    refSensorNameList = _getComCamSensorNameList()
+		sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
-    refSensorNameList  = ["R00_S22_C0","R00_S22_C1", 
-                      "R04_S20_C0","R04_S20_C1",
-                      "R40_S02_C0","R40_S02_C1",
-                      "R44_S00_C0","R44_S00_C0"
-                     ]
-    sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
-    listOfFWHMSensorData = []
-    for sensorId, fwhm in zip(sensorIdList, fwhmData):
-        fwhmSensorData = FWHMSensorData(sensorId, np.array([fwhm]))
-        listOfFWHMSensorData.append(fwhmSensorData)
+    # if lsstcam / lsstfamcam,   OPD calc for LsstFamCam, but need to choose 31 of 189 sensors 
+    if (select_sensor == 'lsstcam' ) or (select_sensor == 'lsstfamcam'):
+		refSensorNameList = _getLsstFamCamSensorNameList()
+		
+		# getting the names of sensors that 
+		# fall within opd field Idx...
+		path_to_ts_ofc = getPackageDir("ts_ofc")
+		mappingFilePath = os.path.join(path_to_ts_ofc , 'policy/lsst', 'sensorNameToFieldIdx.yaml')
+		_mappingFile = ParamReader()
+		_mappingFile.setFilePath(mappingFilePath)
+
+		fieldIdx = []
+		for sensor in refSensorNameList:
+		    field = _mappingFile.getSetting(sensor)
+		    fieldIdx.append(int(field))
+		    
+		uniqueFieldIdx = np.unique(fieldIdx)
+		uniqueFieldIdxLt31 = uniqueFieldIdx[uniqueFieldIdx<31]
+
+		#This shows all sensors corresponding to each fieldIdx 
+		oneSensorPerFieldIdx = []
+		for field in uniqueFieldIdxLt31:
+		    #print(field, np.array(refSensorNameList)[fieldIdx == field])
+		    oneSensorPerFieldIdx.append(np.array(refSensorNameList)[fieldIdx == field][0])
+		    
+
+		# I pick one sensor for each fieldIdx 
+		# this list is used to make the listOfFWHMSensorData : 
+		sensorIdList = mapSensorNameAndId.mapSensorNameToId(oneSensorPerFieldIdx)
+
+    
+    # make a list of fwhm sensor data 
+	listOfFWHMSensorData = []
+	for sensorId, fwhm in zip(sensorIdList, fwhmData):
+	    fwhmSensorData = FWHMSensorData(sensorId, np.array([fwhm]))
+	    listOfFWHMSensorData.append(fwhmSensorData)
 
     ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
     ofcCalc.calculateCorrections(listOfWfErr)
+    
+    # Save the aggregated degree of freedom to a file 
+    dofInUm = ofcCalc.getStateAggregated()
+    
+    # I skip setting PhoSimCmpt dofInUm , since here we just run one iteration
+    # Save the DOF in um data to file for the next iteration
+    # parts of 
+	# phosimCmpt.saveDofInUmFileForNextIter(
+	#        dofInUm, dofInUmFileName=dofInUmFileName)
+	dofInUmFileName="dofPertInNextIter.mat"
+	outputDir= os.path.join(baseOutputDir,'iter0','pert')
+	filePath = os.path.join(outputDir, dofInUmFileName)
+	header = "The following are the DOF in um:"
+	np.savetxt(filePath, np.transpose(dofInUm), header=header)
+
+
+    def _getComCamSensorNameList(self):
+	    chips  = ['00','01','02',
+	              '10','11','12',
+	              '20','21','22']
+	    rafts = ['22']
+	    sensors = []
+	    for r in rafts:
+	        for c in chips:
+	            s = "R%s_S%s"%(r,c)
+	            sensors.append(s)
+	    sensorNameList = sensors
+	    return sensorNameList
+
+	def _getLsstFamCamSensorNameList(self):
+	    # I assume it includes the ComCam 
+	    chips  = ['00','01','02',
+	              '10','11','12',
+	              '20','21','22']
+	    rafts = ['14','24','34', 
+	        '03','13','23','33','43',
+	        '02','12','22','32','42',
+	        '01','11','21','31','41',
+	             '10','20','30']
+	    sensors = []
+	    for r in rafts:
+	        for c in chips:
+	            s = "R%s_S%s"%(r,c)
+	            sensors.append(s)
+	    sensorNameList = sensors
+	    return sensorNameList
 
 
 
