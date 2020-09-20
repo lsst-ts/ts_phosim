@@ -21,7 +21,7 @@ import analysisTools as at
 def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
          save_postage_stamps=True, run_deblender=True, select_sensor = 'comcam', rerun='run1',
          db_filename = 'bsc1.db3', gaia_field_name='', rotAngInDeg = 0, bscDbType='file',
-         setting_filename = 'default.yaml', raInDeg=0, decInDeg=0):
+         setting_filename = 'default.yaml', raInDeg=0, decInDeg=0,expWcs=False):
 
     """
     closed_loop_input_dir: string
@@ -85,6 +85,15 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
         os.remove(os.path.join(bscDataDir,db_filename))
         print('Removed old %s file'%db_filename)
     
+    # update expWcs setting ... 
+	#expWcs = False # using PhoSim WCS Sol 
+	settingFile= ParamReader(filePath=path_to_setting_file)
+	settingFile.updateSetting("expWcs", expWcs)
+	settingFile.saveSetting(filePath=path_to_setting_file)
+	settingFile = ParamReader(filePath=path_to_setting_file)
+	print('After change: expWcs : ', settingFile.getSetting("expWcs"))
+
+
  
     ########################
     # Initialize wep_calc
@@ -344,6 +353,7 @@ if __name__ == '__main__':
     parser.add_argument("--rotAngInDeg", default=0, help='rotation angle in degrees')
     parser.add_argument("--raInDeg", default=0, help='boresight right ascension in degrees')
     parser.add_argument("--decInDeg", default=0, help='boresight declination in degrees')
+    parser.add_argument("--expWcs", default=False, help='whether to use PhosimWcsSol (True) or default WcsSol (False)')
     args = parser.parse_args()
 
     # detector_list = ['R:2,2 S:0,0', 'R:2,2 S:0,1', 'R:2,2 S:0,2']
@@ -354,5 +364,4 @@ if __name__ == '__main__':
     db_filename = args.db_filename, gaia_field_name=args.gaia_field_name,
         setting_filename=args.setting_filename,
          bscDbType = args.bscDbType,rotAngInDeg=args.rotAngInDeg, raInDeg=args.raInDeg,
-         decInDeg=args.decInDeg
-        )
+         decInDeg=args.decInDeg, expWcs =args.expWcs)
