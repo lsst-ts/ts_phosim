@@ -57,7 +57,7 @@ pipeline {
 
                         cd ../ts_wep/
                         setup -k -r .
-                        scons
+                        scons python
                     """
                 }
             }
