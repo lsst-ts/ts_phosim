@@ -22,6 +22,7 @@
 import os
 import re
 import shutil
+import warnings
 import numpy as np
 from scipy import ndimage
 from astropy.io import fits
@@ -31,6 +32,7 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
+from lsst.ts.ofc.Utility import InstName
 from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
 
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
@@ -417,26 +419,31 @@ class PhosimCmpt(object):
             Arguments to run the PhoSim.
         """
 
-        # Set the default ComCam OPD field positions
-        self.metr.setDefaultComcamGQ()
+        warnings.warn(
+            "Use getOpdArgsAndFilesForPhoSim() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
 
-        argString = self._getOpdArgsAndFilesForPhoSim(
-            cmdFileName,
-            instFileName,
-            logFileName,
-            cmdSettingFileName,
-            instSettingFileName,
+        argString = self.getOpdArgsAndFilesForPhoSim(
+            InstName.COMCAM,
+            cmdFileName=cmdFileName,
+            instFileName=instFileName,
+            logFileName=logFileName,
+            cmdSettingFileName=cmdSettingFileName,
+            instSettingFileName=instSettingFileName,
         )
 
         return argString
 
-    def _getOpdArgsAndFilesForPhoSim(
+    def getOpdArgsAndFilesForPhoSim(
         self,
-        cmdFileName,
-        instFileName,
-        logFileName,
-        cmdSettingFileName,
-        instSettingFileName,
+        instName,
+        cmdFileName="opd.cmd",
+        instFileName="opd.inst",
+        logFileName="opdPhoSim.log",
+        cmdSettingFileName="opdDefault.cmd",
+        instSettingFileName="opdDefault.inst",
     ):
         """Get the OPD calculation arguments and files for the PhoSim
         calculation.
@@ -445,22 +452,28 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        cmdFileName : str
-            Physical command file name.
-        instFileName : str
-            OPD instance file name.
-        logFileName : str
-            Log file name.
-        cmdSettingFileName : str
-            Physical command setting file name.
-        instSettingFileName : str
-            Instance setting file name.
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
+        cmdFileName : str, optional
+            Physical command file name. (the default is "opd.cmd".)
+        instFileName : str, optional
+            OPD instance file name. (the default is "opd.inst".)
+        logFileName : str, optional
+            Log file name. (the default is "opdPhoSim.log".)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "opdDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "opdDefault.inst".)
 
         Returns
         -------
         str
             Arguments to run the PhoSim.
         """
+
+        # Set the weighting ratio and field positions of OPD
+        self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Write the command file
         cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName, cmdFileName)
@@ -733,8 +746,42 @@ class PhosimCmpt(object):
             PSSN file name. (the default is "PSSN.txt".)
         """
 
+        warnings.warn(
+            "Use analyzeOpdData() instead.", category=DeprecationWarning, stacklevel=2,
+        )
+        self.analyzeOpdData(
+            InstName.COMCAM,
+            zkFileName=zkFileName,
+            rotOpdInDeg=rotOpdInDeg,
+            pssnFileName=pssnFileName,
+        )
+
+    def analyzeOpdData(
+        self, instName, zkFileName="opd.zer", rotOpdInDeg=0.0, pssnFileName="PSSN.txt"
+    ):
+        """Analyze the OPD data.
+
+        Rotate OPD to simulate the output by rotated camera. When anaylzing the
+        PSSN, the unrotated OPD is used.
+
+        OPD: Optical path difference.
+        PSSN: Normalized point source sensitivity.
+
+        Parameters
+        ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
+        zkFileName : str, optional
+            OPD in zk file name. (the default is "opd.zer".)
+        rotOpdInDeg : float, optional
+            Rotate OPD in degree in the counter-clockwise direction. (the
+            default is 0.0.)
+        pssnFileName : str, optional
+            PSSN file name. (the default is "PSSN.txt".)
+        """
+
         self._writeOpdZkFile(zkFileName, rotOpdInDeg)
-        self._writeOpdPssnFile(pssnFileName)
+        self._writeOpdPssnFile(instName, pssnFileName)
 
     def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
         """Write the OPD in zk file.
@@ -852,7 +899,7 @@ class PhosimCmpt(object):
 
         return fileList
 
-    def _writeOpdPssnFile(self, pssnFileName):
+    def _writeOpdPssnFile(self, instName, pssnFileName):
         """Write the OPD PSSN in file.
 
         OPD: Optical path difference.
@@ -860,17 +907,20 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
         pssnFileName : str
             PSSN file name.
         """
 
-        filePath = os.path.join(self.outputImgDir, pssnFileName)
+        # Set the OPD weighting ratio
+        self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Calculate the PSSN
-        pssnList, gqEffPssn = self._calcComCamOpdPssn()
+        pssnList, gqEffPssn = self._calcPssnOpd()
 
         # Calculate the FWHM
-        effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
+        effFwhmList, gqEffFwhm = self._calcEffFwhmOpd(pssnList)
 
         # Append the list to write the data into file
         pssnList.append(gqEffPssn)
@@ -880,13 +930,13 @@ class PhosimCmpt(object):
         data = np.vstack((pssnList, effFwhmList))
 
         # Write to file
+        filePath = os.path.join(self.outputImgDir, pssnFileName)
         header = "The followings are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
         np.savetxt(filePath, data, header=header)
 
-    def _calcComCamOpdPssn(self):
-        """Calculate the ComCam PSSN of OPD.
+    def _calcPssnOpd(self):
+        """Calculate the PSSN of OPD.
 
-        ComCam: Commissioning camera.
         OPD: Optical path difference.
         PSSN: Normalized point source sensitivity.
         GQ: Gaussian quadrature.
@@ -908,24 +958,13 @@ class PhosimCmpt(object):
             pssnList.append(pssn)
 
         # Calculate the GQ effectice PSSN
-        self._setComCamWgtRatio()
         gqEffPssn = self.metr.calcGQvalue(pssnList)
 
         return pssnList, gqEffPssn
 
-    def _setComCamWgtRatio(self):
-        """Set the ComCam weighting ratio.
+    def _calcEffFwhmOpd(self, pssnList):
+        """Calculate the effective FWHM of OPD.
 
-        ComCam: Commissioning camera.
-        """
-
-        comcamWtRatio = np.ones(9)
-        self.metr.setWeightingRatio(comcamWtRatio)
-
-    def _calcComCamOpdEffFwhm(self, pssnList):
-        """Calculate the ComCam effective FWHM of OPD.
-
-        ComCam: Commissioning camera.
         FWHM: Full width and half maximum.
         PSSN: Normalized point source sensitivity.
         GQ: Gaussian quadrature.
@@ -940,7 +979,7 @@ class PhosimCmpt(object):
         list
             Effective FWHM list.
         float
-            GQ effective FWHM of ComCam.
+            GQ effective FWHM.
         """
 
         # Calculate the list of effective FWHM
@@ -950,7 +989,6 @@ class PhosimCmpt(object):
             effFwhmList.append(effFwhm)
 
         # Calculate the GQ effectice FWHM
-        self._setComCamWgtRatio()
         gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
 
         return effFwhmList, gqEffFwhm
@@ -1259,7 +1297,3 @@ class PhosimCmpt(object):
             valueMatrix = np.vstack((valueMatrix, wfErr))
 
         return valueMatrix
-
-
-if __name__ == "__main__":
-    pass
