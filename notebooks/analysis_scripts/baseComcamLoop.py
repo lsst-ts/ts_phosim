@@ -113,7 +113,7 @@ class baseComcamLoop():
         isEimg: bool, False by default - whether to make an electronic or amplifier
                 image.
 
-        useMinDofIdx: bool, True by default - whether to only use 10 hexapod
+        useMinDofIdx: bool, False by default - whether to only use 10 hexapod
             positions and first 3 bending modes of M1M3 and M2
 
 
@@ -229,7 +229,6 @@ class baseComcamLoop():
         phosimCmpt.setDofInUm(state0)
 
 
-   
 
 
         # Do the iteration
@@ -308,6 +307,8 @@ class baseComcamLoop():
             print("   GQ effective FWHM is %.4f." % gqEffFwhm)
 
             # Set the FWHM data
+            # here the sensorNameList corresponds to 
+            # whatever names are in 
             listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
                                             opdPssnFileName, sensorNameList)
             ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
@@ -358,27 +359,16 @@ class baseComcamLoop():
                     _eraseFolderContent(extraRawExpDir)
 
 
-
                 # just prepend the working directory by default
                 argPrepend = '-w ' + baseOutputDir+ ' '
 
-
                 # then prepend argument to run PhoSim only on R22
                 # for defocal images
-                if selectSensors is 'comcam':
-                    rafts = ['22']
-                    chips  = ['00','01','02',
-                              '10','11','12',
-                              '20','21','22']
-                    sensors = ''
-                    for r in rafts:
-                        for c in chips:
-                            s = "R%s_S%s|"%(r,c)
-                            sensors += s
-                    sensors = ' "%s" '%sensors
+                sensorNameList = self._getComCamSensorNameList()
+                sensorNameString =  self._sensorNameListToString(sensorNameList)
 
                 if selectSensors is not None:
-                    argPrepend +=  '-s ' + sensors+ ' '
+                    argPrepend +=  '-s  "%s"  '%sensorNameString
 
                 print('\n PhoSim added argPrepend is %s'%argPrepend)
 
@@ -447,20 +437,12 @@ class baseComcamLoop():
                 # then prepend argument to run PhoSim only on R22
                 # just in case some stars provided to PhoSim
                 # had streaks or extended 
-                if selectSensors is 'comcam':
-                    rafts = ['22']
-                    chips  = ['00','01','02',
-                              '10','11','12',
-                              '20','21','22']
-                    sensors = ''
-                    for r in rafts:
-                        for c in chips:
-                            s = "R%s_S%s|"%(r,c)
-                            sensors += s
-                    sensors = ' "%s" '%sensors
+
+                sensorNameList = self._getComCamSensorNameList()
+                sensorNameString =  self._sensorNameListToString(sensorNameList)
 
                 if selectSensors is not None:
-                    argPrepend +=  '-s ' + sensors+ ' '
+                    argPrepend +=  '-s  "%s"  '%sensorNameString
 
                 print('\nPhoSim added argPrepend is %s'%argPrepend)
 
@@ -564,6 +546,7 @@ class baseComcamLoop():
             listOfWfErr = wepCalc.calculateWavefrontErrors(
                 intraRawExpData, extraRawExpData=extraRawExpData,
                 postageImg=postageImg, postageImgDir = postageImgDir)
+
             ofcCalc.calculateCorrections(listOfWfErr)
             t2 =datetime.datetime.now()
             _print_duration(t2-t1)
@@ -600,9 +583,6 @@ class baseComcamLoop():
 
     def _getComCamSensorNameList(self):
 
-        #sensorNameList = ["R22_S00", "R22_S01", "R22_S02", "R22_S10", "R22_S11",
-        #                "R22_S12", "R22_S20", "R22_S21", "R22_S22"]
-
         chips  = ['00','01','02',
               '10','11','12',
               '20','21','22']
@@ -615,10 +595,11 @@ class baseComcamLoop():
         sensorNameList = sensors
         return sensorNameList
 
-    def _getWfsSensorNameList(self):
-        sensorNameList = ["R00_S22","R04_S20","R44_S00","R40_S02"]
-
-        return sensorNameList
+    def _sensorNameListToString(self,sensorNameList):
+        sensors  = ''
+        for sensor in sensorNameList:
+            sensors += "%s|"%sensor
+        return sensors
 
     def _makeCalibs(self, outputDir, sensorNameList):
 
