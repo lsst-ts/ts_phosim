@@ -30,8 +30,9 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
-from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
+from lsst.ts.ofc.Utility import InstName
 
+from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.Utility import getModulePath
@@ -190,6 +191,21 @@ class TestPhosimCmpt(unittest.TestCase):
         numOfLine = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLine, 67)
 
+    def testGetOpdArgsAndFilesForPhoSim(self):
+
+        instFileName = "opd.inst"
+        with self.assertWarns(UserWarning):
+            argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(
+                InstName.COMCAM, instFileName=instFileName
+            )
+
+        self.assertTrue(isinstance(argString, str))
+        self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 11)
+
+        instFilePath = os.path.join(self.outputDir, instFileName)
+        numOfLine = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLine, 67)
+
     def _getNumOfFileInFolder(self, folder):
 
         return len(
@@ -244,7 +260,7 @@ class TestPhosimCmpt(unittest.TestCase):
         delta = np.sum(np.abs(dofInUm - data))
         self.assertEqual(delta, 0)
 
-    def testAnalyzeComCamOpdData(self):
+    def testAnalyzeOpdData(self):
 
         self._analyzeComCamOpdData()
 
@@ -276,7 +292,8 @@ class TestPhosimCmpt(unittest.TestCase):
     def _analyzeComCamOpdData(self, rotOpdInDeg=0.0):
 
         self._copyOpdToImgDirFromTestData()
-        self.phosimCmpt.analyzeComCamOpdData(
+        self.phosimCmpt.analyzeOpdData(
+            InstName.COMCAM,
             zkFileName=self.zkFileName,
             rotOpdInDeg=rotOpdInDeg,
             pssnFileName=self.pssnFileName,
