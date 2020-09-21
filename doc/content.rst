@@ -25,6 +25,7 @@ This module is a high-level module to use other modules.
 * **PlotUtil**: Plot utility functions.
 * **Utility**: Enums and functions used in this module.
 * **MetroTool**: Metrology related functions contain the atmosphere model.
+* **CloseLoopTask**: Close loop task to run the simulation with PhoSim.
 
 .. _lsst.ts.phosim-modules_phosim_telescope:
 

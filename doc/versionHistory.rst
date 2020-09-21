@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.2.6:
+
+-------------
+1.2.6
+-------------
+
+Add the **CloseLoopTask** class.
+
 .. _lsst.ts.phosim-1.2.5:
 
 -------------
