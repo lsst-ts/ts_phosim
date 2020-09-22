@@ -498,7 +498,9 @@ class baseAOSLoop():
                 intraRawExpData = RawExpData() 
                 intraRawExpDir = os.path.join(outputImgDir, phosimCmpt.getIntraFocalDirName())
                 intraRawExpData.append(intraObsId, 0, intraRawExpDir)
-     
+
+                extraRawExpData = None # set that so that we pass to wep_calc both 
+                
             #########################################
             # IN-FOCUS IMAGES : GENERATE AND COLLECT
             ########################################
@@ -610,6 +612,8 @@ class baseAOSLoop():
 
             print('\nCalculating the wavefront error ')
             t1 =datetime.datetime.now()
+            
+            
 
             listOfWfErr = wepCalc.calculateWavefrontErrors(
                 intraRawExpData, extraRawExpData=extraRawExpData,
@@ -696,7 +700,7 @@ class baseAOSLoop():
         sensorNameList = ["R00_S22_C0","R00_S22_C1", 
                           "R04_S20_C0","R04_S20_C1",
                           "R40_S02_C0","R40_S02_C1",
-                          "R44_S00_C0","R44_S00_C0"
+                          "R44_S00_C0","R44_S00_C1"
                          ]
 
         return sensorNameList
