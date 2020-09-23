@@ -40,7 +40,7 @@ class baseAOSLoop():
             deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
             bscDbType = 'file', dbFileName  = 'bsc2.db3', expWcs = False,
-            raInDeg=None,decInDeg=None, rotAngInDeg=None):
+            raInDeg=None,decInDeg=None, rotAngInDeg=None, noPerturbations = False):
         '''
         Code to run the full AOS loop on ComCam / LsstCam / LsstFamCam
 
@@ -206,7 +206,7 @@ class baseAOSLoop():
         print('\nPreparing the PhoSim component ')
         phosimCmpt = self._preparePhosimCmpt(phosimDir, filterType, raInDeg, decInDeg,
                                         rotAngInDeg, numPro, isEimg,
-                                        m1m3ForceError)
+                                        m1m3ForceError,noPerturbations)
 
         print('\nPreparing the wepCalc component ')
         wepCalc = self._prepareWepCalc(isrDir, filterType, raInDeg, decInDeg,
@@ -500,7 +500,7 @@ class baseAOSLoop():
                 intraRawExpData.append(intraObsId, 0, intraRawExpDir)
 
                 extraRawExpData = None # set that so that we pass to wep_calc both 
-                
+
             #########################################
             # IN-FOCUS IMAGES : GENERATE AND COLLECT
             ########################################
@@ -612,9 +612,6 @@ class baseAOSLoop():
 
             print('\nCalculating the wavefront error ')
             t1 =datetime.datetime.now()
-            
-            
-
             listOfWfErr = wepCalc.calculateWavefrontErrors(
                 intraRawExpData, extraRawExpData=extraRawExpData,
                 postageImg=postageImg, postageImgDir = outputPostageDir)
@@ -644,8 +641,8 @@ class baseAOSLoop():
             phosimCmpt.setDofInUm(dofInUm)
 
             # Save the DOF file
-            phosimCmpt.saveDofInUmFileForNextIter(
-                dofInUm, dofInUmFileName=dofInUmFileName)
+            phosimCmpt.saveDofInUmFileForNextIter(dofInUm, 
+                dofInUmFileName=dofInUmFileName)
 
             # Add the observation ID by 10 for the next iteration
             obsId += 10
@@ -786,11 +783,15 @@ class baseAOSLoop():
 
 
     def _preparePhosimCmpt(self, phosimDir, filterType, raInDeg, decInDeg, rotAngInDeg,
-                        numPro, isEimg, m1m3ForceError):
+                        numPro, isEimg, m1m3ForceError,noPerturbations):
 
         # Set the Telescope facade class
         tele = TeleFacade()
-        tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
+        if not noPerturbations:
+            print('Adding perturbations via teleFacade')
+            tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
+        if noPerturbations:
+            print('No perturbations will be added via teleFacade')
         tele.setPhoSimDir(phosimDir)
         print('Using phosim.py located in %s'%phosimDir)
 
@@ -982,6 +983,16 @@ if __name__ == "__main__":
                         help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
     parser.add_argument('--clobber', default=False, action='store_true',
                         help='Delete existing output directory')
+    parser.add_argument('--noPerturbations', default=False, action='store_true')
+    parser.add_argument('--opdCmdSettingsFile', type=str, default='opdDefault.cmd', 
+                        help='Name of the file in ts_phosim/policy/cmd used as a seed when making the opd.cmd')
+    parser.add_argument('--starCmdSettingsFile', type=str, default='starDefault.cmd', 
+                        help='Name of the file in ts_phosim/policy/cmd used as a seed when making the opd.cmd')
+    parser.add_argument('--selectSensors', type=str, default="comcam",
+                        help='Sensors to run the simulation with. Choose one of "comcam" (1 raft, 9 CCDs), \
+                        "lsstcam" (4 corner sensors), "lsstfamcam" (full array mode, 189 CCDs)'
+                        )
+
     args = parser.parse_args()
 
     # Run the simulation
@@ -995,5 +1006,7 @@ if __name__ == "__main__":
     ccLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
                 isEimg=args.isEimg, genFocalImg = args.genFocalImg, 
                 useMinDofIdx=args.useMinDofIdx,
-                inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError)
+                inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError,
+                noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
+                starCmdSettingsFile=args.starCmdSettingsFile, selectSensors=args.selectSensors)
     
