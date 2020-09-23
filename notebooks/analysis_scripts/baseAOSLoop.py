@@ -1002,8 +1002,8 @@ if __name__ == "__main__":
     if (args.clobber == True):
         _eraseFolderContent(args.outputDir)
 
-    ccLoop = baseComcamLoop()
-    ccLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
+    aosLoop = baseAOSLoop()
+    aosLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
                 isEimg=args.isEimg, genFocalImg = args.genFocalImg, 
                 useMinDofIdx=args.useMinDofIdx,
                 inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError,
