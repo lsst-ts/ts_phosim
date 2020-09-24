@@ -31,7 +31,7 @@ class baseAOSLoop():
             genFocalImg =False, genFlats=True,
             surveyFilter=None, starMag=15,
             useMinDofIdx=False, inputSkyFilePath="", m1m3ForceError=0.05,
-            doDeblending=False, camDimOffset = None, postageImg=False,
+            doDeblending=False, camDimOffset = None, postageImg=True,
             phosimRepackagerKeepOriginal = True, 
             opdCmdSettingsFile='opdDefault.cmd',
             starCmdSettingsFile='starDefault.cmd', 
@@ -129,6 +129,9 @@ class baseAOSLoop():
         # Once wep_calc is called , there is no way 
         # to change bscDbType (any .updateSetting("bscDbType") call 
         # will not take desired effect)
+
+        print('\nStarting AOS loop for %s'%selectSensors)
+
         path_to_ts_wep = getPackageDir("ts_wep")
         setting_filename = 'default.yaml'
         path_to_setting_file = os.path.join(path_to_ts_wep, 'policy',setting_filename)
@@ -163,7 +166,6 @@ class baseAOSLoop():
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             print('\nMaking the calibration products ')
-            # by default only make calibs for comcam
 
             if selectSensors is 'comcam':
                 sensorNameList = self._getComCamSensorNameList()
@@ -975,6 +977,12 @@ if __name__ == "__main__":
                         help='Use the eimage files')
     parser.add_argument('--genFocalImg', default=False, action='store_true',
                         help='Generate in-focus images')
+    parser.add_argument('--genDefocalImg', default=False, action='store_true',
+                        help='Generate defocal images')
+    parser.add_argument('--genOpd', default=True, action='store_true',
+                        help='Generate OPD images')
+    parser.add_argument('--genFlats', default=True, action='store_true',
+                        help='Generate calibration images (fake flats from image gain).')
     parser.add_argument('--useMinDofIdx', default=False, action='store_true',
                         help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
     parser.add_argument("--skyFile", type=str, default="",
@@ -993,6 +1001,8 @@ if __name__ == "__main__":
                         "lsstcam" (4 corner sensors), "lsstfamcam" (full array mode, 189 CCDs)'
                         )
 
+
+
     args = parser.parse_args()
 
     # Run the simulation
@@ -1004,7 +1014,8 @@ if __name__ == "__main__":
 
     aosLoop = baseAOSLoop()
     aosLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
-                isEimg=args.isEimg, genFocalImg = args.genFocalImg, 
+                isEimg=args.isEimg, genFocalImg = args.genFocalImg, genOpd=args.genOpd, 
+                genDefocalImg=args.genDefocalImg, genFlats=args.genFlats,
                 useMinDofIdx=args.useMinDofIdx,
                 inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError,
                 noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
