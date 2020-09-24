@@ -129,7 +129,7 @@ class baseAOSLoop():
         # Once wep_calc is called , there is no way 
         # to change bscDbType (any .updateSetting("bscDbType") call 
         # will not take desired effect)
-
+        
         print('\nStarting AOS loop for %s'%selectSensors)
 
         path_to_ts_wep = getPackageDir("ts_wep")
@@ -167,15 +167,15 @@ class baseAOSLoop():
         if ((not isEimg) & (genFlats is True)):
             print('\nMaking the calibration products ')
 
-            if selectSensors is 'comcam':
+            if selectSensors == 'comcam':
                 sensorNameList = self._getComCamSensorNameList()
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
-            elif selectSensors is 'lsstfamcam':
+            elif selectSensors == 'lsstfamcam':
                 sensorNameList = self._getLsstFamCamSensorNameList()
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
-            elif selectSensors is 'lsstcam':
+            elif selectSensors == 'lsstcam':
                 fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
 
 
