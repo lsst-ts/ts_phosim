@@ -1,0 +1,8 @@
+R22_S00:
+  unit: nm
+  description:
+    RMS between this chip's WFS estimated Zernikes and the OPD values.
+  reference:
+    url: https://arxiv.org/pdf/1506.04839.pdf
+  tags:
+    - aos
