@@ -830,10 +830,10 @@ class baseAOSLoop():
         if (selectSensors is None) or (selectSensors == 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
 
-        elif selectSensors is 'lsstcam': # use LsstCam
+        elif selectSensors == 'lsstcam': # use LsstCam
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
 
-        elif selectSensors is 'lsstfamcam':
+        elif selectSensors == 'lsstfamcam':
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstFamCam, isrDirPath)
 
         wepCalc.setFilter(filterType)
@@ -926,15 +926,6 @@ class baseAOSLoop():
 
         ztaac.setZkAndDofInGroups(m1m3Bend=m1m3Bend, m2Bend=m2Bend)
 
-    def _eraseFolderContent(self,targetDir):
-
-        for theFile in os.listdir(targetDir):
-            filePath = os.path.join(targetDir, theFile)
-            if os.path.isfile(filePath):
-                os.unlink(filePath)
-            elif os.path.isdir(filePath):
-                shutil.rmtree(filePath)
-
 
     def _print_duration(self,delta):
         ''' Convenience function to print execution time 
@@ -958,6 +949,14 @@ class baseAOSLoop():
         delta_hr = delta_min / 60
         print('    It took %.3f minutes, i.e. %.5f hours ' % (delta_min, delta_hr))
 
+def _eraseFolderContent(targetDir):
+
+    for theFile in os.listdir(targetDir):
+        filePath = os.path.join(targetDir, theFile)
+        if os.path.isfile(filePath):
+            os.unlink(filePath)
+        elif os.path.isdir(filePath):
+            shutil.rmtree(filePath)
 
 
 if __name__ == "__main__":
@@ -977,7 +976,7 @@ if __name__ == "__main__":
                         help='Use the eimage files')
     parser.add_argument('--genFocalImg', default=False, action='store_true',
                         help='Generate in-focus images')
-    parser.add_argument('--genDefocalImg', default=False, action='store_true',
+    parser.add_argument('--genDefocalImg', default=True, action='store_true',
                         help='Generate defocal images')
     parser.add_argument('--genOpd', default=True, action='store_true',
                         help='Generate OPD images')
@@ -985,8 +984,8 @@ if __name__ == "__main__":
                         help='Generate calibration images (fake flats from image gain).')
     parser.add_argument('--useMinDofIdx', default=False, action='store_true',
                         help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
-    parser.add_argument("--skyFile", type=str, default="",
-                        help="Star Id, ra, dec, and magnitude")
+    parser.add_argument("--inputSkyFilePath", type=str, default="",
+                        help="Path to skyfile, that contains Star Id, ra, dec, and magnitude")
     parser.add_argument("--m1m3ForceError", type=float, default=0.05,
                         help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
     parser.add_argument('--clobber', default=False, action='store_true',
@@ -1000,8 +999,9 @@ if __name__ == "__main__":
                         help='Sensors to run the simulation with. Choose one of "comcam" (1 raft, 9 CCDs), \
                         "lsstcam" (4 corner sensors), "lsstfamcam" (full array mode, 189 CCDs)'
                         )
-
-
+   # parser.add_argument('--generatePostage', type=bool, default=True, action='store_true')
+    parser.add_argument('--dbFileName', type=str, default  = 'bsc.db3', 
+                        help='Database filename used to select targets for wavefront error calculation.')
 
     args = parser.parse_args()
 
@@ -1017,7 +1017,8 @@ if __name__ == "__main__":
                 isEimg=args.isEimg, genFocalImg = args.genFocalImg, genOpd=args.genOpd, 
                 genDefocalImg=args.genDefocalImg, genFlats=args.genFlats,
                 useMinDofIdx=args.useMinDofIdx,
-                inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError,
+                inputSkyFilePath=args.inputSkyFilePath, m1m3ForceError=args.m1m3ForceError,
                 noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
-                starCmdSettingsFile=args.starCmdSettingsFile, selectSensors=args.selectSensors)
+                starCmdSettingsFile=args.starCmdSettingsFile, selectSensors=args.selectSensors,
+                dbFileName=args.dbFileName)
     
