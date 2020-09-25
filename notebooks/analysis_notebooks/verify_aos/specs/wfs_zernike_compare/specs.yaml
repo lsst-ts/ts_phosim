@@ -1,0 +1,8 @@
+name: "design"
+metric: "R22_S00"
+threshold:
+  operator: "<="
+  unit: "nm"
+  value: 100
+tags:
+  - "design"
