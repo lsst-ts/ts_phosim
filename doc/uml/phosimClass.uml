@@ -6,4 +6,6 @@ package "telescope" #DDDDDD {
 PhosimCmpt ..> SkySim
 PhosimCmpt *-- OpdMetrology
 PhosimCmpt *-- TeleFacade
+CloseLoopTask ..> PhosimCmpt
+CloseLoopTask ..> TeleFacade
 @enduml

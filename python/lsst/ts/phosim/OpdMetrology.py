@@ -19,13 +19,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
+import warnings
 import numpy as np
 from astropy.io import fits
 
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
 from lsst.ts.wep.SourceProcessor import SourceProcessor
+from lsst.ts.wep.ParamReader import ParamReader
+
+from lsst.ts.ofc.Utility import getConfigDir as getConfigDirOfc
+from lsst.ts.ofc.Utility import InstName
 
 from lsst.ts.phosim.MetroTool import calc_pssn, psf2eAtmW
+from lsst.ts.phosim.Utility import getConfigDir
 
 
 class OpdMetrology(object):
@@ -122,34 +129,56 @@ class OpdMetrology(object):
         self.fieldX = np.append(self.fieldX, fieldXInDegree)
         self.fieldY = np.append(self.fieldY, fieldYInDegree)
 
+    def setWgtAndFieldXyOfGQ(self, instName):
+        """Set the GQ weighting ratio and field X, Y.
+
+        GQ: Gaussian quadrature.
+
+        Parameters
+        ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
+
+        Raises
+        ------
+        ValueError
+            This instrument name is not supported.
+        """
+
+        if instName == InstName.COMCAM:
+            dirInst = "comcam"
+        elif instName == InstName.LSST:
+            dirInst = "lsst"
+        elif instName == InstName.LSSTFAM:
+            dirInst = "lsstfam"
+        else:
+            raise ValueError(f"This instrument name ({instName}) is not supported.")
+
+        # Set the weighting ratio
+        pathWgtFile = os.path.join(getConfigDirOfc(), dirInst, "imgQualWgt.yaml")
+        wgtFile = ParamReader(filePath=pathWgtFile)
+        self.setWeightingRatio(list(wgtFile.getContent().values()))
+
+        # Set the field (x, y)
+        pathFieldXyFile = os.path.join(
+            getConfigDir(), "instrument", dirInst, "fieldXy.yaml"
+        )
+        paramReader = ParamReader(filePath=pathFieldXyFile)
+        fieldXY = paramReader.getMatContent()
+        self.setFieldXYinDeg(fieldXY[:, 0], fieldXY[:, 1])
+
     def setDefaultLsstGQ(self):
         """Set the default LSST GQ field X, Y and weighting ratio.
 
         GQ: Gaussian quadrature
         """
 
-        # The distance of point xi (used in Gaussian quadrature plane) to the
-        # origin
-        # This value is in [-1.75, 1.75]
-        armLen = [0.379, 0.841, 1.237, 1.535, 1.708]
-
-        # Weighting of point xi (used in Gaussian quadrature plane) for each
-        # ring
-        armW = [0.2369, 0.4786, 0.5689, 0.4786, 0.2369]
-
-        # Number of points on each ring
-        nArm = 6
-
-        # Get the weighting for all field points (31 for lsst camera)
-        # Consider the first element is center (0)
-        wt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
-        self.setWeightingRatio(wt)
-
-        # Generate the fields point x, y coordinates
-        pointAngle = np.arange(nArm) * (2 * np.pi) / nArm
-        fieldX = np.concatenate([np.zeros(1), np.kron(armLen, np.cos(pointAngle))])
-        fieldY = np.concatenate([np.zeros(1), np.kron(armLen, np.sin(pointAngle))])
-        self.setFieldXYinDeg(fieldX, fieldY)
+        warnings.warn(
+            "Use setWgtAndFieldXyOfGQ() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.setWgtAndFieldXyOfGQ(InstName.LSST)
 
     def getDefaultLsstWfsGQ(self):
         """Get the default field X, Y of LSST WFS on GQ.
@@ -177,27 +206,12 @@ class OpdMetrology(object):
         GQ: Gaussian quadrature
         """
 
-        # ComCam is the cetral raft of LSST cam, which is composed of 3 x 3
-        # CCDs.
-        nRow = 3
-        nCol = 3
-
-        # Number of field points
-        nField = nRow * nCol
-
-        # Get the weighting for all field points (9 for comcam)
-        wt = np.ones(nField)
-        self.setWeightingRatio(wt)
-
-        # Distance to raft center in degree along x/y direction and the
-        # related relative position
-        sensorD = 0.2347
-        coorComcam = sensorD * np.array([-1, 0, 1])
-
-        # Generate the fields point x, y coordinates
-        fieldX = np.kron(coorComcam, np.ones(nRow))
-        fieldY = np.kron(np.ones(nCol), coorComcam)
-        self.setFieldXYinDeg(fieldX, fieldY)
+        warnings.warn(
+            "Use setWgtAndFieldXyOfGQ() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.setWgtAndFieldXyOfGQ(InstName.COMCAM)
 
     def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
         """Get the wavefront error of OPD in the basis of annular Zernike
@@ -471,7 +485,3 @@ class OpdMetrology(object):
         GQvalue = np.sum(self.wt * valueArray)
 
         return GQvalue
-
-
-if __name__ == "__main__":
-    pass
