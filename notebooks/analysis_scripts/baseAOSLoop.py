@@ -373,11 +373,34 @@ class baseAOSLoop():
 
             # Prepare the faked sky
             if (inputSkyFilePath == ""):
-                # According to the OPD field positions
-                metr = phosimCmpt.getOpdMetr()
-                skySim = self._prepareSkySim(metr, starMag)
-                print("\nUse the default OPD field positions to be star positions.")
-                print("The star magnitude is chosen to be %.2f." % starMag)
+                if selectSensors == 'comcam':
+                    # According to the OPD field positions: one star per comcam sensor 
+                    metr = phosimCmpt.getOpdMetr()
+                    skySim = self._prepareSkySim(metr, starMag)
+                    print("\nUse the default OPD field positions to be star positions.")
+                    print("The star magnitude is chosen to be %.2f." % starMag)
+
+                elif (selectSensors =='lsstfamcam'):
+                    # 31 OPD field positions would not include all sensors. I'd rather 
+                    # add one star per sensor, so that we can test inclusion of all 
+                    # lsstFamCam sensors.
+                    sensorNameList = self._getLsstFamCamSensorNameList()
+                    skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
+                        decInDeg,rotAngInDeg,
+                        starMag,xPx=[2000],yPx=[2000])
+                    print("\nAdding 1 star per sensor, at location (x,y)=(1000,1000)")
+                    print("The star magnitude is chosen to be %.2f." % starMag)
+
+                elif selectSensors == 'lsstcam':
+                    sensorNameList = self._getLsstCamSensorNameList()
+                    xPx = [200,500,1000]
+                    yPx = [1000,2000,3000]
+                    skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
+                        decInDeg,rotAngInDeg,
+                        starMag,xPx=xPx,yPx=yPx)
+                    print("\nAdding 1 star per sensor, at location (x,y)=",xPx,yPx)
+                    print("The star magnitude is chosen to be %.2f." % starMag)
+
             else:
                 skySim = self._prepareSkySimBySkyFile(inputSkyFilePath)
 
@@ -904,6 +927,24 @@ class baseAOSLoop():
         return skySim
 
 
+    def _prepareSkySimByChipPos(self,sensorName,raInDeg,decInDeg,
+                                rotSkyPos,starMag,xPx=[1000],yPx=[1000],
+                                mjd=59000):
+
+        skySim = SkySim()
+       
+        skySim.setObservationMetaData(raInDeg, decInDeg, rotSkyPos, mjd)
+
+        starId = 0 
+        for sensor in sensorName:
+            for i in range(len(xPx)):
+                skySim.addStarByChipPos(sensor, starId, xPx[i],
+                                        yPx[i], starMag)
+                starId += 1 
+
+        return skySim
+        
+
     def _prepareSkySimBySkyFile(self, inputSkyFilePath):
 
         skySim = SkySim()
@@ -999,6 +1040,9 @@ if __name__ == "__main__":
                         help='Sensors to run the simulation with. Choose one of "comcam" (1 raft, 9 CCDs), \
                         "lsstcam" (4 corner sensors), "lsstfamcam" (full array mode, 189 CCDs)'
                         )
+    parser.add_argument('--bscDbType', type=str, default='file', 
+                        help='database type for donut detection: file, image, or refCat ')
+
    # parser.add_argument('--generatePostage', type=bool, default=True, action='store_true')
     parser.add_argument('--dbFileName', type=str, default  = 'bsc.db3', 
                         help='Database filename used to select targets for wavefront error calculation.')
@@ -1020,5 +1064,5 @@ if __name__ == "__main__":
                 inputSkyFilePath=args.inputSkyFilePath, m1m3ForceError=args.m1m3ForceError,
                 noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
                 starCmdSettingsFile=args.starCmdSettingsFile, selectSensors=args.selectSensors,
-                dbFileName=args.dbFileName)
+                dbFileName=args.dbFileName, bscDbType=args.bscDbType)
     
