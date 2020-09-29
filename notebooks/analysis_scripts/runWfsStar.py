@@ -1,7 +1,8 @@
 import os
 import numpy as np
-from baseWfsWep import baseWfsWep
+from baseLsstCamLoop import baseLsstCamLoop
 from baseComcamLoop import _eraseFolderContent
+from baseAOSLoop import baseAOSLoop
 from createPhosimCatalogNew import createPhosimCatalog
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getConfigDir
 from lsst.ts.wep.Utility import runProgram
@@ -11,10 +12,10 @@ phosimDir = getPhoSimPath()
 testLabel = 'wfs'
 
 # settings for simulation
-numPro = 15 # number of processors setting in phosimCmptSetting.yaml 
-iterNum  = 1 # number of iterations 
+numPro = 20 # number of processors setting in phosimCmptSetting.yaml 
+iterNum  = 5 # number of iterations 
 
-# we evaluate OPD for LsstFamCam
+# we evaluate OPD for 31 locations of LsstFamCam
 opd = True 
 
 # we simulate the calibration products for LsstCam to do the ISR 
@@ -24,7 +25,7 @@ flats = True
 defocalImg = True 
 
 # no need to deblend single stars 
-doDeblending = True 
+doDeblending = False 
 
 # we want to save postage stamps..
 postageImg = True 
@@ -32,11 +33,11 @@ postageImg = True
 # dir from /analysis_scripts/ level... 
 # - that's where we save the results
 topDir = 'results_wfs'
-expDir = 'arrowStars_2020_24' # name of the experiment dir 
+expDir = 'arrowStars_2020_24_noPert2_iters' # name of the experiment dir 
 
 outputDir = os.path.join(topDir,expDir)
 
-# Use Te-Wei's catalog
+# the  catalog to use 
 skyFilePath = os.path.join(topDir, 'skyWfsArrow.txt')
 
 # the opd and wfs are stored here 
@@ -68,19 +69,21 @@ if defocalImg is True:
     if os.path.exists(intraPath):  _eraseFolderContent(intraPath)
     if os.path.exists(extraPath):  _eraseFolderContent(extraPath)   
    
+opdCmd  = 'opdQuickBackgroundNoPert.cmd'
+starCmd = 'starQuickBackgroundNoPert.cmd'
 
 # initialize the baseWfsWep.py Class 
-wfsLoop = baseWfsWep() 
-testName  = '%s' % (testLabel)
-print('The testName is %s'%testName)
+wfsLoop = baseAOSLoop() 
 
-wfsLoop.main(phosimDir, numPro, iterNum, outputDir, testName, 
+wfsLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel, 
             isEimg=False,  genOpd=opd, genDefocalImg=defocalImg, 
             genFlats=flats, useMinDofIdx=False,
             inputSkyFilePath=skyFilePath, m1m3ForceError=0.05,
             doDeblending=doDeblending, postageImg=postageImg,
-            phosimRepackagerKeepOriginal = True )
+            phosimRepackagerKeepOriginal = True, opdCmdSettingsFile=opdCmd, 
+            starCmdSettingsFile=starCmd, selectSensors='lsstcam',
+            expWcs = False, noPerturbations=True )
 
-print('Done running wfsLoop \n\n')
+print('\nDone running lsstCamLoop \n\n')
 
 
