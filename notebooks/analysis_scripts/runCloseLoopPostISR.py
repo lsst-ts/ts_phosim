@@ -18,8 +18,8 @@ import sys
 sys.path.append('../analysis_tools/')
 import analysisTools as at
 
-def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
-         save_postage_stamps=True, run_deblender=True, select_sensor = 'comcam', rerun='run1',
+def main(closed_loop_input_dir, wfs_zer_output, save_postage_stamps=True, run_deblender=True, 
+         select_sensor = 'comcam', rerun='run1',
          db_filename = 'bsc1.db3', gaia_field_name='', rotAngInDeg = 0, bscDbType='file',
          setting_filename = 'default.yaml', raInDeg=0, decInDeg=0,expWcs=False):
 
@@ -29,9 +29,6 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
 
     wfs_zer_output: string, eg. 'wfs.gaia.zer' 
         The output filename for the wfs Zernikes
-
-    postage_img_dir: string
-        The directory for postage stamps.
 
     save_postage_stamps: bool, default=False
         Set to save the postage stamps created for each donut
@@ -159,12 +156,22 @@ def main(closed_loop_input_dir, wfs_zer_output, postage_img_dir,
     elif len(obsIdList) == 1 : #corner WFS case
         isrImgMap = wep_calc.wepCntlr.getPostIsrImgMapOnCornerWfs(detector_list, obsIdList[0])
 
+
+    if save_postage_stamps :
+        outputPostageDir  = os.path.join(baseOutputDir,iterDirName,
+                            outputPostageDirName)
+        if (not os.path.exists(outputPostageDir)):
+            os.makedirs(outputPostageDir)
+    else:
+        outputPostageDir = None
+
+
     print('\nGetting the donut map')
     donut_map = wep_calc.wepCntlr.getDonutMap(neighborStarMap, isrImgMap, FilterType.REF,
                                               doDeblending=run_deblender, postageImg=save_postage_stamps,
-                                              postageImgDir=postage_img_dir, verbose=False)
+                                              postageImgDir=outputPostageDir, verbose=False)
     print('\nCalculating wavefront error')
-    donutMap = wep_calc.wepCntlr.calcWfErr(donut_map, postage_img_dir, verbose=False)
+    donutMap = wep_calc.wepCntlr.calcWfErr(donut_map, outputPostageDir, verbose=False)
 
     # if select_sensor is 'lsstcam' : 
     #     sensorNameToIdFileName='sensorNameToIdWfs.yaml'
@@ -337,10 +344,10 @@ if __name__ == '__main__':
         description="Run AOS closed-loop after ISR is already performed.")
     parser.add_argument("--closed_loop_input_dir", type=str,
                         help="The 'input' directory created by AOS close-loop code (absolute path)")
-    parser.add_argument("--wfs_zer_output", type=str,
+    parser.add_argument("--wfs_zer_output", type=str, default='wfs.out.zer',
                         help="The output filename for the wfs Zernikes (saved inside closed_loop_input_dir)")
-    parser.add_argument("--postage_img_dir", type=str,
-                        help="The directory for postage stamps (absolute path)")
+    # parser.add_argument("--postage_img_dir", type=str,
+    #                     help="The directory for postage stamps (absolute path)")
     parser.add_argument("--save_postage_stamps", default=True, action='store_true',
                         help="Set tag to save the postage stamps created for each donut.")
     parser.add_argument("--run_deblender", default=True, action='store_true',
@@ -362,7 +369,7 @@ if __name__ == '__main__':
     # detector_list = ['R:2,2 S:0,0', 'R:2,2 S:0,1', 'R:2,2 S:0,2']
 
     main(closed_loop_input_dir=args.closed_loop_input_dir, wfs_zer_output=args.wfs_zer_output, 
-    postage_img_dir=args.postage_img_dir, save_postage_stamps=args.save_postage_stamps, 
+    save_postage_stamps=args.save_postage_stamps, 
     run_deblender=args.run_deblender,select_sensor = args.select_sensor, rerun=args.rerun,
     db_filename = args.db_filename, gaia_field_name=args.gaia_field_name,
         setting_filename=args.setting_filename,
