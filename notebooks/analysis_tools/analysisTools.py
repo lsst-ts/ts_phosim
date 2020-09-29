@@ -1,12 +1,263 @@
 # common functions for AOS analysis
 import os
-import lsst.daf.persistence as dafPersist
-from astropy.table import Table
 import numpy as np
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm 
+from matplotlib.ticker import MaxNLocator
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from astropy.table import Table
 from astropy.coordinates import SkyCoord
+import lsst.daf.persistence as dafPersist
+
+
+
+def plotIterationSummary(data_dir, iterNum=5, num_ccds=9, suptitle='', figname='1.png',
+                          testLabel='1',opdPssnFileName='PSSN.txt'):
+    '''Convenience function to make a 4-panel plot informing about the 
+     convergence of AOS loop plotting :
+     1) the OPD data in terms of Zernikes
+     2) RMS WFS vs OPD in Zernikes
+     3) PSSN as a function of iteration number 
+     4) FWHM as a function of iteration number
+     
+    Parameters:
+    ----------
+    data_dir : str, a path to the AOS loop directory, eg. 
+        '/epyc/users/suberlak/Commissioning/aos/ts_phosim/notebooks/analysis_scripts/baselineTestComCam_qbkg'
+    iterNum : float, a number of iterations (usually 5)
+    num_ccds : float, a number of CCDs (field positions) for OPD evaluation. 
+        For comcam it's usually 9 (one field point per CCD), for lsstcam/lsstfamcam 
+        it's 31 (field points scattered across the full array)
+    suptitle : str, a suptitle to apply to the figure
+    figname : str, a filename to save the plot as 
+    testLabel: str, a label to identify tests; by default in AOS loop '1', so that 
+        we expect opd.zer.1 and wfs.zer.1   files to be present in iterX/img/ directory
+        where X=0,1,2,3,4 etc. 
+        
+    Returns:
+    --------
+    None
+     
+    '''
+    # two things to set 
+    #iterNum = 5 # numer of iterations 
+    #num_ccds = 9 # numer of CCDs at which OPD was evaluated 
+    opdDataDic = {}
+    wfsDataDic = {}
+    pssn_data = []
+    fwhm_data = []
+    for iterCount in range(iterNum):
+        # load the OPD data 
+        opdZkFilePath = os.path.join(data_dir,  'iter%d/img/opd.zer.%s'%(iterCount,
+                                                                         testLabel))
+        opdData = np.loadtxt(opdZkFilePath)
+        opdDataDic[iterCount] = opdData
+
+        # load the wavefront error data 
+        wfsZkFilePath = os.path.join(data_dir,  'iter%d/img/wfs.zer.%s'%(iterCount,
+                                                                         testLabel))
+        wfsData = np.loadtxt(wfsZkFilePath)
+        wfsDataDic[iterCount] = wfsData
+
+        # load the PSSN and FWHM data 
+        pssn_filename = os.path.join(data_dir, 'iter%i' % iterCount, 
+                                     'img/%s'%opdPssnFileName)
+        pssn_file_array = np.genfromtxt(pssn_filename)
+        pssn_data.append(pssn_file_array[0])
+        fwhm_data.append(pssn_file_array[1])
+    pssn_data = np.array(pssn_data)
+    fwhm_data = np.array(fwhm_data)
+
+
+    fig,axs = plt.subplots(2,2,figsize=(16,12))
+    ax = np.ravel(axs)
+
+    # 0: plot the OPD 
+
+    # to compare the two, need  to somehow "average" the OPD ? 
+    # plot the values of zernikes at different field points...
+    for iterCount in range(iterNum):
+        opdData = opdDataDic[iterCount]
+    #     for i in range(np.shape(opdData)[0]):
+    #         ax.plot(opdData[i,:], lw=1,ls='--')
+        # plot the average of these ... 
+        ax[0].plot(np.mean(opdData, axis=0), lw=3,ls='-' ,)
+
+    ax[0].set_xlabel('Zernike #')
+    ax[0].set_ylabel('wavefront error of OPD '+r'$[\mu m]$')
+
+
+    # 1: plot Zernike wavefront errors  vs OPD 
+    for iterCount in range(iterNum):
+        wfsData = wfsDataDic[iterCount]
+        opdData = opdDataDic[iterCount]
+        # do the difference with mean OPD ... 
+        meanOpdData = np.mean(opdData, axis=0)
+        zernikeErrorsDiff = np.sqrt((wfsData - meanOpdData)**2.)
+
+        zernikeErrors = np.transpose(zernikeErrorsDiff, axes=(1,0))
+
+        zernikeRms = np.sqrt(np.mean(np.square(zernikeErrors), axis=1))
+
+        ax[1].plot(np.arange(19)+4, zernikeRms, 
+                      '-o', lw=3, label='iter%d'%iterCount)
+
+    ax[1].set_xlabel('Zernike Number', size=18)
+    ax[1].set_ylabel('RMS WFS vs OPD (microns)', size=18)
+
+    ax[1].legend(fontsize=16)
+    ax[1].set_title('Zernike Errors WFS corner sensors arrows', size=18)
+
+
+    # 2: plot PSSN 
+    for i in range(num_ccds):
+        ax[2].plot(np.arange(iterNum), pssn_data[:,i], c='b', marker='x')
+    ax[2].plot(np.arange(iterNum), pssn_data[:,num_ccds], lw=4, marker='+',
+             ms=20, markeredgewidth=5, c='r', label='GQ PSSN')
+    ax[2].legend()
+    ax[2].set_xlabel('Iteration')
+    ax[2].set_ylabel('PSSN')
+    ax[2].set_title('PSSN')
+    # plt.xticks(size=14)
+    # plt.yticks(size=14)
+
+
+    # 3: plot the FWHM 
+    for i in range(num_ccds):
+        ax[3].plot(np.arange(iterNum), fwhm_data[:,i], c='b', marker='x')
+    ax[3].plot(np.arange(iterNum), fwhm_data[:,num_ccds], lw=4, marker='+',
+             ms=20, markeredgewidth=5, c='r', label='GQ FWHM_eff')
+    ax[3].legend()
+    ax[3].set_xlabel('Iteration')
+    ax[3].set_ylabel('FWHM_eff (arcseconds)')
+    ax[3].set_title('FWHM_eff')
+    # plt.xticks(size=14)
+    # plt.yticks(size=14)
+
+    # on all : turn on the grid and set the x-label to be on integers only
+    # since we're plotting Zernikes and iteration, both of which are integers
+    for i in range(len(ax)):
+        ax[i].grid()
+        ax[i].xaxis.set_major_locator(MaxNLocator(integer=True))
+    fig.subplots_adjust(hspace=0.3)
+    fig.suptitle(suptitle)
+    plt.savefig(figname, bbox_inches='tight')
+    print('Saved fig as %s'%figname)
+
+
+# Two convenience functions to define x,y coordinates of points
+# that look like an arrow, and points that 
+# trace the outline of the sensor 
+
+def pixel_arrow(x_vertex=1500, y_vertex=3000, width=1100, 
+                spacing=300, diag_spacing=200, xmin=0, xmax=2000,
+                ymin=0, ymax=4072 , xy_offset = 1300 ,print_shape=True
+               ):
+    #x_vertex, y_vertex = 1500,3000  
+    # width = 1100; spacing = 300
+    xPx = np.zeros(0)
+    yPx = np.zeros(0)
+    # vertical part
+    ys = np.arange(y_vertex-width,y_vertex, spacing )
+    xs = x_vertex*np.ones_like(ys)
+    print(xs,ys)
+    xPx = np.append(xPx, xs)
+    yPx = np.append(yPx, ys)
+
+
+    # horizontal part 
+    xh = np.arange(x_vertex-width,x_vertex, spacing)
+    yh = y_vertex*np.ones_like(xh)
+    print(xh, yh)
+    xPx = np.append(xPx, xh)
+    yPx = np.append(yPx, yh)
+
+
+    # diagonal part:
+    x_start, y_start = x_vertex-xy_offset, y_vertex-xy_offset
+
+    a = (y_start-y_vertex)/(x_start-x_vertex)
+    b = y_vertex-a*x_vertex
+    print('y=%.2fx %.2f'%(a,b))
+
+    #diag_spacing = 200
+    xd = np.arange(x_start, x_vertex,diag_spacing)
+    yd = a*xd+b
+    print(xd,yd)
+    xPx = np.append(xPx, xd)
+    yPx = np.append(yPx, yd)
+
+    # append vertex too 
+    xPx = np.append(xPx, x_vertex)
+    yPx = np.append(yPx, y_vertex)
+
+    if print_shape:
+        # plot what I expect on  a single WFS half-chip 
+        fig,ax = plt.subplots(1,1,figsize=((4./2000)*xmax,(8./4072)*ymax))
+        ax.scatter(xs,ys)
+        ax.scatter(xh,yh)
+        ax.scatter(xd,yd)
+        ax.scatter(x_vertex,y_vertex)
+        #xmin,xmax = 0,2000
+        #ymin,ymax = 0,4072
+        ax.set_xlim(xmin,xmax)
+        ax.set_ylim(ymin,ymax)
+        ax.grid()
+        ax.set_xlabel('x [px]')
+        ax.set_ylabel('y [px]')
+
+        ax.scatter(xPx, yPx)
+    print(xPx, yPx)
+    return xPx, yPx 
+
+
+def pixel_outline(xmin=0,  xmax=2000, ymin=0, ymax=4072, dx=100 , dy=100, off =15,
+                 print_shape=True):
+
+    x0,x1 = xmin,xmax
+    y0,y1 = ymin,ymax
+
+    # initialize as empty arrays 
+    xPx = np.zeros(0)
+    yPx = np.zeros(0)
+
+    # bottom part
+    x = np.arange(x0,x1,dx)
+    y = np.zeros_like(x)
+    xPx = np.append(xPx, x)
+    yPx = np.append(yPx, y)
+
+    # right 
+    y = np.arange(y0,y1,dy)
+    x = np.ones_like(y) * x1
+    xPx = np.append(xPx, x)
+    yPx = np.append(yPx, y)
+
+    # top 
+    x = np.arange(x0,x1,dx)
+    y = np.ones_like(x)* y1
+    xPx = np.append(xPx, x)
+    yPx = np.append(yPx, y)
+
+    # left 
+    y = np.arange(y0,y1,dy)
+    x = np.zeros_like(y)
+    xPx = np.append(xPx, x)
+    yPx = np.append(yPx, y)
+
+    if print_shape:
+        # plot what I expect on  a single WFS half-chip 
+        fig,ax = plt.subplots(1,1,figsize=((4./2000)*xmax,(8./4072)*ymax))
+        ax.scatter(xPx,yPx)
+        ax.set_xlim(xmin-off,xmax+off)
+        ax.set_ylim(ymin-off,ymax+off)
+        ax.grid()
+        ax.set_xlabel('x [px]')
+        ax.set_ylabel('y [px]')
+    return xPx, yPx
+
+
+
 
 def getRaDecFromGaiaField(field='high'):
     ''' A helper function to translate the GAIA field name to
@@ -37,9 +288,9 @@ def getRaDecFromGaiaField(field='high'):
     print('For this field, the raInDeg=%.3f, decInDeg=%.3f'%(raInDeg,decInDeg))
     return raInDeg, decInDeg
 
-def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
-                     detector = None, detNum = None, verbose=True,
-                     data_id = None, rerun='run1'):
+def readImage(data_dir, focalType = 'extra', obsId=None, raft = None,
+              detector = None, detNum = None, verbose=True,
+              data_id = None, rerun='run1', imgType = 'postISR'):
     ''' A function to read the post ISR image for a given CCD (sensor) 
     using Butler (so it has to be a butler repository). 
 
@@ -56,6 +307,8 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
     detNum : int, detector Id - by default it's read from a following dictionary for comCam
              {'S00':90, 'S01':91, 'S02':92, 'S10':93, 'S11':94, 'S12':95, 'S20':96, 'S21':97, 'S22':98}
     verbose : boolean, True by default  - whether to print info about the progress of reading images 
+    rerun : str, by default run1, could be run2, etc.
+    imgType:  postISR (by default),   or raw 
     
     Returns:
     --------
@@ -63,8 +316,6 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
 
     '''
     # Read in the postISR image using the Butler 
-   
-    
     # if Butler args are no provided, attempting to 
     # guess based on the following:
     if data_id is None:
@@ -99,9 +350,14 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
     print('data_id is')
     print(data_id)
     # Read each figure as a postage stamp, store data to an array 
-
-    repo_dir = os.path.join(data_dir, 'input/rerun/', rerun)
-    print('Reading postISR images from the following repo_dir:')
+    if imgType is 'postISR':
+        repo_dir = os.path.join(data_dir, 'input/rerun/', rerun)
+        
+    elif imgType is 'raw':
+        repo_dir = os.path.join(data_dir, 'input/')
+        
+        
+    print('Reading %s images from the following repo_dir:'%imgType)
     print(repo_dir)
     
     butler = dafPersist.Butler(repo_dir)
@@ -109,7 +365,9 @@ def readPostISRImage(data_dir, focalType = 'extra', obsId=None, raft = None,
     # show what keys are needed by the `postISRCCD` data type.... 
     # butler.getKeys('postISRCCD')
     # yields {'visit': int, 'filter': str,'raftName': str, 'detectorName': str, 'detector': int}
-    post = butler.get('postISRCCD', **data_id) 
+    butlerImgType = {'postISR':'postISRCCD', 'raw':'raw'}
+    butlerImg = butlerImgType[imgType]
+    post = butler.get(butlerImg, **data_id) 
 
     # store in a dictionary
     image = post.image.array
@@ -197,7 +455,8 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
              postage=None,postFlag=False, centroid=None, centFlag=False, 
               Nstars=2, starMarker='redCross',starMarkerArgs=None,
              centMarkerArgs = None,centMarker='redCross',
-             starLabelArgs=None, plotArgs=None):
+             starLabelArgs=None, plotArgs=None, imgType='postISR',
+             addColorbar = True, addTitle=False, title=''):
     ''' A function  to plot a CCD image
 
     Parameters:
@@ -230,11 +489,16 @@ def plotImage(image,ax=None, log=False, sensor='R22_S00', focalType='extra',
     if plotArgs is None:
         plotArgs = {}
     img = ax.imshow(plottable, origin='lower', **plotArgs)
-    cbar= colorbar(mappable=img, ax=ax)
-    cbar.set_label(label=cbar_label, weight='normal', )
+    if addColorbar : 
+        cbar= colorbar(mappable=img, ax=ax)
+        cbar.set_label(label=cbar_label, weight='normal', )
     ax.set_xlabel('x [px]')
     ax.set_ylabel('y [px]')
-    ax.set_title('postISR image, sensor %s, %s-focal'%(sensor,focalType))
+    if addTitle:
+        if len(title)>1: # use the title from the provided string 
+            ax.set_title(title)
+        else: # the default title
+            ax.set_title('%s image, sensor %s, %s-focal'%(imgType, sensor,focalType))
 
     # try to figure out how many stars there are from postage file 
     if postFlag: 
@@ -441,7 +705,9 @@ def plotPostageStamps(postage_dir, sensor='R22_S00', focalType='extra', Nstars=3
         for row in range(Nstars): # Nstars   rows : one per star
             fname = available[imgType][row]
             word = 'id' ; loc = fname.find(word)
-            starId = fname[loc+len(word)+2]
+            start = loc+len(word)+1
+            stop = loc+len(word)+2
+            starId = fname[start:start+2]
             print('Loading %s'%fname)
             image = np.loadtxt(os.path.join(postage_dir,fname))
             if image.ndim == 2  :
