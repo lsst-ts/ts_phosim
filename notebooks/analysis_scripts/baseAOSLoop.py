@@ -385,9 +385,12 @@ class baseAOSLoop():
                     # add one star per sensor, so that we can test inclusion of all 
                     # lsstFamCam sensors.
                     sensorNameList = self._getLsstFamCamSensorNameList()
+                    xPx = [2000]
+                    yPx = [2000]
                     skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
                         decInDeg,rotAngInDeg,starMag,xPx=[2000],yPx=[2000],)
-                    print("\nAdding 1 star per sensor, at location (x,y)=(1000,1000)")
+                    print("\nAdding %d star(s) per sensor, at locations (x,y)="%len(xPx),
+                        xPx,yPx)
                     print("The star magnitude is chosen to be %.2f." % starMag)
 
                 elif selectSensors == 'lsstcam':
@@ -396,7 +399,8 @@ class baseAOSLoop():
                     yPx = [1000,2000,3000]
                     skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
                         decInDeg,rotAngInDeg,starMag,xPx=xPx,yPx=yPx)
-                    print("\nAdding 1 star per sensor, at location (x,y)=",xPx,yPx)
+                    print("\nAdding %d star(s) per sensor, at locations (x,y)="%len(xPx),
+                        xPx,yPx)
                     print("The star magnitude is chosen to be %.2f." % starMag)
 
             else:
