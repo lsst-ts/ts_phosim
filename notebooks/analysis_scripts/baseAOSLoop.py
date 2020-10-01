@@ -386,8 +386,7 @@ class baseAOSLoop():
                     # lsstFamCam sensors.
                     sensorNameList = self._getLsstFamCamSensorNameList()
                     skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
-                        decInDeg,rotAngInDeg,
-                        starMag,xPx=[2000],yPx=[2000])
+                        decInDeg,rotAngInDeg,starMag,xPx=[2000],yPx=[2000],)
                     print("\nAdding 1 star per sensor, at location (x,y)=(1000,1000)")
                     print("The star magnitude is chosen to be %.2f." % starMag)
 
@@ -396,8 +395,7 @@ class baseAOSLoop():
                     xPx = [200,500,1000]
                     yPx = [1000,2000,3000]
                     skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
-                        decInDeg,rotAngInDeg,
-                        starMag,xPx=xPx,yPx=yPx)
+                        decInDeg,rotAngInDeg,starMag,xPx=xPx,yPx=yPx)
                     print("\nAdding 1 star per sensor, at location (x,y)=",xPx,yPx)
                     print("The star magnitude is chosen to be %.2f." % starMag)
 
@@ -886,6 +884,7 @@ class baseAOSLoop():
         print("imageType: %s"%settingFile.getSetting("imageType"))
         print("bscDbType: %s"%settingFile.getSetting("bscDbType"))
         print('camDimOffset: %s'% settingFile.getSetting("camDimOffset"))
+        print("cameraMJD: %d"% settingFile.getSetting("cameraMJD"))
         print("doDeblending:  %s"%settingFile.getSetting("doDeblending"))
         print("deblendDonutAlgo: %s"%settingFile.getSetting("deblendDonutAlgo"))
         print("centroidTemplateType: %s"%settingFile.getSetting("centroidTemplateType"))
@@ -915,6 +914,8 @@ class baseAOSLoop():
         skySim = SkySim()
 
         starId = 0
+        # note  : here we don't need to provide MJD 
+        # because ra,dec is directly written to a skyFile as-is 
         raInDegList, declInDegList = opdMetr.getFieldXY()
         for raInDeg, declInDeg in zip(raInDegList, declInDegList):
             # It is noted that the field position might be < 0. But it is not the
@@ -928,11 +929,29 @@ class baseAOSLoop():
 
 
     def _prepareSkySimByChipPos(self,sensorName,raInDeg,decInDeg,
-                                rotSkyPos,starMag,xPx=[1000],yPx=[1000],
-                                mjd=59000):
+                                rotSkyPos,starMag,
+                                xPx=[1000],yPx=[1000]
+                                ):
 
         skySim = SkySim()
        
+        # note: here we need to provide MJD because addStarByChipPos() 
+        # uses _getSkyPosByChipPos()  which calls 
+        # raDecFromPixelCoords(
+        # pixelDmX, pixelDmY, expandedSensorName, camera=self._camera,
+        # obs_metadata=self._obs, epoch=epoch,
+        # includeDistortion=includeDistortion)
+        # and here  _obs  contains 
+        #ObservationMetaData(pointingRA=ra, pointingDec=decl,
+                                        # rotSkyPos=rotSkyPos,
+                                        # mjd=mjd)
+        # and there aren't any default values. We ensure that it is
+        # the same as in ts_phosim/policy/surveySettings.yaml "cameraMJD"
+        # and ts_wep/policy/default.yaml "cameraMJD"
+        settingFilePath = os.path.join(getConfigDir(), "teleSetting.yaml")
+        teleSettingFile = ParamReader(filePath=settingFilePath)
+        mjd = teleSettingFile.getSetting("cameraMJD")
+        print('Using cameraMJD=%d'%mjd)
         skySim.setObservationMetaData(raInDeg, decInDeg, rotSkyPos, mjd)
 
         starId = 0 
@@ -1058,8 +1077,8 @@ if __name__ == "__main__":
 
     aosLoop = baseAOSLoop()
     aosLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
-                isEimg=args.isEimg, genFocalImg = args.genFocalImg, genOpd=args.genOpd, 
-                genDefocalImg=args.genDefocalImg, genFlats=args.genFlats,
+                isEimg=args.isEimg, genFocalImg = args.genFocalImg, genOpd=True, 
+                genDefocalImg=args.genDefocalImg, genFlats=True,
                 useMinDofIdx=args.useMinDofIdx,
                 inputSkyFilePath=args.inputSkyFilePath, m1m3ForceError=args.m1m3ForceError,
                 noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
