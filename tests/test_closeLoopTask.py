@@ -45,6 +45,126 @@ class TestCloseLoopTask(unittest.TestCase):
 
         self.testDir.cleanup()
 
+    def testConfigSkySimWithError(self):
+
+        self.assertRaises(ValueError, self.closeLoopTask.configSkySim, "NoThisInstName")
+
+    def testConfigSkySimNoSkyFileLSSTFAM(self):
+
+        self.closeLoopTask.configSkySim(InstName.LSSTFAM)
+
+        skySim = self.closeLoopTask.getSkySim()
+        self.assertEqual(len(skySim.getStarId()), 189)
+
+    def testConfigSkySimNoSkyFileCOMCAM(self):
+
+        self.closeLoopTask.configSkySim(InstName.COMCAM)
+
+        skySim = self.closeLoopTask.getSkySim()
+        self.assertEqual(len(skySim.getStarId()), 9)
+
+    def testConfigSkySimNoSkyFileLSST(self):
+
+        self.closeLoopTask.configSkySim(InstName.LSST)
+
+        skySim = self.closeLoopTask.getSkySim()
+        self.assertEqual(len(skySim.getStarId()), 4)
+
+    def testConfigSkySimWithSkyFile(self):
+
+        testSkyFile = os.path.join(
+            getModulePath(), "tests", "testData", "sky", "skyComCam.txt"
+        )
+        self.closeLoopTask.configSkySim(InstName.COMCAM, pathSkyFile=testSkyFile)
+
+        skySim = self.closeLoopTask.getSkySim()
+        self.assertEqual(len(skySim.getStarId()), 9)
+        self.assertEqual(skySim.getStarMag()[0], 15)
+
+    def testConfigWepCalc(self):
+
+        filterType = FilterType.R
+        pathIsrDir = self._makeIsrDir()
+        boresight = [1.2, 2.3]
+        rotCamInDeg = 30
+        self.closeLoopTask.configWepCalc(
+            CamType.LsstFamCam,
+            pathIsrDir,
+            filterType,
+            boresight,
+            rotCamInDeg,
+            useEimg=True,
+        )
+
+        wepCalc = self.closeLoopTask.getWepCalc()
+        self.assertEqual(wepCalc.getIsrDir(), pathIsrDir)
+        self.assertEqual(wepCalc.getFilter(), filterType)
+        self.assertEqual(wepCalc.getBoresight(), tuple(boresight))
+        self.assertEqual(wepCalc.getRotAng(), rotCamInDeg)
+
+        setting = wepCalc.getSettingFile()
+        self.assertEqual(setting.getSetting("imageType"), "eimage")
+
+    def _makeIsrDir(self):
+
+        isrDirName = "inputTest"
+        isrDir = self.closeLoopTask.createIsrDir(
+            self.testDir.name, isrDirName=isrDirName
+        )
+
+        return isrDir
+
+    def testConfigOfcCalc(self):
+
+        instName = InstName.COMCAM
+        filterType = FilterType.R
+        rotAngInDeg = 30
+        self.closeLoopTask.configOfcCalc(instName, filterType, rotAngInDeg)
+
+        ofcCalc = self.closeLoopTask.getOfcCalc()
+        self.assertEqual(ofcCalc.getFilter(), filterType)
+        self.assertEqual(ofcCalc.getRotAng(), rotAngInDeg)
+
+    def testConfigPhosimCmpt(self):
+
+        # Set the environment variable of phosim path
+        PHOSIMPATH = "/path/to/phosim"
+        os.environ["PHOSIMPATH"] = PHOSIMPATH
+
+        # Configure the PhoSim component
+        filterType = FilterType.R
+        rotAngInDeg = 30
+        m1m3ForceError = 0.07
+        numPro = 2
+        boresight = [1.1, 2.3]
+        zAngleInDeg = 31.2
+        seedNum = 7
+        self.closeLoopTask.configPhosimCmpt(
+            filterType,
+            rotAngInDeg,
+            m1m3ForceError,
+            numPro,
+            boresight=boresight,
+            zAngleInDeg=zAngleInDeg,
+            seedNum=seedNum,
+        )
+        phosimCmpt = self.closeLoopTask.getPhosimCmpt()
+
+        self.assertEqual(phosimCmpt.getSeedNum(), seedNum)
+
+        setting = phosimCmpt.getSettingFile()
+        self.assertEqual(setting.getSetting("numPro"), 2)
+
+        tele = phosimCmpt.getTele()
+        surveyParam = tele.getSurveyParam()
+        self.assertEqual(surveyParam["filterType"], filterType)
+        self.assertEqual(surveyParam["rotAngInDeg"], rotAngInDeg)
+        self.assertEqual(surveyParam["boresight"], tuple(boresight))
+        self.assertEqual(surveyParam["zAngleInDeg"], zAngleInDeg)
+
+        # Pop out the environment variable of phosim path
+        os.environ.pop("PHOSIMPATH")
+
     def testGetCamTypeAndInstNameComCam(self):
 
         camType, instName = self.closeLoopTask.getCamTypeAndInstName("comcam")
@@ -115,7 +235,6 @@ class TestCloseLoopTask(unittest.TestCase):
         parser = CloseLoopTask.setDefaultParser(parser)
 
         args = parser.parse_known_args()[0]
-
         self.assertEqual(args.inst, "comcam")
         self.assertEqual(args.filterType, "ref")
         self.assertEqual(args.rotCam, 0.0)
@@ -124,6 +243,18 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(args.iterNum, 5)
         self.assertEqual(args.output, "")
         self.assertEqual(args.clobber, False)
+
+    def testSetImgParser(self):
+
+        parser = argparse.ArgumentParser()
+        parser = CloseLoopTask.setImgParser(parser)
+
+        argsToTest = ["--boresightDeg", "1.2", "2.3"]
+
+        args = parser.parse_known_args(args=argsToTest)[0]
+        self.assertEqual(args.boresightDeg, [1.2, 2.3])
+        self.assertEqual(args.skyFile, "")
+        self.assertEqual(args.eimage, False)
 
     def testGetSensorNameListOfFieldsComCam(self):
 
@@ -146,7 +277,6 @@ class TestCloseLoopTask(unittest.TestCase):
     def testGetSensorNameListOfFieldsLsstFam(self):
 
         sensorNameList = self.closeLoopTask.getSensorNameListOfFields(InstName.LSSTFAM)
-
         self.assertEqual(len(sensorNameList), 189)
         self.assertEqual(sensorNameList[0], "R01_S00")
         self.assertEqual(sensorNameList[3], "R02_S00")
@@ -165,8 +295,77 @@ class TestCloseLoopTask(unittest.TestCase):
 
         # Try to erase the content
         self.closeLoopTask.eraseDirectoryContent(self.testDir.name)
+
         files = os.listdir(self.testDir.name)
         self.assertEqual(len(files), 0)
+
+    def testCheckBoresight(self):
+
+        self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [1, 2], "")
+        self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [-1, 0], "")
+        self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [361, 0], "")
+        self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [0, -91], "")
+        self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [0, 91], "")
+
+    def testCreateIsrDir(self):
+
+        isrDir = self._makeIsrDir()
+        self.assertTrue(os.path.exists(isrDir))
+
+    def testMakeCalibsLSST(self):
+
+        fakeFlatDir = self.closeLoopTask.makeCalibs(InstName.LSST, self.testDir.name)
+
+        self.assertTrue(os.path.exists(fakeFlatDir))
+
+        files = os.listdir(fakeFlatDir)
+        self.assertEqual(len(files), 24)
+
+    def testMakeCalibsComCam(self):
+
+        fakeFlatDir = self.closeLoopTask.makeCalibs(InstName.COMCAM, self.testDir.name)
+
+        self.assertTrue(os.path.exists(fakeFlatDir))
+
+        files = os.listdir(fakeFlatDir)
+        self.assertEqual(len(files), 54)
+
+    def testAssignImgType(self):
+
+        self.assertFalse(self.closeLoopTask.useCcdImg())
+
+        self.closeLoopTask.assignImgType(False)
+        self.assertTrue(self.closeLoopTask.useCcdImg())
+
+        self.closeLoopTask.assignImgType(True)
+        self.assertTrue(self.closeLoopTask.useCcdImg())
+
+        self.closeLoopTask.assignImgType(None)
+        self.assertFalse(self.closeLoopTask.useCcdImg())
+
+    def testUseCcdImg(self):
+
+        self.assertFalse(self.closeLoopTask.useCcdImg())
+
+        self.closeLoopTask.assignImgType(False)
+        self.assertTrue(self.closeLoopTask.useCcdImg())
+
+    def testSetWepCalcWithSkyInfo(self):
+
+        self.closeLoopTask.configSkySim(InstName.LSST)
+
+        pathIsrDir = self._makeIsrDir()
+        self.closeLoopTask.configWepCalc(
+            CamType.LsstFamCam, pathIsrDir, FilterType.R, [0, 0], 0,
+        )
+
+        outputSkyInfoFilePath = self.closeLoopTask.setWepCalcWithSkyInfo(
+            self.testDir.name
+        )
+        self.assertTrue(os.path.exists(outputSkyInfoFilePath))
+
+        wepCalc = self.closeLoopTask.getWepCalc()
+        self.assertEqual(wepCalc.getSkyFile(), outputSkyInfoFilePath)
 
 
 if __name__ == "__main__":
