@@ -36,7 +36,7 @@ class baseAOSLoop():
             opdCmdSettingsFile='opdDefault.cmd',
             starCmdSettingsFile='starDefault.cmd', 
             instSettingFileName='starSingleExp.inst',
-            selectSensors = 'comcam',
+            selectSensors = 'comcam', sensorNames  = ['R14_S00'],
             deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
             bscDbType = 'file', dbFileName  = 'bsc2.db3', expWcs = False,
@@ -166,17 +166,24 @@ class baseAOSLoop():
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
             print('\nMaking the calibration products ')
+          
+            if len(sensorNames) == 0 : 
+                if selectSensors == 'comcam':
+                    sensorNameList = self._getComCamSensorNameList()
+                    fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
-            if selectSensors == 'comcam':
-                sensorNameList = self._getComCamSensorNameList()
+                elif selectSensors == 'lsstfamcam':
+                    sensorNameList = self._getLsstFamCamSensorNameList()
+                    fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
+
+                elif selectSensors == 'lsstcam':
+                    fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
+
+            elif len(sensorNames)>0:
+                print('\nUsing provided sensor name list for ')
+                print(sensorNames)
+                sensorNameList = sensorNames.copy()
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
-
-            elif selectSensors == 'lsstfamcam':
-                sensorNameList = self._getLsstFamCamSensorNameList()
-                fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
-
-            elif selectSensors == 'lsstcam':
-                fakeFlatDir = self._makeCalibsWfs(baseOutputDir)
 
 
         # Make the ISR directory
@@ -200,6 +207,7 @@ class baseAOSLoop():
             decInDeg = surveySettings.getSetting("decInDeg")
         if rotAngInDeg is None :
             rotAngInDeg = surveySettings.getSetting("rotAngInDeg")
+
         print('\nUsing the following settings for the telescope:')
         print('boresight (ra,dec) = %.3f,%.3f [deg]'%(raInDeg,decInDeg))
         print('rotation angle = %.3f [deg] '%rotAngInDeg)
@@ -373,34 +381,51 @@ class baseAOSLoop():
 
             # Prepare the faked sky
             if (inputSkyFilePath == ""):
-                if selectSensors == 'comcam':
-                    # According to the OPD field positions: one star per comcam sensor 
-                    metr = phosimCmpt.getOpdMetr()
-                    skySim = self._prepareSkySim(metr, starMag)
-                    print("\nUse the default OPD field positions to be star positions.")
-                    print("The star magnitude is chosen to be %.2f." % starMag)
 
-                elif (selectSensors =='lsstfamcam'):
-                    # 31 OPD field positions would not include all sensors. I'd rather 
-                    # add one star per sensor, so that we can test inclusion of all 
-                    # lsstFamCam sensors.
-                    sensorNameList = self._getLsstFamCamSensorNameList()
-                    xPx = [2000]
-                    yPx = [2000]
-                    skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
-                        decInDeg,rotAngInDeg,starMag,xPx=[2000],yPx=[2000],)
-                    print("\nAdding %d star(s) per sensor, at locations (x,y)="%len(xPx),
-                        xPx,yPx)
-                    print("The star magnitude is chosen to be %.2f." % starMag)
+                if len(sensorNames) == 0 : 
+                    if selectSensors == 'comcam':
+                        # According to the OPD field positions: one star per comcam sensor 
+                        metr = phosimCmpt.getOpdMetr()
+                        skySim = self._prepareSkySim(metr, starMag)
+                        print("\nUse the default OPD field positions to be star positions.")
+                        print("The star magnitude is chosen to be %.2f." % starMag)
 
-                elif selectSensors == 'lsstcam':
-                    sensorNameList = self._getLsstCamSensorNameList()
-                    xPx = [200,500,1000]
+                    elif (selectSensors =='lsstfamcam'):
+                        # 31 OPD field positions would not include all sensors. I'd rather 
+                        # add one star per sensor, so that we can test inclusion of all 
+                        # lsstFamCam sensors.
+                        sensorNameList = self._getLsstFamCamSensorNameList()
+                        xPx = [2000]
+                        yPx = [2000]
+                        skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
+                            decInDeg,rotAngInDeg,starMag,xPx=[2000],yPx=[2000],)
+                        print("\nAdding %d star(s) per sensor, at locations (x,y)="%len(xPx),
+                            xPx,yPx)
+                        print("The star magnitude is chosen to be %.2f." % starMag)
+
+                    elif selectSensors == 'lsstcam':
+                        sensorNameList = self._getLsstCamSensorNameList()
+                        xPx = [200,500,1000]
+                        yPx = [1000,2000,3000]
+                        skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
+                            decInDeg,rotAngInDeg,starMag,xPx=xPx,yPx=yPx)
+                        print("\nAdding %d star(s) per sensor, at locations (x,y)="%len(xPx),
+                            xPx,yPx)
+                        print("The star magnitude is chosen to be %.2f." % starMag)
+
+                elif len(sensorNames) > 0 : 
+                    print('\nIn the absence of input sky file using the ')
+                    print('following provided list of sensors:')
+                    print(sensorNames)
+
+                    sensorNameList = sensorNames.copy()
+                    xPx = [1000,2000,3000]
                     yPx = [1000,2000,3000]
                     skySim= self._prepareSkySimByChipPos(sensorNameList,raInDeg,
                         decInDeg,rotAngInDeg,starMag,xPx=xPx,yPx=yPx)
+
                     print("\nAdding %d star(s) per sensor, at locations (x,y)="%len(xPx),
-                        xPx,yPx)
+                            xPx,yPx)
                     print("The star magnitude is chosen to be %.2f." % starMag)
 
             else:
@@ -447,15 +472,17 @@ class baseAOSLoop():
 
                 # then prepend argument to run PhoSim only on R22
                 # for defocal images
-                if selectSensors == 'comcam':
-                    sensorNameList = self._getComCamSensorNameList()
+                if len(sensorNames) == 0 : 
+                    if selectSensors == 'comcam':
+                        sensorNameList = self._getComCamSensorNameList()
 
-                elif selectSensors == 'lsstcam':
-                    sensorNameList = self._getLsstCamSensorNameList()
+                    elif selectSensors == 'lsstcam':
+                        sensorNameList = self._getLsstCamSensorNameList()
 
-                elif selectSensors == 'lsstfamcam':
-                    sensorNameList = self._getLsstFamCamSensorNameList()
-
+                    elif selectSensors == 'lsstfamcam':
+                        sensorNameList = self._getLsstFamCamSensorNameList()
+                elif len(sensorNames)>0:
+                    sensorNameList = sensorNames.copy()
                 
                 sensorNameString =  self._sensorNameListToString(sensorNameList)
 
@@ -496,6 +523,7 @@ class baseAOSLoop():
                 
                 if (selectSensors == 'comcam') or (selectSensors == 'lsstfamcam') :
                     # Repackage the images based on the image type
+                    # there's nothing specific for comcam here...
                     if (isEimg):
                         phosimCmpt.repackageComCamEimgFromPhoSim()
                     else:
@@ -548,15 +576,19 @@ class baseAOSLoop():
                     argPrepend = '-w ' + baseOutputDir+ ' '
 
 
-                    # then prepend argument to run PhoSim only on R22
-                    # just in case some stars provided to PhoSim
-                    # had streaks or extended 
+                    # then prepend argument to run PhoSim only on selected sensors
+                    # in case some stars provided to PhoSim had streaks or extended
+                    # beyond chip boundary 
+                    if len(sensorNames) == 0 :  
+                    
+                        if selectSensors == 'comcam':
+                            sensorNameList = self._getComCamSensorNameList()
 
-                    if selectSensors == 'comcam':
-                        sensorNameList = self._getComCamSensorNameList()
+                        elif selectSensors == 'lsstfamcam':
+                            sensorNameList = self._getLsstFamCamSensorNameList()
 
-                    elif selectSensors == 'lsstfamcam':
-                        sensorNameList = self._getLsstFamCamSensorNameList()
+                    elif len(sensorNames)>0 : 
+                        sensorNameList = sensorNames.copy()
 
                     sensorNameString =  self._sensorNameListToString(sensorNameList)
 
@@ -603,7 +635,9 @@ class baseAOSLoop():
 
 
             ##################################
-            # IN-FOCUS IMAGES : INGEST AND ISR   
+            # IN-FOCUS IMAGES : INGEST AND ISR  
+            # since these are not used in the wavefront 
+            # estimation  
             #################################
             if (selectSensors == 'comcam') or (selectSensors == 'lsstfamcam') :
                 if genFocalImg is True :
@@ -647,16 +681,17 @@ class baseAOSLoop():
             t2 =datetime.datetime.now()
             self._print_duration(t2-t1)
 
+            if len(sensorNames) == 0 : 
+                if selectSensors == 'comcam':
+                    sensorNameList = self._getComCamSensorNameList()
 
-            if selectSensors == 'comcam':
-                sensorNameList = self._getComCamSensorNameList()
+                elif selectSensors  == 'lsstcam':
+                    sensorNameList  = ["R00_S22", "R04_S20","R40_S02","R44_S00"]
 
-            elif selectSensors  == 'lsstcam':
-                sensorNameList  = ["R00_S22", "R04_S20","R40_S02","R44_S00"]
-
-            elif selectSensors == 'lsstfamcam':
-                sensorNameList == self._getLsstFamCamSensorNameList()
-
+                elif selectSensors == 'lsstfamcam':
+                    sensorNameList == self._getLsstFamCamSensorNameList()
+            elif len(sensorNames) > 0:
+                sensorNameList = sensorNames.copy()
 
             # Record the wfs error with the same order as OPD for the comparison
             phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
@@ -727,6 +762,19 @@ class baseAOSLoop():
                           "R44_S00_C0","R44_S00_C1"
                          ]
 
+        return sensorNameList
+
+    def _getCustomRaftsSensorNameList(self,rafts=['14']):
+
+        chips  = ['00','01','02',
+              '10','11','12',
+              '20','21','22']
+        sensors = []
+        for r in rafts:
+            for c in chips:
+                s = "R%s_S%s"%(r,c)
+                sensors.append(s)
+        sensorNameList = sensors
         return sensorNameList
 
     def _getUniqueLsstFamCamOpdSensors(self):
@@ -1036,25 +1084,31 @@ if __name__ == "__main__":
                         help="output directory")
     parser.add_argument("--testLabel", type=str, default="1",
                         help="filename identifier for test files")
+
+    # boolean arguments 
     parser.add_argument('--isEimg', default=False, action='store_true',
                         help='Use the eimage files')
+
+    parser.add_argument('--noOpd', default=False, action='store_true', 
+                        help='Do not make the OPD images  (by default we do')
+    parser.add_argument('--noFlats', default=False, action='store_true',
+                        help='Do not generate calibration images (fake flats from image gain) - by default we do.')
     parser.add_argument('--genFocalImg', default=False, action='store_true',
                         help='Generate in-focus images')
-    parser.add_argument('--genDefocalImg', default=True, action='store_true',
-                        help='Generate defocal images')
-    parser.add_argument('--genOpd', default=True, action='store_true',
-                        help='Generate OPD images')
-    parser.add_argument('--genFlats', default=True, action='store_true',
-                        help='Generate calibration images (fake flats from image gain).')
+    parser.add_argument('--noDefocalImg', default=False, action='store_true',
+                        help='Do not generate defocal images (by default we do')
+
     parser.add_argument('--useMinDofIdx', default=False, action='store_true',
                         help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
+    parser.add_argument('--clobber', default=False, action='store_true',
+                        help='Delete existing output directory')
+    parser.add_argument('--noPerturbations', default=False, action='store_true',
+                        help='Do not introduce perturbations via TeleFacade')
+
     parser.add_argument("--inputSkyFilePath", type=str, default="",
                         help="Path to skyfile, that contains Star Id, ra, dec, and magnitude")
     parser.add_argument("--m1m3ForceError", type=float, default=0.05,
                         help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
-    parser.add_argument('--clobber', default=False, action='store_true',
-                        help='Delete existing output directory')
-    parser.add_argument('--noPerturbations', default=False, action='store_true')
     parser.add_argument('--opdCmdSettingsFile', type=str, default='opdDefault.cmd', 
                         help='Name of the file in ts_phosim/policy/cmd used as a seed when making the opd.cmd')
     parser.add_argument('--starCmdSettingsFile', type=str, default='starDefault.cmd', 
@@ -1063,29 +1117,64 @@ if __name__ == "__main__":
                         help='Sensors to run the simulation with. Choose one of "comcam" (1 raft, 9 CCDs), \
                         "lsstcam" (4 corner sensors), "lsstfamcam" (full array mode, 189 CCDs)'
                         )
+    parser.add_argument('--sensors', type=str, default='',
+                         help = 'List of sensor names, eg. "R14_S00|R04_S20",\
+                        converted to a list of sensorNames, as ["R14_S00", "R04_S20"] ')
+
     parser.add_argument('--bscDbType', type=str, default='file', 
                         help='database type for donut detection: file, image, or refCat ')
 
-   # parser.add_argument('--generatePostage', type=bool, default=True, action='store_true')
     parser.add_argument('--dbFileName', type=str, default  = 'bsc.db3', 
                         help='Database filename used to select targets for wavefront error calculation.')
 
     args = parser.parse_args()
+
+    if len(args.sensors)>0:
+        sensorNamesString = args.sensors
+        sensorNames = sensorNamesString.split('|')
+
+    # parse correctly the boolean args :
+    # if we invoke any boolean arg, it becomes true, so 
+    # --genOpd never becomes false; need to make 
+    # --noOpd True,  that makes below genOpd False 
+    genOpd = True      # but 
+    if args.noOpd : 
+        genOpd = False
+     
+    genDefocalImg = True
+    if args.noDefocalImg :
+        genDefocalImg = False
+    
+    genFlats = True
+    if args.noFlats:
+        genFlats  = False
+    # parser.add_argument('--genOpd', default=True, action='store_true',
+    #                     help='Generate OPD images')
+    # parser.add_argument('--genDefocalImg', default=True, action='store_true',
+    #                     help='Generate defocal images')
+    # parser.add_argument('--genFlats', default=True, action='store_true',
+    #                         help='Generate calibration images (fake flats from image gain).')
 
     # Run the simulation
     phosimDir = getPhoSimPath()
 
     os.makedirs(args.outputDir, exist_ok=True)
     if (args.clobber == True):
-        _eraseFolderContent(args.outputDir)
+        argString = '-rf %s/'%args.outputDir
+        print('\nRemoving the non-empty output dir ')
+        print('Running')
+        print('rm', argString)
+        runProgram("rm", argstring=argString)
+    
 
     aosLoop = baseAOSLoop()
     aosLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
-                isEimg=args.isEimg, genFocalImg = args.genFocalImg, genOpd=True, 
-                genDefocalImg=args.genDefocalImg, genFlats=True,
+                isEimg=args.isEimg, genFocalImg = args.genFocalImg, genOpd=genOpd, 
+                genDefocalImg= genDefocalImg, genFlats=genFlats,
                 useMinDofIdx=args.useMinDofIdx,
                 inputSkyFilePath=args.inputSkyFilePath, m1m3ForceError=args.m1m3ForceError,
                 noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
                 starCmdSettingsFile=args.starCmdSettingsFile, selectSensors=args.selectSensors,
+                sensorNames = sensorNames,
                 dbFileName=args.dbFileName, bscDbType=args.bscDbType)
     
