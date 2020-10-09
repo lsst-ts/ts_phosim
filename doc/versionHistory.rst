@@ -15,6 +15,13 @@ Version History
 * Use the sims_w_2020_38.
 * Replace the **comcamCloseLoop.py** with the **imgCloseLoop.py**.
 * Update the class diagram.
+* Deprecation warning:
+
+1. Use ``setWgtAndFieldXyOfGQ()`` to replace ``setDefaultLsstGQ()`` and ``setDefaultComcamGQ()`` in **OpdMetrology.py**.
+2. Use ``getOpdArgsAndFilesForPhoSim()`` to replace ``getComCamOpdArgsAndFilesForPhoSim()`` in **PhosimCmpt.py**.
+3. Use ``getPistonCamStarArgsAndFilesForPhoSim()`` to replace ``getComCamStarArgsAndFilesForPhoSim()`` in **PhosimCmpt.py**.
+4. Use ``analyzeOpdData()`` to replace ``analyzeComCamOpdData()`` in **PhosimCmpt.py**.
+5. Use ``repackagePistonCamImgs()`` to replace ``repackageComCamAmpImgFromPhoSim()`` and ``repackageComCamEimgFromPhoSim()`` in **PhosimCmpt.py**.
 
 .. _lsst.ts.phosim-1.2.6:
 
