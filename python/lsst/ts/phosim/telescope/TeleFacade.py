@@ -101,6 +101,17 @@ class TeleFacade(object):
 
         return self.dofInUm
 
+    def getSurveyParam(self):
+        """Get the survey parameters of telescope.
+
+        Returns
+        -------
+        dict
+            Survey parameters of telescope.
+        """
+
+        return self.surveyParam
+
     def getNumOfDof(self):
         """Get the number of DOF in the setting file.
 

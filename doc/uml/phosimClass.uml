@@ -3,9 +3,21 @@ package "telescope" #DDDDDD {
   class TeleFacade
 }
 
+package "ts_wep" #DDDDDD {
+  class WEPCalculation
+}
+
+package "ts_ofc" #DDDDDD {
+  class OFCCalculation
+}
+
 PhosimCmpt ..> SkySim
 PhosimCmpt *-- OpdMetrology
 PhosimCmpt *-- TeleFacade
-CloseLoopTask ..> PhosimCmpt
+CloseLoopTask *-- SkySim
+CloseLoopTask *-- WEPCalculation
+CloseLoopTask *-- OFCCalculation
+CloseLoopTask *-- PhosimCmpt
 CloseLoopTask ..> TeleFacade
+CloseLoopTask ..> OpdMetrology
 @enduml

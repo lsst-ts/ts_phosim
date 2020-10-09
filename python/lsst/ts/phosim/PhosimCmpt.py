@@ -619,6 +619,57 @@ class PhosimCmpt(object):
             List of arguments to run the PhoSim.
         """
 
+        warnings.warn(
+            "Use getPistonCamStarArgsAndFilesForPhoSim() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        return self.getPistonCamStarArgsAndFilesForPhoSim(
+            extraObsId,
+            intraObsId,
+            skySim,
+            simSeed=simSeed,
+            cmdSettingFileName=cmdSettingFileName,
+            instSettingFileName=instSettingFileName,
+        )
+
+    def getPistonCamStarArgsAndFilesForPhoSim(
+        self,
+        extraObsId,
+        intraObsId,
+        skySim,
+        simSeed=1000,
+        cmdSettingFileName="starDefault.cmd",
+        instSettingFileName="starSingleExp.inst",
+    ):
+        """Get the star calculation arguments and files of piston camera (
+        ComCam or LSST FAM) for the PhoSim calculation.
+
+        FAM: Full-array mode.
+
+        Parameters
+        ----------
+        extraObsId : int
+            Extra-focal observation Id.
+        intraObsId : int
+            Intra-focal observation Id.
+        skySim : SkySim
+            Sky simulator
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "starDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "starSingleExp.inst".)
+
+        Returns
+        -------
+        list[str]
+            List of arguments to run the PhoSim.
+        """
+
         # Set the intra- and extra-focal related information
         obsIdList = {"-1": extraObsId, "1": intraObsId}
         instFileNameList = {"-1": "starExtra.inst", "1": "starIntra.inst"}
@@ -1149,18 +1200,11 @@ class PhosimCmpt(object):
 
         return listOfFWHMSensorData
 
-    def repackageComCamAmpImgFromPhoSim(self):
-        """Repackage the ComCam amplifier images from PhoSim to the single 16
-        extension MEFs for processing.
+    def repackagePistonCamImgs(self, isEimg=False):
+        """Repackage the images of piston camera (ComCam and LSST FAM) from
+        PhoSim for processing.
 
-        ComCam: commissioning camera.
-        MEF: multi-extension frames.
-        """
-
-        self._repackageComCamImages(isEimg=False)
-
-    def _repackageComCamImages(self, isEimg=False):
-        """Repackage the ComCam images from PhoSim for processing.
+        FAM: Full-array mode.
 
         Parameters
         ----------
@@ -1195,13 +1239,35 @@ class PhosimCmpt(object):
         # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
 
+    def repackageComCamAmpImgFromPhoSim(self):
+        """Repackage the ComCam amplifier images from PhoSim to the single 16
+        extension MEFs for processing.
+
+        ComCam: commissioning camera.
+        MEF: multi-extension frames.
+        """
+
+        warnings.warn(
+            "Use repackagePistonCamImgs() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        self.repackagePistonCamImgs(isEimg=False)
+
     def repackageComCamEimgFromPhoSim(self):
         """Repackage the ComCam eimages from PhoSim for processing.
 
         ComCam: commissioning camera.
         """
 
-        self._repackageComCamImages(isEimg=True)
+        warnings.warn(
+            "Use repackagePistonCamImgs() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        self.repackagePistonCamImgs(isEimg=True)
 
     def reorderAndSaveWfErrFile(
         self, listOfWfErr, refSensorNameList, zkFileName="wfs.zer"

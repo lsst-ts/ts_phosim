@@ -457,14 +457,14 @@ class TestPhosimCmpt(unittest.TestCase):
         delta = np.sum(np.abs(dofInUm - settingDofInUm))
         self.assertEqual(delta, 0)
 
-    def testGetComCamStarArgsAndFilesForPhoSim(self):
+    def testGetPistonCamStarArgsAndFilesForPhoSim(self):
 
         extraObsId = 9005000
         intraObsId = 9005001
         skySim = self._addSglStarToSkySim()
 
         with self.assertWarns(UserWarning):
-            argStringList = self.phosimCmpt.getComCamStarArgsAndFilesForPhoSim(
+            argStringList = self.phosimCmpt.getPistonCamStarArgsAndFilesForPhoSim(
                 extraObsId,
                 intraObsId,
                 skySim,

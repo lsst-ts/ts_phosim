@@ -54,7 +54,11 @@ To enable this:
 ## Command Line Task
 
 - **opdCloseLoop.py**: Close-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
-- **comcamCloseLoop.py**: Close-loop simulation of commissioning camera. There are 9 stars on the center of each CCD. This task supports the amplifier images and eimages of PhoSim.
+- **imgCloseLoop.py**: Close-loop simulation of the images. This task supports the amplifier images and eimages of PhoSim.
+
+## Example Sky Files
+
+There are two sky files in `tests/testData/sky/` directory that can be used in the test of command line task. One is for ComCam and one is for LSST full array mode (FAM): **skyComCam.txt** and **skyLsstFam.txt**.
 
 ## Build the Document
 
