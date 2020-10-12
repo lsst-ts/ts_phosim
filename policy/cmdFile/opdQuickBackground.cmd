@@ -1,3 +1,3 @@
-backgroundmode 0
+quickbackground
 raydensity 0.0
 perturbationmode 1
