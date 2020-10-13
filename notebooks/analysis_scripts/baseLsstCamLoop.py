@@ -10,6 +10,7 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.Utility import FilterType, CamType, runProgram
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
+from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
 from lsst.ts.ofc.Utility import InstName
 from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
@@ -65,6 +66,14 @@ class baseLsstCamLoop():
             os.remove(os.path.join(bscDataDir,db_filename))
             print('\nRemoved old %s file'%db_filename)
 
+        # update expWcs setting ... 
+        #expWcs = False # True :using PhoSim WCS Sol 
+        settingFile= ParamReader(filePath=path_to_setting_file)
+        expWcs = False
+        settingFile.updateSetting("expWcs", expWcs)
+        settingFile.saveSetting(filePath=path_to_setting_file)
+        settingFile = ParamReader(filePath=path_to_setting_file)
+        print('After change: expWcs : ', settingFile.getSetting("expWcs"))
 
         # get the list of sensors -  here the wavefront sensing corner sensors ... 
         # it's not used for PhoSim simulation
@@ -81,8 +90,8 @@ class baseLsstCamLoop():
         # it would work, since OFC doesn't read the postISR 
         # image FITS files as ts_wep does  
         # 
-        if selectSensors is 'lsstcam': 
-            sensorNameList = self._getWfsSensorNameList()
+        # if selectSensors is 'lsstcam': 
+        #     sensorNameList = self._getWfsSensorNameList()
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
@@ -251,11 +260,38 @@ class baseLsstCamLoop():
             gqEffFwhm = phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
             print("GQ effective FWHM is %.4f." % gqEffFwhm)
 
-            # Set the FWHM data
+            # Set the FWHM data: for lsstcam or lsstfamcam  
+            # need to choose 31 of 189 sensors for which OPD was evaluated 
+            # we use for that the sensorNameToFieldIdx.yaml
+            # translation file from ts_ofc/policy/lsst/
+            if (selectSensors == 'lsstcam' ) or  (selectSensors == 'lsstfamcam'): 
+                refSensorNameList = self._getLsstFamCamSensorNameList()
+                sensorNameToIdFileName  = 'sensorNameToId.yaml'
+                mapSensorNameAndId = MapSensorNameAndId(sensorNameToIdFileName)
+
+                path_to_ts_ofc = getPackageDir("ts_ofc")
+                mappingFilePath = os.path.join(path_to_ts_ofc , 'policy/lsst', 'sensorNameToFieldIdx.yaml')
+                _mappingFile = ParamReader()
+                _mappingFile.setFilePath(mappingFilePath)
+
+                fieldIdx = []
+                for sensor in refSensorNameList:
+                    field = _mappingFile.getSetting(sensor)
+                    fieldIdx.append(int(field))
+                    
+                uniqueFieldIdx = np.unique(fieldIdx)
+                uniqueFieldIdxLt31 = uniqueFieldIdx[uniqueFieldIdx<31]
+
+                #This shows all sensors corresponding to each fieldIdx 
+                oneSensorPerFieldIdx = []
+                for field in uniqueFieldIdxLt31:
+                    #print(field, np.array(refSensorNameList)[fieldIdx == field])
+                    oneSensorPerFieldIdx.append(np.array(refSensorNameList)[fieldIdx == field][0])
+
 
             listOfFWHMSensorData = phosimCmpt.getListOfFwhmSensorData(
-                                           opdPssnFileName, sensorNameList,
-                                           sensorNameToIdFileName )
+                                           opdPssnFileName, oneSensorPerFieldIdx)
+            
             ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
 
             # Use the input sky catalog .... 
@@ -287,26 +323,26 @@ class baseLsstCamLoop():
             
             print('\nUsing %s and %s for cmd and inst PhoSim files '%(starCmdSettingsFile,
                     instSettingFile))
-            argString = phosimCmpt.getLsstCamStarArgsAndFilesForPhosim(
-                 intraObsId=intraObsId, skySim=skySim, simSeed=simSeed,
-                 cmdSettingFileName=starCmdSettingsFile,
-                 instSettingFileName=instSettingFile)
-
-            # Note, at this point PhosimCmpt.py  uses TeleFacade.py  
-            # self.tele.writeStarInstFile() , which writes the 
-            # camera configuration parameter 
-            # camconfig  using the default 
-            # self.sensorOn = {"sciSensorOn": True,
-            #                  "wfSensorOn": True,
-            #                  "guidSensorOn": False} 
-            # i.e.  camconfig is 3, 
-            # unless self.tele.sensorOn['sciSensorOn'] = False 
-            # in which case camconfig is 2 ... 
+          
 
 
             if genDefocalImg is True:
+                argString = phosimCmpt.getLsstCamStarArgsAndFilesForPhosim(
+                             intraObsId=intraObsId, skySim=skySim, simSeed=simSeed,
+                             cmdSettingFileName=starCmdSettingsFile,
+                             instSettingFileName=instSettingFile)
 
-                # for running PhoSim on the defocal image on the selected WFS sensors
+                # Note, at this point PhosimCmpt.py  uses TeleFacade.py  
+                # self.tele.writeStarInstFile() , which writes the 
+                # camera configuration parameter 
+                # camconfig  using the default 
+                # self.sensorOn = {"sciSensorOn": True,
+                #                  "wfSensorOn": True,
+                #                  "guidSensorOn": False} 
+                # i.e.  camconfig is 3, 
+                # unless self.tele.sensorOn['sciSensorOn'] = False 
+                # in which case camconfig is 2 ... 
+                    # for running PhoSim on the defocal image on the selected WFS sensors
                 # we prepend the sensors explicitly ... 
 
                 # start again - prepend the working directory first 
@@ -352,33 +388,46 @@ class baseLsstCamLoop():
 
             # before ingesting images by WEP,  make sure that the previously ingested 
             # ones are erased, especially in WFS-only mode !
-            ingestedDir = os.path.join(isrDir, 'raw')
-            if os.path.exists(ingestedDir):
-                print('Removing the previously ingested raw images directory  %s \
-                    before re-ingesting the images from iter0/img/...'%ingestedDir)
-                argString = '-rf %s/'%ingestedDir
-                runProgram("rm", argstring=argString)
+            # ingestedDir = os.path.join(isrDir, 'raw')
+            # if os.path.exists(ingestedDir):
+            #     print('Removing the previously ingested raw images directory  %s \
+            #         before re-ingesting the images from iter0/img/...'%ingestedDir)
+            #     argString = '-rf %s/'%ingestedDir
+            #     runProgram("rm", argstring=argString)
             
             # also erase previously existing registry since this would mess the ingest process
-            registryFile= os.path.join(isrDir,'registry.sqlite3')
-            if os.path.exists(registryFile):
-                print('Removing image registry file  %s '%registryFile)
-                runProgram("rm", argstring=registryFile)
+            # registryFile= os.path.join(isrDir,'registry.sqlite3')
+            # if os.path.exists(registryFile):
+            #     print('Removing image registry file  %s '%registryFile)
+            #     runProgram("rm", argstring=registryFile)
 
 
             # Calculate the wavefront error and DOF
-            if selectSensors is 'lsstcam' : 
-                sensorNameToIdFileName='sensorNameToIdWfs.yaml'
-            else:
-                sensorNameToIdFileName='sensorNameToId.yaml'
-            print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
+            # if selectSensors is 'lsstcam' : 
+            #     sensorNameToIdFileName='sensorNameToIdWfs.yaml'
+            # else:
+            #     sensorNameToIdFileName='sensorNameToId.yaml'
+            # print('Using sensor to ID translation from %s'%sensorNameToIdFileName)
             
+            # thanks to the fix in _populateListOfWavefrontSensorData,
+            # the listOfWfErr for the corner sensors has 4 items,
+            # as we'd expect
             listOfWfErr = wepCalc.calculateWavefrontErrors(
-                intraRawExpData, postageImg=postageImg, postageImgDir = postageImgDir,
-                sensorNameToIdFileName=sensorNameToIdFileName)
+                intraRawExpData, postageImg=postageImg, postageImgDir = postageImgDir)#,
             ofcCalc.calculateCorrections(listOfWfErr)
 
+
             # Record the wfs error with the same order as OPD for the comparison
+            # NB: can't really record with the same order as OPD 
+            # since OPD was eval at 31 locations, and 
+            # WFS at 4 locations (corner sensors).
+            # Thus just save in the order of 4 sensors 
+            if selectSensors  == 'lsstcam':
+                sensorNameList  = ["R00_S22", "R04_S20","R40_S02","R44_S00"]
+            elif selectSensors == 'lsstfamcam':
+                sensorNameList == self._getLsstFamCamSensorNameList()
+            # elif selectSensors == 'comcam':
+            #     sensorNameList == self._getComCamSensorNameList()
             phosimCmpt.reorderAndSaveWfErrFile(listOfWfErr, sensorNameList,
                                                zkFileName=wfsZkFileName)
 
@@ -407,7 +456,27 @@ class baseLsstCamLoop():
 
         return skySim, wepCalc
 
-    def _getWfsSensorNameList(self):
+
+    def _getLsstFamCamSensorNameList(self):
+        # I assume it includes the ComCam 
+        chips  = ['00','01','02',
+                  '10','11','12',
+                  '20','21','22']
+        rafts = ['14','24','34', 
+            '03','13','23','33','43',
+            '02','12','22','32','42',
+            '01','11','21','31','41',
+                 '10','20','30']
+        sensors = []
+        for r in rafts:
+            for c in chips:
+                s = "R%s_S%s"%(r,c)
+                sensors.append(s)
+        sensorNameList = sensors
+        return sensorNameList
+
+
+    def _getLsstCamSensorNameList(self):
         sensorNameList = ["R00_S22_C0","R00_S22_C1", 
                           "R04_S20_C0","R04_S20_C1",
                           "R40_S02_C0","R40_S02_C1",
@@ -535,7 +604,7 @@ class baseLsstCamLoop():
 
         if selectSensors is None: # by default
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-        elif selectSensors is 'lsstcam': # use LsstCam 
+        elif selectSensors == 'lsstcam': # use LsstCam 
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
 
         ofcCalc.setFilter(filterType)
