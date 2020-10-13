@@ -1,3 +1,5 @@
+# OLD version of star separation analusis (first try ... )
+
 # import sys
 # path_to_comcamCloseLoop = '/astro/store/epyc/projects/lsst_comm/ts_phosim/bin.src/'
 # sys.path.append(path_to_comcamCloseLoop)
