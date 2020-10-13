@@ -106,7 +106,7 @@ def plotIterationSummary(data_dir, iterNum=5, num_ccds=9, suptitle='', figname='
     ax[1].set_ylabel('RMS WFS vs OPD (microns)', size=18)
 
     ax[1].legend(fontsize=16)
-    ax[1].set_title('Zernike Errors WFS corner sensors arrows', size=18)
+    ax[1].set_title('Zernike Errors WFS ', size=18)
 
 
     # 2: plot PSSN 
@@ -290,7 +290,7 @@ def getRaDecFromGaiaField(field='high'):
 
 def readImage(data_dir, focalType = 'extra', obsId=None, raft = None,
               detector = None, detNum = None, verbose=True,
-              data_id = None, rerun='run1', imgType = 'postISR'):
+              data_id = None, rerun='run1', imgType = 'postISR', iterNum = 0):
     ''' A function to read the post ISR image for a given CCD (sensor) 
     using Butler (so it has to be a butler repository). 
 
@@ -309,6 +309,8 @@ def readImage(data_dir, focalType = 'extra', obsId=None, raft = None,
     verbose : boolean, True by default  - whether to print info about the progress of reading images 
     rerun : str, by default run1, could be run2, etc.
     imgType:  postISR (by default),   or raw 
+    iterNum : iteration number, 0 by default : translates to the obsId used from the 
+            /input/rerun/run1/postISRCCD/
     
     Returns:
     --------
@@ -337,7 +339,8 @@ def readImage(data_dir, focalType = 'extra', obsId=None, raft = None,
         if not detNum:
             detNum = detNumDict[sensor]    
         # these are decided in baseComcamLoop.py or baseWfsLoop.py 
-        obsIdDic = {'focal':9006000, 'extra':9006001,  'intra':9006002}
+        obsIdDic = {'focal':int('90060%d0'%iterNum), 'extra':int('90060%d1'%iterNum),  
+                    'intra':int('90060%d2'%iterNum)}
         if not obsId: # if not provided, reading it from a dict, based on the focal type
             obsId = obsIdDic[focalType]
         
@@ -627,8 +630,8 @@ def sepInPercToRadii(sepInPerc):
 
 def plotPostageStamps(postage_dir, sensor='R22_S00', focalType='extra', Nstars=3,
                       cbarX0Y0DxDy = [0.13, 0.06, 0.76, 0.01],
-                      sepInPerc=3, testLabel=None,
-                      magPrimary=16, mag = 15
+                      sepInPerc=3, testLabel=None,suptitle=None,
+                      magPrimary=16, mag = 15, filename = None
                      ):
 
     
@@ -636,26 +639,33 @@ def plotPostageStamps(postage_dir, sensor='R22_S00', focalType='extra', Nstars=3
     imgTypes = ['singleSciImg','imgDeblend_full', 'imgDeblend_resized']
     print('Using postage images from %s'%postage_dir)
     
-    suptitle = '%s %s-focal, '%(sensor,focalType)
-    figtitle = 'img_AOS_'
+    if suptitle is None:
+        suptitle = '%s %s-focal, '%(sensor,focalType)
     
-    if testLabel is 'sep':
+    if testLabel == 'sep':
         sepInRadii = sepInPercToRadii(sepInPerc)
-        print(sepInRadii)
         suptitle += 'sep=%.1f donut radii'%sepInRadii
-        figtitle += 'singleAmpSep_'
-        
-    if testLabel is 'mag':
+
+    elif testLabel == 'mag':
         suptitle += r'$\Delta =%d$ mag' % (magPrimary-mag)
-        figtitle += 'singleAmpMag_'
-        
-    if testLabel is 'gaia':
+            
+    elif testLabel == 'gaia':
         suptitle += 'GAIA DR2'
-        figtitle += 'gaia_'
         
-    figtitle += sensor+'_'+focalType+'_postageImg.png'
-    
-   
+        
+    if filename is None:
+        filename = 'img_AOS_'
+        if testLabel == 'sep':
+            filename += 'singleAmpSep_'
+
+        elif testLabel == 'mag':
+            filename += 'singleAmpMag_'
+
+        elif testLabel == 'gaia':
+            filename += 'gaia_'
+            
+        filename += sensor+'_'+focalType+'_postageImg.png'
+        
     print('Searching in %s directory'%postage_dir)
     print('\nAvailable postage stamp images for sensor %s: '%sensor)
     available = {}
@@ -726,8 +736,9 @@ def plotPostageStamps(postage_dir, sensor='R22_S00', focalType='extra', Nstars=3
     cbar.set_label(label='counts',weight='normal', fontsize=17)
 
     fig.suptitle(suptitle, fontsize=17)
-    plt.savefig(figtitle, 
+    plt.savefig(filename, 
                 bbox_inches='tight', dpi=100)
+    print('Saved as %s'%filename)
     
     
     

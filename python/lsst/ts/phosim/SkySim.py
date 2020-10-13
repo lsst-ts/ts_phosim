@@ -4,6 +4,8 @@ from lsst.obs.lsstSim import LsstSimMapper
 from lsst.sims.utils import ObservationMetaData
 from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords
 
+from lsst.sims.coordUtils import raDecFromPixelCoordsLSST
+
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 from lsst.ts.wep.Utility import expandDetectorName
 
@@ -318,12 +320,23 @@ class SkySim(object):
 
         # Expand the sensor name
         expandedSensorName = expandDetectorName(sensorName)
+        
+        # distinguish between corner sensors and scientific sensors 
 
-        # Get the sky position in (ra, decl)
-        raInDeg, declInDeg = raDecFromPixelCoords(
-            pixelDmX, pixelDmY, expandedSensorName, camera=self._camera,
-            obs_metadata=self._obs, epoch=epoch,
-            includeDistortion=includeDistortion)
+        # # corner sensors
+        if expandedSensorName.endswith(('A','B')): 
+            #print('Getting coords for corner sensors with raDecFromPixelCoordsLSST')
+            raInDeg, declInDeg = raDecFromPixelCoordsLSST(
+                pixelDmX, pixelDmY, expandedSensorName,
+                obs_metadata=self._obs, epoch=epoch,
+                includeDistortion=includeDistortion)
+        # scientific sensors     
+        else: 
+            # Get the sky position in (ra, decl)
+            raInDeg, declInDeg = raDecFromPixelCoords(
+                pixelDmX, pixelDmY, expandedSensorName, camera=self._camera,
+                obs_metadata=self._obs, epoch=epoch,
+                includeDistortion=includeDistortion)
 
         return raInDeg, declInDeg
 
