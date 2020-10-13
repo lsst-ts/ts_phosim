@@ -146,9 +146,6 @@ class baseLsstFamCamLoop():
             os.remove(os.path.join(bscDataDir,db_filename))
             print('\nRemoved old %s file'%db_filename)
         
-        # get the list of sensors 
-        if selectSensors is 'lsstfamcam':
-            sensorNameList = self._getLsstFamCamSensorNameList()
 
         # Prepare the calibration products (only for the amplifier images)
         if ((not isEimg) & (genFlats is True)):
@@ -156,6 +153,7 @@ class baseLsstFamCamLoop():
             # by default only make calibs for comcam
 
             if selectSensors is 'lsstfamcam':
+                sensorNameList = self._getLsstFamCamSensorNameList()
                 fakeFlatDir = self._makeCalibs(baseOutputDir, sensorNameList)
 
         # Make the ISR directory
@@ -344,7 +342,7 @@ class baseLsstFamCamLoop():
                 # corner sensors ... 
                 # so better be explicit about sensors at this stage 
 
-                if selectSensors is 'lsstfamcam':
+                if selectSensors == 'lsstfamcam':
                     sensorNameList = self._getLsstFamCamSensorNameList()
 
                 sensorNameString =  self._sensorNameListToString(sensorNameList)
@@ -673,7 +671,7 @@ class baseLsstFamCamLoop():
 
         if (selectSensors is None) or (selectSensors is 'comcam'): # by default
             wepCalc = WEPCalculationFactory.getCalculator(CamType.ComCam, isrDirPath)
-        elif selectSensors is 'wfs': # use LsstCam
+        elif selectSensors is 'lsstcam': # use LsstCam
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstCam, isrDirPath)
         elif selectSensors is 'lsstfamcam':
             wepCalc = WEPCalculationFactory.getCalculator(CamType.LsstFamCam, isrDirPath)
@@ -713,9 +711,9 @@ class baseLsstFamCamLoop():
 
     def _prepareOfcCalc(self, filterType, rotAngInDeg, selectSensors):
 
-        if (selectSensors is None) or (selectSensors is 'comcam'): # by default
+        if (selectSensors is None) or (selectSensors == 'comcam'): # by default
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.COMCAM)
-        elif (selectSensors is 'wfs') or (selectSensors is 'lsstfamcam'): # use LsstCam
+        elif (selectSensors == 'lsstcam') or (selectSensors == 'lsstfamcam'): # use LsstCam
             ofcCalc = OFCCalculationFactory.getCalculator(InstName.LSST)
 
         ofcCalc.setFilter(filterType)
