@@ -229,8 +229,6 @@ class baseComcamLoop():
         phosimCmpt.setDofInUm(state0)
 
 
-
-
         # Do the iteration
         obsId = 9006000
         opdZkFileName = str("opd.zer" + '.' + testName)
@@ -825,12 +823,14 @@ if __name__ == "__main__":
                         help="number of closed-loop iteration (default: 5)")
     parser.add_argument("--outputDir", type=str, default="",
                         help="output directory")
-    parser.add_argument("--testLabel", type=str, default="1",
+    parser.add_argument("--testName", type=str, default="1",
                         help="filename identifier for test files")
     parser.add_argument('--isEimg', default=False, action='store_true',
                         help='Use the eimage files')
     parser.add_argument('--genFocalImg', default=False, action='store_true',
                         help='Generate in-focus images')
+    parser.add_argument('--genFlats', default=True, action='store_true',
+                        help='Generate calibration images ')
     parser.add_argument('--useMinDofIdx', default=False, action='store_true',
                         help='Use 10 hexapod positions and first 3 bending modes of M1M3 and M2')
     parser.add_argument("--skyFile", type=str, default="",
@@ -849,8 +849,7 @@ if __name__ == "__main__":
         _eraseFolderContent(args.outputDir)
 
     ccLoop = baseComcamLoop()
-    ccLoop.main(phosimDir, args.numPro, args.iterNum, args.outputDir, args.testLabel,
-                isEimg=args.isEimg, genFocalImg = args.genFocalImg, 
-                useMinDofIdx=args.useMinDofIdx,
-                inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError)
-    
+    ccLoop.main(phosimDir, numPro=args.numPro, iterNum=args.iterNum, baseOutputDir=args.outputDir, 
+        testName=args.testName, isEimg=args.isEimg, genFocalImg = args.genFocalImg, genFlats=args.genFlats,
+        useMinDofIdx=args.useMinDofIdx, inputSkyFilePath=args.skyFile, m1m3ForceError=args.m1m3ForceError)
+
