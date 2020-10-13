@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import re
 import warnings
@@ -154,8 +175,7 @@ def getPhoSimPath(phosimPathVar="PHOSIMPATH"):
     try:
         return os.environ[phosimPathVar]
     except KeyError:
-        raise RuntimeError("Please set the '%s' environment variable."
-                           % phosimPathVar)
+        raise RuntimeError("Please set the '%s' environment variable." % phosimPathVar)
 
 
 def getAoclcOutputPath(aoclcOutputPathVar="AOCLCOUTPUTPATH"):
@@ -178,8 +198,10 @@ def getAoclcOutputPath(aoclcOutputPathVar="AOCLCOUTPUTPATH"):
         outputPath = os.environ[aoclcOutputPathVar]
     except KeyError:
         outputPath = os.path.join(getModulePath(), "output")
-        warnings.warn("No 'AOCLCOUTPUTPATH' assigned. Use %s instead." % outputPath,
-                      category=UserWarning)
+        warnings.warn(
+            "No 'AOCLCOUTPUTPATH' assigned. Use %s instead." % outputPath,
+            category=UserWarning,
+        )
 
     return outputPath
 
@@ -210,13 +232,12 @@ def sortOpdFileList(opdFileList):
     opdNumList = []
     for basename in baseNameList:
         m = re.match(r"\Aopd_\d+_(\d+).fits", basename)
-        if (m is None):
+        if m is None:
             raise ValueError("Unmatched file name (%s) found." % basename)
         else:
             opdNumList.append(int(m.groups()[0]))
 
-    sortedIdxList = sorted(range(len(opdNumList)),
-                           key=lambda idx: opdNumList[idx])
+    sortedIdxList = sorted(range(len(opdNumList)), key=lambda idx: opdNumList[idx])
 
     # Get the rearranged file list
     sortedOpdFileList = [opdFileList[idx] for idx in sortedIdxList]

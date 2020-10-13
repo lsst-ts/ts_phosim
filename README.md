@@ -2,22 +2,22 @@
 
 This module is a high-level module to use PhoSim.
 
-## 1. Platform
+## Platform
 
 - CentOS 7
-- python: 3.7.6
-- scientific pipeline (newinstall.sh from master branch)
-- phosim_syseng4 (branch: aos, tag: firstdonuts)
+- python: 3.7.8
+- [phosim_syseng4](https://github.com/lsst-ts/phosim_syseng4) (branch: aos, tag: firstdonuts)
 
-## 2. Needed Package
+## Needed Package
 
-- [ts_wep](https://github.com/lsst-ts/ts_wep) - master branch (commit: 3c661a4)
-- [ts_ofc](https://github.com/lsst-ts/ts_ofc) - master branch (commit: 87075e2)
+- [ts_wep](https://github.com/lsst-ts/ts_wep)
+- [ts_ofc](https://github.com/lsst-ts/ts_ofc)
+- [black](https://github.com/psf/black) (optional)
 - [documenteer](https://github.com/lsst-sqre/documenteer) (optional)
 - [plantuml](http://plantuml.com) (optional)
 - [sphinxcontrib-plantuml](https://pypi.org/project/sphinxcontrib-plantuml/) (optional)
 
-## 3. Use of Module
+## Use of Module
 
 1. Setup the WEP and OFC environments first, and then, setup the PhoSim environment by `eups`:
 
@@ -34,7 +34,15 @@ export PHOSIMPATH=$path_to_phosim
 export AOCLCOUTPUTPATH=$path_to_output
 ```
 
-## 4. Example Script
+## Code Format
+
+This code is automatically formatted by `black` using a git pre-commit hook.
+To enable this:
+
+1. Install the `black` Python package.
+2. Run `git config core.hooksPath .githooks` once in this repository.
+
+## Example Script
 
 - **calcOpd.py**: Test the OPD without the subsystem perturbation.
 - **calcOpdAndSubSys.py**: Test the OPD with the subsystem perturbation.
@@ -43,15 +51,23 @@ export AOCLCOUTPUTPATH=$path_to_output
 - **checkStarCoor.py**: Test to add the star by pixel position and get the image.
 - **checkStarCoorWiLsstFAM.py**: Test to add the star by pixel position in LSST FAM condition and get the images.
 
-## 5. Command Line Task
+## Command Line Task
 
 - **opdCloseLoop.py**: Close-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
-- **comcamCloseLoop.py**: Close-loop simulation of commissioning camera. There are 9 stars on the center of each CCD. This task supports the amplifier images and eimages of PhoSim.
+- **imgCloseLoop.py**: Close-loop simulation of the images. This task supports the amplifier images and eimages of PhoSim.
 
-## 6. Build the Document
+## Example Sky Files
 
-The user can use `package-docs build` to build the documentation. The packages of documenteer, plantuml, and sphinxcontrib-plantuml are needed. The path of plantuml.jar in doc/conf.py needs to be updated to the correct path. To clean the built documents, use `package-docs clean`. See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.
+There are two sky files in `tests/testData/sky/` directory that can be used in the test of command line task. One is for ComCam and one is for LSST full array mode (FAM): **skyComCam.txt** and **skyLsstFam.txt**.
 
-## 7. Reference of PhoSim with active optics (AOS)
+## Build the Document
+
+To build project documentation, run `package-docs build` to build the documentation.
+The packages of **documenteer**, **plantuml**, and **sphinxcontrib-plantuml** are needed.
+The path of `plantuml.jar` in `doc/conf.py` needs to be updated to the correct path.
+To clean the built documents, use `package-docs clean`.
+See [Building single-package documentation locally](https://developer.lsst.io/stack/building-single-package-docs.html) for further details.
+
+## Reference of PhoSim with active optics (AOS)
 
 - The original work was done by Bo Xin and Chuck Claver. The source code can be found in: [IM](https://github.com/bxin/IM).

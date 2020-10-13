@@ -1,6 +1,28 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import re
 import shutil
+import warnings
 import numpy as np
 from scipy import ndimage
 from astropy.io import fits
@@ -10,6 +32,7 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
+from lsst.ts.ofc.Utility import InstName
 from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
 
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
@@ -17,7 +40,6 @@ from lsst.ts.phosim.OpdMetrology import OpdMetrology
 
 
 class PhosimCmpt(object):
-
     def __init__(self, tele):
         """Initialization of PhoSim component class.
 
@@ -33,8 +55,7 @@ class PhosimCmpt(object):
         self.configDir = getConfigDir()
 
         # Telescope setting file
-        settingFilePath = os.path.join(self.configDir,
-                                       "phosimCmptSetting.yaml")
+        settingFilePath = os.path.join(self.configDir, "phosimCmptSetting.yaml")
         self._phosimCmptSettingFile = ParamReader(filePath=settingFilePath)
 
         # OPD metrology
@@ -248,8 +269,14 @@ class PhosimCmpt(object):
 
         return self.seedNum
 
-    def setSurveyParam(self, obsId=None, filterType=None, boresight=None,
-                       zAngleInDeg=None, rotAngInDeg=None):
+    def setSurveyParam(
+        self,
+        obsId=None,
+        filterType=None,
+        boresight=None,
+        zAngleInDeg=None,
+        rotAngInDeg=None,
+    ):
         """Set the survey parameters.
 
         Parameters
@@ -267,9 +294,13 @@ class PhosimCmpt(object):
             default is None.)
         """
 
-        self.tele.setSurveyParam(obsId=obsId, filterType=filterType,
-                                 boresight=boresight, zAngleInDeg=zAngleInDeg,
-                                 rotAngInDeg=rotAngInDeg)
+        self.tele.setSurveyParam(
+            obsId=obsId,
+            filterType=filterType,
+            boresight=boresight,
+            zAngleInDeg=zAngleInDeg,
+            rotAngInDeg=rotAngInDeg,
+        )
 
     def addOpdFieldXYbyDeg(self, fieldXInDegree, fieldYInDegree):
         """Add the OPD new field X, Y in degree.
@@ -334,8 +365,9 @@ class PhosimCmpt(object):
 
         return self.tele.getDofInUm()
 
-    def saveDofInUmFileForNextIter(self, dofInUm,
-                                   dofInUmFileName="dofPertInNextIter.mat"):
+    def saveDofInUmFileForNextIter(
+        self, dofInUm, dofInUmFileName="dofPertInNextIter.mat"
+    ):
         """Save the DOF in um data to file for the next iteration.
 
         DOF: degree of freedom.
@@ -365,9 +397,13 @@ class PhosimCmpt(object):
         self.tele.runPhoSim(argString)
 
     def getComCamOpdArgsAndFilesForPhoSim(
-            self, cmdFileName="opd.cmd", instFileName="opd.inst",
-            logFileName="opdPhoSim.log", cmdSettingFileName="opdDefault.cmd",
-            instSettingFileName="opdDefault.inst"):
+        self,
+        cmdFileName="opd.cmd",
+        instFileName="opd.inst",
+        logFileName="opdPhoSim.log",
+        cmdSettingFileName="opdDefault.cmd",
+        instSettingFileName="opdDefault.inst",
+    ):
         """Get the OPD calculation arguments and files of ComCam for the PhoSim
         calculation.
 
@@ -394,30 +430,41 @@ class PhosimCmpt(object):
             Arguments to run the PhoSim.
         """
 
-        # Set the default ComCam OPD field positions
-        self.metr.setDefaultComcamGQ()
+        warnings.warn(
+            "Use getOpdArgsAndFilesForPhoSim() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
 
-        argString = self._getOpdArgsAndFilesForPhoSim(
-            cmdFileName, instFileName, logFileName, cmdSettingFileName,
-            instSettingFileName)
+        argString = self.getOpdArgsAndFilesForPhoSim(
+            InstName.COMCAM,
+            cmdFileName=cmdFileName,
+            instFileName=instFileName,
+            logFileName=logFileName,
+            cmdSettingFileName=cmdSettingFileName,
+            instSettingFileName=instSettingFileName,
+        )
 
         return argString
 
-
-
-    def getLsstFamCamOpdArgsAndFilesForPhoSim(
-            self, cmdFileName="opd.cmd", instFileName="opd.inst",
-            logFileName="opdPhoSim.log", cmdSettingFileName="opdDefault.cmd",
-            instSettingFileName="opdDefault.inst"):
-        """Get the OPD calculation arguments and files of LsstFamCam for the PhoSim
-        calculation - it evaluates OPD in 31 locations 
-        in the focal plane 
+    def getOpdArgsAndFilesForPhoSim(
+        self,
+        instName,
+        cmdFileName="opd.cmd",
+        instFileName="opd.inst",
+        logFileName="opdPhoSim.log",
+        cmdSettingFileName="opdDefault.cmd",
+        instSettingFileName="opdDefault.inst",
+    ):
+        """Get the OPD calculation arguments and files for the PhoSim
+        calculation.
 
         OPD: optical path difference.
-        ComCam: commissioning camera.
 
         Parameters
         ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
         cmdFileName : str, optional
             Physical command file name. (the default is "opd.cmd".)
         instFileName : str, optional
@@ -436,52 +483,20 @@ class PhosimCmpt(object):
             Arguments to run the PhoSim.
         """
 
-        # Set the default LsstCam OPD field positions
-        self.metr.setDefaultLsstGQ()
-
-        argString = self._getOpdArgsAndFilesForPhoSim(
-            cmdFileName, instFileName, logFileName, cmdSettingFileName,
-            instSettingFileName)
-
-        return argString
-
-
-    def _getOpdArgsAndFilesForPhoSim(self, cmdFileName, instFileName,
-                                     logFileName, cmdSettingFileName,
-                                     instSettingFileName):
-        """Get the OPD calculation arguments and files for the PhoSim
-        calculation.
-
-        OPD: optical path difference.
-
-        Parameters
-        ----------
-        cmdFileName : str
-            Physical command file name.
-        instFileName : str
-            OPD instance file name.
-        logFileName : str
-            Log file name.
-        cmdSettingFileName : str
-            Physical command setting file name.
-        instSettingFileName : str
-            Instance setting file name.
-
-        Returns
-        -------
-        str
-            Arguments to run the PhoSim.
-        """
+        # Set the weighting ratio and field positions of OPD
+        self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Write the command file
-        cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName,
-                                                 cmdFileName)
+        cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName, cmdFileName)
 
         # Write the instance file
         instSettingFile = self._getInstSettingFilePath(instSettingFileName)
         instFilePath = self.tele.writeOpdInstFile(
-            self.outputDir, self.metr, instSettingFile=instSettingFile,
-            instFileName=instFileName)
+            self.outputDir,
+            self.metr,
+            instSettingFile=instSettingFile,
+            instFileName=instFileName,
+        )
 
         # Get the argument to run the PhoSim
         argString = self._getPhoSimArgs(logFileName, instFilePath, cmdFilePath)
@@ -507,20 +522,25 @@ class PhosimCmpt(object):
         # Write the perturbation file
         pertCmdFileName = "pert.cmd"
         pertCmdFilePath = os.path.join(self.outputDir, pertCmdFileName)
-        if (not os.path.exists(pertCmdFilePath)):
+        if not os.path.exists(pertCmdFilePath):
             self.tele.writePertBaseOnConfigFile(
-                self.outputDir, seedNum=self.seedNum,
-                m1m3ForceError=self.m1m3ForceError, saveResMapFig=True,
-                pertCmdFileName=pertCmdFileName)
+                self.outputDir,
+                seedNum=self.seedNum,
+                m1m3ForceError=self.m1m3ForceError,
+                saveResMapFig=True,
+                pertCmdFileName=pertCmdFileName,
+            )
 
         # Write the physical command file
-        cmdSettingFile = os.path.join(self.configDir, "cmdFile",
-                                      cmdSettingFileName)
+        cmdSettingFile = os.path.join(self.configDir, "cmdFile", cmdSettingFileName)
         cmdFilePath = os.path.join(self.outputDir, cmdFileName)
-        if (not os.path.exists(cmdFilePath)):
+        if not os.path.exists(cmdFilePath):
             self.tele.writeCmdFile(
-                self.outputDir, cmdSettingFile=cmdSettingFile,
-                pertFilePath=pertCmdFilePath, cmdFileName=cmdFileName)
+                self.outputDir,
+                cmdSettingFile=cmdSettingFile,
+                pertFilePath=pertCmdFilePath,
+                cmdFileName=cmdFileName,
+            )
 
         return cmdFilePath
 
@@ -538,8 +558,7 @@ class PhosimCmpt(object):
             Instance setting file path.
         """
 
-        instSettingFile = os.path.join(self.configDir, "instFile",
-                                       instSettingFileName)
+        instSettingFile = os.path.join(self.configDir, "instFile", instSettingFileName)
 
         return instSettingFile
 
@@ -567,8 +586,13 @@ class PhosimCmpt(object):
         logFilePath = os.path.join(self.outputImgDir, logFileName)
 
         argString = self.tele.getPhoSimArgs(
-            instFilePath, extraCommandFile=cmdFilePath, numPro=numPro,
-            outputDir=self.outputImgDir, e2ADC=e2ADC, logFilePath=logFilePath)
+            instFilePath,
+            extraCommandFile=cmdFilePath,
+            numPro=numPro,
+            outputDir=self.outputImgDir,
+            e2ADC=e2ADC,
+            logFilePath=logFilePath,
+        )
 
         return argString
 
@@ -785,9 +809,14 @@ class PhosimCmpt(object):
 
 
     def getComCamStarArgsAndFilesForPhoSim(
-            self, extraObsId, intraObsId, skySim, simSeed=1000,
-            cmdSettingFileName="starDefault.cmd",
-            instSettingFileName="starSingleExp.inst"):
+        self,
+        extraObsId,
+        intraObsId,
+        skySim,
+        simSeed=1000,
+        cmdSettingFileName="starDefault.cmd",
+        instSettingFileName="starSingleExp.inst",
+    ):
         """Get the star calculation arguments and files of ComCam for the
         PhoSim calculation of the defocal images.  The defocal images 
         are achieved by movement of the camera piston by 1.5 mm  - this is 
@@ -819,18 +848,65 @@ class PhosimCmpt(object):
             List of arguments to run the PhoSim.
         """
 
+        warnings.warn(
+            "Use getPistonCamStarArgsAndFilesForPhoSim() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        return self.getPistonCamStarArgsAndFilesForPhoSim(
+            extraObsId,
+            intraObsId,
+            skySim,
+            simSeed=simSeed,
+            cmdSettingFileName=cmdSettingFileName,
+            instSettingFileName=instSettingFileName,
+        )
+
+    def getPistonCamStarArgsAndFilesForPhoSim(
+        self,
+        extraObsId,
+        intraObsId,
+        skySim,
+        simSeed=1000,
+        cmdSettingFileName="starDefault.cmd",
+        instSettingFileName="starSingleExp.inst",
+    ):
+        """Get the star calculation arguments and files of piston camera (
+        ComCam or LSST FAM) for the PhoSim calculation.
+
+        FAM: Full-array mode.
+
+        Parameters
+        ----------
+        extraObsId : int
+            Extra-focal observation Id.
+        intraObsId : int
+            Intra-focal observation Id.
+        skySim : SkySim
+            Sky simulator
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "starDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "starSingleExp.inst".)
+
+        Returns
+        -------
+        list[str]
+            List of arguments to run the PhoSim.
+        """
+
         # Set the intra- and extra-focal related information
-        obsIdList = {"-1": extraObsId,
-                     "1": intraObsId}
-        instFileNameList = {"-1": "starExtra.inst",
-                            "1": "starIntra.inst"}
-        logFileNameList = {"-1": "starExtraPhoSim.log",
-                           "1": "starIntraPhoSim.log"}
+        obsIdList = {"-1": extraObsId, "1": intraObsId}
+        instFileNameList = {"-1": "starExtra.inst", "1": "starIntra.inst"}
+        logFileNameList = {"-1": "starExtraPhoSim.log", "1": "starIntraPhoSim.log"}
 
         extraFocalDirName = self.getExtraFocalDirName()
         intraFocalDirName = self.getIntraFocalDirName()
-        outImgDirNameList = {"-1": extraFocalDirName,
-                             "1": intraFocalDirName}
+        outImgDirNameList = {"-1": extraFocalDirName, "1": intraFocalDirName}
 
         # Write the instance and command files of defocal conditions
         cmdFileName = "star.cmd"
@@ -850,17 +926,19 @@ class PhosimCmpt(object):
             self.setDofInUm(onFocalDofInUm + pistonInUm)
 
             # Update the output image directory
-            outputImgDir = os.path.join(onFocalOutputImgDir,
-                                        outImgDirNameList[str(ii)])
+            outputImgDir = os.path.join(onFocalOutputImgDir, outImgDirNameList[str(ii)])
             self.setOutputImgDir(outputImgDir)
 
             # Get the argument to run the phosim
             argString = self.getStarArgsAndFilesForPhoSim(
-                skySim, cmdFileName=cmdFileName,
+                skySim,
+                cmdFileName=cmdFileName,
                 instFileName=instFileNameList[str(ii)],
-                logFileName=logFileNameList[str(ii)], simSeed=simSeed,
+                logFileName=logFileNameList[str(ii)],
+                simSeed=simSeed,
                 cmdSettingFileName=cmdSettingFileName,
-                instSettingFileName=instSettingFileName)
+                instSettingFileName=instSettingFileName,
+            )
             argStringList.append(argString)
 
         # Put the internal state back to the focal plane condition
@@ -869,13 +947,16 @@ class PhosimCmpt(object):
 
         return argStringList
 
-    def getStarArgsAndFilesForPhoSim(self, skySim,
-                                     cmdFileName="star.cmd",
-                                     instFileName="star.inst",
-                                     logFileName="starPhoSim.log",
-                                     simSeed=1000,
-                                     cmdSettingFileName="starDefault.cmd",
-                                     instSettingFileName="starSingleExp.inst"):
+    def getStarArgsAndFilesForPhoSim(
+        self,
+        skySim,
+        cmdFileName="star.cmd",
+        instFileName="star.inst",
+        logFileName="starPhoSim.log",
+        simSeed=1000,
+        cmdSettingFileName="starDefault.cmd",
+        instSettingFileName="starSingleExp.inst",
+    ):
         """Get the star calculation arguments and files for the PhoSim
         calculation.
 
@@ -904,23 +985,27 @@ class PhosimCmpt(object):
         """
 
         # Write the command file
-        cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName,
-                                                 cmdFileName)
+        cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName, cmdFileName)
 
         # Write the instance file
         instSettingFile = self._getInstSettingFilePath(instSettingFileName)
         instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, simSeed=simSeed, sedName="sed_flat.txt",
-            instSettingFile=instSettingFile, instFileName=instFileName)
+            self.outputDir,
+            skySim,
+            simSeed=simSeed,
+            sedName="sed_flat.txt",
+            instSettingFile=instSettingFile,
+            instFileName=instFileName,
+        )
 
         # Get the argument to run the PhoSim
         argString = self._getPhoSimArgs(logFileName, instFilePath, cmdFilePath)
 
         return argString
 
-    def analyzeComCamOpdData(self, zkFileName="opd.zer",
-                             rotOpdInDeg=0.0,
-                             pssnFileName="PSSN.txt"):
+    def analyzeComCamOpdData(
+        self, zkFileName="opd.zer", rotOpdInDeg=0.0, pssnFileName="PSSN.txt"
+    ):
         """Analyze the ComCam OPD data.
 
         Rotate OPD to simulate the output by rotated camera. When anaylzing the
@@ -941,24 +1026,31 @@ class PhosimCmpt(object):
             PSSN file name. (the default is "PSSN.txt".)
         """
 
-        self._writeOpdZkFile(zkFileName, rotOpdInDeg)
-        self._writeOpdPssnFile(pssnFileName, sensor='comcam')
+        warnings.warn(
+            "Use analyzeOpdData() instead.", category=DeprecationWarning, stacklevel=2,
+        )
+        self.analyzeOpdData(
+            InstName.COMCAM,
+            zkFileName=zkFileName,
+            rotOpdInDeg=rotOpdInDeg,
+            pssnFileName=pssnFileName,
+        )
 
-    def analyzeLsstFamCamOpdData(self, zkFileName="opd.zer",
-                             rotOpdInDeg=0.0,
-                             pssnFileName="PSSN.txt"):
-        """Analyze the LsstFamCam OPD data.
+    def analyzeOpdData(
+        self, instName, zkFileName="opd.zer", rotOpdInDeg=0.0, pssnFileName="PSSN.txt"
+    ):
+        """Analyze the OPD data.
 
-        Rotate OPD to simulate the output by rotated camera. When analyzing the
+        Rotate OPD to simulate the output by rotated camera. When anaylzing the
         PSSN, the unrotated OPD is used.
 
-        LsstFamCam: The LSST full array mode OPD, calculated in 31 locations 
-            specified by metr.setDefaultLsstGQ()
         OPD: Optical path difference.
         PSSN: Normalized point source sensitivity.
 
         Parameters
         ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
         zkFileName : str, optional
             OPD in zk file name. (the default is "opd.zer".)
         rotOpdInDeg : float, optional
@@ -969,7 +1061,8 @@ class PhosimCmpt(object):
         """
 
         self._writeOpdZkFile(zkFileName, rotOpdInDeg)
-        self._writeOpdPssnFile(pssnFileName,sensor='LsstFamCam')
+        self._writeOpdPssnFile(instName, pssnFileName)
+
 
     def _writeOpdZkFile(self, zkFileName, rotOpdInDeg):
         """Write the OPD in zk file.
@@ -986,8 +1079,12 @@ class PhosimCmpt(object):
 
         filePath = os.path.join(self.outputImgDir, zkFileName)
         opdData = self._mapOpdToZk(rotOpdInDeg)
-        header = "The following are OPD in rotation angle of %.2f degree in um from z4 to z22:" % (
-            rotOpdInDeg)
+
+        header = (
+            "The following are OPD in rotation angle of %.2f degree in um from z4 to z22:" 
+            % (rotOpdInDeg)
+        )
+
         np.savetxt(filePath, opdData, header=header)
 
     def _mapOpdToZk(self, rotOpdInDeg):
@@ -1018,7 +1115,7 @@ class PhosimCmpt(object):
             opd = fits.getdata(opdFile)
 
             # Rotate OPD if needed
-            if (rotOpdInDeg != 0):
+            if rotOpdInDeg != 0:
                 opdRot = ndimage.rotate(opd, rotOpdInDeg, reshape=False)
                 opdRot[opd == 0] = 0
             else:
@@ -1029,7 +1126,7 @@ class PhosimCmpt(object):
 
             # Only need to collect z4 to z22
             initIdx = 3
-            opdData[idx, :] = zk[initIdx:initIdx + numOfZk]
+            opdData[idx, :] = zk[initIdx : initIdx + numOfZk]
 
         return opdData
 
@@ -1055,7 +1152,7 @@ class PhosimCmpt(object):
         for file in fileList:
             fileName = os.path.basename(file)
             m = re.match(r"\Aopd_\d+_(\d+).fits.gz", fileName)
-            if (m is not None):
+            if m is not None:
                 opdFileList.append(file)
 
         # Do the sorting of file name
@@ -1085,7 +1182,8 @@ class PhosimCmpt(object):
 
         return fileList
 
-    def _writeOpdPssnFile(self, pssnFileName,sensor='comcam'):
+
+    def _writeOpdPssnFile(self, instName, pssnFileName):
         """Write the OPD PSSN in file.
 
         OPD: Optical path difference.
@@ -1093,26 +1191,20 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
         pssnFileName : str
             PSSN file name.
         """
 
-        filePath = os.path.join(self.outputImgDir, pssnFileName)
+        # Set the OPD weighting ratio
+        self.metr.setWgtAndFieldXyOfGQ(instName)
 
-        if sensor is 'comcam':
-            # Calculate the PSSN
-            pssnList, gqEffPssn = self._calcComCamOpdPssn()
+        # Calculate the PSSN
+        pssnList, gqEffPssn = self._calcPssnOpd()
 
-            # Calculate the FWHM
-            effFwhmList, gqEffFwhm = self._calcComCamOpdEffFwhm(pssnList)
-
-        elif sensor is 'LsstFamCam':
-            # Calculate the PSSN
-            pssnList, gqEffPssn = self._calcLsstFamCamOpdPssn()
-
-            # Calculate the FWHM
-            effFwhmList, gqEffFwhm = self._calcLsstFamCamOpdEffFwhm(pssnList)
-             
+        # Calculate the FWHM
+        effFwhmList, gqEffFwhm = self._calcEffFwhmOpd(pssnList)
 
         # Append the list to write the data into file
         pssnList.append(gqEffPssn)
@@ -1122,13 +1214,13 @@ class PhosimCmpt(object):
         data = np.vstack((pssnList, effFwhmList))
 
         # Write to file
+        filePath = os.path.join(self.outputImgDir, pssnFileName)
         header = "The following are PSSN and FWHM (in arcsec) data. The final number is the GQ value."
         np.savetxt(filePath, data, header=header)
 
-    def _calcComCamOpdPssn(self):
-        """Calculate the ComCam PSSN of OPD.
+    def _calcPssnOpd(self):
+        """Calculate the PSSN of OPD.
 
-        ComCam: Commissioning camera.
         OPD: Optical path difference.
         PSSN: Normalized point source sensitivity.
         GQ: Gaussian quadrature.
@@ -1150,66 +1242,14 @@ class PhosimCmpt(object):
             pssnList.append(pssn)
 
         # Calculate the GQ effectice PSSN
-        self._setComCamWgtRatio()
         gqEffPssn = self.metr.calcGQvalue(pssnList)
 
         return pssnList, gqEffPssn
 
-    def _calcLsstFamCamOpdPssn(self):
-        """Calculate the LsstFamCam PSSN from OPD.
 
-        LsstCam: The The LSST full array mode camera,
-            with OPD calculated in 31 locations 
-            specified by metr.setDefaultLsstGQ()
-        OPD: Optical path difference.
-        PSSN: Normalized point source sensitivity.
-        GQ: Gaussian quadrature.
+    def _calcEffFwhmOpd(self, pssnList):
+        """Calculate the effective FWHM of OPD.
 
-        Returns
-        -------
-        list
-            PSSN list.
-        float
-            GQ effective PSSN.
-        """
-
-        opdFileList = self._getOpdFileInDir(self.outputImgDir)
-
-        wavelengthInUm = self.tele.getRefWaveLength() * 1e-3
-        pssnList = []
-        for opdFile in opdFileList:
-            pssn = self.metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFile)
-            pssnList.append(pssn)
-
-        # Calculate the GQ effectice PSSN
-        # part of that is  self.setWeightingRatio(wt)
-        # it was already called when setting up PhosimCmpt
-        # but setting weighting ratio explicitly here 
-        # won't hurt 
-        # otherwise the _setComCamWgtRatio() here 
-        # is completely obsolete if self.metr.setDefaultComcamGQ()
-        # is always called as part of 
-        # getComCamOpdArgsAndFilesForPhoSim() above...
-        self.metr.setDefaultLsstGQ() 
-        gqEffPssn = self.metr.calcGQvalue(pssnList)
-
-        return pssnList, gqEffPssn
-    
-
-    def _setComCamWgtRatio(self):
-        """Set the ComCam weighting ratio.
-
-        ComCam: Commissioning camera.
-        """
-
-        comcamWtRatio = np.ones(9)
-        self.metr.setWeightingRatio(comcamWtRatio)
-
-
-    def _calcComCamOpdEffFwhm(self, pssnList):
-        """Calculate the ComCam effective FWHM of OPD.
-
-        ComCam: Commissioning camera.
         FWHM: Full width and half maximum.
         PSSN: Normalized point source sensitivity.
         GQ: Gaussian quadrature.
@@ -1224,7 +1264,7 @@ class PhosimCmpt(object):
         list
             Effective FWHM list.
         float
-            GQ effective FWHM of ComCam.
+            GQ effective FWHM.
         """
 
         # Calculate the list of effective FWHM
@@ -1234,7 +1274,6 @@ class PhosimCmpt(object):
             effFwhmList.append(effFwhm)
 
         # Calculate the GQ effectice FWHM
-        self._setComCamWgtRatio()
         gqEffFwhm = self.metr.calcGQvalue(effFwhmList)
 
         return effFwhmList, gqEffFwhm
@@ -1304,8 +1343,7 @@ class PhosimCmpt(object):
         listOfWfErr = []
         for sensorId, zk in zip(sensorIdList, opdZk):
 
-            sensorWavefrontData = SensorWavefrontError(
-                numOfZk=self.getNumOfZk())
+            sensorWavefrontData = SensorWavefrontError(numOfZk=self.getNumOfZk())
             sensorWavefrontData.setSensorId(sensorId)
             sensorWavefrontData.setAnnularZernikePoly(zk)
 
@@ -1437,98 +1475,11 @@ class PhosimCmpt(object):
         return listOfFWHMSensorData
 
 
-    def repackageComCamAmpFocalImgFromPhoSim(self):
-        """Repackage the ComCam amplifier images from PhoSim to the single 
-        16 extension multi-extension frames (MEFs) for processing,
-        """
-        # Make a temporary directory
-        tmpDirPath = os.path.join(self.outputImgDir, "tmp")
-        self._makeDir(tmpDirPath)
+    def repackagePistonCamImgs(self, isEimg=False):
+        """Repackage the images of piston camera (ComCam and LSST FAM) from
+        PhoSim for processing.
 
-        focalDirName = self.getFocalDirName()
-  
-        # Repackage the images to the temporary directory
-        command = "phosim_repackager.py"
-        phosimImgDir = os.path.join(self.outputImgDir, focalDirName)
-        argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
-      
-        runProgram(command, argstring=argstring)
-
-        # Remove the image data in the original directory
-        argString = "-rf %s/*.fits*" % phosimImgDir
-        runProgram("rm", argstring=argString)
-
-        # Put the repackaged data into the image directory
-        argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
-        runProgram("mv", argstring=argstring)
-
-        # Remove the temporary directory
-        shutil.rmtree(tmpDirPath)
-
-    def repackageLsstCamAmpImgFromPhosim(self,keepOriginal=False,verbose=False):
-        """Repackage the LsstCam amplifier images from PhoSim to the single 
-        16 extension multi-extension frames (MEFs) for processing. There is 
-        only intra-focal dir used 
-        """
-        # Make a temporary directory
-        tmpDirPath = os.path.join(self.outputImgDir, "tmp")
-        self._makeDir(tmpDirPath)
-
-        intraFocalDirName = self.getIntraFocalDirName()
-    
-        # Repackage the images to the temporary directory
-        command = "phosim_repackager.py"
-        phosimImgDir = os.path.join(self.outputImgDir, intraFocalDirName)
-        argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
-        runProgram(command, argstring=argstring)
-        if verbose:
-            print('\nRunning')
-            print(command, argstring)
-        
-
-
-        # if keeping originals, copy them to  a dir 
-        if keepOriginal:
-            origDirPath = os.path.join(self.outputImgDir, 'orig')
-            self._makeDir(origDirPath)
-
-            argstring = '-a %s/. %s/'%(phosimImgDir,origDirPath)
-            runProgram("cp", argstring=argstring)
-            if verbose:
-                print('\nRunning')
-                print("cp ",argstring)
-                print('We keep the original PhoSim output images in %s'%origDirPath)
-
-          
-        # Remove the image data in the original directory
-        argstring = "-rf %s/*.fits*" % phosimImgDir
-        runProgram("rm", argstring=argstring)
-        if verbose:
-            print('\nRunning')
-            print("rm ", argstring)
-
-        # Put the repackaged data back into the image directory
-        argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
-        runProgram("mv", argstring=argstring)
-        if verbose:
-            print('\nRunning')
-            print("mv ", argstring)
-
-        # Remove the temporary directory
-        shutil.rmtree(tmpDirPath)
-
-    def repackageComCamAmpImgFromPhoSim(self):
-        """Repackage the ComCam amplifier images from PhoSim to the single 16
-        extension MEFs for processing.
-
-        ComCam: commissioning camera.
-        MEF: multi-extension frames.
-        """
-
-        self._repackageComCamImages(isEimg=False)
-
-    def _repackageComCamImages(self, isEimg=False):
-        """Repackage the ComCam images from PhoSim for processing.
+        FAM: Full-array mode.
 
         Parameters
         ----------
@@ -1548,7 +1499,7 @@ class PhosimCmpt(object):
             command = "phosim_repackager.py"
             phosimImgDir = os.path.join(self.outputImgDir, imgType)
             argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
-            if (isEimg):
+            if isEimg:
                 argstring += " --eimage"
             runProgram(command, argstring=argstring)
 
@@ -1563,16 +1514,39 @@ class PhosimCmpt(object):
         # Remove the temporary directory
         shutil.rmtree(tmpDirPath)
 
+    def repackageComCamAmpImgFromPhoSim(self):
+        """Repackage the ComCam amplifier images from PhoSim to the single 16
+        extension MEFs for processing.
+
+        ComCam: commissioning camera.
+        MEF: multi-extension frames.
+        """
+
+        warnings.warn(
+            "Use repackagePistonCamImgs() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+
+        self.repackagePistonCamImgs(isEimg=False)
+
     def repackageComCamEimgFromPhoSim(self):
         """Repackage the ComCam eimages from PhoSim for processing.
 
         ComCam: commissioning camera.
         """
 
-        self._repackageComCamImages(isEimg=True)
+        warnings.warn(
+            "Use repackagePistonCamImgs() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
 
-    def reorderAndSaveWfErrFile(self, listOfWfErr, refSensorNameList,
-                                zkFileName="wfs.zer"):
+        self.repackagePistonCamImgs(isEimg=True)
+
+    def reorderAndSaveWfErrFile(
+        self, listOfWfErr, refSensorNameList, zkFileName="wfs.zer"
+    ):
         """Reorder the wavefront error in the wavefront error list according to
         the reference sensor name list and save to a file.
 
@@ -1667,5 +1641,33 @@ class PhosimCmpt(object):
         return valueMatrix
 
 
-if __name__ == "__main__":
-    pass
+
+def repackageComCamAmpFocalImgFromPhoSim(self):
+        """Repackage the ComCam amplifier images from PhoSim to the single 
+        16 extension multi-extension frames (MEFs) for processing,
+        """
+        # Make a temporary directory
+        tmpDirPath = os.path.join(self.outputImgDir, "tmp")
+        self._makeDir(tmpDirPath)
+
+        focalDirName = self.getFocalDirName()
+  
+        # Repackage the images to the temporary directory
+        command = "phosim_repackager.py"
+        phosimImgDir = os.path.join(self.outputImgDir, focalDirName)
+        argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
+      
+        runProgram(command, argstring=argstring)
+
+        # Remove the image data in the original directory
+        argString = "-rf %s/*.fits*" % phosimImgDir
+        runProgram("rm", argstring=argString)
+
+        # Put the repackaged data into the image directory
+        argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
+        runProgram("mv", argstring=argstring)
+
+        # Remove the temporary directory
+        shutil.rmtree(tmpDirPath)
+
+

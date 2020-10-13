@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -11,7 +32,6 @@ from lsst.ts.wep.ParamReader import ParamReader
 
 
 class M2Sim(MirrorSim):
-
     def __init__(self):
         """Initiate the M2 simulator class."""
 
@@ -32,10 +52,9 @@ class M2Sim(MirrorSim):
         # Mirror FEA model with gradient temperature data
         self._feaFile = ParamReader()
 
-        self._config("M2_1um_force.yaml", "", "M2_1um_grid.yaml",
-                     "M2_GT_FEA.yaml")
+        self._config("", "M2_1um_grid.yaml", "M2_GT_FEA.yaml")
 
-    def _config(self, actForceFileName, lutFileName, gridFileName, feaFileName):
+    def _config(self, lutFileName, gridFileName, feaFileName):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -43,8 +62,6 @@ class M2Sim(MirrorSim):
 
         Parameters
         ----------
-        actForceFileName : str
-            Actuator force file name.
         lutFileName : str
             LUT file name.
         gridFileName : str
@@ -55,9 +72,9 @@ class M2Sim(MirrorSim):
 
         numTerms = self._m2SettingFile.getSetting("numTerms")
 
-        super(M2Sim, self).config(numTerms=numTerms,
-                                  actForceFileName=actForceFileName,
-                                  lutFileName=lutFileName)
+        super(M2Sim, self).config(
+            numTerms=numTerms, lutFileName=lutFileName,
+        )
 
         mirrorDataDir = self.getMirrorDataDir()
 
@@ -99,21 +116,23 @@ class M2Sim(MirrorSim):
         yFea = data[:, 1]
 
         # Zenith direction in um
-        zdz = self.fitData(xFea, yFea, data[:, 2], bxInZemax/radius,
-                           byInZemax/radius)
+        zdz = self.fitData(
+            xFea, yFea, data[:, 2], bxInZemax / radius, byInZemax / radius
+        )
 
         # Horizon direction in um
-        hdz = self.fitData(xFea, yFea, data[:, 3], bxInZemax/radius,
-                           byInZemax/radius)
+        hdz = self.fitData(
+            xFea, yFea, data[:, 3], bxInZemax / radius, byInZemax / radius
+        )
 
         # Do the M2 gravitational correction.
         # Map the changes of dz on a plane for certain zenith angle
-        printthzInUm = zdz * np.cos(zAngleInRadian) + \
-            hdz * np.sin(zAngleInRadian)
+        printthzInUm = zdz * np.cos(zAngleInRadian) + hdz * np.sin(zAngleInRadian)
 
         # Do the pre-compensation elevation angle correction
-        printthzInUm -= zdz * np.cos(preCompElevInRadian) + \
-            hdz * np.sin(preCompElevInRadian)
+        printthzInUm -= zdz * np.cos(preCompElevInRadian) + hdz * np.sin(
+            preCompElevInRadian
+        )
 
         return printthzInUm
 
@@ -171,12 +190,14 @@ class M2Sim(MirrorSim):
         yFea = data[:, 1]
 
         # Z-gradient in um
-        tzdz = self.fitData(xFea, yFea, data[:, 4], bxInZemax/radius,
-                            byInZemax/radius)
+        tzdz = self.fitData(
+            xFea, yFea, data[:, 4], bxInZemax / radius, byInZemax / radius
+        )
 
         # r-gradient in um
-        trdz = self.fitData(xFea, yFea, data[:, 5], bxInZemax/radius,
-                            byInZemax/radius)
+        trdz = self.fitData(
+            xFea, yFea, data[:, 5], bxInZemax / radius, byInZemax / radius
+        )
 
         # Get the temprature correction
         tempCorrInUm = m2TzGrad * tzdz + m2TrGrad * trdz
@@ -213,12 +234,14 @@ class M2Sim(MirrorSim):
 
         # Transform the M2 coordinate to Zemax coordinate
         bxInZemax, byInZemax, surfInZemax = opt2ZemaxCoorTrans(
-            bx, by, self.getSurfAlongZ())
+            bx, by, self.getSurfAlongZ()
+        )
 
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()
         resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
-            surfInZemax, bxInZemax/RinM, byInZemax/RinM)
+            surfInZemax, bxInZemax / RinM, byInZemax / RinM
+        )
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -227,13 +250,14 @@ class M2Sim(MirrorSim):
         zcInMmInZemax = zcInUmInZemax * 1e-3
 
         # Save the file of fitted Zk
-        if (writeZcInMnToFilePath is not None):
+        if writeZcInMnToFilePath is not None:
             np.savetxt(writeZcInMnToFilePath, zcInMmInZemax)
 
         return resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInMmInZemax
 
-    def writeMirZkAndGridResInZemax(self, resFile="", surfaceGridN=200,
-                                    writeZcInMnToFilePath=None):
+    def writeMirZkAndGridResInZemax(
+        self, resFile="", surfaceGridN=200, writeZcInMnToFilePath=None
+    ):
         """Write the grid residue in mm of mirror surface after the fitting
         with Zk under the Zemax coordinate.
 
@@ -254,9 +278,9 @@ class M2Sim(MirrorSim):
         """
 
         # Get the residure map
-        resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
-            self.getMirrorResInMmInZemax(
-                writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
+        resInMmInZemax, bxInMmInZemax, byInMmInZemax = self.getMirrorResInMmInZemax(
+            writeZcInMnToFilePath=writeZcInMnToFilePath
+        )[0:3]
 
         # Change the unit from m to mm
         innerRinMm = self.getInnerRinM() * 1e3
@@ -266,8 +290,15 @@ class M2Sim(MirrorSim):
         # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
         # Content: (z, dx, dy, dxdy)
         content = self._gridSampInMnInZemax(
-            resInMmInZemax, bxInMmInZemax, byInMmInZemax, innerRinMm,
-            outerRinMm, surfaceGridN, surfaceGridN, resFile=resFile)
+            resInMmInZemax,
+            bxInMmInZemax,
+            byInMmInZemax,
+            innerRinMm,
+            outerRinMm,
+            surfaceGridN,
+            surfaceGridN,
+            resFile=resFile,
+        )
 
         return content
 
@@ -283,14 +314,20 @@ class M2Sim(MirrorSim):
         """
 
         # Get the residure map
-        resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
-            self.getMirrorResInMmInZemax()[0:3]
+        resInMmInZemax, bxInMmInZemax, byInMmInZemax = self.getMirrorResInMmInZemax()[
+            0:3
+        ]
 
         # Change the unit
         outerRinMm = self.getOuterRinM() * 1e3
-        plotResMap(resInMmInZemax, bxInMmInZemax, byInMmInZemax,
-                   outerRinMm, resFile=resFile,
-                   writeToResMapFilePath=writeToResMapFilePath)
+        plotResMap(
+            resInMmInZemax,
+            bxInMmInZemax,
+            byInMmInZemax,
+            outerRinMm,
+            resFile=resFile,
+            writeToResMapFilePath=writeToResMapFilePath,
+        )
 
 
 if __name__ == "__main__":

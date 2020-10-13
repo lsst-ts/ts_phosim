@@ -30,5 +30,8 @@ pytest_session.txt
 # Jupyter Notebook Checkpoints
 *.ipynb_checkpoints
 
+# Vscode setting
+.vscode/
+
 # MacOS metadata
 .DS_Store

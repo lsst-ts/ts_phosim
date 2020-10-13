@@ -30,16 +30,17 @@ if __name__ == "__main__":
 
     # Set the parser
     parser = argparse.ArgumentParser(
-        description="Run AOS closed-loop simulation in optical path difference (OPD) level."
+        description="Run AOS closed-loop simulation (default is amplifier files)."
     )
     parser = CloseLoopTask.setDefaultParser(parser)
+    parser = CloseLoopTask.setImgParser(parser)
 
     # Get the arguments
     args = parser.parse_args()
 
     # Run the simulation
     closeLoopTask = CloseLoopTask()
-    closeLoopTask.runOpd(
+    closeLoopTask.runImg(
         args.inst,
         args.filterType,
         args.rotCam,
@@ -48,4 +49,7 @@ if __name__ == "__main__":
         args.iterNum,
         args.output,
         args.clobber,
+        args.boresightDeg,
+        args.skyFile,
+        args.eimage,
     )

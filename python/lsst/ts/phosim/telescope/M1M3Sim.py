@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 
@@ -12,7 +33,6 @@ from lsst.ts.wep.ParamReader import ParamReader
 
 
 class M1M3Sim(MirrorSim):
-
     def __init__(self):
         """Initiate the M1M3 simulator class."""
 
@@ -29,9 +49,9 @@ class M1M3Sim(MirrorSim):
         radiusM3Inner = self._m1m3SettingFile.getSetting("radiusM3Inner")
         radiusM3Outer = self._m1m3SettingFile.getSetting("radiusM3Outer")
 
-        super(M1M3Sim, self).__init__((radiusM1Inner, radiusM3Inner),
-                                      (radiusM1Outer, radiusM3Outer),
-                                      configDir)
+        super(M1M3Sim, self).__init__(
+            (radiusM1Inner, radiusM3Inner), (radiusM1Outer, radiusM3Outer), configDir
+        )
 
         # Mirror surface bending mode grid file
         self._gridFile = ParamReader()
@@ -54,19 +74,28 @@ class M1M3Sim(MirrorSim):
         # Influence matrix of actuator forces
         self._forceInflFile = ParamReader()
 
-        self._config("M1M3_1um_156_force.yaml",
-                     "M1M3_LUT.yaml",
-                     "M1M3_1um_156_grid.yaml",
-                     "M1M3_thermal_FEA.yaml",
-                     "M1M3_dxdydz_zenith.yaml",
-                     "M1M3_dxdydz_horizon.yaml",
-                     "M1M3_force_zenith.yaml",
-                     "M1M3_force_horizon.yaml",
-                     "M1M3_influence_256.yaml")
+        self._config(
+            "M1M3_LUT.yaml",
+            "M1M3_1um_156_grid.yaml",
+            "M1M3_thermal_FEA.yaml",
+            "M1M3_dxdydz_zenith.yaml",
+            "M1M3_dxdydz_horizon.yaml",
+            "M1M3_force_zenith.yaml",
+            "M1M3_force_horizon.yaml",
+            "M1M3_influence_256.yaml",
+        )
 
-    def _config(self, actForceFileName, lutFileName, gridFileName, feaFileName,
-                feaZenFileName, feaHorFileName, forceZenFileName,
-                forceHorFileName, forceInflFileName):
+    def _config(
+        self,
+        lutFileName,
+        gridFileName,
+        feaFileName,
+        feaZenFileName,
+        feaHorFileName,
+        forceZenFileName,
+        forceHorFileName,
+        forceInflFileName,
+    ):
         """Do the configuration.
 
         LUT: Look-up table.
@@ -74,8 +103,6 @@ class M1M3Sim(MirrorSim):
 
         Parameters
         ----------
-        actForceFileName : str
-            Actuator force file name.
         lutFileName : str
             LUT file name.
         gridFileName : str
@@ -96,9 +123,9 @@ class M1M3Sim(MirrorSim):
 
         numTerms = self._m1m3SettingFile.getSetting("numTerms")
 
-        super(M1M3Sim, self).config(numTerms=numTerms,
-                                    actForceFileName=actForceFileName,
-                                    lutFileName=lutFileName)
+        super(M1M3Sim, self).config(
+            numTerms=numTerms, lutFileName=lutFileName,
+        )
 
         mirrorDataDir = self.getMirrorDataDir()
 
@@ -155,23 +182,23 @@ class M1M3Sim(MirrorSim):
 
         # Do the M1M3 gravitational correction.
         # Map the changes of dx, dy, and dz on a plane for certain zenith angle
-        printthxInM = zdx * np.cos(zAngleInRadian) + \
-            hdx * np.sin(zAngleInRadian)
-        printthyInM = zdy * np.cos(zAngleInRadian) + \
-            hdy * np.sin(zAngleInRadian)
-        printthzInM = zdz * np.cos(zAngleInRadian) + \
-            hdz * np.sin(zAngleInRadian)
+        printthxInM = zdx * np.cos(zAngleInRadian) + hdx * np.sin(zAngleInRadian)
+        printthyInM = zdy * np.cos(zAngleInRadian) + hdy * np.sin(zAngleInRadian)
+        printthzInM = zdz * np.cos(zAngleInRadian) + hdz * np.sin(zAngleInRadian)
 
         # Get the bending mode information
         idx1, idx3, bx, by, bz = self._getMirCoor()
 
         # Calcualte the mirror ideal shape
-        zRef = self._calcIdealShape(bx*1000, by*1000, idx1, idx3)/1000
+        zRef = self._calcIdealShape(bx * 1000, by * 1000, idx1, idx3) / 1000
 
         # Calcualte the mirror ideal shape with the displacement
-        zpRef = self._calcIdealShape((bx + printthxInM)*1000,
-                                     (by + printthyInM)*1000,
-                                     idx1, idx3)/1000
+        zpRef = (
+            self._calcIdealShape(
+                (bx + printthxInM) * 1000, (by + printthyInM) * 1000, idx1, idx3
+            )
+            / 1000
+        )
 
         # Convert printthz into surface sag to get the estimated wavefront
         # error.
@@ -183,9 +210,9 @@ class M1M3Sim(MirrorSim):
         Ri = self.getInnerRinM()[0]
         R = self.getOuterRinM()[0]
 
-        normX = bx/R
-        normY = by/R
-        obs = Ri/R
+        normX = bx / R
+        normY = by / R
+        obs = Ri / R
 
         # Fit the annular Zernike polynomials z0-z2 (piton, x-tilt, y-tilt)
         zc = ZernikeAnnularFit(printthzInM, normX, normY, 3, obs)
@@ -216,8 +243,8 @@ class M1M3Sim(MirrorSim):
         data = self._gridFile.getMatContent()
 
         nodeID = data[:, 0].astype("int")
-        nodeM1 = (nodeID == 1)
-        nodeM3 = (nodeID == 3)
+        nodeM1 = nodeID == 1
+        nodeM3 = nodeID == 3
 
         bx = data[:, 1]
         by = data[:, 2]
@@ -225,8 +252,7 @@ class M1M3Sim(MirrorSim):
 
         return nodeM1, nodeM3, bx, by, bz
 
-    def _calcIdealShape(self, xInMm, yInMm, idxM1, idxM3, dr1=0, dr3=0, dk1=0,
-                        dk3=0):
+    def _calcIdealShape(self, xInMm, yInMm, idxM1, idxM3, dr1=0, dr3=0, dk1=0, dk3=0):
         """Calculate the ideal shape of mirror along z direction.
 
         This is described by a series of cylindrically-symmetric aspheric
@@ -278,17 +304,17 @@ class M1M3Sim(MirrorSim):
         # Get the dimension of input xInMm, yInMm
         nr = xInMm.shape
         mr = yInMm.shape
-        if (nr != mr):
+        if nr != mr:
             raise ValueError("X[%d] is unequal to y[%d]." % (nr, mr))
 
         # Calculation the curvature (c) and conic constant (kappa)
 
         # Mirror 1 (M1)
-        c1 = 1/(r1 + dr1)
+        c1 = 1 / (r1 + dr1)
         k1 = k1 + dk1
 
         # Mirror 3 (M3)
-        c3 = 1/(r3 + dr3)
+        c3 = 1 / (r3 + dr3)
         k3 = k3 + dk3
 
         # Construct the curvature, kappa, and alpha matrixes for the ideal
@@ -307,7 +333,7 @@ class M1M3Sim(MirrorSim):
             alphaMat[ii, idxM3] = alpha3[ii]
 
         # Calculate the radius
-        r2 = xInMm**2 + yInMm**2
+        r2 = xInMm ** 2 + yInMm ** 2
 
         # Calculate the ideal surface
 
@@ -317,9 +343,9 @@ class M1M3Sim(MirrorSim):
         # sum(ai * r^(2*i)) + sum(Aj * Zj)
         # where i = 1-8, j = 1-N
 
-        z0 = cMat * r2 / (1 + np.sqrt(1 - (1 + kMat) * cMat**2 * r2))
+        z0 = cMat * r2 / (1 + np.sqrt(1 - (1 + kMat) * cMat ** 2 * r2))
         for ii in range(8):
-            z0 += alphaMat[ii, :] * r2**(ii+1)
+            z0 += alphaMat[ii, :] * r2 ** (ii + 1)
 
         # M3 vertex offset from M1 vertex, values from Zemax model
         # M3voffset = (233.8 - 233.8 - 900 - 3910.701 - 1345.500 + 1725.701
@@ -333,8 +359,7 @@ class M1M3Sim(MirrorSim):
         # (z0>0) is needed. That means the direction of M2 to M1M3.
         return -z0
 
-    def getTempCorr(self, m1m3TBulk, m1m3TxGrad, m1m3TyGrad, m1m3TzGrad,
-                    m1m3TrGrad):
+    def getTempCorr(self, m1m3TBulk, m1m3TxGrad, m1m3TyGrad, m1m3TzGrad, m1m3TrGrad):
         """Get the mirror print correction along z direction for certain
         temperature gradient.
 
@@ -381,8 +406,8 @@ class M1M3Sim(MirrorSim):
         # Do the fitting in the normalized coordinate
         bx, by = self._getMirCoor()[2:4]
         R = self.getOuterRinM()[0]
-        normX = bx/R
-        normY = by/R
+        normX = bx / R
+        normY = by / R
 
         # Fit the bulk
         tbdz = self.fitData(tx, ty, data[:, 2], normX, normY)
@@ -400,8 +425,13 @@ class M1M3Sim(MirrorSim):
         trdz = self.fitData(tx, ty, data[:, 6], normX, normY)
 
         # Get the temprature correction
-        tempCorrInUm = m1m3TBulk*tbdz + m1m3TxGrad*txdz + m1m3TyGrad*tydz + \
-            m1m3TzGrad*tzdz + m1m3TrGrad*trdz
+        tempCorrInUm = (
+            m1m3TBulk * tbdz
+            + m1m3TxGrad * txdz
+            + m1m3TyGrad * tydz
+            + m1m3TzGrad * tzdz
+            + m1m3TrGrad * trdz
+        )
 
         return tempCorrInUm
 
@@ -435,12 +465,14 @@ class M1M3Sim(MirrorSim):
 
         # Transform the M1M3 coordinate to Zemax coordinate
         bxInZemax, byInZemax, surfInZemax = opt2ZemaxCoorTrans(
-            bx, by, self.getSurfAlongZ())
+            bx, by, self.getSurfAlongZ()
+        )
 
         # Get the mirror residue and zk in um
         RinM = self.getOuterRinM()[0]
         resInUmInZemax, zcInUmInZemax = self._getMirrorResInNormalizedCoor(
-            surfInZemax, bxInZemax/RinM, byInZemax/RinM)
+            surfInZemax, bxInZemax / RinM, byInZemax / RinM
+        )
 
         # Change the unit to mm
         resInMmInZemax = resInUmInZemax * 1e-3
@@ -449,13 +481,14 @@ class M1M3Sim(MirrorSim):
         zcInMmInZemax = zcInUmInZemax * 1e-3
 
         # Save the file of fitted Zk
-        if (writeZcInMnToFilePath is not None):
+        if writeZcInMnToFilePath is not None:
             np.savetxt(writeZcInMnToFilePath, zcInMmInZemax)
 
         return resInMmInZemax, bxInMmInZemax, byInMmInZemax, zcInMmInZemax
 
-    def writeMirZkAndGridResInZemax(self, resFile=[], surfaceGridN=200,
-                                    writeZcInMnToFilePath=None):
+    def writeMirZkAndGridResInZemax(
+        self, resFile=[], surfaceGridN=200, writeZcInMnToFilePath=None
+    ):
         """Write the grid residue in mm of mirror surface after the fitting
         with Zk under the Zemax coordinate.
 
@@ -478,9 +511,9 @@ class M1M3Sim(MirrorSim):
         """
 
         # Get the residure map
-        resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
-            self.getMirrorResInMmInZemax(
-                writeZcInMnToFilePath=writeZcInMnToFilePath)[0:3]
+        resInMmInZemax, bxInMmInZemax, byInMmInZemax = self.getMirrorResInMmInZemax(
+            writeZcInMnToFilePath=writeZcInMnToFilePath
+        )[0:3]
 
         # Get the mirror node
         idx1, idx3 = self._getMirCoor()[0:2]
@@ -496,12 +529,18 @@ class M1M3Sim(MirrorSim):
             # Content header: (NUM_X_PIXELS, NUM_Y_PIXELS, delta x, delta y)
             # Content: (z, dx, dy, dxdy)
             content = self._gridSampInMnInZemax(
-                resInMmInZemax[idx], bxInMmInZemax[idx], byInMmInZemax[idx],
-                innerRinMm, outerRinMm, surfaceGridN, surfaceGridN,
-                resFile=resFile[ii])
-            if (ii == 0):
+                resInMmInZemax[idx],
+                bxInMmInZemax[idx],
+                byInMmInZemax[idx],
+                innerRinMm,
+                outerRinMm,
+                surfaceGridN,
+                surfaceGridN,
+                resFile=resFile[ii],
+            )
+            if ii == 0:
                 contentM1 = content
-            elif (ii == 1):
+            elif ii == 1:
                 contentM3 = content
 
         return contentM1, contentM3
@@ -518,8 +557,9 @@ class M1M3Sim(MirrorSim):
         """
 
         # Get the residure map
-        resInMmInZemax, bxInMmInZemax, byInMmInZemax = \
-            self.getMirrorResInMmInZemax()[0:3]
+        resInMmInZemax, bxInMmInZemax, byInMmInZemax = self.getMirrorResInMmInZemax()[
+            0:3
+        ]
 
         # Get the mirror node
         idx1, idx3 = self._getMirCoor()[0:2]
@@ -529,12 +569,16 @@ class M1M3Sim(MirrorSim):
 
         for ii, RinM, idx in zip((0, 1), RinMtuple, (idx1, idx3)):
             outerRinMm = RinM * 1e3
-            plotResMap(resInMmInZemax[idx], bxInMmInZemax[idx],
-                       byInMmInZemax[idx], outerRinMm, resFile=resFile[ii],
-                       writeToResMapFilePath=writeToResMapFilePath[ii])
+            plotResMap(
+                resInMmInZemax[idx],
+                bxInMmInZemax[idx],
+                byInMmInZemax[idx],
+                outerRinMm,
+                resFile=resFile[ii],
+                writeToResMapFilePath=writeToResMapFilePath[ii],
+            )
 
-    def genMirSurfRandErr(self, zAngleInRadian, m1m3ForceError=0.05,
-                          seedNum=0):
+    def genMirSurfRandErr(self, zAngleInRadian, m1m3ForceError=0.05, seedNum=0):
         """Generate the mirror surface random error.
 
         LUT: Loop-up table.
@@ -563,23 +607,23 @@ class M1M3Sim(MirrorSim):
         # This means from -5% to +5% of original actuator's force.
         np.random.seed(int(seedNum))
         nActuator = len(LUTforce)
-        myu = (1 + 2*(np.random.rand(nActuator) - 0.5)*m1m3ForceError)*LUTforce
+        myu = (1 + 2 * (np.random.rand(nActuator) - 0.5) * m1m3ForceError) * LUTforce
 
         # Balance forces along z-axis
         # This statement is intentionally to make the force balance.
         nzActuator = int(self._m1m3SettingFile.getSetting("numActuatorInZ"))
-        myu[nzActuator-1] = np.sum(LUTforce[:nzActuator]) - \
-            np.sum(myu[:nzActuator-1])
+        myu[nzActuator - 1] = np.sum(LUTforce[:nzActuator]) - np.sum(
+            myu[: nzActuator - 1]
+        )
 
         # Balance forces along y-axis
         # This statement is intentionally to make the force balance.
-        myu[nActuator-1] = np.sum(LUTforce[nzActuator:]) - \
-            np.sum(myu[nzActuator:-1])
+        myu[nActuator - 1] = np.sum(LUTforce[nzActuator:]) - np.sum(myu[nzActuator:-1])
 
         # Get the net force along the z-axis
         zf = self._forceZenFile.getMatContent()
         hf = self._forceHorFile.getMatContent()
-        u0 = zf*np.cos(zAngleInRadian) + hf*np.sin(zAngleInRadian)
+        u0 = zf * np.cos(zAngleInRadian) + hf * np.sin(zAngleInRadian)
 
         # Calculate the random surface
         G = self._forceInflFile.getMatContent()

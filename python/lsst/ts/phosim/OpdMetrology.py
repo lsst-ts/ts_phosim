@@ -1,14 +1,41 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+import os
+import warnings
 import numpy as np
 from astropy.io import fits
 
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
 from lsst.ts.wep.SourceProcessor import SourceProcessor
+from lsst.ts.wep.ParamReader import ParamReader
+
+from lsst.ts.ofc.Utility import getConfigDir as getConfigDirOfc
+from lsst.ts.ofc.Utility import InstName
 
 from lsst.ts.phosim.MetroTool import calc_pssn, psf2eAtmW
+from lsst.ts.phosim.Utility import getConfigDir
 
 
 class OpdMetrology(object):
-
     def __init__(self):
         """Initialization of OPD metrology class.
 
@@ -70,7 +97,7 @@ class OpdMetrology(object):
         """
 
         if np.all(wtArray >= 0):
-            self.wt = wtArray/np.sum(wtArray)
+            self.wt = wtArray / np.sum(wtArray)
         else:
             raise ValueError("All weighting ratios should be >=0.")
 
@@ -102,36 +129,56 @@ class OpdMetrology(object):
         self.fieldX = np.append(self.fieldX, fieldXInDegree)
         self.fieldY = np.append(self.fieldY, fieldYInDegree)
 
+    def setWgtAndFieldXyOfGQ(self, instName):
+        """Set the GQ weighting ratio and field X, Y.
+
+        GQ: Gaussian quadrature.
+
+        Parameters
+        ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
+
+        Raises
+        ------
+        ValueError
+            This instrument name is not supported.
+        """
+
+        if instName == InstName.COMCAM:
+            dirInst = "comcam"
+        elif instName == InstName.LSST:
+            dirInst = "lsst"
+        elif instName == InstName.LSSTFAM:
+            dirInst = "lsstfam"
+        else:
+            raise ValueError(f"This instrument name ({instName}) is not supported.")
+
+        # Set the weighting ratio
+        pathWgtFile = os.path.join(getConfigDirOfc(), dirInst, "imgQualWgt.yaml")
+        wgtFile = ParamReader(filePath=pathWgtFile)
+        self.setWeightingRatio(list(wgtFile.getContent().values()))
+
+        # Set the field (x, y)
+        pathFieldXyFile = os.path.join(
+            getConfigDir(), "instrument", dirInst, "fieldXy.yaml"
+        )
+        paramReader = ParamReader(filePath=pathFieldXyFile)
+        fieldXY = paramReader.getMatContent()
+        self.setFieldXYinDeg(fieldXY[:, 0], fieldXY[:, 1])
+
     def setDefaultLsstGQ(self):
         """Set the default LSST GQ field X, Y and weighting ratio.
 
         GQ: Gaussian quadrature
         """
 
-        # The distance of point xi (used in Gaussian quadrature plane) to the
-        # origin
-        # This value is in [-1.75, 1.75]
-        armLen = [0.379, 0.841, 1.237, 1.535, 1.708]
-
-        # Weighting of point xi (used in Gaussian quadrature plane) for each
-        # ring
-        armW = [0.2369, 0.4786, 0.5689, 0.4786, 0.2369]
-
-        # Number of points on each ring
-        nArm = 6
-
-        # Get the weighting for all field points (31 for lsst camera)
-        # Consider the first element is center (0)
-        wt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
-        self.setWeightingRatio(wt)
-
-        # Generate the fields point x, y coordinates
-        pointAngle = np.arange(nArm) * (2*np.pi)/nArm
-        fieldX = np.concatenate([np.zeros(1),
-                                 np.kron(armLen, np.cos(pointAngle))])
-        fieldY = np.concatenate([np.zeros(1),
-                                 np.kron(armLen, np.sin(pointAngle))])
-        self.setFieldXYinDeg(fieldX, fieldY)
+        warnings.warn(
+            "Use setWgtAndFieldXyOfGQ() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.setWgtAndFieldXyOfGQ(InstName.LSST)
 
     def getDefaultLsstWfsGQ(self):
         """Get the default field X, Y of LSST WFS on GQ.
@@ -159,30 +206,14 @@ class OpdMetrology(object):
         GQ: Gaussian quadrature
         """
 
-        # ComCam is the cetral raft of LSST cam, which is composed of 3 x 3
-        # CCDs.
-        nRow = 3
-        nCol = 3
+        warnings.warn(
+            "Use setWgtAndFieldXyOfGQ() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.setWgtAndFieldXyOfGQ(InstName.COMCAM)
 
-        # Number of field points
-        nField = nRow*nCol
-
-        # Get the weighting for all field points (9 for comcam)
-        wt = np.ones(nField)
-        self.setWeightingRatio(wt)
-
-        # Distance to raft center in degree along x/y direction and the
-        # related relative position
-        sensorD = 0.2347
-        coorComcam = sensorD * np.array([-1, 0, 1])
-
-        # Generate the fields point x, y coordinates
-        fieldX = np.kron(coorComcam, np.ones(nRow))
-        fieldY = np.kron(np.ones(nCol), coorComcam)
-        self.setFieldXYinDeg(fieldX, fieldY)
-
-    def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22,
-                     obscuration=0.61):
+    def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
         """Get the wavefront error of OPD in the basis of annular Zernike
         polynomials.
 
@@ -218,13 +249,13 @@ class OpdMetrology(object):
         """
 
         # Get the OPD data (PhoSim OPD unit: um)
-        if (opdFitsFile is not None):
+        if opdFitsFile is not None:
             opd = fits.getdata(opdFitsFile)
-        elif (opdMap is not None):
+        elif opdMap is not None:
             opd = opdMap.copy()
 
         # Check the x, y dimensions of OPD are the same
-        if (np.unique(opd.shape).size != 1):
+        if np.unique(opd.shape).size != 1:
             raise ValueError("The x, y dimensions of OPD are different.")
 
         # x-, y-coordinate in the OPD image
@@ -233,9 +264,8 @@ class OpdMetrology(object):
         opdx, opdy = np.meshgrid(opdGrid1d, opdGrid1d)
 
         # Fit the OPD map with Zk and write into the file
-        idx = (opd != 0)
-        zk = ZernikeAnnularFit(opd[idx], opdx[idx], opdy[idx], znTerms,
-                               obscuration)
+        idx = opd != 0
+        zk = ZernikeAnnularFit(opd[idx], opdx[idx], opdy[idx], znTerms, obscuration)
 
         return zk, opd, opdx, opdy
 
@@ -265,18 +295,18 @@ class OpdMetrology(object):
         # Do the spherical Zernike fitting for the OPD map
         # Only fit the first three terms (z1-z3): piston, x-tilt, y-tilt
         zk, opd, opdx, opdy = self.getZkFromOpd(
-            opdFitsFile=opdFitsFile, opdMap=opdMap, znTerms=3, obscuration=0)
+            opdFitsFile=opdFitsFile, opdMap=opdMap, znTerms=3, obscuration=0
+        )
 
         # Find the index that the value of OPD is not 0
-        idx = (opd != 0)
+        idx = opd != 0
 
         # Remove the PTT
         opd[idx] -= ZernikeEval(zk, opdx[idx], opdy[idx])
 
         return opd, opdx, opdy
 
-    def addFieldXYbyCamPos(self, sensorName, xInpixel, yInPixel,
-                           folderPath2FocalPlane):
+    def addFieldXYbyCamPos(self, sensorName, xInpixel, yInPixel, folderPath2FocalPlane):
         """Add the new field X, Y in degree by the camera pixel positions.
 
         Parameters
@@ -296,14 +326,14 @@ class OpdMetrology(object):
         sourProc.config(sensorName=sensorName)
 
         # Do the coordinate transformation
-        fieldXInDegree, fieldYInDegree = sourProc.camXYtoFieldXY(xInpixel,
-                                                                 yInPixel)
+        fieldXInDegree, fieldYInDegree = sourProc.camXYtoFieldXY(xInpixel, yInPixel)
 
         # Add to listed field x, y
         self.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)
 
-    def calcPSSN(self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0,
-                 debugLevel=0):
+    def calcPSSN(
+        self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0, debugLevel=0
+    ):
         """ Calculate the PSSN based on OPD map.
 
         PSSN: Normalized point source sensitivity.
@@ -335,8 +365,7 @@ class OpdMetrology(object):
         opdRmPTT = self.rmPTTfromOPD(opdFitsFile=opdFitsFile, opdMap=opdMap)[0]
 
         # Calculate the normalized point source sensitivity (PSSN)
-        pssn = calc_pssn(opdRmPTT, wavelengthInUm, zen=zen,
-                         debugLevel=debugLevel)
+        pssn = calc_pssn(opdRmPTT, wavelengthInUm, zen=zen, debugLevel=debugLevel)
 
         return pssn
 
@@ -366,7 +395,7 @@ class OpdMetrology(object):
         # information.
         eta = 1.086
         FWHMatm = 0.6
-        FWHMeff = eta*FWHMatm*np.sqrt(1/pssn - 1)
+        FWHMeff = eta * FWHMatm * np.sqrt(1 / pssn - 1)
 
         return FWHMeff
 
@@ -392,8 +421,9 @@ class OpdMetrology(object):
 
         return dm5
 
-    def calcEllip(self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0,
-                  debugLevel=0):
+    def calcEllip(
+        self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0, debugLevel=0
+    ):
         """Calculate the ellipticity.
 
         Parameters
@@ -421,8 +451,7 @@ class OpdMetrology(object):
         opdRmPTT = self.rmPTTfromOPD(opdFitsFile=opdFitsFile, opdMap=opdMap)[0]
 
         # Calculate the ellipticity
-        elli = psf2eAtmW(opdRmPTT, wavelengthInUm, zen=zen,
-                         debugLevel=debugLevel)[0]
+        elli = psf2eAtmW(opdRmPTT, wavelengthInUm, zen=zen, debugLevel=debugLevel)[0]
 
         return elli
 
@@ -448,15 +477,11 @@ class OpdMetrology(object):
         """
 
         # Check the lengths of weighting ratio and value list are the same
-        if (len(self.wt) != len(valueList)):
+        if len(self.wt) != len(valueList):
             raise ValueError("Length of wt ratio != length of value list.")
 
         # Calculate the effective value on Gaussain quardure plane
         valueArray = np.array(valueList, dtype=float)
-        GQvalue = np.sum(self.wt*valueArray)
+        GQvalue = np.sum(self.wt * valueArray)
 
         return GQvalue
-
-
-if __name__ == "__main__":
-    pass

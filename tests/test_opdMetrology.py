@@ -1,6 +1,29 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
+
+from lsst.ts.ofc.Utility import InstName
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.Utility import getModulePath
@@ -11,8 +34,9 @@ class TestOpdMetrology(unittest.TestCase):
 
     def setUp(self):
 
-        self.testDataDir = os.path.join(getModulePath(), "tests", "testData",
-                                        "testOpdFunc")
+        self.testDataDir = os.path.join(
+            getModulePath(), "tests", "testData", "testOpdFunc"
+        )
         self.metr = OpdMetrology()
 
     def testGetFieldXY(self):
@@ -37,7 +61,7 @@ class TestOpdMetrology(unittest.TestCase):
         wtInMetr = self.metr.getWeightingRatio()
         self.assertEqual(len(wtInMetr), len(wt))
         self.assertEqual(np.sum(wtInMetr), 1)
-        self.assertAlmostEqual(wtInMetr[1]/wtInMetr[0], 2)
+        self.assertAlmostEqual(wtInMetr[1] / wtInMetr[0], 2)
         self.assertRaises(ValueError, self.metr.setWeightingRatio, [-1, 1])
 
     def testSetFieldXYinDeg(self):
@@ -64,24 +88,103 @@ class TestOpdMetrology(unittest.TestCase):
         fieldX, fieldY = self.metr.getFieldXY()
         self.assertEqual(len(fieldX), 2)
 
-    def testSetDefaultLsstGQ(self):
+    def testSetWgtAndFieldXyOfGQLsst(self):
 
-        self.metr.setDefaultLsstGQ()
+        self.metr.setWgtAndFieldXyOfGQ(InstName.LSST)
+
+        fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtLsst()
 
         fieldX, fieldY = self.metr.getFieldXY()
         self.assertEqual(len(fieldX), 31)
+        self.assertLess(np.sum(np.abs(fieldX - fieldXAns)), 1e-10)
+        self.assertLess(np.sum(np.abs(fieldY - fieldYAns)), 1e-10)
+
+        wgt = self.metr.getWeightingRatio()
+        self.assertEqual(len(wgt), 31)
+        self.assertLess(np.sum(np.abs(wgt - wgtAns)), 1e-10)
+
+    def _calcFieldXyAndWgtLsst(self):
+
+        # The distance of point xi (used in Gaussian quadrature plane) to the
+        # origin
+        # This value is in [-1.75, 1.75]
+        armLen = [0.379, 0.841, 1.237, 1.535, 1.708]
+
+        # Weighting of point xi (used in Gaussian quadrature plane) for each
+        # ring
+        armW = [0.2369, 0.4786, 0.5689, 0.4786, 0.2369]
+
+        # Number of points on each ring
+        nArm = 6
+
+        # Get the weighting for all field points (31 for lsst camera)
+        # Consider the first element is center (0)
+        wgt = np.concatenate([np.zeros(1), np.kron(armW, np.ones(nArm))])
+
+        # Generate the fields point x, y coordinates
+        pointAngle = np.arange(nArm) * (2 * np.pi) / nArm
+        fieldX = np.concatenate([np.zeros(1), np.kron(armLen, np.cos(pointAngle))])
+        fieldY = np.concatenate([np.zeros(1), np.kron(armLen, np.sin(pointAngle))])
+
+        return fieldX, fieldY, wgt / np.sum(wgt)
+
+    def testSetWgtAndFieldXyOfGQComCam(self):
+
+        self.metr.setWgtAndFieldXyOfGQ(InstName.COMCAM)
+
+        fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtComCam()
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 9)
+        self.assertLess(np.sum(np.abs(fieldX - fieldXAns)), 1e-10)
+        self.assertLess(np.sum(np.abs(fieldY - fieldYAns)), 1e-10)
+
+        wgt = self.metr.getWeightingRatio()
+        self.assertEqual(len(wgt), 9)
+        self.assertLess(np.sum(np.abs(wgt - wgtAns)), 1e-10)
+
+    def _calcFieldXyAndWgtComCam(self):
+
+        # ComCam is the cetral raft of LSST cam, which is composed of 3 x 3
+        # CCDs.
+        nRow = 3
+        nCol = 3
+
+        # Number of field points
+        nField = nRow * nCol
+
+        # Get the weighting for all field points (9 for comcam)
+        wgt = np.ones(nField)
+
+        # Distance to raft center in degree along x/y direction and the
+        # related relative position
+        sensorD = 0.2347
+        coorComcam = sensorD * np.array([-1, 0, 1])
+
+        # Generate the fields point x, y coordinates
+        fieldX = np.kron(coorComcam, np.ones(nRow))
+        fieldY = np.kron(np.ones(nCol), coorComcam)
+
+        return fieldX, fieldY, wgt / np.sum(wgt)
+
+    def testSetWgtAndFieldXyOfGQLsstFam(self):
+
+        self.metr.setWgtAndFieldXyOfGQ(InstName.LSSTFAM)
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertEqual(len(fieldX), 189)
+
+        wgt = self.metr.getWeightingRatio()
+        self.assertEqual(len(wgt), 189)
+
+    def testSetWgtAndFieldXyOfGQErr(self):
+
+        self.assertRaises(ValueError, self.metr.setWgtAndFieldXyOfGQ, "NoThisInstName")
 
     def testGetDefaultLsstWfsGQ(self):
 
         fieldWFSx, fieldWFSy = self.metr.getDefaultLsstWfsGQ()
         self.assertEqual(len(fieldWFSx), 4)
-
-    def testSetDefaultComcamGQ(self):
-
-        self.metr.setDefaultComcamGQ()
-
-        fieldX, fieldY = self.metr.getFieldXY()
-        self.assertEqual(len(fieldX), 9)
 
     def testGetZkFromOpd(self):
 
@@ -91,7 +194,7 @@ class TestOpdMetrology(unittest.TestCase):
         ansOpdFileName = "sim6_iter0_opd.zer"
         ansOpdFilePath = os.path.join(self.testDataDir, ansOpdFileName)
         allOpdAns = np.loadtxt(ansOpdFilePath)
-        self.assertLess(np.sum(np.abs(zk-allOpdAns[0, :])), 1e-10)
+        self.assertLess(np.sum(np.abs(zk - allOpdAns[0, :])), 1e-10)
 
     def _getOpdFilePath(self):
 
@@ -113,14 +216,14 @@ class TestOpdMetrology(unittest.TestCase):
         sensorName = "R22_S11"
         xInpixel = 4000
         yInPixel = 4072
-        self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel,
-                                     self.testDataDir)
+        self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, self.testDataDir)
 
-        ansFieldXinDeg = 2000*0.2/3600
-        ansFieldYinDeg = 2036*0.2/3600
+        ansFieldXinDeg = 2000 * 0.2 / 3600
+        ansFieldYinDeg = 2036 * 0.2 / 3600
         fieldX, fieldY = self.metr.getFieldXY()
-        self.assertAlmostEqual((fieldX[-1], fieldY[-1]),
-                               (ansFieldXinDeg, ansFieldYinDeg))
+        self.assertAlmostEqual(
+            (fieldX[-1], fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg)
+        )
 
     def calcPSSN(self):
 
@@ -173,7 +276,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def testCalcGQvalue(self):
 
-        self.metr.setDefaultLsstGQ()
+        self.metr.setWgtAndFieldXyOfGQ(InstName.LSST)
         allData = self._getMetroAllAnsData()
         valueList = allData[0, 0:31]
 

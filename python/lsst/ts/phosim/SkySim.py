@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import numpy as np
 
 from lsst.obs.lsstSim import LsstSimMapper
@@ -11,7 +32,6 @@ from lsst.ts.wep.Utility import expandDetectorName
 
 
 class SkySim(object):
-
     def __init__(self):
         """Initialization of sky simulator class."""
 
@@ -102,9 +122,9 @@ class SkySim(object):
             Camera MJD.
         """
 
-        self._obs = ObservationMetaData(pointingRA=ra, pointingDec=decl,
-                                        rotSkyPos=rotSkyPos,
-                                        mjd=mjd)
+        self._obs = ObservationMetaData(
+            pointingRA=ra, pointingDec=decl, rotSkyPos=rotSkyPos, mjd=mjd
+        )
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
@@ -130,7 +150,7 @@ class SkySim(object):
         # Add the stars
         for ii in range(len(starIdList)):
             intStarId = int(starIdList[ii])
-            if (self._isUniqStarId(intStarId)):
+            if self._isUniqStarId(intStarId):
                 self.starId = np.append(self.starId, intStarId)
                 self.ra = np.append(self.ra, raInDegList[ii])
                 self.decl = np.append(self.decl, declInDegList[ii])
@@ -214,10 +234,10 @@ class SkySim(object):
         data = np.loadtxt(readFilePath, skiprows=skiprows)
 
         # Only consider the non-empty data
-        if (len(data) != 0):
+        if len(data) != 0:
 
             # Change to 2D array if the input is 1D array
-            if (data.ndim == 1):
+            if data.ndim == 1:
                 data = np.expand_dims(data, axis=0)
 
             for star in data:
@@ -238,16 +258,27 @@ class SkySim(object):
         # Add the star information
         for ii in range(len(self.starId)):
             content += "%d\t %3.6f\t %3.6f\t %3.6f\n" % (
-                self.starId[ii], self.ra[ii], self.decl[ii], self.mag[ii])
+                self.starId[ii],
+                self.ra[ii],
+                self.decl[ii],
+                self.mag[ii],
+            )
 
         # Write into file
         fid = open(outputFilePath, "w")
         fid.write(content)
         fid.close()
 
-    def addStarByChipPos(self, sensorName, starId, xInpixelInCam,
-                         yInPixelInCam, starMag, epoch=2000.0,
-                         includeDistortion=True):
+    def addStarByChipPos(
+        self,
+        sensorName,
+        starId,
+        xInpixelInCam,
+        yInPixelInCam,
+        starMag,
+        epoch=2000.0,
+        includeDistortion=True,
+    ):
         """Add the star based on the chip position.
 
         Parameters
@@ -276,14 +307,24 @@ class SkySim(object):
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = self._getSkyPosByChipPos(
-            sensorName, xInpixelInCam, yInPixelInCam, epoch=epoch,
-            includeDistortion=includeDistortion)
+            sensorName,
+            xInpixelInCam,
+            yInPixelInCam,
+            epoch=epoch,
+            includeDistortion=includeDistortion,
+        )
 
         # Add the star
         self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
 
-    def _getSkyPosByChipPos(self, sensorName, xInpixelInCam, yInPixelInCam,
-                            epoch=2000.0, includeDistortion=True):
+    def _getSkyPosByChipPos(
+        self,
+        sensorName,
+        xInpixelInCam,
+        yInPixelInCam,
+        epoch=2000.0,
+        includeDistortion=True,
+    ):
         """Get the sky position in (ra, dec) based on the chip pixel positions.
 
         Parameters
@@ -315,28 +356,21 @@ class SkySim(object):
 
         # Get the pixel positions in DM team
         self._sourProc.config(sensorName=sensorName)
-        pixelDmX, pixelDmY = self._sourProc.camXY2DmXY(xInpixelInCam,
-                                                       yInPixelInCam)
+        pixelDmX, pixelDmY = self._sourProc.camXY2DmXY(xInpixelInCam, yInPixelInCam)
 
         # Expand the sensor name
         expandedSensorName = expandDetectorName(sensorName)
-        
-        # distinguish between corner sensors and scientific sensors 
 
-        # # corner sensors
-        if expandedSensorName.endswith(('A','B')): 
-            #print('Getting coords for corner sensors with raDecFromPixelCoordsLSST')
-            raInDeg, declInDeg = raDecFromPixelCoordsLSST(
-                pixelDmX, pixelDmY, expandedSensorName,
-                obs_metadata=self._obs, epoch=epoch,
-                includeDistortion=includeDistortion)
-        # scientific sensors     
-        else: 
-            # Get the sky position in (ra, decl)
-            raInDeg, declInDeg = raDecFromPixelCoords(
-                pixelDmX, pixelDmY, expandedSensorName, camera=self._camera,
-                obs_metadata=self._obs, epoch=epoch,
-                includeDistortion=includeDistortion)
+        # Get the sky position in (ra, decl)
+        raInDeg, declInDeg = raDecFromPixelCoords(
+            pixelDmX,
+            pixelDmY,
+            expandedSensorName,
+            camera=self._camera,
+            obs_metadata=self._obs,
+            epoch=epoch,
+            includeDistortion=includeDistortion,
+        )
 
         return raInDeg, declInDeg
 

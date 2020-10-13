@@ -1,3 +1,24 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import numpy as np
 import unittest
@@ -58,8 +79,9 @@ class TestSkySim(unittest.TestCase):
 
     def testSetStarRaDecInDeg(self):
 
-        self.skySim.setStarRaDecInDeg(np.array([0]), np.array([1]),
-                                      np.array([2]), np.array([3]))
+        self.skySim.setStarRaDecInDeg(
+            np.array([0]), np.array([1]), np.array([2]), np.array([3])
+        )
         self.assertEqual(len(self.skySim.getStarId()), 1)
 
     def testAddStarByFile(self):
@@ -76,8 +98,7 @@ class TestSkySim(unittest.TestCase):
 
     def _addStarByFile(self, skyFileName):
 
-        skyFile = os.path.join(getModulePath(), "tests", "testData", "sky",
-                               skyFileName)
+        skyFile = os.path.join(getModulePath(), "tests", "testData", "sky", skyFileName)
         self.skySim.addStarByFile(skyFile)
 
     def testAddStarByFileWithSglStar(self):
@@ -95,8 +116,7 @@ class TestSkySim(unittest.TestCase):
     def testExportSkyToFile(self):
 
         self._addStarByFile("wfsStar.txt")
-        outputFilePath = os.path.join(getModulePath(), "output",
-                                      "testSkyOutput.txt")
+        outputFilePath = os.path.join(getModulePath(), "output", "testSkyOutput.txt")
 
         self.skySim.exportSkyToFile(outputFilePath)
         self.assertTrue(os.path.isfile(outputFilePath))
@@ -112,8 +132,9 @@ class TestSkySim(unittest.TestCase):
         xInpixelInCam = 2000
         yInPixelInCam = 2036
         starMag = 17
-        self.skySim.addStarByChipPos(sensorName, starId, xInpixelInCam,
-                                     yInPixelInCam, starMag)
+        self.skySim.addStarByChipPos(
+            sensorName, starId, xInpixelInCam, yInPixelInCam, starMag
+        )
 
         # Test the result
         ra, decl = self.skySim.getRaDecInDeg()

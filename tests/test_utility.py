@@ -1,9 +1,37 @@
+# This file is part of ts_phosim.
+#
+# Developed for the LSST Telescope and Site Systems.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import unittest
 
-from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans, zemax2optCoorTrans, \
-    mapSurfNameToEnum, SurfaceType, getPhoSimPath, sortOpdFileList, \
-    getAoclcOutputPath, getModulePath
+from lsst.ts.phosim.Utility import (
+    opt2ZemaxCoorTrans,
+    zemax2optCoorTrans,
+    mapSurfNameToEnum,
+    SurfaceType,
+    getPhoSimPath,
+    sortOpdFileList,
+    getAoclcOutputPath,
+    getModulePath,
+)
 
 
 class TestUtility(unittest.TestCase):
@@ -13,17 +41,21 @@ class TestUtility(unittest.TestCase):
 
         xInPhosim, yInPhosim, zInPhosim = 1, 2, 3
         xInZemax, yInZemax, zInZemax = opt2ZemaxCoorTrans(
-            xInPhosim, yInPhosim, zInPhosim)
-        self.assertEqual((xInZemax, yInZemax, zInZemax),
-                         (-xInPhosim, yInPhosim, -zInPhosim))
+            xInPhosim, yInPhosim, zInPhosim
+        )
+        self.assertEqual(
+            (xInZemax, yInZemax, zInZemax), (-xInPhosim, yInPhosim, -zInPhosim)
+        )
 
     def testZemax2phosimCoorTrans(self):
 
         xInZemax, yInZemax, zInZemax = 1, 2, 3
         xInPhosim, yInPhosim, zInPhosim = zemax2optCoorTrans(
-            xInZemax, yInZemax, zInZemax)
-        self.assertEqual((xInPhosim, yInPhosim, zInPhosim),
-                         (-xInZemax, yInZemax, -zInZemax))
+            xInZemax, yInZemax, zInZemax
+        )
+        self.assertEqual(
+            (xInPhosim, yInPhosim, zInPhosim), (-xInZemax, yInZemax, -zInZemax)
+        )
 
     def testMapSurfNameToEnum(self):
 
@@ -51,8 +83,7 @@ class TestUtility(unittest.TestCase):
         with self.assertWarns(UserWarning):
             aoclcOutputPath = getAoclcOutputPath()
 
-        self.assertEqual(aoclcOutputPath,
-                         os.path.join(getModulePath(), "output"))
+        self.assertEqual(aoclcOutputPath, os.path.join(getModulePath(), "output"))
 
     def testGetAoclcOutputPath(self):
 
@@ -67,11 +98,14 @@ class TestUtility(unittest.TestCase):
     def testSortOpdFileList(self):
 
         fileDir = "/fileDir"
-        opdFileNameList = ["opd_100_3.fits.gz", "opd_100_1.fits.gz",
-                           "opd_100_13.fits.gz", "opd_100_0.fits.gz",
-                           "opd_100_10.fits.gz"]
-        opdFileList = [os.path.join(fileDir, fileName)
-                       for fileName in opdFileNameList]
+        opdFileNameList = [
+            "opd_100_3.fits.gz",
+            "opd_100_1.fits.gz",
+            "opd_100_13.fits.gz",
+            "opd_100_0.fits.gz",
+            "opd_100_10.fits.gz",
+        ]
+        opdFileList = [os.path.join(fileDir, fileName) for fileName in opdFileNameList]
 
         sortedOpdFileList = sortOpdFileList(opdFileList)
 
