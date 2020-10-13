@@ -65,8 +65,8 @@ def main(closed_loop_input_dir, wfs_zer_output, save_postage_stamps=True, run_de
     path_to_setting_file = os.path.join(path_to_ts_wep, 'policy',setting_filename)
     settingFile = ParamReader(filePath=path_to_setting_file)
     bscDbTypeInFile = settingFile.getSetting("bscDbType")
-    print('%s contains : '%path_to_setting_file, 
-          bscDbTypeInFile)
+    print('The setting file contains bscDbType : %s'%bscDbTypeInFile)
+
     if bscDbTypeInFile != bscDbType:
         # In the following we update the setting for bscDbType,
         # saving the change in the default.yaml file 
@@ -112,12 +112,13 @@ def main(closed_loop_input_dir, wfs_zer_output, save_postage_stamps=True, run_de
     iterDirName = "%s%d" % ("iter", iterCount)
 
     # Set the path to sky file directory :   iter0/pert
-    outputDirName = "pert"
-    outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
-    skyInfoFileName = 'skyInfo.txt'
-    outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
-    print('\nSetting sky file as %s'%outputSkyInfoFilePath)
-    wep_calc.setSkyFile(outputSkyInfoFilePath)
+    if bscDbType == 'file':
+        outputDirName = "pert"
+        outputDir = os.path.join(baseOutputDir, iterDirName, outputDirName)
+        skyInfoFileName = 'skyInfo.txt'
+        outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
+        print('\nSetting sky file as %s'%outputSkyInfoFilePath)
+        wep_calc.setSkyFile(outputSkyInfoFilePath)
 
     # update name of bscDbFile ... 
     #settingFilePath = os.path.join(path_to_ts_wep, 'policy/default.yaml')
@@ -156,7 +157,7 @@ def main(closed_loop_input_dir, wfs_zer_output, save_postage_stamps=True, run_de
     elif len(obsIdList) == 1 : #corner WFS case
         isrImgMap = wep_calc.wepCntlr.getPostIsrImgMapOnCornerWfs(detector_list, obsIdList[0])
 
-
+    outputPostageDirName = "postage"
     if save_postage_stamps :
         outputPostageDir  = os.path.join(baseOutputDir,iterDirName,
                             outputPostageDirName)
@@ -167,9 +168,10 @@ def main(closed_loop_input_dir, wfs_zer_output, save_postage_stamps=True, run_de
 
 
     print('\nGetting the donut map')
+    print('run_deblender is ', run_deblender )
     donut_map = wep_calc.wepCntlr.getDonutMap(neighborStarMap, isrImgMap, FilterType.REF,
                                               doDeblending=run_deblender, postageImg=save_postage_stamps,
-                                              postageImgDir=outputPostageDir, verbose=False)
+                                              postageImgDir=outputPostageDir, verbose=True)
     print('\nCalculating wavefront error')
     donutMap = wep_calc.wepCntlr.calcWfErr(donut_map, outputPostageDir, verbose=False)
 
@@ -350,7 +352,7 @@ if __name__ == '__main__':
     #                     help="The directory for postage stamps (absolute path)")
     parser.add_argument("--save_postage_stamps", default=True, action='store_true',
                         help="Set tag to save the postage stamps created for each donut.")
-    parser.add_argument("--run_deblender", default=True, action='store_true',
+    parser.add_argument("--run_deblender", default=False, action='store_true',
                         help="Set tag to use donuts that require deblending")
     parser.add_argument("--select_sensor", default='comcam', 
                         help='Choose sensor family: comcam, lsstcam, or lsstfamcam')
