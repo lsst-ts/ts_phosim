@@ -560,6 +560,12 @@ class CloseLoopTask(object):
 
             # Generate the OPD image
             argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(instName)
+            
+            # Need to prepend the working dir to which one has write access 
+            # to save PhoSim intermediate files 
+            outputImgDir = self.phosimCmpt.getOutputDir()
+            argPrepend  = '-w ' + outputImgDir+ ' '
+            argString = argPrepend + argString
             self.phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
@@ -701,6 +707,11 @@ class CloseLoopTask(object):
             instSettingFileName="starSingleExp.inst",
         )
         for argString in argStringList:
+            # Need to prepend the working dir to which one has write access 
+            # to save PhoSim intermediate files 
+            outputImgDir = self.phosimCmpt.getOutputDir()
+            argPrepend  = '-w ' + outputImgDir+ ' '
+            argString = argPrepend + argString
             self.phosimCmpt.runPhoSim(argString)
 
         # Repackage the images based on the image type
