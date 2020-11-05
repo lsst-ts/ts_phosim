@@ -5,6 +5,8 @@ package "telescope" #DDDDDD {
 
 package "ts_wep" #DDDDDD {
   class WEPCalculation
+  class SourceProcessor
+  class WcsSol
 }
 
 package "ts_ofc" #DDDDDD {
@@ -12,12 +14,14 @@ package "ts_ofc" #DDDDDD {
 }
 
 PhosimCmpt ..> SkySim
-PhosimCmpt *-- OpdMetrology
+PhosimCmpt o-- OpdMetrology
 PhosimCmpt *-- TeleFacade
-CloseLoopTask *-- SkySim
-CloseLoopTask *-- WEPCalculation
-CloseLoopTask *-- OFCCalculation
-CloseLoopTask *-- PhosimCmpt
+SkySim o-- SourceProcessor
+SkySim o-- WcsSol
+CloseLoopTask o-- SkySim
+CloseLoopTask o-- WEPCalculation
+CloseLoopTask o-- OFCCalculation
+CloseLoopTask o-- PhosimCmpt
 CloseLoopTask ..> TeleFacade
 CloseLoopTask ..> OpdMetrology
 @enduml

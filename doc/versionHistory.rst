@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.2.8:
+
+-------------
+1.2.8
+-------------
+
+* Remove the dependency of sims package by letting the **SkySim** class to depend on **WcsSol** class in ts_wep.
+
 .. _lsst.ts.phosim-1.2.7:
 
 -------------
