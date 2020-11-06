@@ -21,9 +21,7 @@
 
 import numpy as np
 
-from lsst.obs.lsstSim import LsstSimMapper
-from lsst.sims.utils import ObservationMetaData
-from lsst.sims.coordUtils.CameraUtils import raDecFromPixelCoords
+from lsst.ts.wep.bsc.WcsSol import WcsSol
 
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 from lsst.ts.wep.Utility import expandDetectorName
@@ -45,12 +43,8 @@ class SkySim(object):
         # Star magnitude
         self.mag = np.array([])
 
-        # DM camera object contains the information to do the coordinate
-        # transformation
-        self._camera = LsstSimMapper().camera
-
-        # SIMS observation metadata object
-        self._obs = ObservationMetaData()
+        # WCS solution
+        self._wcsSol = WcsSol()
 
         # Source processor in ts_wep
         self._sourProc = SourceProcessor()
@@ -103,7 +97,7 @@ class SkySim(object):
             transformation
         """
 
-        self._camera = camera
+        self._wcsSol.setCamera(camera)
 
     def setObservationMetaData(self, ra, decl, rotSkyPos, mjd):
         """Set the observation meta data.
@@ -120,9 +114,7 @@ class SkySim(object):
             Camera MJD.
         """
 
-        self._obs = ObservationMetaData(
-            pointingRA=ra, pointingDec=decl, rotSkyPos=rotSkyPos, mjd=mjd
-        )
+        self._wcsSol.setObsMetaData(ra, decl, rotSkyPos, mjd=mjd)
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
@@ -360,18 +352,12 @@ class SkySim(object):
         expendedSensorName = expandDetectorName(sensorName)
 
         # Get the sky position in (ra, decl)
-        raInDeg, declInDeg = raDecFromPixelCoords(
+        raInDeg, declInDeg = self._wcsSol.raDecFromPixelCoords(
             pixelDmX,
             pixelDmY,
             expendedSensorName,
-            camera=self._camera,
-            obs_metadata=self._obs,
             epoch=epoch,
             includeDistortion=includeDistortion,
         )
 
         return raInDeg, declInDeg
-
-
-if __name__ == "__main__":
-    pass

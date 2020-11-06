@@ -4,9 +4,6 @@
 #   the "sconsUtils" package.
 setupRequired(sconsUtils)
 setupRequired(utils)
-setupRequired(obs_lsstSim)
-setupRequired(sims_utils)
-setupRequired(sims_coordUtils)
 setupRequired(phosim_utils)
 setupRequired(ts_wep)
 setupRequired(ts_ofc)
