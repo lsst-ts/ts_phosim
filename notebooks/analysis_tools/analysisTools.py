@@ -290,7 +290,8 @@ def getRaDecFromGaiaField(field='high'):
 
 def readImage(data_dir, focalType = 'extra', obsId=None, raft = None,
               detector = None, detNum = None, verbose=True,
-              data_id = None, rerun='run1', imgType = 'postISR', iterNum = 0):
+              data_id = None, rerun='run1', imgType = 'postISR', iterNum = 0,
+             repo_dir=None):
     ''' A function to read the post ISR image for a given CCD (sensor) 
     using Butler (so it has to be a butler repository). 
 
@@ -353,13 +354,13 @@ def readImage(data_dir, focalType = 'extra', obsId=None, raft = None,
     print('data_id is')
     print(data_id)
     # Read each figure as a postage stamp, store data to an array 
-    if imgType is 'postISR':
-        repo_dir = os.path.join(data_dir, 'input/rerun/', rerun)
-        
-    elif imgType is 'raw':
-        repo_dir = os.path.join(data_dir, 'input/')
-        
-        
+    if repo_dir == None:
+        if imgType is 'postISR':
+            repo_dir = os.path.join(data_dir, 'input/rerun/', rerun)
+
+        elif imgType is 'raw':
+            repo_dir = os.path.join(data_dir, 'input/')
+      
     print('Reading %s images from the following repo_dir:'%imgType)
     print(repo_dir)
     
