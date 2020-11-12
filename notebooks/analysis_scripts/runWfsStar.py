@@ -33,12 +33,12 @@ postageImg = True
 # dir from /analysis_scripts/ level... 
 # - that's where we save the results
 topDir = 'results_wfs'
-expDir = 'arrowStars_2020_24_noPert2_iters' # name of the experiment dir 
+expDir = 'arrowStarsLetters_2020_44' # name of the experiment dir 
 
 outputDir = os.path.join(topDir,expDir)
 
 # the  catalog to use 
-skyFilePath = os.path.join(topDir, 'skyWfsArrow.txt')
+skyFilePath = os.path.join(topDir, 'skyWfsArrowLetter.txt')
 
 # the opd and wfs are stored here 
 os.environ["closeLoopTestDir"] = outputDir
@@ -69,8 +69,8 @@ if defocalImg is True:
     if os.path.exists(intraPath):  _eraseFolderContent(intraPath)
     if os.path.exists(extraPath):  _eraseFolderContent(extraPath)   
    
-opdCmd  = 'opdQuickBackgroundNoPert.cmd'
-starCmd = 'starQuickBackgroundNoPert.cmd'
+opdCmd  = 'opdDefault.cmd'
+starCmd = 'starDefault.cmd'
 
 # initialize the baseWfsWep.py Class 
 wfsLoop = baseAOSLoop() 
@@ -82,7 +82,7 @@ wfsLoop.main(phosimDir, numPro, iterNum, outputDir, testLabel,
             doDeblending=doDeblending, postageImg=postageImg,
             phosimRepackagerKeepOriginal = True, opdCmdSettingsFile=opdCmd, 
             starCmdSettingsFile=starCmd, selectSensors='lsstcam',
-            expWcs = False, noPerturbations=True )
+            expWcs = False, noPerturbations=False )
 
 print('\nDone running lsstCamLoop \n\n')
 
