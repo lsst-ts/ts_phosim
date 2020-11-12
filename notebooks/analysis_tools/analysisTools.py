@@ -256,8 +256,65 @@ def pixel_outline(xmin=0,  xmax=2000, ymin=0, ymax=4072, dx=100 , dy=100, off =1
         ax.set_ylabel('y [px]')
     return xPx, yPx
 
+def pixel_letter_E(xmin=500,ymin=200,width=800,height=1200,xspacing=220,yspacing=200):
+    xmax = xmin+width
+    ymax = ymin+height
+    # initialize array storing coords for all pixels 
+    xPx = np.zeros(0)
+    yPx = np.zeros(0)
 
+    # bottom horizontal line
+    x_bott = np.arange(xmin,xmax,xspacing)
+    y_bott = np.ones_like(x_bott)*ymin
+    xPx = np.append(xPx, x_bott)
+    yPx = np.append(yPx, y_bott)
 
+    # middle horizontal line
+    x_mid = x_bott.copy()
+    y_mid = np.ones_like(x_mid) * ((ymin+ymax)/2.)
+    xPx = np.append(xPx, x_mid)
+    yPx = np.append(yPx, y_mid)
+    
+    # top horizontal line
+    x_top = x_bott.copy()
+    y_top = np.ones_like(x_top)*ymax
+    xPx = np.append(xPx, x_top)
+    yPx = np.append(yPx, y_top)
+
+    # vertical line
+    y_vert = np.arange(ymin+200,ymax-100,yspacing)
+    x_vert = np.ones_like(y_vert)*xmin
+    xPx = np.append(xPx, x_vert)
+    yPx = np.append(yPx, y_vert)
+
+    return xPx, yPx
+    
+def pixel_letter_I(xmin=500,ymin=200,width=900,height=1200,xspacing=220,yspacing=200):
+    xmax = xmin+width
+    ymax = ymin+height
+    # initialize array storing coords for all pixels 
+    xPx = np.zeros(0)
+    yPx = np.zeros(0)
+
+    # bottom horizontal line
+    x_bott = np.arange(xmin,xmax,xspacing)
+    y_bott = np.ones_like(x_bott)*ymin
+    xPx = np.append(xPx, x_bott)
+    yPx = np.append(yPx, y_bott)
+
+    # top horizontal line
+    x_top = x_bott.copy()
+    y_top = np.ones_like(x_top)*ymax
+    xPx = np.append(xPx, x_top)
+    yPx = np.append(yPx, y_top)
+
+    # vertical line
+    y_vert = np.arange(ymin+200,ymax-100,yspacing)
+    x_vert = np.ones_like(y_vert)*((xmin+xmax)/2.)
+    xPx = np.append(xPx, x_vert)
+    yPx = np.append(yPx, y_vert)
+
+    return xPx, yPx
 
 def getRaDecFromGaiaField(field='high'):
     ''' A helper function to translate the GAIA field name to
