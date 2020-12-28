@@ -65,8 +65,7 @@ def main(phosimDir):
     skySim = SkySim()
 
     # Set the observation information
-    mjd = tele.getCamMjd()
-    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+    skySim.setObservationMetaData(ra, decl, rotSkyPos)
 
     # Add the interested stars
     sensorName = "R22_S11"
