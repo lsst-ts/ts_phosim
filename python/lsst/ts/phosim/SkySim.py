@@ -20,11 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import warnings
 
 from lsst.ts.wep.bsc.WcsSol import WcsSol
-
 from lsst.ts.wep.SourceProcessor import SourceProcessor
-from lsst.ts.wep.Utility import expandDetectorName
 
 
 class SkySim(object):
@@ -99,7 +98,7 @@ class SkySim(object):
 
         self._wcsSol.setCamera(camera)
 
-    def setObservationMetaData(self, ra, decl, rotSkyPos, mjd):
+    def setObservationMetaData(self, ra, decl, rotSkyPos, mjd=None):
         """Set the observation meta data.
 
         Parameters
@@ -110,11 +109,19 @@ class SkySim(object):
             Pointing decl in degree.
         rotSkyPos : float
             The orientation of the telescope in degrees.
-        mjd : float
+        mjd : None, optional
             Camera MJD.
+            Note: This is a deprecated argument.
         """
 
-        self._wcsSol.setObsMetaData(ra, decl, rotSkyPos, mjd=mjd)
+        if mjd is not None:
+            warnings.warn(
+                "The argument of mjd is deprecated.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+
+        self._wcsSol.setObsMetaData(ra, decl, rotSkyPos)
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
@@ -266,8 +273,8 @@ class SkySim(object):
         xInpixelInCam,
         yInPixelInCam,
         starMag,
-        epoch=2000.0,
-        includeDistortion=True,
+        epoch=None,
+        includeDistortion=None,
     ):
         """Add the star based on the chip position.
 
@@ -283,37 +290,36 @@ class SkySim(object):
             Pixel position y on camera coordinate.
         starMag : float
             Star magnitude.
-        epoch : float, optional
+        epoch : None, optional
             Epoch is the mean epoch in years of the celestial coordinate
-            system. (the default is 2000.0.)
-        includeDistortion : bool, optional
-            If True (default), then this method will expect the true pixel
-            coordinates with optical distortion included.  If False, this
-            method will expect TAN_PIXEL coordinates, which are the pixel
-            coordinates with estimated optical distortion removed.  See
-            the documentation in afw.cameraGeom for more details. (the
-            default is True.)
+            system. (the default is None.)
+            Note: This is a deprecated argument.
+        includeDistortion : None, optional
+            If True, then this method will expect the true pixel coordinates
+            with optical distortion included.  If False, this method will
+            expect TAN_PIXEL coordinates, which are the pixel coordinates with
+            estimated optical distortion removed. See the documentation in
+            afw.cameraGeom for more details. (the default is None.)
+            Note: This is a deprecated argument.
         """
+
+        if epoch is not None or includeDistortion is not None:
+            warnings.warn(
+                "The arguments of epoch and includeDistortion are deprecated.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = self._getSkyPosByChipPos(
-            sensorName,
-            xInpixelInCam,
-            yInPixelInCam,
-            epoch=epoch,
-            includeDistortion=includeDistortion,
+            sensorName, xInpixelInCam, yInPixelInCam,
         )
 
         # Add the star
         self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
 
     def _getSkyPosByChipPos(
-        self,
-        sensorName,
-        xInpixelInCam,
-        yInPixelInCam,
-        epoch=2000.0,
-        includeDistortion=True,
+        self, sensorName, xInpixelInCam, yInPixelInCam,
     ):
         """Get the sky position in (ra, dec) based on the chip pixel positions.
 
@@ -325,16 +331,6 @@ class SkySim(object):
             Pixel position x on camera coordinate.
         yInPixelInCam : float
             Pixel position y on camera coordinate.
-        epoch : float, optional
-            Epoch is the mean epoch in years of the celestial coordinate
-            system. (the default is 2000.0.)
-        includeDistortion : bool, optional
-            If True (default), then this method will expect the true pixel
-            coordinates with optical distortion included.  If False, this
-            method will expect TAN_PIXEL coordinates, which are the pixel
-            coordinates with estimated optical distortion removed.  See
-            the documentation in afw.cameraGeom for more details. (the
-            default is True.)
 
         Returns
         -------
@@ -345,19 +341,11 @@ class SkySim(object):
         """
 
         # Get the pixel positions in DM team
-        self._sourProc.config(sensorName=sensorName)
         pixelDmX, pixelDmY = self._sourProc.camXY2DmXY(xInpixelInCam, yInPixelInCam)
-
-        # Expend the sensor name
-        expendedSensorName = expandDetectorName(sensorName)
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = self._wcsSol.raDecFromPixelCoords(
-            pixelDmX,
-            pixelDmY,
-            expendedSensorName,
-            epoch=epoch,
-            includeDistortion=includeDistortion,
+            pixelDmX, pixelDmY, sensorName,
         )
 
         return raInDeg, declInDeg

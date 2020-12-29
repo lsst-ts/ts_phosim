@@ -61,19 +61,18 @@ def main(phosimDir, numPro):
     skySim = SkySim()
 
     # Set the observation information
-    mjd = tele.getCamMjd()
-    skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+    skySim.setObservationMetaData(ra, decl, rotSkyPos)
 
     # Add the interested stars
     sensorName = [
-        "R44_S00_C0",
-        "R00_S22_C1",
-        "R44_S00_C1",
-        "R00_S22_C0",
-        "R04_S20_C1",
-        "R40_S02_C0",
-        "R04_S20_C0",
-        "R40_S02_C1",
+        "R44_SW1",
+        "R00_SW0",
+        "R44_SW0",
+        "R00_SW1",
+        "R04_SW0",
+        "R40_SW1",
+        "R04_SW1",
+        "R40_SW0",
     ]
     xInpixelInCam = [500, 800]
     yInPixelInCam = [1000, 1300]
