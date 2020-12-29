@@ -30,14 +30,16 @@ pipeline {
 
     stages {
 
-        stage('Cloning Repos') {
+        stage ('Cloning Repos') {
             steps {
-                withEnv(["HOME=${env.WORKSPACE}"]) {
-                    sh """
-                        git clone -b master https://github.com/lsst-dm/phosim_utils.git
-                        git clone -b tickets/DM-27899 https://github.com/lsst-ts/ts_wep.git
-                        git clone -b master https://github.com/lsst-ts/ts_ofc.git
-                    """
+                dir(env.WORKSPACE + '/phosim_utils') {
+                    git branch: 'master', url: 'https://github.com/lsst-dm/phosim_utils.git'
+                }
+                dir(env.WORKSPACE + '/ts_wep') {
+                    git branch: 'master', url: 'https://github.com/lsst-ts/ts_wep.git'
+                }
+                dir(env.WORKSPACE + '/ts_ofc') {
+                    git branch: 'master', url: 'https://github.com/lsst-ts/ts_ofc.git'
                 }
             }
         }
@@ -63,7 +65,7 @@ pipeline {
             }
         }
 
-        stage('Unit Tests and Coverage Analysis') { 
+        stage ('Unit Tests and Coverage Analysis') {
             steps {
                 // Direct the HOME to WORKSPACE for pip to get the
                 // installed library.
