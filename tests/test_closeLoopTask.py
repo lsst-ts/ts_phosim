@@ -319,7 +319,7 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertTrue(os.path.exists(fakeFlatDir))
 
         files = os.listdir(fakeFlatDir)
-        self.assertEqual(len(files), 24)
+        self.assertEqual(len(files), 48)
 
     def testMakeCalibsComCam(self):
 
@@ -356,7 +356,11 @@ class TestCloseLoopTask(unittest.TestCase):
 
         pathIsrDir = self._makeIsrDir()
         self.closeLoopTask.configWepCalc(
-            CamType.LsstFamCam, pathIsrDir, FilterType.R, [0, 0], 0,
+            CamType.LsstFamCam,
+            pathIsrDir,
+            FilterType.R,
+            [0, 0],
+            0,
         )
 
         outputSkyInfoFilePath = self.closeLoopTask.setWepCalcWithSkyInfo(
