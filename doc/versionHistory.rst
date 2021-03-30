@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.3.0:
+
+-------------
+1.3.0
+-------------
+
+* Update tests for ``teleFacade``, ``closeLoopTask``, and ``opdMetrology``, with new dimensions for R22 of lsstCam
+
 .. _lsst.ts.phosim-1.2.9:
 
 -------------
