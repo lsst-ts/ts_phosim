@@ -214,12 +214,12 @@ class TestOpdMetrology(unittest.TestCase):
     def testAddFieldXYbyCamPos(self):
 
         sensorName = "R22_S11"
-        xInpixel = 4000
-        yInPixel = 4072
+        xInpixel = 4004
+        yInPixel = 4096
         self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, self.testDataDir)
 
-        ansFieldXinDeg = 2000 * 0.2 / 3600
-        ansFieldYinDeg = 2036 * 0.2 / 3600
+        ansFieldXinDeg = 2002 * 0.2 / 3600
+        ansFieldYinDeg = 2048 * 0.2 / 3600
         fieldX, fieldY = self.metr.getFieldXY()
         self.assertAlmostEqual(
             (fieldX[-1], fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg)
