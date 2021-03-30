@@ -312,14 +312,19 @@ class SkySim(object):
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = self._getSkyPosByChipPos(
-            sensorName, xInpixelInCam, yInPixelInCam,
+            sensorName,
+            xInpixelInCam,
+            yInPixelInCam,
         )
 
         # Add the star
         self.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
 
     def _getSkyPosByChipPos(
-        self, sensorName, xInpixelInCam, yInPixelInCam,
+        self,
+        sensorName,
+        xInpixelInCam,
+        yInPixelInCam,
     ):
         """Get the sky position in (ra, dec) based on the chip pixel positions.
 
@@ -345,7 +350,9 @@ class SkySim(object):
 
         # Get the sky position in (ra, decl)
         raInDeg, declInDeg = self._wcsSol.raDecFromPixelCoords(
-            pixelDmX, pixelDmY, sensorName,
+            pixelDmX,
+            pixelDmY,
+            sensorName,
         )
 
         return raInDeg, declInDeg

@@ -395,7 +395,11 @@ class CloseLoopTask(object):
 
         # Run the simulation
         self._runSim(
-            camType, instName, rotCamInDeg, iterNum, baseOutputDir,
+            camType,
+            instName,
+            rotCamInDeg,
+            iterNum,
+            baseOutputDir,
         )
 
     def getCamTypeAndInstName(self, inst):
@@ -503,7 +507,12 @@ class CloseLoopTask(object):
                 shutil.rmtree(filePath)
 
     def _runSim(
-        self, camType, instName, rotCamInDeg, iterNum, baseOutputDir,
+        self,
+        camType,
+        instName,
+        rotCamInDeg,
+        iterNum,
+        baseOutputDir,
     ):
         """Run the simulation.
 
@@ -809,7 +818,11 @@ class CloseLoopTask(object):
 
         # Run the simulation
         self._runSim(
-            camType, instName, rotCamInDeg, iterNum, baseOutputDir,
+            camType,
+            instName,
+            rotCamInDeg,
+            iterNum,
+            baseOutputDir,
         )
 
     def checkBoresight(self, boresight, pathSkyFile):

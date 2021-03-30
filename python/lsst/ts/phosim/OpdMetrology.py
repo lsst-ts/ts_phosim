@@ -334,7 +334,7 @@ class OpdMetrology(object):
     def calcPSSN(
         self, wavelengthInUm, opdFitsFile=None, opdMap=None, zen=0, debugLevel=0
     ):
-        """ Calculate the PSSN based on OPD map.
+        """Calculate the PSSN based on OPD map.
 
         PSSN: Normalized point source sensitivity.
         OPD: Optical path difference.

@@ -798,7 +798,9 @@ class PhosimCmpt(object):
         """
 
         warnings.warn(
-            "Use analyzeOpdData() instead.", category=DeprecationWarning, stacklevel=2,
+            "Use analyzeOpdData() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
         )
         self.analyzeOpdData(
             InstName.COMCAM,

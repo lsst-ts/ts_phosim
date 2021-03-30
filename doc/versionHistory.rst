@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.3.1:
+
+-------------
+1.3.1
+-------------
+
+* Reformat the code by `black` v20.8b1.
+
 .. _lsst.ts.phosim-1.3.0:
 
 -------------
