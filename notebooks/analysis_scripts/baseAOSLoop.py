@@ -23,6 +23,9 @@ from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, \
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 from lsst.utils import getPackageDir
 
+import sys
+sys.path.append('../analysis_tools/')
+import analysisTools as at
 
 class baseAOSLoop():
 
@@ -36,7 +39,7 @@ class baseAOSLoop():
             opdCmdSettingsFile='opdDefault.cmd',
             starCmdSettingsFile='starDefault.cmd', 
             instSettingFileName='starSingleExp.inst',
-            selectSensors = 'comcam', sensorNames  = ['R14_S00'],
+            selectSensors = 'comcam', sensorNames  = [],
             deblendDonutAlgo='convolveTemplate',
             centroidTemplateType='model', deblendTemplateType='isolatedDonutFromImage',
             bscDbType = 'file', dbFileName  = 'bsc2.db3', expWcs = False,
@@ -196,11 +199,9 @@ class baseAOSLoop():
         surveySettingFilePath = os.path.join(getConfigDir(),
                                             "surveySettings.yaml")
         surveySettings = ParamReader(filePath=surveySettingFilePath)
-        if surveyFilter is None:
-            filterType = FilterType.fromString(
-                surveySettings.getSetting("filterType"))
-        else:
-            filterType = FilterType.fromString(surveyFilter)
+        
+        filterType = FilterType.REF 
+
         if raInDeg is None:
             raInDeg = surveySettings.getSetting("raInDeg")
         if decInDeg is None:
@@ -313,11 +314,15 @@ class baseAOSLoop():
                          cmdSettingFileName=opdCmdSettingsFile)
 
                 # generate OPD at 31 field locations 
-                if (selectSensors == 'lsstfamcam' ) or (selectSensors == 'lsstcam'):
+                if selectSensors == 'lsstcam':
                     print('\nGenerating OPD at 31 field locations spread across the\
                         full focal plane.')
-                    argString = phosimCmpt.getLsstFamCamOpdArgsAndFilesForPhoSim(
-                        cmdSettingFileName=opdCmdSettingsFile)
+                    argString = phosimCmpt.getOpdArgsAndFilesForPhoSim(InstName.LSST, 
+                        cmdSettingFileName=opdCmdSettingsFile   )
+
+                if selectSensors == 'lsstfamcam' :
+                     argString = phosimCmpt.getOpdArgsAndFilesForPhoSim(InstName.LSSTFAM, 
+                        cmdSettingFileName=opdCmdSettingsFile   )
 
                 argString = argPrepend + argString
                 print('Generating OPD with Phosim, argString is \n')
@@ -348,12 +353,16 @@ class baseAOSLoop():
             print('\nAnalyzing the OPD data ')
 
             if selectSensors == 'comcam':
-                phosimCmpt.analyzeComCamOpdData(zkFileName=opdZkFileName,
-                                            pssnFileName=opdPssnFileName)
+                phosimCmpt.analyzeOpdData(InstName.COMCAM,
+                    zkFileName=opdZkFileName, pssnFileName=opdPssnFileName)
 
-            elif (selectSensors == 'lsstcam') or (selectSensors == 'lsstfamcam'):
-                phosimCmpt.analyzeLsstFamCamOpdData(zkFileName=opdZkFileName,
-                                                pssnFileName=opdPssnFileName)
+            if selectSensors == 'lsstcam' :
+                phosimCmpt.analyzeOpdData( InstName.LSST, 
+                    zkFileName=opdZkFileName, pssnFileName=opdPssnFileName )
+
+            if selectSensors == 'lsstfamcam':
+                phosimCmpt.analyzeOpdData(InstName.LSSTFAM,
+                    zkFileName=opdZkFileName, pssnFileName=opdPssnFileName)
 
             # Get the PSSN from file
             pssn = phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
@@ -1111,7 +1120,7 @@ if __name__ == "__main__":
                         help="Ratio of M1M3 actuator force error between 0 and 1 (default: 0.05)")
     parser.add_argument('--opdCmdSettingsFile', type=str, default='opdDefault.cmd', 
                         help='Name of the file in ts_phosim/policy/cmd used as a seed when making the opd.cmd')
-    parser.add_argument('--starCmdSettingsFile', type=str, default='starDefault.cmd', 
+    parser.add_argument('--starCmdSettingsFile', type=str, default='starQuickBackground.cmd', 
                         help='Name of the file in ts_phosim/policy/cmd used as a seed when making the opd.cmd')
     parser.add_argument('--selectSensors', type=str, default="comcam",
                         help='Sensors to run the simulation with. Choose one of "comcam" (1 raft, 9 CCDs), \
@@ -1127,11 +1136,21 @@ if __name__ == "__main__":
     parser.add_argument('--dbFileName', type=str, default  = 'bsc.db3', 
                         help='Database filename used to select targets for wavefront error calculation.')
 
+    parser.add_argument('--gaiaFieldName', type=str, default='', 
+                        help='GAIA DR2 field name, eg. high, med, low, Baade, Pleiades ')
     args = parser.parse_args()
 
     if len(args.sensors)>0:
         sensorNamesString = args.sensors
         sensorNames = sensorNamesString.split('|')
+    
+    # get raInDeg, decInDeg from the GAIA DR2 field name if provided 
+    raInDeg, decInDeg = 0. ,0. # default pointing : (0,0) 
+
+    if len(args.gaiaFieldName)>0:
+        raInDeg, decInDeg  = at.getRaDecFromGaiaField(args.gaiaFieldName)
+        print('Using raInDeg=%.2f, decInDeg=%.2f, based on GAIA field name ')
+
 
     # parse correctly the boolean args :
     # if we invoke any boolean arg, it becomes true, so 
@@ -1176,5 +1195,7 @@ if __name__ == "__main__":
                 noPerturbations=args.noPerturbations, opdCmdSettingsFile=args.opdCmdSettingsFile,
                 starCmdSettingsFile=args.starCmdSettingsFile, selectSensors=args.selectSensors,
                 sensorNames = sensorNames,
-                dbFileName=args.dbFileName, bscDbType=args.bscDbType)
+                dbFileName=args.dbFileName, bscDbType=args.bscDbType,
+                raInDeg=raInDeg,decInDeg=decInDeg,
+                )
     

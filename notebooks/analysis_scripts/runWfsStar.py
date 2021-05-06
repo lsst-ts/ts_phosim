@@ -16,10 +16,10 @@ numPro = 20 # number of processors setting in phosimCmptSetting.yaml
 iterNum  = 5 # number of iterations 
 
 # we evaluate OPD for 31 locations of LsstFamCam
-opd = True 
+opd = False 
 
 # we simulate the calibration products for LsstCam to do the ISR 
-flats = True
+flats = False
 
 # we simulate defocal corner LsstCam images 
 defocalImg = True 
