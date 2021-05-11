@@ -1220,14 +1220,18 @@ class PhosimCmpt(object):
 
         intraFocalDirName = self.getIntraFocalDirName()
         extraFocalDirName = self.getExtraFocalDirName()
-        for imgType in (intraFocalDirName, extraFocalDirName):
-
+        defocalDistInMm = self.tele.defocalDist
+        defocalDistInMicrons = int(1000*defocalDistInMm)
+        for imgType, focusz in zip([intraFocalDirName, extraFocalDirName],
+                                   [defocalDistInMicrons, -defocalDistInMicrons]
+                                   ):
             # Repackage the images to the temporary directory
             command = "phosim_repackager.py"
             phosimImgDir = os.path.join(self.outputImgDir, imgType)
             argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
             if isEimg:
                 argstring += " --eimage"
+            argstring += f" --focusz {focusz}"
             runProgram(command, argstring=argstring)
 
             # Remove the image data in the original directory
