@@ -30,8 +30,6 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
-from lsst.ts.ofc.Utility import InstName
-
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
@@ -196,7 +194,7 @@ class TestPhosimCmpt(unittest.TestCase):
         instFileName = "opd.inst"
         with self.assertWarns(UserWarning):
             argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(
-                InstName.COMCAM, instFileName=instFileName
+                "comcam", instFileName=instFileName
             )
 
         self.assertTrue(isinstance(argString, str))
@@ -293,7 +291,7 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self._copyOpdToImgDirFromTestData()
         self.phosimCmpt.analyzeOpdData(
-            InstName.COMCAM,
+            "comcam",
             zkFileName=self.zkFileName,
             rotOpdInDeg=rotOpdInDeg,
             pssnFileName=self.pssnFileName,
@@ -396,10 +394,13 @@ class TestPhosimCmpt(unittest.TestCase):
         self._analyzeComCamOpdData()
         refSensorNameList = self._getRefSensorNameList()
 
-        listOfFWHMSensorData = self.phosimCmpt.getListOfFwhmSensorData(
+        (
+            sensor_data_fwhm,
+            sensor_data_sensor_id,
+        ) = self.phosimCmpt.getListOfFwhmSensorData(
             self.pssnFileName, refSensorNameList
         )
-        self.assertEqual(len(listOfFWHMSensorData), len(refSensorNameList))
+        self.assertEqual(len(sensor_data_fwhm), len(refSensorNameList))
 
         mapSensorNameAndId = MapSensorNameAndId()
         ansSensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
@@ -407,11 +408,11 @@ class TestPhosimCmpt(unittest.TestCase):
         ansData = self.phosimCmpt._getDataOfPssnFile(self.pssnFileName)
         ansFwhmData = ansData[1, :-1]
 
-        for fwhmSensorData, sensorId, fwhm in zip(
-            listOfFWHMSensorData, ansSensorIdList, ansFwhmData
+        for fwhm_data, sid, sensorId, fwhm in zip(
+            sensor_data_fwhm, sensor_data_sensor_id, ansSensorIdList, ansFwhmData
         ):
-            self.assertEqual(fwhmSensorData.getSensorId(), sensorId)
-            self.assertEqual(fwhmSensorData.getFwhmValues()[0], fwhm)
+            self.assertEqual(sid, sensorId)
+            self.assertEqual(fwhm_data, fwhm)
 
     def testGetOpdMetr(self):
 

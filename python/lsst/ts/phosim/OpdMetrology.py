@@ -28,8 +28,7 @@ from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
 from lsst.ts.wep.SourceProcessor import SourceProcessor
 from lsst.ts.wep.ParamReader import ParamReader
 
-from lsst.ts.ofc.Utility import getConfigDir as getConfigDirOfc
-from lsst.ts.ofc.Utility import InstName
+from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 
 from lsst.ts.phosim.MetroTool import calc_pssn, psf2eAtmW
 from lsst.ts.phosim.Utility import getConfigDir
@@ -136,33 +135,35 @@ class OpdMetrology(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
 
         Raises
         ------
-        ValueError
-            This instrument name is not supported.
+        RuntimeError
+            If the instrument path does not exists.
+            If fieldXy.yaml file does not exists in the instrument
+            configuration directory.
         """
 
-        if instName == InstName.COMCAM:
-            dirInst = "comcam"
-        elif instName == InstName.LSST:
-            dirInst = "lsst"
-        elif instName == InstName.LSSTFAM:
-            dirInst = "lsstfam"
-        else:
-            raise ValueError(f"This instrument name ({instName}) is not supported.")
+        instrumentPath = getConfigDirOfc() / instName
+
+        if not instrumentPath.exists():
+            raise RuntimeError(f"OFC instrument path does exists: {instrumentPath}")
 
         # Set the weighting ratio
-        pathWgtFile = os.path.join(getConfigDirOfc(), dirInst, "imgQualWgt.yaml")
+        pathWgtFile = instrumentPath / "imgQualWgt.yaml"
         wgtFile = ParamReader(filePath=pathWgtFile)
         self.setWeightingRatio(list(wgtFile.getContent().values()))
 
         # Set the field (x, y)
         pathFieldXyFile = os.path.join(
-            getConfigDir(), "instrument", dirInst, "fieldXy.yaml"
+            getConfigDir(), "instrument", instName, "fieldXy.yaml"
         )
+
+        if not os.path.exists(pathFieldXyFile):
+            raise RuntimeError(f"Field xy file does not exists: {pathFieldXyFile}.")
+
         paramReader = ParamReader(filePath=pathFieldXyFile)
         fieldXY = paramReader.getMatContent()
         self.setFieldXYinDeg(fieldXY[:, 0], fieldXY[:, 1])
@@ -178,7 +179,7 @@ class OpdMetrology(object):
             category=DeprecationWarning,
             stacklevel=2,
         )
-        self.setWgtAndFieldXyOfGQ(InstName.LSST)
+        self.setWgtAndFieldXyOfGQ("lsst")
 
     def getDefaultLsstWfsGQ(self):
         """Get the default field X, Y of LSST WFS on GQ.
@@ -211,7 +212,7 @@ class OpdMetrology(object):
             category=DeprecationWarning,
             stacklevel=2,
         )
-        self.setWgtAndFieldXyOfGQ(InstName.COMCAM)
+        self.setWgtAndFieldXyOfGQ("comcam")
 
     def getZkFromOpd(self, opdFitsFile=None, opdMap=None, znTerms=22, obscuration=0.61):
         """Get the wavefront error of OPD in the basis of annular Zernike
