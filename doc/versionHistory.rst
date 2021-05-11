@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.3.2:
+
+-------------
+1.3.2
+-------------
+
+* Add focusz to phosim_repackager call
+
 .. _lsst.ts.phosim-1.3.1:
 
 -------------
