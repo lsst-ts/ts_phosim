@@ -32,9 +32,6 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
-from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
-
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 
@@ -426,7 +423,7 @@ class PhosimCmpt(object):
         )
 
         argString = self.getOpdArgsAndFilesForPhoSim(
-            InstName.COMCAM,
+            "comcam",
             cmdFileName=cmdFileName,
             instFileName=instFileName,
             logFileName=logFileName,
@@ -452,7 +449,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
         cmdFileName : str, optional
             Physical command file name. (the default is "opd.cmd".)
@@ -803,7 +800,7 @@ class PhosimCmpt(object):
             stacklevel=2,
         )
         self.analyzeOpdData(
-            InstName.COMCAM,
+            "comcam",
             zkFileName=zkFileName,
             rotOpdInDeg=rotOpdInDeg,
             pssnFileName=pssnFileName,
@@ -822,7 +819,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
         zkFileName : str, optional
             OPD in zk file name. (the default is "opd.zer".)
@@ -960,7 +957,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
         pssnFileName : str
             PSSN file name.
@@ -1182,8 +1179,10 @@ class PhosimCmpt(object):
 
         Returns
         -------
-        list [lsst.ts.ofc.ctrlIntf.FWHMSensorData]
-            List of FWHMSensorData which contains the sensor Id and FWHM data.
+        fwhm : `np.ndarray`
+            Numpy array with fwhm data.
+        sensor_id: `np.ndarray`
+            Numpy array with sensor ids.
         """
 
         # Get the FWHM data from the PSSN file
@@ -1195,12 +1194,13 @@ class PhosimCmpt(object):
         mapSensorNameAndId = MapSensorNameAndId()
         sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
-        listOfFWHMSensorData = []
-        for sensorId, fwhm in zip(sensorIdList, fwhmData):
-            fwhmSensorData = FWHMSensorData(sensorId, np.array([fwhm]))
-            listOfFWHMSensorData.append(fwhmSensorData)
+        sensor_id = np.array(sensorIdList, dtype=int)
 
-        return listOfFWHMSensorData
+        fwhm = np.array([], dtype=object)
+        for _fwhm in fwhmData:
+            fwhm = np.append(fwhm, _fwhm)
+
+        return fwhm, sensor_id
 
     def repackagePistonCamImgs(self, isEimg=False):
         """Repackage the images of piston camera (ComCam and LSST FAM) from

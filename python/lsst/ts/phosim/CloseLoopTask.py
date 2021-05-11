@@ -24,14 +24,15 @@
 import os
 import shutil
 
+import numpy as np
+
 from lsst.ts.wep.Utility import CamType, FilterType, runProgram
 from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
 from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
 
-from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.Utility import getConfigDir as getConfigDirOfc
-from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
+from lsst.ts.ofc import OFC, OFCData
+from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 
 from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
@@ -119,9 +120,9 @@ class CloseLoopTask(object):
         print(f"The star magnitude is chosen to be {starMag}.")
 
         opdMetr = OpdMetrology()
-        if instName in (InstName.COMCAM, InstName.LSSTFAM):
+        if instName in ("comcam", "lsstfam"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
-        elif instName == InstName.LSST:
+        elif instName == "lsst":
             fieldX, fieldY = opdMetr.getDefaultLsstWfsGQ()
             opdMetr.setFieldXYinDeg(fieldX, fieldY)
         else:
@@ -172,7 +173,7 @@ class CloseLoopTask(object):
             settingFile = self.wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
 
-    def configOfcCalc(self, instName, filterType, rotAngInDeg):
+    def configOfcCalc(self, instName):
         """Configure the OFC calculator.
 
         OFC: Optical feedback calculator.
@@ -181,17 +182,9 @@ class CloseLoopTask(object):
         ----------
         instName : enum 'InstName' in lsst.ts.ofc.Utility
             Instrument name.
-        filterType : enum 'FilterType' in lsst.ts.wep.Utility
-            Filter type.
-        rotAngInDeg : float
-            The camera rotation angle in degree (-90 to 90).
         """
 
-        self.ofcCalc = OFCCalculationFactory.getCalculator(instName)
-
-        self.ofcCalc.setFilter(filterType)
-        self.ofcCalc.setRotAng(rotAngInDeg)
-        self.ofcCalc.setGainByPSSN()
+        self.ofcCalc = OFC(OFCData(instName))
 
     def configPhosimCmpt(
         self,
@@ -424,9 +417,9 @@ class CloseLoopTask(object):
         """
 
         if inst == "comcam":
-            return CamType.ComCam, InstName.COMCAM
+            return CamType.ComCam, "comcam"
         elif inst == "lsstfam":
-            return CamType.LsstFamCam, InstName.LSSTFAM
+            return CamType.LsstFamCam, "lsstfam"
         else:
             raise ValueError(f"This instrument ({inst}) is not supported.")
 
@@ -510,6 +503,7 @@ class CloseLoopTask(object):
         self,
         camType,
         instName,
+        filterType,
         rotCamInDeg,
         iterNum,
         baseOutputDir,
@@ -522,6 +516,8 @@ class CloseLoopTask(object):
             Camera type.
         instName : enum 'InstName' in lsst.ts.ofc.Utility
             Instrument name.
+        filterType : str
+            Filter type.
         rotCamInDeg : float
             The camera rotation angle in degree (-90 to 90).
         iterNum : int
@@ -531,7 +527,7 @@ class CloseLoopTask(object):
         """
 
         # Set the telescope state to be the same as the OFC
-        state0 = self.ofcCalc.getStateAggregated()
+        state0 = self.ofcCalc.ofc_controller.aggregated_state
         self.phosimCmpt.setDofInUm(state0)
 
         # Get the list of referenced sensor name (field positions)
@@ -589,10 +585,11 @@ class CloseLoopTask(object):
             print("GQ effective FWHM is %.4f." % gqEffFwhm)
 
             # Set the FWHM data
-            listOfFWHMSensorData = self.phosimCmpt.getListOfFwhmSensorData(
+            fwhm, sensor_id = self.phosimCmpt.getListOfFwhmSensorData(
                 opdPssnFileName, refSensorNameList
             )
-            self.ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
+
+            self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
             # Generate the sky images and calculate the wavefront error
             if self.useCcdImg():
@@ -611,10 +608,23 @@ class CloseLoopTask(object):
                 )
 
             # Calculate the DOF
-            self.ofcCalc.calculateCorrections(listOfWfErr)
+            wfe = np.array(
+                [sensor_wfe.getAnnularZernikePoly() for sensor_wfe in listOfWfErr]
+            )
+            sensor_ids = np.array(
+                [sensor_wfe.getSensorId() for sensor_wfe in listOfWfErr]
+            )
+
+            self.ofcCalc.calculate_corrections(
+                wfe=wfe,
+                field_idx=sensor_ids,
+                filter_name=str(filterType),
+                gain=-1,
+                rot=rotCamInDeg,
+            )
 
             # Set the new aggregated DOF to phosimCmpt
-            dofInUm = self.ofcCalc.getStateAggregated()
+            dofInUm = self.ofcCalc.ofc_controller.aggregated_state
             self.phosimCmpt.setDofInUm(dofInUm)
 
             # Save the DOF file
@@ -660,13 +670,12 @@ class CloseLoopTask(object):
         """
 
         # Check the input
-        if instName not in (InstName.COMCAM, InstName.LSSTFAM):
+        if instName not in ("comcam", "lsstfam"):
             raise ValueError(f"This instrument name ({instName}) is not supported.")
 
         # Get the data of sensor name and field index
-        filePath = os.path.join(
-            getConfigDirOfc(), instName.name.lower(), "sensorNameToFieldIdx.yaml"
-        )
+        filePath = getConfigDirOfc() / instName / "sensorNameToFieldIdx.yaml"
+
         paramReader = ParamReader(filePath=filePath)
         data = paramReader.getContent()
 
@@ -937,7 +946,7 @@ class CloseLoopTask(object):
 
         justWfs = False
         detectors = ""
-        if instName == InstName.LSST:
+        if instName == "lsst":
             justWfs = True
         else:
             sensorNameList = self.getSensorNameListOfFields(instName)
