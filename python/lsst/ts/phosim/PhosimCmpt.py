@@ -1195,7 +1195,7 @@ class PhosimCmpt(object):
 
         return fwhm, sensor_id
 
-    def repackagePistonCamImgs(self, isEimg=False):
+    def repackagePistonCamImgs(self, instName, isEimg=False):
         """Repackage the images of piston camera (ComCam and LSST FAM) from
         PhoSim for processing.
 
@@ -1219,16 +1219,28 @@ class PhosimCmpt(object):
             command = "phosim_repackager.py"
             phosimImgDir = os.path.join(self.outputImgDir, imgType)
             argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
+            argstring += f" --inst {instName} "
             if isEimg:
                 argstring += " --eimage"
+            focusz = (
+                self.tele.getDefocalDistInMm()
+                * 1e3
+                * (-1.0 if imgType == intraFocalDirName else 1.0)
+            )
+            argstring += f" --focusz {focusz} --no-derotate "
+
+            print(command, argstring)
+
             runProgram(command, argstring=argstring)
 
             # Remove the image data in the original directory
-            argString = "-rf %s/*.fits*" % phosimImgDir
-            runProgram("rm", argstring=argString)
+            argstring = "-rf %s/*.fits*" % phosimImgDir
+            print(argstring)
+            runProgram("rm", argstring=argstring)
 
             # Put the repackaged data into the image directory
             argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
+            print(argstring)
             runProgram("mv", argstring=argstring)
 
         # Remove the temporary directory
