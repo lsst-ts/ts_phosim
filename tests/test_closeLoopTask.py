@@ -232,7 +232,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
         args = parser.parse_known_args()[0]
         self.assertEqual(args.inst, "comcam")
-        self.assertEqual(args.filterType, "ref")
+        self.assertEqual(args.filterType, "")
         self.assertEqual(args.rotCam, 0.0)
         self.assertEqual(args.m1m3FErr, 0.05)
         self.assertEqual(args.numOfProc, 1)
@@ -275,11 +275,16 @@ class TestCloseLoopTask(unittest.TestCase):
         sensorNameList = self.closeLoopTask.getSensorNameListOfFields("lsstfam")
         self.assertEqual(len(sensorNameList), 189)
         self.assertEqual(sensorNameList[0], "R01_S00")
-        self.assertEqual(sensorNameList[3], "R02_S00")
-        self.assertEqual(sensorNameList[5], "R02_S02")
-        self.assertEqual(sensorNameList[9], "R01_S10")
+        self.assertEqual(sensorNameList[3], "R01_S10")
+        self.assertEqual(sensorNameList[5], "R01_S12")
+        self.assertEqual(sensorNameList[9], "R02_S00")
         self.assertEqual(sensorNameList[13], "R02_S11")
         self.assertEqual(sensorNameList[188], "R43_S22")
+
+        # Test the wavefront detector is not in the list
+        self.assertTrue("R00_SW0" not in sensorNameList)
+        # Test guider detector not in the list
+        self.assertTrue("R00_SG0" not in sensorNameList)
 
     def testEraseDirectoryContent(self):
 

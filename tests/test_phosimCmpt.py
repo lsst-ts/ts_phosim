@@ -33,7 +33,7 @@ from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.Utility import getModulePath, getCamera
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
 
 
@@ -330,8 +330,11 @@ class TestPhosimCmpt(unittest.TestCase):
         self._analyzeComCamOpdData()
 
         refSensorNameList = self._getRefSensorNameList()
+        mapSensorNameAndId = MapSensorNameAndId()
+        ansSensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+
         listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
-            self.zkFileName, refSensorNameList
+            self.zkFileName, ansSensorIdList
         )
 
         self.assertEqual(len(listOfWfErr), len(refSensorNameList))
@@ -393,17 +396,14 @@ class TestPhosimCmpt(unittest.TestCase):
 
         self._analyzeComCamOpdData()
         refSensorNameList = self._getRefSensorNameList()
+        mapSensorNameAndId = MapSensorNameAndId()
+        ansSensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
         (
             sensor_data_fwhm,
             sensor_data_sensor_id,
-        ) = self.phosimCmpt.getListOfFwhmSensorData(
-            self.pssnFileName, refSensorNameList
-        )
-        self.assertEqual(len(sensor_data_fwhm), len(refSensorNameList))
-
-        mapSensorNameAndId = MapSensorNameAndId()
-        ansSensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+        ) = self.phosimCmpt.getListOfFwhmSensorData(self.pssnFileName, ansSensorIdList)
+        self.assertEqual(len(sensor_data_fwhm), len(ansSensorIdList))
 
         ansData = self.phosimCmpt._getDataOfPssnFile(self.pssnFileName)
         ansFwhmData = ansData[1, :-1]
@@ -531,10 +531,10 @@ class TestPhosimCmpt(unittest.TestCase):
 
         listOfWfErr = self._prapareListOfWfErr()
 
-        refSensorNameList = ["R00_S12", "R00_S21", "R01_S00", "R01_S01"]
+        refSensorNameList = ["R01_S00", "R01_S01", "R01_S10", "R01_S11"]
         zkFileName = "testZk.zer"
         self.phosimCmpt.reorderAndSaveWfErrFile(
-            listOfWfErr, refSensorNameList, zkFileName=zkFileName
+            listOfWfErr, refSensorNameList, getCamera("lsstfam"), zkFileName=zkFileName
         )
 
         zkFilePath = os.path.join(self.phosimCmpt.getOutputImgDir(), zkFileName)

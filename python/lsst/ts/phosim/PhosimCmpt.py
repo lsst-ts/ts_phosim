@@ -1323,14 +1323,13 @@ class PhosimCmpt(object):
         """
 
         mapSensorNameAndId = dict(
-            [(detector.getName(), detector.getId()) for detector in lsstCamera]
+            [(detector.getId(), detector.getName()) for detector in lsstCamera]
         )
 
         wfErrMap = dict()
         for sensorWavefrontData in listOfWfErr:
             sensorId = sensorWavefrontData.getSensorId()
-            sensorNameList = mapSensorNameAndId.mapSensorIdToName(sensorId)[0]
-            sensorName = sensorNameList[0]
+            sensorName = mapSensorNameAndId[sensorId]
 
             avgErrInUm = sensorWavefrontData.getAnnularZernikePoly()
 
