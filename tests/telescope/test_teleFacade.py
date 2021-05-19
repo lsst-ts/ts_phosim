@@ -175,10 +175,9 @@ class TestTeleFacade(unittest.TestCase):
     def testSetInstName(self):
 
         defocalDist = 1.0
-        with self.assertWarns(UserWarning):
-            self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
+        self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
 
-        self.assertEqual(self.tele.surveyParam["instName"], "lsst")
+        self.assertEqual(self.tele.surveyParam["instName"], "comcam")
         self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
     def testSetInstNameWithWrongCamType(self):

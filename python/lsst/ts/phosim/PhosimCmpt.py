@@ -1260,7 +1260,7 @@ class PhosimCmpt(object):
             stacklevel=2,
         )
 
-        self.repackagePistonCamImgs(isEimg=False)
+        self.repackagePistonCamImgs(isEimg=False, instName="comcam")
 
     def repackageComCamEimgFromPhoSim(self):
         """Repackage the ComCam eimages from PhoSim for processing.
@@ -1274,7 +1274,7 @@ class PhosimCmpt(object):
             stacklevel=2,
         )
 
-        self.repackagePistonCamImgs(isEimg=True)
+        self.repackagePistonCamImgs(isEimg=True, instName="comcam")
 
     def reorderAndSaveWfErrFile(
         self, listOfWfErr, refSensorNameList, lsstCamera, zkFileName="wfs.zer"

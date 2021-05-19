@@ -491,7 +491,7 @@ class TestPhosimCmpt(unittest.TestCase):
         intraFileNum = self._getNumOfFileInFolder(intraFileFolderPath)
         self.assertEqual(intraFileNum, 17)
 
-        self.phosimCmpt.repackageComCamAmpImgFromPhoSim()
+        self.phosimCmpt.repackageComCamAmpImgFromPhoSim(instName="comcam")
 
         self._checkNumOfFilesAfterRepackage()
 
