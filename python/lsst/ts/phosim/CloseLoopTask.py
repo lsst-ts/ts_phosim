@@ -584,8 +584,6 @@ class CloseLoopTask(object):
             self.phosimCmpt.setOutputImgDir(outputImgDir)
 
             # Generate the OPD image
-            _instName = self.phosimCmpt.tele.surveyParam["instName"]
-
             argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(instName)
 
             self.phosimCmpt.runPhoSim(argString)
@@ -800,24 +798,31 @@ class CloseLoopTask(object):
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
 
-        runProgram(
-            f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
-        )
+        butler = dafButler.Butler(butlerRootPath)
 
-        self.writeWepConfiguration(instName)
+        if f"LSST{butlerInstName}/calib" not in butler.registry.queryCollections():
+
+            self.log.info("Ingesting curated calibrations.")
+
+            runProgram(
+                f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
+            )
+
+            self.writeWepConfiguration(instName)
 
         runProgram(
             f"pipetask run -b {butlerRootPath} "
             f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib "
             f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
-            f"--register-dataset-types --output-run ts_phosim -p {instName}Pipeline.yaml -d "
+            f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {instName}Pipeline.yaml -d "
             f'"exposure IN ({self.visitIdOffset+extraObsId}, {self.visitIdOffset+intraObsId})" -j 2'
         )
 
+        # Need to redefine butler because the database changed.
         butler = dafButler.Butler(butlerRootPath)
 
         datasetRefs = butler.registry.queryDatasets(
-            datasetType="zernikeEstimateAvg", collections=["ts_phosim"]
+            datasetType="zernikeEstimateAvg", collections=[f"ts_phosim_{extraObsId}"]
         )
 
         listOfWfErr = []
@@ -830,7 +835,9 @@ class CloseLoopTask(object):
             }
 
             zerCoeff = butler.get(
-                "zernikeEstimateAvg", dataId=dataId, collections=["ts_phosim"]
+                "zernikeEstimateAvg",
+                dataId=dataId,
+                collections=[f"ts_phosim_{extraObsId}"],
             )
 
             sensorWavefrontData = SensorWavefrontData()
