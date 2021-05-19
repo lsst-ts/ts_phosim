@@ -835,9 +835,9 @@ class CloseLoopTask(object):
 
             sensorWavefrontData = SensorWavefrontData()
             sensorWavefrontData.setSensorId(dataset.dataId["detector"])
-            sensorWavefrontData.setListOfDonut(zerCoeff)
+            sensorWavefrontData.setAnnularZernikePoly(zerCoeff)
 
-            listOfWfErr.append(SensorWavefrontData)
+            listOfWfErr.append(sensorWavefrontData)
 
         return listOfWfErr
 
