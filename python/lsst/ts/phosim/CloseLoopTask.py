@@ -23,6 +23,7 @@
 
 import os
 import shutil
+import logging
 
 import astropy.io.ascii
 
@@ -50,6 +51,8 @@ class CloseLoopTask(object):
     def __init__(self):
         """Initialization of the close-loop task class to run the simulation
         with PhoSim."""
+
+        self.log = logging.getLogger(type(self).__name__)
 
         # Sky simulator
         self.skySim = None
@@ -122,8 +125,10 @@ class CloseLoopTask(object):
             This instrument name is not supported.
         """
 
-        print("Use the default OPD field positions to be star positions.")
-        print(f"The star magnitude is chosen to be {starMag}.")
+        self.log.info(
+            "Use the default OPD field positions to be star positions."
+            f"The star magnitude is chosen to be {starMag}."
+        )
 
         opdMetr = OpdMetrology()
         if instName in ("comcam", "lsstfam"):
@@ -580,11 +585,9 @@ class CloseLoopTask(object):
 
             # Generate the OPD image
             _instName = self.phosimCmpt.tele.surveyParam["instName"]
-            print(f"tele.instName: {_instName}")
 
             argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(instName)
 
-            print(f"runPhoSim: {argString}")
             self.phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
@@ -598,11 +601,11 @@ class CloseLoopTask(object):
 
             # Get the PSSN from file
             pssn = self.phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
-            print("Calculated PSSN is %s." % pssn)
+            self.log.info("Calculated PSSN is %s." % pssn)
 
             # Get the GQ effective FWHM from file
             gqEffFwhm = self.phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
-            print("GQ effective FWHM is %.4f." % gqEffFwhm)
+            self.log.info("GQ effective FWHM is %.4f." % gqEffFwhm)
 
             # Set the FWHM data
             fwhm, sensor_id = self.phosimCmpt.getListOfFwhmSensorData(
@@ -1186,22 +1189,20 @@ tasks:
             Name of the instrument.
         """
 
-        print(f"Generating bulter gen3 in {butlerRootPath} for {instName}")
+        self.log.info(f"Generating bulter gen3 in {butlerRootPath} for {instName}")
 
         runProgram(f"butler create {butlerRootPath}")
 
         if instName == "comcam":
-            print("Registering LsstComCam")
+            self.log.debug("Registering LsstComCam")
             runProgram(
                 f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstComCam"
             )
         else:
-            print("Registering LsstCam")
+            self.log.debug("Registering LsstCam")
             runProgram(
                 f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstCam"
             )
-
-        print("Creating reference catalog.")
 
     def generateRefCatalog(self, instName, butlerRootPath, pathSkyFile):
         """Generate reference star catalog.
@@ -1215,6 +1216,7 @@ tasks:
         pathSkyFile: `str`
             Path to the catalog star file.
         """
+        self.log.debug("Creating reference catalog.")
 
         catDir = os.path.join(butlerRootPath, "skydata")
         skyFilename = os.path.join(catDir, "sky_data.csv")
@@ -1311,6 +1313,10 @@ config.mag_column_list=['g']
         )
 
         parser.add_argument("--output", type=str, default="", help="Output directory.")
+
+        parser.add_argument(
+            "--log-level", type=int, default=logging.INFO, help="Log level."
+        )
 
         parser.add_argument(
             "--clobber",
