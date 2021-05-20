@@ -772,7 +772,9 @@ class CloseLoopTask(object):
             self.phosimCmpt.runPhoSim(argString)
 
         # Repackage the images based on the image type
-        self.phosimCmpt.repackagePistonCamImgs(instName=instName, isEimg=self.useEimg)
+        self.phosimCmpt.repackagePistonCamImgs(
+            instName=instName if instName == "comcam" else "lsst", isEimg=self.useEimg
+        )
 
         # Ingest images into butler gen3
         self.ingestData(butlerRootPath=butlerRootPath, instName=instName)
@@ -808,7 +810,7 @@ class CloseLoopTask(object):
                 f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
             )
 
-            self.writeWepConfiguration(instName)
+        self.writeWepConfiguration(instName)
 
         runProgram(
             f"pipetask run -b {butlerRootPath} "
@@ -911,7 +913,15 @@ tasks:
             )
 
     def ingestData(self, butlerRootPath, instName):
-        """"""
+        """Ingest data into a gen3 data Butler.
+
+        Parameters
+        ----------
+        butlerRootPath: str
+            Path to the butler repository.
+        instName: str
+            Instrument name.
+        """
         outputImgDir = self.phosimCmpt.getOutputImgDir()
 
         intraRawExpDir = os.path.join(
@@ -1001,14 +1011,6 @@ tasks:
         # Set the defocal distance for WEP calculator based on the setting
         # file in the telescope
         self.setWepCalcWithDefocalDist()
-
-        # Let the WEP calculator to have the idea of sky
-        # self.setWepCalcWithSkyInfo(baseOutputDir)
-
-        # Make the calibration products and do the ingestion if needed
-        # if self.useAmp:
-        # fakeFlatDir = self.makeCalibs(instName, baseOutputDir)
-        # self.wepCalc.ingestCalibs(fakeFlatDir)
 
         # generate bluter gen3 repo if needed
         butlerRootPath = os.path.join(baseOutputDir, "phosimData")
