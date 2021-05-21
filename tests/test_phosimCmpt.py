@@ -20,6 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+import glob
 import shutil
 import numpy as np
 import warnings
@@ -503,8 +504,25 @@ class TestPhosimCmpt(unittest.TestCase):
             imgDirPath = os.path.join(
                 getModulePath(), "tests", "testData", "comcamPhosimData", imgType
             )
+            imgToCopy = glob.glob(f"{imgDirPath}/*")
+            srcFilenames = [os.path.basename(fname) for fname in imgToCopy]
             dst = os.path.join(self.phosimCmpt.getOutputImgDir(), imgType)
-            shutil.copytree(imgDirPath, dst)
+
+            dstFilenames = [
+                os.path.join(
+                    dst,
+                    fname.replace("lsst_", "comcam_")
+                    if fname.startswith("lsst_")
+                    else fname,
+                )
+                for fname in srcFilenames
+            ]
+
+            if not os.path.exists(dst):
+                os.makedirs(dst)
+
+            for src, dst in zip(imgToCopy, dstFilenames):
+                shutil.copyfile(src, dst)
 
     def _checkNumOfFilesAfterRepackage(self):
 
