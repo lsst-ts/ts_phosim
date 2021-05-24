@@ -1193,7 +1193,7 @@ class PhosimCmpt(object):
 
         fwhmCollection = np.array([], dtype=object)
         for fwhm in fwhmData:
-            fwhmCollection = np.append(fwhmCollection, _fwhm)
+            fwhmCollection = np.append(fwhmCollection, fwhm)
 
         return fwhmCollection, sensor_id
 
