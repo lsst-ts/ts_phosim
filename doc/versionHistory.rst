@@ -6,6 +6,21 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.4.0:
+
+-------------
+1.4.0
+-------------
+
+* Update to work with ts-ofc v2.0.
+* Update Jenkinsfile to run unit tests in the entire package and to build/upload documentation.
+* Update ``test/test_skySim`` ra and dec values because of the CCD geometry difference between the real camera and PhoSim's camera.
+* Update documentation ``conf.py`` to be compatible with the latest package-docs build system.
+* Update setup.cfg to ignore files in doc/, run pytest-black and add setuptools_scm.
+* Add conda recipe.
+  This recipe will only work to create the package (if run with ``--no-test``).
+  We still need to figure out how to properly build packages that depend on the rubin-env.
+
 .. _lsst.ts.phosim-1.3.1:
 
 -------------

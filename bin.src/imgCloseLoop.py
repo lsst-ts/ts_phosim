@@ -22,6 +22,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import argparse
+import logging
 
 from lsst.ts.phosim.CloseLoopTask import CloseLoopTask
 
@@ -37,6 +38,8 @@ if __name__ == "__main__":
 
     # Get the arguments
     args = parser.parse_args()
+
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=args.log_level)
 
     # Run the simulation
     closeLoopTask = CloseLoopTask()

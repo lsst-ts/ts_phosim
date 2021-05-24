@@ -26,6 +26,8 @@ from enum import Enum
 
 from lsst.utils import getPackageDir
 
+from lsst.obs.lsst import LsstComCam, LsstCam
+
 
 class CamDistType(Enum):
     L1S1zer = 1
@@ -243,6 +245,34 @@ def sortOpdFileList(opdFileList):
     sortedOpdFileList = [opdFileList[idx] for idx in sortedIdxList]
 
     return sortedOpdFileList
+
+
+def getCamera(instName):
+    """Returns a lsst instrument for a given instrument name.
+
+    Parameters
+    ----------
+    instName : `str`
+        Instrument name. Valid options are 'comcam or 'lsstfam'.
+
+    Returns
+    -------
+    camera : `lsst.afw.cameraGeom.Camera`
+
+    Raises
+    ------
+    ValueError
+        If input `instName` is not valid.
+    """
+    # Check the input
+    if instName == "lsstfam":
+        return LsstCam().getCamera()
+    elif instName == "comcam":
+        return LsstComCam().getCamera()
+    else:
+        raise ValueError(
+            f"This instrument name ({instName}) is not supported. Must be 'comcam' or 'lsstfam'."
+        )
 
 
 if __name__ == "__main__":

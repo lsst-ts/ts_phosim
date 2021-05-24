@@ -25,7 +25,6 @@ import tempfile
 import unittest
 
 from lsst.ts.wep.Utility import CamType, FilterType
-from lsst.ts.ofc.Utility import InstName
 
 from lsst.ts.phosim.CloseLoopTask import CloseLoopTask
 from lsst.ts.phosim.Utility import getModulePath
@@ -51,21 +50,21 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testConfigSkySimNoSkyFileLSSTFAM(self):
 
-        self.closeLoopTask.configSkySim(InstName.LSSTFAM)
+        self.closeLoopTask.configSkySim("lsstfam")
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 189)
 
     def testConfigSkySimNoSkyFileCOMCAM(self):
 
-        self.closeLoopTask.configSkySim(InstName.COMCAM)
+        self.closeLoopTask.configSkySim("comcam")
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 9)
 
     def testConfigSkySimNoSkyFileLSST(self):
 
-        self.closeLoopTask.configSkySim(InstName.LSST)
+        self.closeLoopTask.configSkySim("lsst")
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 4)
@@ -75,7 +74,7 @@ class TestCloseLoopTask(unittest.TestCase):
         testSkyFile = os.path.join(
             getModulePath(), "tests", "testData", "sky", "skyComCam.txt"
         )
-        self.closeLoopTask.configSkySim(InstName.COMCAM, pathSkyFile=testSkyFile)
+        self.closeLoopTask.configSkySim("comcam", pathSkyFile=testSkyFile)
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 9)
@@ -116,14 +115,11 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testConfigOfcCalc(self):
 
-        instName = InstName.COMCAM
-        filterType = FilterType.R
-        rotAngInDeg = 30
-        self.closeLoopTask.configOfcCalc(instName, filterType, rotAngInDeg)
+        instName = "comcam"
+        self.closeLoopTask.configOfcCalc(instName)
 
         ofcCalc = self.closeLoopTask.getOfcCalc()
-        self.assertEqual(ofcCalc.getFilter(), filterType)
-        self.assertEqual(ofcCalc.getRotAng(), rotAngInDeg)
+        self.assertEqual(ofcCalc.ofc_data.name, instName)
 
     def testConfigPhosimCmpt(self):
 
@@ -169,13 +165,13 @@ class TestCloseLoopTask(unittest.TestCase):
 
         camType, instName = self.closeLoopTask.getCamTypeAndInstName("comcam")
         self.assertEqual(camType, CamType.ComCam)
-        self.assertEqual(instName, InstName.COMCAM)
+        self.assertEqual(instName, "comcam")
 
     def testGetCamTypeAndInstNameLsstFam(self):
 
         camType, instName = self.closeLoopTask.getCamTypeAndInstName("lsstfam")
         self.assertEqual(camType, CamType.LsstFamCam)
-        self.assertEqual(instName, InstName.LSSTFAM)
+        self.assertEqual(instName, "lsstfam")
 
     def testGetCamTypeAndInstNameErr(self):
 
@@ -236,7 +232,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
         args = parser.parse_known_args()[0]
         self.assertEqual(args.inst, "comcam")
-        self.assertEqual(args.filterType, "ref")
+        self.assertEqual(args.filterType, "")
         self.assertEqual(args.rotCam, 0.0)
         self.assertEqual(args.m1m3FErr, 0.05)
         self.assertEqual(args.numOfProc, 1)
@@ -258,7 +254,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testGetSensorNameListOfFieldsComCam(self):
 
-        sensorNameList = self.closeLoopTask.getSensorNameListOfFields(InstName.COMCAM)
+        sensorNameList = self.closeLoopTask.getSensorNameListOfFields("comcam")
         self.assertEqual(len(sensorNameList), 9)
 
         sensorNameListAns = [
@@ -276,14 +272,19 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testGetSensorNameListOfFieldsLsstFam(self):
 
-        sensorNameList = self.closeLoopTask.getSensorNameListOfFields(InstName.LSSTFAM)
+        sensorNameList = self.closeLoopTask.getSensorNameListOfFields("lsstfam")
         self.assertEqual(len(sensorNameList), 189)
         self.assertEqual(sensorNameList[0], "R01_S00")
-        self.assertEqual(sensorNameList[3], "R02_S00")
-        self.assertEqual(sensorNameList[5], "R02_S02")
-        self.assertEqual(sensorNameList[9], "R01_S10")
+        self.assertEqual(sensorNameList[3], "R01_S10")
+        self.assertEqual(sensorNameList[5], "R01_S12")
+        self.assertEqual(sensorNameList[9], "R02_S00")
         self.assertEqual(sensorNameList[13], "R02_S11")
         self.assertEqual(sensorNameList[188], "R43_S22")
+
+        # Test the wavefront detector is not in the list
+        self.assertTrue("R00_SW0" not in sensorNameList)
+        # Test guider detector not in the list
+        self.assertTrue("R00_SG0" not in sensorNameList)
 
     def testEraseDirectoryContent(self):
 
@@ -314,7 +315,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testMakeCalibsLSST(self):
 
-        fakeFlatDir = self.closeLoopTask.makeCalibs(InstName.LSST, self.testDir.name)
+        fakeFlatDir = self.closeLoopTask.makeCalibs("lsst", self.testDir.name)
 
         self.assertTrue(os.path.exists(fakeFlatDir))
 
@@ -323,7 +324,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testMakeCalibsComCam(self):
 
-        fakeFlatDir = self.closeLoopTask.makeCalibs(InstName.COMCAM, self.testDir.name)
+        fakeFlatDir = self.closeLoopTask.makeCalibs("comcam", self.testDir.name)
 
         self.assertTrue(os.path.exists(fakeFlatDir))
 
@@ -352,7 +353,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testSetWepCalcWithSkyInfo(self):
 
-        self.closeLoopTask.configSkySim(InstName.LSST)
+        self.closeLoopTask.configSkySim("lsst")
 
         pathIsrDir = self._makeIsrDir()
         self.closeLoopTask.configWepCalc(

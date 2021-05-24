@@ -354,10 +354,7 @@ class TeleFacade(object):
         if camType in (CamType.LsstCam, CamType.LsstFamCam):
             instName = "lsst"
         elif camType == CamType.ComCam:
-            instName = "lsst"
-            warnings.warn(
-                "Use 'lsst' instead of 'comcam' in PhoSim.", category=UserWarning
-            )
+            instName = "comcam"
         else:
             raise ValueError("This camera type (%s) is not supported yet." % camType)
 
@@ -560,7 +557,9 @@ class TeleFacade(object):
         ra = boresight[0]
         dec = boresight[1]
 
-        rot = self.surveyParam["rotAngInDeg"]
+        # Have to add 90 degrees rotation to account for the inconsistency
+        # between phosim geometry and that of obs_lsst.
+        rot = self.surveyParam["rotAngInDeg"] + 90.0
         mjd = self.getCamMjd()
 
         self.phoSimCommu.getStarInstance(
@@ -670,7 +669,9 @@ class TeleFacade(object):
         ra = boresight[0]
         dec = boresight[1]
 
-        rot = self.surveyParam["rotAngInDeg"]
+        # Have to add 90 degrees rotation to account for the inconsistency
+        # between phosim geometry and that of obs_lsst.
+        rot = self.surveyParam["rotAngInDeg"] + 90.0
 
         # Write the default instance setting
         self.phoSimCommu.getOpdInstance(
