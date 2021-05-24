@@ -72,7 +72,14 @@ class CloseLoopTask(object):
         # Use the eimage
         self.useEimg = False
 
+        # offset between the specified obsId and the assigned visitId, e.g.
+        # obsId = 9006000, visitId = 4021123106000.
         self.visitIdOffset = 4021114100000
+
+        # Ra/Dec/RotAng coordinates used in the simulation.
+        self.boresightRa = None
+        self.boresightDec = None
+        self.boresightRotAng = None
 
     def configSkySim(self, instName, pathSkyFile="", starMag=15):
         """Configure the sky simulator.
@@ -543,6 +550,8 @@ class CloseLoopTask(object):
             Number of closed-loop iteration.
         baseOutputDir : str
             Base output directory.
+        butlerRootPath : str
+            Path to the butler gen 3 repository.
         """
 
         # Set the telescope state to be the same as the OFC
@@ -744,6 +753,8 @@ class CloseLoopTask(object):
         ----------
         obsId : int
             Observation ID used in PhoSim.
+        butlerRootPath : str
+            Path to the butler repository.
         snap : int, optional
             Snap. (the default is 0.)
         simSeed : int, optional
@@ -788,14 +799,20 @@ class CloseLoopTask(object):
 
         Parameters
         ----------
-        extraObsId: `int`
+        extraObsId : `int`
             Extra observation id.
-        intraObsId: `int`
+        intraObsId : `int`
             Intra observation id.
-        butlerRootPath: `str`
+        butlerRootPath : `str`
             Path to the butler gen3 repos.
-        instName: `str`
+        instName : `str`
             Instrument name.
+
+        Returns
+        -------
+        listOfWfErr : `list` of `SensorWavefrontData`
+            List of SensorWavefrontData with the results of the wavefront
+            estimation pipeline for each sensor.
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
@@ -917,9 +934,9 @@ tasks:
 
         Parameters
         ----------
-        butlerRootPath: str
+        butlerRootPath : str
             Path to the butler repository.
-        instName: str
+        instName : str
             Instrument name.
         """
         outputImgDir = self.phosimCmpt.getOutputImgDir()
@@ -1236,6 +1253,10 @@ tasks:
 
         # Read sky file and convert it to csv
         skyData = astropy.io.ascii.read(pathSkyFile)
+        # Constructing the catalog of stars to use in the wavefront estimation
+        # pipeline. Here it assign the g filter. Since this is only for target
+        # selection it really doesn't matter which filter we select, as long
+        # as it is a valid one.
         skyData.rename_column("Mag", "g")
 
         skyData.write(skyFilename, format="csv", overwrite=True)

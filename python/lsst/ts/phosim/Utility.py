@@ -252,12 +252,17 @@ def getCamera(instName):
 
     Parameters
     ----------
-    instName: `str`
-        Instrument name.
+    instName : `str`
+        Instrument name. Valid options are 'comcam or 'lsstfam'.
 
     Returns
     -------
-    camera: `lsst.obs.lsst.`
+    camera : `lsst.afw.cameraGeom.Camera`
+
+    Raises
+    ------
+    ValueError
+        If input `instName` is not valid.
     """
     # Check the input
     if instName == "lsstfam":

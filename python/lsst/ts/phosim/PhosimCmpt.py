@@ -1175,8 +1175,10 @@ class PhosimCmpt(object):
 
         Returns
         -------
-        fwhm : `np.ndarray`
-            Numpy array with fwhm data.
+        fwhmCollection : `np.ndarray [object]`
+            Numpy array with fwhm data. This is a numpy array of arrays. The
+            data type is `object` because each element may have different
+            number of elements.
         sensor_id: `np.ndarray`
             Numpy array with sensor ids.
         """
@@ -1189,11 +1191,11 @@ class PhosimCmpt(object):
 
         sensor_id = np.array(sensorIdList, dtype=int)
 
-        fwhm = np.array([], dtype=object)
-        for _fwhm in fwhmData:
-            fwhm = np.append(fwhm, _fwhm)
+        fwhmCollection = np.array([], dtype=object)
+        for fwhm in fwhmData:
+            fwhmCollection = np.append(fwhmCollection, _fwhm)
 
-        return fwhm, sensor_id
+        return fwhmCollection, sensor_id
 
     def repackagePistonCamImgs(self, instName, isEimg=False):
         """Repackage the images of piston camera (ComCam and LSST FAM) from
@@ -1203,6 +1205,8 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
+        instName : `str`
+            Instrument name.
         isEimg : bool, optional
             Is eimage or not. (the default is False.)
         """
@@ -1229,18 +1233,14 @@ class PhosimCmpt(object):
             )
             argstring += f" --focusz {focusz} --no-derotate "
 
-            print(command, argstring)
-
             runProgram(command, argstring=argstring)
 
             # Remove the image data in the original directory
             argstring = "-rf %s/*.fits*" % phosimImgDir
-            print(argstring)
             runProgram("rm", argstring=argstring)
 
             # Put the repackaged data into the image directory
             argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
-            print(argstring)
             runProgram("mv", argstring=argstring)
 
         # Remove the temporary directory
@@ -1291,7 +1291,7 @@ class PhosimCmpt(object):
             List of SensorWavefrontData object.
         refSensorNameList : list
             Reference sensor name list.
-        lsstCamera :
+        lsstCamera : lsst.afw.cameraGeom.Camera
             Lsst instrument.
         zkFileName : str, optional
             Wavefront error file name. (the default is "wfs.zer".)
@@ -1325,6 +1325,8 @@ class PhosimCmpt(object):
         ----------
         listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
             List of SensorWavefrontData object.
+        lsstCamera : lsst.afw.cameraGeom.Camera
+            Lsst instrument.
 
         Returns
         -------

@@ -409,11 +409,11 @@ class TestPhosimCmpt(unittest.TestCase):
         ansData = self.phosimCmpt._getDataOfPssnFile(self.pssnFileName)
         ansFwhmData = ansData[1, :-1]
 
-        for fwhm_data, sid, sensorId, fwhm in zip(
+        for data_fwhm, sensor_id, ansSensorId, ansFwhm in zip(
             sensor_data_fwhm, sensor_data_sensor_id, ansSensorIdList, ansFwhmData
         ):
-            self.assertEqual(sid, sensorId)
-            self.assertEqual(fwhm_data, fwhm)
+            self.assertEqual(sensor_id, ansSensorId)
+            self.assertEqual(data_fwhm, ansFwhm)
 
     def testGetOpdMetr(self):
 
