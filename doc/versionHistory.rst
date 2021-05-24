@@ -6,10 +6,10 @@
 Version History
 ##################
 
-.. _lsst.ts.phosim-1.3.2:
+.. _lsst.ts.phosim-1.4.0:
 
 -------------
-1.3.2
+1.4.0
 -------------
 
 * Update to work with ts-ofc v2.0.
