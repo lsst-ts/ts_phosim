@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.4.1:
+
+-------------
+1.4.1
+-------------
+
+* Add log output about what the call to Phosim looks like.
+* Fix bug when running `imgCloseLoop.py` without specifying a `skyFile`.
+
 .. _lsst.ts.phosim-1.4.0:
 
 -------------
