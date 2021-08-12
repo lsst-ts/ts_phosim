@@ -73,7 +73,8 @@ class M2Sim(MirrorSim):
         numTerms = self._m2SettingFile.getSetting("numTerms")
 
         super(M2Sim, self).config(
-            numTerms=numTerms, lutFileName=lutFileName,
+            numTerms=numTerms,
+            lutFileName=lutFileName,
         )
 
         mirrorDataDir = self.getMirrorDataDir()

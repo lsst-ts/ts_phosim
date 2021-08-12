@@ -20,9 +20,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import numpy as np
 import unittest
+import tempfile
 
 from lsst.ts.wep.Utility import FilterType, CamType
 
@@ -40,9 +40,10 @@ class TestTeleFacade(unittest.TestCase):
     def setUp(self):
 
         self.configDir = getConfigDir()
+        self.modulePath = getModulePath()
 
-        self.outputDir = os.path.join(getModulePath(), "output", "temp")
-        os.makedirs(self.outputDir)
+        testDir = os.path.join(self.modulePath, "tests")
+        self.outputDir = tempfile.TemporaryDirectory(dir=testDir)
 
     @classmethod
     def setUpClass(cls):
@@ -68,8 +69,7 @@ class TestTeleFacade(unittest.TestCase):
     def tearDown(self):
 
         self._setDefaultTeleSetting()
-
-        shutil.rmtree(self.outputDir)
+        self.outputDir.cleanup()
 
     def _setDefaultTeleSetting(self):
 
@@ -175,10 +175,9 @@ class TestTeleFacade(unittest.TestCase):
     def testSetInstName(self):
 
         defocalDist = 1.0
-        with self.assertWarns(UserWarning):
-            self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
+        self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
 
-        self.assertEqual(self.tele.surveyParam["instName"], "lsst")
+        self.assertEqual(self.tele.surveyParam["instName"], "comcam")
         self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
     def testSetInstNameWithWrongCamType(self):
@@ -228,7 +227,7 @@ class TestTeleFacade(unittest.TestCase):
 
     def testWriteAccDofFile(self):
 
-        dofFilePath = self.tele.writeAccDofFile(self.outputDir)
+        dofFilePath = self.tele.writeAccDofFile(self.outputDir.name)
         dof = np.loadtxt(dofFilePath)
 
         self.assertEqual(np.sum(dof), 0)
@@ -236,7 +235,7 @@ class TestTeleFacade(unittest.TestCase):
 
     def testWritePertBaseOnConfigFile(self):
 
-        pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
+        pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir.name)
 
         numOfLineInFile = self._getNumOfLineInFile(pertCmdFilePath)
         self.assertEqual(numOfLineInFile, 256)
@@ -263,9 +262,9 @@ class TestTeleFacade(unittest.TestCase):
 
         starCmdSettingFile = os.path.join(self.configDir, "cmdFile", "starDefault.cmd")
 
-        pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir)
+        pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir.name)
         cmdFilePath = self.tele.writeCmdFile(
-            self.outputDir,
+            self.outputDir.name,
             cmdSettingFile=starCmdSettingFile,
             pertFilePath=pertCmdFilePath,
             cmdFileName="star.cmd",
@@ -287,7 +286,7 @@ class TestTeleFacade(unittest.TestCase):
 
         with self.assertWarns(UserWarning):
             instFilePath = self.tele.writeOpdInstFile(
-                self.outputDir, metr, instSettingFile=opdInstSettingFile
+                self.outputDir.name, metr, instSettingFile=opdInstSettingFile
             )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
@@ -300,7 +299,7 @@ class TestTeleFacade(unittest.TestCase):
         metr, opdInstSettingFile = self._generateOpd()
         with self.assertWarns(UserWarning):
             instFilePath = self.tele.writeOpdInstFile(
-                self.outputDir, metr, instSettingFile=opdInstSettingFile
+                self.outputDir.name, metr, instSettingFile=opdInstSettingFile
             )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
@@ -319,7 +318,7 @@ class TestTeleFacade(unittest.TestCase):
         skySim, starInstSettingFile = self._generateFakeSky()
 
         instFilePath = self.tele.writeStarInstFile(
-            self.outputDir, skySim, instSettingFile=starInstSettingFile
+            self.outputDir.name, skySim, instSettingFile=starInstSettingFile
         )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)
@@ -332,7 +331,7 @@ class TestTeleFacade(unittest.TestCase):
         skySim, starInstSettingFile = self._generateFakeSky()
         with self.assertWarns(UserWarning):
             instFilePath = self.tele.writeStarInstFile(
-                self.outputDir, skySim, instSettingFile=starInstSettingFile
+                self.outputDir.name, skySim, instSettingFile=starInstSettingFile
             )
 
         numOfLineInFile = self._getNumOfLineInFile(instFilePath)

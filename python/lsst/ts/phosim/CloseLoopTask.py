@@ -23,17 +23,23 @@
 
 import os
 import shutil
+import logging
+
+import astropy.io.ascii
+
+import numpy as np
+
+from lsst.afw.cameraGeom import DetectorType
+
+from lsst.daf import butler as dafButler
 
 from lsst.ts.wep.Utility import CamType, FilterType, runProgram
-from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
-from lsst.ts.wep.ctrlIntf.RawExpData import RawExpData
+from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 
-from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.Utility import getConfigDir as getConfigDirOfc
-from lsst.ts.ofc.ctrlIntf.OFCCalculationFactory import OFCCalculationFactory
+from lsst.ts.ofc import OFC, OFCData
 
-from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath
+from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getCamera
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
 from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
@@ -45,6 +51,8 @@ class CloseLoopTask(object):
     def __init__(self):
         """Initialization of the close-loop task class to run the simulation
         with PhoSim."""
+
+        self.log = logging.getLogger(type(self).__name__)
 
         # Sky simulator
         self.skySim = None
@@ -63,6 +71,15 @@ class CloseLoopTask(object):
 
         # Use the eimage
         self.useEimg = False
+
+        # offset between the specified obsId and the assigned visitId, e.g.
+        # obsId = 9006000, visitId = 4021123106000.
+        self.visitIdOffset = 4021114100000
+
+        # Ra/Dec/RotAng coordinates used in the simulation.
+        self.boresightRa = None
+        self.boresightDec = None
+        self.boresightRotAng = None
 
     def configSkySim(self, instName, pathSkyFile="", starMag=15):
         """Configure the sky simulator.
@@ -115,13 +132,15 @@ class CloseLoopTask(object):
             This instrument name is not supported.
         """
 
-        print("Use the default OPD field positions to be star positions.")
-        print(f"The star magnitude is chosen to be {starMag}.")
+        self.log.info(
+            "Use the default OPD field positions to be star positions."
+            f"The star magnitude is chosen to be {starMag}."
+        )
 
         opdMetr = OpdMetrology()
-        if instName in (InstName.COMCAM, InstName.LSSTFAM):
+        if instName in ("comcam", "lsstfam"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
-        elif instName == InstName.LSST:
+        elif instName == "lsst":
             fieldX, fieldY = opdMetr.getDefaultLsstWfsGQ()
             opdMetr.setFieldXYinDeg(fieldX, fieldY)
         else:
@@ -172,7 +191,7 @@ class CloseLoopTask(object):
             settingFile = self.wepCalc.getSettingFile()
             settingFile.updateSetting("imageType", "eimage")
 
-    def configOfcCalc(self, instName, filterType, rotAngInDeg):
+    def configOfcCalc(self, instName):
         """Configure the OFC calculator.
 
         OFC: Optical feedback calculator.
@@ -181,17 +200,9 @@ class CloseLoopTask(object):
         ----------
         instName : enum 'InstName' in lsst.ts.ofc.Utility
             Instrument name.
-        filterType : enum 'FilterType' in lsst.ts.wep.Utility
-            Filter type.
-        rotAngInDeg : float
-            The camera rotation angle in degree (-90 to 90).
         """
 
-        self.ofcCalc = OFCCalculationFactory.getCalculator(instName)
-
-        self.ofcCalc.setFilter(filterType)
-        self.ofcCalc.setRotAng(rotAngInDeg)
-        self.ofcCalc.setGainByPSSN()
+        self.ofcCalc = OFC(OFCData(instName))
 
     def configPhosimCmpt(
         self,
@@ -227,6 +238,10 @@ class CloseLoopTask(object):
         PhosimCmpt
             PhoSim component.
         """
+
+        self.boresightRa = boresight[0]
+        self.boresightDec = boresight[1]
+        self.boresightRotAng = rotAngInDeg
 
         # Set the Telescope facade class
         tele = TeleFacade()
@@ -390,12 +405,19 @@ class CloseLoopTask(object):
             self.eraseDirectoryContent(baseOutputDir)
 
         # Configure the components
-        self.configOfcCalc(instName, filterType, rotCamInDeg)
+        self.configOfcCalc(instName)
         self.configPhosimCmpt(filterType, rotCamInDeg, m1m3ForceError, numPro)
 
+        butlerRootPath = os.path.join(baseOutputDir, "phosimData")
         # Run the simulation
         self._runSim(
-            camType, instName, rotCamInDeg, iterNum, baseOutputDir,
+            camType=camType,
+            instName=instName,
+            filterType=filterTypeName,
+            rotCamInDeg=rotCamInDeg,
+            iterNum=iterNum,
+            baseOutputDir=baseOutputDir,
+            butlerRootPath=butlerRootPath,
         )
 
     def getCamTypeAndInstName(self, inst):
@@ -420,9 +442,9 @@ class CloseLoopTask(object):
         """
 
         if inst == "comcam":
-            return CamType.ComCam, InstName.COMCAM
+            return CamType.ComCam, "comcam"
         elif inst == "lsstfam":
-            return CamType.LsstFamCam, InstName.LSSTFAM
+            return CamType.LsstFamCam, "lsstfam"
         else:
             raise ValueError(f"This instrument ({inst}) is not supported.")
 
@@ -445,7 +467,7 @@ class CloseLoopTask(object):
             This filter type is not supported.
         """
 
-        if filterTypeName == "ref":
+        if filterTypeName in {"", "ref"}:
             return FilterType.REF
         elif filterTypeName == "u":
             return FilterType.U
@@ -503,7 +525,14 @@ class CloseLoopTask(object):
                 shutil.rmtree(filePath)
 
     def _runSim(
-        self, camType, instName, rotCamInDeg, iterNum, baseOutputDir,
+        self,
+        camType,
+        instName,
+        filterType,
+        rotCamInDeg,
+        iterNum,
+        baseOutputDir,
+        butlerRootPath,
     ):
         """Run the simulation.
 
@@ -513,20 +542,25 @@ class CloseLoopTask(object):
             Camera type.
         instName : enum 'InstName' in lsst.ts.ofc.Utility
             Instrument name.
+        filterType : str
+            Filter type.
         rotCamInDeg : float
             The camera rotation angle in degree (-90 to 90).
         iterNum : int
             Number of closed-loop iteration.
         baseOutputDir : str
             Base output directory.
+        butlerRootPath : str
+            Path to the butler gen 3 repository.
         """
 
         # Set the telescope state to be the same as the OFC
-        state0 = self.ofcCalc.getStateAggregated()
+        state0 = self.ofcCalc.ofc_controller.aggregated_state
         self.phosimCmpt.setDofInUm(state0)
 
         # Get the list of referenced sensor name (field positions)
         refSensorNameList = self.getSensorNameListOfFields(instName)
+        refSensorIdList = self.getSensorIdListOfFields(instName)
 
         # Common file and directory names
         opdZkFileName = "opd.zer"
@@ -560,6 +594,8 @@ class CloseLoopTask(object):
 
             # Generate the OPD image
             argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(instName)
+            self.log.info(f"PHOSIM OPD ARGSTRING: {argString}")
+
             self.phosimCmpt.runPhoSim(argString)
 
             # Analyze the OPD data
@@ -573,39 +609,58 @@ class CloseLoopTask(object):
 
             # Get the PSSN from file
             pssn = self.phosimCmpt.getOpdPssnFromFile(opdPssnFileName)
-            print("Calculated PSSN is %s." % pssn)
+            self.log.info("Calculated PSSN is %s." % pssn)
 
             # Get the GQ effective FWHM from file
             gqEffFwhm = self.phosimCmpt.getOpdGqEffFwhmFromFile(opdPssnFileName)
-            print("GQ effective FWHM is %.4f." % gqEffFwhm)
+            self.log.info("GQ effective FWHM is %.4f." % gqEffFwhm)
 
             # Set the FWHM data
-            listOfFWHMSensorData = self.phosimCmpt.getListOfFwhmSensorData(
-                opdPssnFileName, refSensorNameList
+            fwhm, sensor_id = self.phosimCmpt.getListOfFwhmSensorData(
+                opdPssnFileName, refSensorIdList
             )
-            self.ofcCalc.setFWHMSensorDataOfCam(listOfFWHMSensorData)
+
+            self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
             # Generate the sky images and calculate the wavefront error
             if self.useCcdImg():
-                listOfWfErr = self._calcWfErrFromImg(obsId, snap=0)
+                listOfWfErr = self._calcWfErrFromImg(
+                    obsId, butlerRootPath=butlerRootPath, instName=instName, snap=0
+                )
             else:
                 # Simulate to get the wavefront sensor data from WEP
                 listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
-                    opdZkFileName, refSensorNameList
+                    opdZkFileName, refSensorIdList
                 )
 
             # Record the wavefront error with the same order as OPD for the
             # comparison
             if self.useCcdImg():
                 self.phosimCmpt.reorderAndSaveWfErrFile(
-                    listOfWfErr, refSensorNameList, zkFileName=wfsZkFileName
+                    listOfWfErr,
+                    refSensorNameList,
+                    getCamera(instName),
+                    zkFileName=wfsZkFileName,
                 )
 
             # Calculate the DOF
-            self.ofcCalc.calculateCorrections(listOfWfErr)
+            wfe = np.array(
+                [sensor_wfe.getAnnularZernikePoly() for sensor_wfe in listOfWfErr]
+            )
+            sensor_ids = np.array(
+                [sensor_wfe.getSensorId() for sensor_wfe in listOfWfErr]
+            )
+
+            self.ofcCalc.calculate_corrections(
+                wfe=wfe,
+                field_idx=sensor_ids,
+                filter_name=str(filterType),
+                gain=-1,
+                rot=rotCamInDeg,
+            )
 
             # Set the new aggregated DOF to phosimCmpt
-            dofInUm = self.ofcCalc.getStateAggregated()
+            dofInUm = self.ofcCalc.ofc_controller.aggregated_state
             self.phosimCmpt.setDofInUm(dofInUm)
 
             # Save the DOF file
@@ -650,32 +705,57 @@ class CloseLoopTask(object):
             This instrument name is not supported.
         """
 
-        # Check the input
-        if instName not in (InstName.COMCAM, InstName.LSSTFAM):
-            raise ValueError(f"This instrument name ({instName}) is not supported.")
-
-        # Get the data of sensor name and field index
-        filePath = os.path.join(
-            getConfigDirOfc(), instName.name.lower(), "sensorNameToFieldIdx.yaml"
+        camera = getCamera(instName)
+        detectorType = (
+            DetectorType.WAVEFRONT if instName == "lsst" else DetectorType.SCIENCE
         )
-        paramReader = ParamReader(filePath=filePath)
-        data = paramReader.getContent()
-
-        # Sort the list of sensor name based on field index from low to high
-        sensorNameList = [
-            senserName
-            for senserName, _ in sorted(data.items(), key=lambda item: item[1])
+        return [
+            detector.getName()
+            for detector in camera
+            if detector.getType() == detectorType
         ]
 
-        return sensorNameList
+    def getSensorIdListOfFields(self, instName):
+        """Get the list of sensor ids of fields.
 
-    def _calcWfErrFromImg(self, obsId, snap=0, simSeed=1000):
+        The list will be sorted based on the field index.
+
+        Parameters
+        ----------
+        instName : enum 'InstName' in lsst.ts.ofc.Utility
+            Instrument name.
+
+        Returns
+        -------
+        list[int]
+            List of sensor ids.
+
+        Raises
+        ------
+        ValueError
+            This instrument name is not supported.
+        """
+
+        camera = getCamera(instName)
+
+        detectorType = (
+            DetectorType.WAVEFRONT if instName == "lsst" else DetectorType.SCIENCE
+        )
+        return [
+            detector.getId()
+            for detector in camera
+            if detector.getType() == detectorType
+        ]
+
+    def _calcWfErrFromImg(self, obsId, butlerRootPath, instName, snap=0, simSeed=1000):
         """Calculate the wavefront error from the images generated by PhoSim.
 
         Parameters
         ----------
         obsId : int
             Observation ID used in PhoSim.
+        butlerRootPath : str
+            Path to the butler repository.
         snap : int, optional
             Snap. (the default is 0.)
         simSeed : int, optional
@@ -701,32 +781,184 @@ class CloseLoopTask(object):
             instSettingFileName="starSingleExp.inst",
         )
         for argString in argStringList:
+            self.log.info(f"PHOSIM CCD ARGSTRING: {argString}")
             self.phosimCmpt.runPhoSim(argString)
 
         # Repackage the images based on the image type
-        self.phosimCmpt.repackagePistonCamImgs(isEimg=self.useEimg)
+        self.phosimCmpt.repackagePistonCamImgs(
+            instName=instName if instName == "comcam" else "lsst", isEimg=self.useEimg
+        )
 
-        # Collect the defocal images
+        # Ingest images into butler gen3
+        self.ingestData(butlerRootPath=butlerRootPath, instName=instName)
+
+        listOfWfErr = self.runWep(extraObsId, intraObsId, butlerRootPath, instName)
+
+        return listOfWfErr
+
+    def runWep(self, extraObsId, intraObsId, butlerRootPath, instName):
+        """Run wavefront estimation pipeline task.
+
+        Parameters
+        ----------
+        extraObsId : `int`
+            Extra observation id.
+        intraObsId : `int`
+            Intra observation id.
+        butlerRootPath : `str`
+            Path to the butler gen3 repos.
+        instName : `str`
+            Instrument name.
+
+        Returns
+        -------
+        listOfWfErr : `list` of `SensorWavefrontData`
+            List of SensorWavefrontData with the results of the wavefront
+            estimation pipeline for each sensor.
+        """
+
+        butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+
+        butler = dafButler.Butler(butlerRootPath)
+
+        if f"LSST{butlerInstName}/calib" not in butler.registry.queryCollections():
+
+            self.log.info("Ingesting curated calibrations.")
+
+            runProgram(
+                f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
+            )
+
+        self.writeWepConfiguration(instName)
+
+        runProgram(
+            f"pipetask run -b {butlerRootPath} "
+            f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib "
+            f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
+            f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {instName}Pipeline.yaml -d "
+            f'"exposure IN ({self.visitIdOffset+extraObsId}, {self.visitIdOffset+intraObsId})" -j 2'
+        )
+
+        # Need to redefine butler because the database changed.
+        butler = dafButler.Butler(butlerRootPath)
+
+        datasetRefs = butler.registry.queryDatasets(
+            datasetType="zernikeEstimateAvg", collections=[f"ts_phosim_{extraObsId}"]
+        )
+
+        listOfWfErr = []
+
+        for dataset in datasetRefs:
+            dataId = {
+                "instrument": dataset.dataId["instrument"],
+                "detector": dataset.dataId["detector"],
+                "exposure": dataset.dataId["exposure"],
+            }
+
+            zerCoeff = butler.get(
+                "zernikeEstimateAvg",
+                dataId=dataId,
+                collections=[f"ts_phosim_{extraObsId}"],
+            )
+
+            sensorWavefrontData = SensorWavefrontData()
+            sensorWavefrontData.setSensorId(dataset.dataId["detector"])
+            sensorWavefrontData.setAnnularZernikePoly(zerCoeff)
+
+            listOfWfErr.append(sensorWavefrontData)
+
+        return listOfWfErr
+
+    def writeWepConfiguration(self, instName):
+        """Write wavefront estimation pipeline task configuration.
+
+        Parameters
+        ----------
+        instName: `str`
+            Name of the instrument this configuration is intended for.
+        """
+
+        butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+
+        with open(f"{instName}Pipeline.yaml", "w") as fp:
+            fp.write(
+                f"""# This yaml file is used to define the tasks and configuration of
+# a Gen 3 pipeline used for testing in ts_wep.
+description: wep basic processing test pipeline
+# Here we specify the corresponding instrument for the data we
+# will be using.
+instrument: lsst.obs.lsst.Lsst{butlerInstName}
+# Then we can specify each task in our pipeline by a name
+# and then specify the class name corresponding to that task
+tasks:
+  isr:
+    class: lsst.ip.isr.isrTask.IsrTask
+    # Below we specify the configuration settings we want to use
+    # when running the task in this pipeline. Since our data doesn't
+    # include bias or flats we only want to use doApplyGains and
+    # doOverscan in our isr task.
+    config:
+      connections.outputExposure: 'postISRCCD'
+      doBias: False
+      doVariance: False
+      doLinearize: False
+      doCrosstalk: False
+      doDefect: False
+      doNanMasking: False
+      doInterpolate: False
+      doBrighterFatter: False
+      doDark: False
+      doFlat: False
+      doApplyGains: True
+      doFringe: False
+      doOverscan: True
+  generateDonutCatalogOnlineTask:
+    class: lsst.ts.wep.task.GenerateDonutCatalogOnlineTask.GenerateDonutCatalogOnlineTask
+    # Here we specify the configurations for pointing that we added into the class
+    # GenerateDonutCatalogOnlineTaskConfig.
+    config:
+      boresightRa: {self.boresightRa}
+      boresightDec: {self.boresightDec}
+      boresightRotAng: {self.boresightRotAng}
+  estimateZernikesFamTask:
+    class: lsst.ts.wep.task.EstimateZernikesFamTask.EstimateZernikesFamTask
+    config:
+      # And here we specify the configuration settings originally defined in
+      # EstimateZernikesFamTaskConfig.
+      donutTemplateSize: 160
+      donutStampSize: 160
+      initialCutoutPadding: 40
+"""
+            )
+
+    def ingestData(self, butlerRootPath, instName):
+        """Ingest data into a gen3 data Butler.
+
+        Parameters
+        ----------
+        butlerRootPath : str
+            Path to the butler repository.
+        instName : str
+            Instrument name.
+        """
         outputImgDir = self.phosimCmpt.getOutputImgDir()
 
-        intraRawExpData = RawExpData()
         intraRawExpDir = os.path.join(
             outputImgDir, self.phosimCmpt.getIntraFocalDirName()
         )
-        intraRawExpData.append(intraObsId, snap, intraRawExpDir)
 
-        extraRawExpData = RawExpData()
         extraRawExpDir = os.path.join(
             outputImgDir, self.phosimCmpt.getExtraFocalDirName()
         )
-        extraRawExpData.append(extraObsId, snap, extraRawExpDir)
 
-        # Calculate the wavefront error and DOF
-        listOfWfErr = self.wepCalc.calculateWavefrontErrors(
-            intraRawExpData, extraRawExpData=extraRawExpData
-        )
-
-        return listOfWfErr
+        runProgram(f"butler ingest-raws {butlerRootPath} {intraRawExpDir}")
+        runProgram(f"butler ingest-raws {butlerRootPath} {extraRawExpDir}")
+        if instName == "comcam":
+            runProgram(
+                f"butler define-visits {butlerRootPath} lsst.obs.lsst.LsstComCam"
+            )
+        else:
+            runProgram(f"butler define-visits {butlerRootPath} lsst.obs.lsst.LsstCam")
 
     def runImg(
         self,
@@ -785,12 +1017,19 @@ class CloseLoopTask(object):
         # Configure the components
         self.configSkySim(instName, pathSkyFile=pathSkyFile, starMag=15)
 
+        # If pathSkyFile using default OPD positions write this to disk
+        # so that the Butler can load it later
+        if pathSkyFile == "":
+            pathSkyFile = os.path.join(baseOutputDir, "sky_info.txt")
+            self.skySim.exportSkyToFile(pathSkyFile)
+            self.log.info(f"Wrote new sky file to {pathSkyFile}.")
+
         pathIsrDir = self.createIsrDir(baseOutputDir)
         self.configWepCalc(
             camType, pathIsrDir, filterType, boresight, rotCamInDeg, useEimg=useEimg
         )
 
-        self.configOfcCalc(instName, filterType, rotCamInDeg)
+        self.configOfcCalc(instName)
         self.configPhosimCmpt(
             filterType, rotCamInDeg, m1m3ForceError, numPro, boresight=boresight
         )
@@ -799,17 +1038,27 @@ class CloseLoopTask(object):
         # file in the telescope
         self.setWepCalcWithDefocalDist()
 
-        # Let the WEP calculator to have the idea of sky
-        self.setWepCalcWithSkyInfo(baseOutputDir)
+        # generate bluter gen3 repo if needed
+        butlerRootPath = os.path.join(baseOutputDir, "phosimData")
+        if self.useCcdImg():
+            self.generateButler(butlerRootPath, instName)
+            self.generateRefCatalog(
+                instName=instName,
+                butlerRootPath=butlerRootPath,
+                pathSkyFile=pathSkyFile,
+            )
 
-        # Make the calibration products and do the ingestion if needed
-        if self.useAmp:
-            fakeFlatDir = self.makeCalibs(instName, baseOutputDir)
-            self.wepCalc.ingestCalibs(fakeFlatDir)
+        self.phosimCmpt.tele.setInstName(camType)
 
         # Run the simulation
         self._runSim(
-            camType, instName, rotCamInDeg, iterNum, baseOutputDir,
+            camType=camType,
+            instName=instName,
+            filterType=filterTypeName,
+            rotCamInDeg=rotCamInDeg,
+            iterNum=iterNum,
+            baseOutputDir=baseOutputDir,
+            butlerRootPath=butlerRootPath,
         )
 
     def checkBoresight(self, boresight, pathSkyFile):
@@ -924,7 +1173,7 @@ class CloseLoopTask(object):
 
         justWfs = False
         detectors = ""
-        if instName == InstName.LSST:
+        if instName == "lsst":
             justWfs = True
         else:
             sensorNameList = self.getSensorNameListOfFields(instName)
@@ -964,6 +1213,86 @@ class CloseLoopTask(object):
         # Back to the current path
         os.chdir(currWorkDir)
 
+    def generateButler(self, butlerRootPath, instName):
+        """Generate butler gen3.
+
+        Parameters
+        ----------
+        butlerRootPath: `str`
+            Path to where the butler repository should be created.
+        instName: `str`
+            Name of the instrument.
+        """
+
+        self.log.info(f"Generating bulter gen3 in {butlerRootPath} for {instName}")
+
+        runProgram(f"butler create {butlerRootPath}")
+
+        if instName == "comcam":
+            self.log.debug("Registering LsstComCam")
+            runProgram(
+                f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstComCam"
+            )
+        else:
+            self.log.debug("Registering LsstCam")
+            runProgram(
+                f"butler register-instrument {butlerRootPath} lsst.obs.lsst.LsstCam"
+            )
+
+    def generateRefCatalog(self, instName, butlerRootPath, pathSkyFile):
+        """Generate reference star catalog.
+
+        Parameters
+        ----------
+        instName: `str`
+            Name of the instrument.
+        butlerRootPath: `str`
+            Path to the butler gen3 repository.
+        pathSkyFile: `str`
+            Path to the catalog star file.
+        """
+        self.log.debug("Creating reference catalog.")
+
+        catDir = os.path.join(butlerRootPath, "skydata")
+        skyFilename = os.path.join(catDir, "sky_data.csv")
+        catConfigFilename = os.path.join(catDir, "cat.cfg")
+        catRefConfigFilename = os.path.join(catDir, "convertRefCat.cfg")
+
+        os.mkdir(catDir)
+
+        # Read sky file and convert it to csv
+        skyData = astropy.io.ascii.read(pathSkyFile)
+        # Constructing the catalog of stars to use in the wavefront estimation
+        # pipeline. Here it assign the g filter. Since this is only for target
+        # selection it really doesn't matter which filter we select, as long
+        # as it is a valid one.
+        skyData.rename_column("Mag", "g")
+
+        skyData.write(skyFilename, format="csv", overwrite=True)
+
+        with open(os.path.join(catDir, "_mapper"), "w") as fp:
+            fp.write("lsst.obs.lsst.LsstCamMapper\n")
+
+        with open(catConfigFilename, "w") as fp:
+            fp.write(
+                """config.ra_name='Ra'
+config.dec_name='Decl'
+config.id_name='Id'
+config.mag_column_list=['g']
+"""
+            )
+        with open(catRefConfigFilename, "w") as fp:
+            fp.write('config.datasetIncludePatterns = ["ref_cat", ]\n')
+            fp.write('config.refCats = ["cal_ref_cat"]\n')
+
+        runProgram(
+            f"ingestReferenceCatalog.py {catDir} {skyFilename} --configfile {catConfigFilename}"
+        )
+
+        runProgram(
+            f"butler convert --gen2root {catDir} --config-file {catRefConfigFilename} {butlerRootPath}"
+        )
+
     @staticmethod
     def setDefaultParser(parser):
         """Set the default parser.
@@ -989,8 +1318,9 @@ class CloseLoopTask(object):
         parser.add_argument(
             "--filterType",
             type=str,
-            default="ref",
-            help="Filter type to use: ref, u, g, r, i, z, or y. (default: ref)",
+            default="",
+            help="Filter type to use: U, G, R, I, Z, Y or empty string for "
+            "reference wavelength. (default: '')",
         )
 
         parser.add_argument(
@@ -1022,6 +1352,10 @@ class CloseLoopTask(object):
         )
 
         parser.add_argument("--output", type=str, default="", help="Output directory.")
+
+        parser.add_argument(
+            "--log-level", type=int, default=logging.INFO, help="Log level."
+        )
 
         parser.add_argument(
             "--clobber",

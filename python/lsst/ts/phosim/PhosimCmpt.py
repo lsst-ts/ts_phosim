@@ -29,11 +29,7 @@ from astropy.io import fits
 
 from lsst.ts.wep.Utility import runProgram
 from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
-
-from lsst.ts.ofc.Utility import InstName
-from lsst.ts.ofc.ctrlIntf.FWHMSensorData import FWHMSensorData
 
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
@@ -426,7 +422,7 @@ class PhosimCmpt(object):
         )
 
         argString = self.getOpdArgsAndFilesForPhoSim(
-            InstName.COMCAM,
+            "comcam",
             cmdFileName=cmdFileName,
             instFileName=instFileName,
             logFileName=logFileName,
@@ -452,7 +448,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
         cmdFileName : str, optional
             Physical command file name. (the default is "opd.cmd".)
@@ -798,10 +794,12 @@ class PhosimCmpt(object):
         """
 
         warnings.warn(
-            "Use analyzeOpdData() instead.", category=DeprecationWarning, stacklevel=2,
+            "Use analyzeOpdData() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
         )
         self.analyzeOpdData(
-            InstName.COMCAM,
+            "comcam",
             zkFileName=zkFileName,
             rotOpdInDeg=rotOpdInDeg,
             pssnFileName=pssnFileName,
@@ -820,7 +818,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
         zkFileName : str, optional
             OPD in zk file name. (the default is "opd.zer".)
@@ -958,7 +956,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : enum 'InstName' in lsst.ts.ofc.Utility
+        instName : `str`
             Instrument name.
         pssnFileName : str
             PSSN file name.
@@ -1044,7 +1042,7 @@ class PhosimCmpt(object):
 
         return effFwhmList, gqEffFwhm
 
-    def mapOpdDataToListOfWfErr(self, opdZkFileName, refSensorNameList):
+    def mapOpdDataToListOfWfErr(self, opdZkFileName, sensorIdList):
         """Map the OPD data to the list of wavefront error.
 
         OPD: Optical path difference.
@@ -1053,7 +1051,7 @@ class PhosimCmpt(object):
         ----------
         opdZkFileName : str
             OPD zk file name.
-        refSensorNameList : list
+        sensorIdList : list
             Reference sensor name list.
 
         Returns
@@ -1063,9 +1061,6 @@ class PhosimCmpt(object):
         """
 
         opdZk = self._getZkFromFile(opdZkFileName)
-
-        mapSensorNameAndId = MapSensorNameAndId()
-        sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
         listOfWfErr = []
         for sensorId, zk in zip(sensorIdList, opdZk):
@@ -1164,7 +1159,7 @@ class PhosimCmpt(object):
 
         return gqEffFwhm
 
-    def getListOfFwhmSensorData(self, pssnFileName, refSensorNameList):
+    def getListOfFwhmSensorData(self, pssnFileName, sensorIdList):
         """Get the list of FWHM sensor data based on the OPD PSSN file.
 
         FWHM: Full width at half maximum.
@@ -1175,13 +1170,17 @@ class PhosimCmpt(object):
         ----------
         pssnFileName : str
             PSSN file name.
-        refSensorNameList : list
-            Reference sensor name list.
+        sensorIdList : list
+            Reference sensor id list.
 
         Returns
         -------
-        list [lsst.ts.ofc.ctrlIntf.FWHMSensorData]
-            List of FWHMSensorData which contains the sensor Id and FWHM data.
+        fwhmCollection : `np.ndarray [object]`
+            Numpy array with fwhm data. This is a numpy array of arrays. The
+            data type is `object` because each element may have different
+            number of elements.
+        sensor_id: `np.ndarray`
+            Numpy array with sensor ids.
         """
 
         # Get the FWHM data from the PSSN file
@@ -1190,17 +1189,15 @@ class PhosimCmpt(object):
         data = self._getDataOfPssnFile(pssnFileName)
         fwhmData = data[1, :-1]
 
-        mapSensorNameAndId = MapSensorNameAndId()
-        sensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
+        sensor_id = np.array(sensorIdList, dtype=int)
 
-        listOfFWHMSensorData = []
-        for sensorId, fwhm in zip(sensorIdList, fwhmData):
-            fwhmSensorData = FWHMSensorData(sensorId, np.array([fwhm]))
-            listOfFWHMSensorData.append(fwhmSensorData)
+        fwhmCollection = np.array([], dtype=object)
+        for fwhm in fwhmData:
+            fwhmCollection = np.append(fwhmCollection, fwhm)
 
-        return listOfFWHMSensorData
+        return fwhmCollection, sensor_id
 
-    def repackagePistonCamImgs(self, isEimg=False):
+    def repackagePistonCamImgs(self, instName, isEimg=False):
         """Repackage the images of piston camera (ComCam and LSST FAM) from
         PhoSim for processing.
 
@@ -1208,6 +1205,8 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
+        instName : `str`
+            Instrument name.
         isEimg : bool, optional
             Is eimage or not. (the default is False.)
         """
@@ -1224,13 +1223,21 @@ class PhosimCmpt(object):
             command = "phosim_repackager.py"
             phosimImgDir = os.path.join(self.outputImgDir, imgType)
             argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
+            argstring += f" --inst {instName} "
             if isEimg:
                 argstring += " --eimage"
+            focusz = (
+                self.tele.getDefocalDistInMm()
+                * 1e3
+                * (-1.0 if imgType == intraFocalDirName else 1.0)
+            )
+            argstring += f" --focusz {focusz} --no-derotate "
+
             runProgram(command, argstring=argstring)
 
             # Remove the image data in the original directory
-            argString = "-rf %s/*.fits*" % phosimImgDir
-            runProgram("rm", argstring=argString)
+            argstring = "-rf %s/*.fits*" % phosimImgDir
+            runProgram("rm", argstring=argstring)
 
             # Put the repackaged data into the image directory
             argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
@@ -1253,7 +1260,7 @@ class PhosimCmpt(object):
             stacklevel=2,
         )
 
-        self.repackagePistonCamImgs(isEimg=False)
+        self.repackagePistonCamImgs(isEimg=False, instName="comcam")
 
     def repackageComCamEimgFromPhoSim(self):
         """Repackage the ComCam eimages from PhoSim for processing.
@@ -1267,10 +1274,10 @@ class PhosimCmpt(object):
             stacklevel=2,
         )
 
-        self.repackagePistonCamImgs(isEimg=True)
+        self.repackagePistonCamImgs(isEimg=True, instName="comcam")
 
     def reorderAndSaveWfErrFile(
-        self, listOfWfErr, refSensorNameList, zkFileName="wfs.zer"
+        self, listOfWfErr, refSensorNameList, lsstCamera, zkFileName="wfs.zer"
     ):
         """Reorder the wavefront error in the wavefront error list according to
         the reference sensor name list and save to a file.
@@ -1284,12 +1291,14 @@ class PhosimCmpt(object):
             List of SensorWavefrontData object.
         refSensorNameList : list
             Reference sensor name list.
+        lsstCamera : lsst.afw.cameraGeom.Camera
+            Lsst instrument.
         zkFileName : str, optional
             Wavefront error file name. (the default is "wfs.zer".)
         """
 
         # Get the sensor name that in the wavefront error map
-        wfErrMap = self._transListOfWfErrToMap(listOfWfErr)
+        wfErrMap = self._transListOfWfErrToMap(listOfWfErr, lsstCamera)
         nameListInWfErrMap = list(wfErrMap.keys())
 
         # Reorder the wavefront error map based on the reference sensor name
@@ -1309,13 +1318,15 @@ class PhosimCmpt(object):
         header = "The followings are ZK in um from z4 to z22:"
         np.savetxt(filePath, wfsData, header=header)
 
-    def _transListOfWfErrToMap(self, listOfWfErr):
+    def _transListOfWfErrToMap(self, listOfWfErr, lsstCamera):
         """Transform the list of wavefront error to map.
 
         Parameters
         ----------
         listOfWfErr : list [lsst.ts.wep.ctrlIntf.SensorWavefrontData]
             List of SensorWavefrontData object.
+        lsstCamera : lsst.afw.cameraGeom.Camera
+            Lsst instrument.
 
         Returns
         -------
@@ -1325,13 +1336,14 @@ class PhosimCmpt(object):
             [numpy.ndarray] is the averaged wavefront error (z4-z22) in um.
         """
 
-        mapSensorNameAndId = MapSensorNameAndId()
+        mapSensorNameAndId = dict(
+            [(detector.getId(), detector.getName()) for detector in lsstCamera]
+        )
 
         wfErrMap = dict()
         for sensorWavefrontData in listOfWfErr:
             sensorId = sensorWavefrontData.getSensorId()
-            sensorNameList = mapSensorNameAndId.mapSensorIdToName(sensorId)[0]
-            sensorName = sensorNameList[0]
+            sensorName = mapSensorNameAndId[sensorId]
 
             avgErrInUm = sensorWavefrontData.getAnnularZernikePoly()
 

@@ -23,8 +23,6 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.ofc.Utility import InstName
-
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.Utility import getModulePath
 
@@ -90,7 +88,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def testSetWgtAndFieldXyOfGQLsst(self):
 
-        self.metr.setWgtAndFieldXyOfGQ(InstName.LSST)
+        self.metr.setWgtAndFieldXyOfGQ("lsst")
 
         fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtLsst()
 
@@ -130,7 +128,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def testSetWgtAndFieldXyOfGQComCam(self):
 
-        self.metr.setWgtAndFieldXyOfGQ(InstName.COMCAM)
+        self.metr.setWgtAndFieldXyOfGQ("comcam")
 
         fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtComCam()
 
@@ -169,7 +167,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def testSetWgtAndFieldXyOfGQLsstFam(self):
 
-        self.metr.setWgtAndFieldXyOfGQ(InstName.LSSTFAM)
+        self.metr.setWgtAndFieldXyOfGQ("lsstfam")
 
         fieldX, fieldY = self.metr.getFieldXY()
         self.assertEqual(len(fieldX), 189)
@@ -179,7 +177,9 @@ class TestOpdMetrology(unittest.TestCase):
 
     def testSetWgtAndFieldXyOfGQErr(self):
 
-        self.assertRaises(ValueError, self.metr.setWgtAndFieldXyOfGQ, "NoThisInstName")
+        self.assertRaises(
+            RuntimeError, self.metr.setWgtAndFieldXyOfGQ, "NoThisInstName"
+        )
 
     def testGetDefaultLsstWfsGQ(self):
 
@@ -214,12 +214,12 @@ class TestOpdMetrology(unittest.TestCase):
     def testAddFieldXYbyCamPos(self):
 
         sensorName = "R22_S11"
-        xInpixel = 4000
-        yInPixel = 4072
+        xInpixel = 4004
+        yInPixel = 4096
         self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, self.testDataDir)
 
-        ansFieldXinDeg = 2000 * 0.2 / 3600
-        ansFieldYinDeg = 2036 * 0.2 / 3600
+        ansFieldXinDeg = 2002 * 0.2 / 3600
+        ansFieldYinDeg = 2048 * 0.2 / 3600
         fieldX, fieldY = self.metr.getFieldXY()
         self.assertAlmostEqual(
             (fieldX[-1], fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg)
@@ -276,7 +276,7 @@ class TestOpdMetrology(unittest.TestCase):
 
     def testCalcGQvalue(self):
 
-        self.metr.setWgtAndFieldXyOfGQ(InstName.LSST)
+        self.metr.setWgtAndFieldXyOfGQ("lsst")
         allData = self._getMetroAllAnsData()
         valueList = allData[0, 0:31]
 

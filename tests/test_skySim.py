@@ -138,16 +138,15 @@ class TestSkySim(unittest.TestCase):
 
         # Test the result
         ra, decl = self.skySim.getRaDecInDeg()
-        self.assertAlmostEqual(ra[0], 359.99971038)
-        self.assertAlmostEqual(decl[0], 0.0001889)
+        self.assertAlmostEqual(ra[0], 0.00063889)
+        self.assertAlmostEqual(decl[0], -8.333e-05)
 
     def _setObservationMetaData(self):
 
         ra = 0
         decl = 0
         rotSkyPos = 0
-        mjd = 59580.0
-        self.skySim.setObservationMetaData(ra, decl, rotSkyPos, mjd)
+        self.skySim.setObservationMetaData(ra, decl, rotSkyPos)
 
 
 if __name__ == "__main__":

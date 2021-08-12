@@ -124,7 +124,8 @@ class M1M3Sim(MirrorSim):
         numTerms = self._m1m3SettingFile.getSetting("numTerms")
 
         super(M1M3Sim, self).config(
-            numTerms=numTerms, lutFileName=lutFileName,
+            numTerms=numTerms,
+            lutFileName=lutFileName,
         )
 
         mirrorDataDir = self.getMirrorDataDir()
