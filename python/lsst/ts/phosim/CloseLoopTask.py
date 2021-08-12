@@ -594,6 +594,7 @@ class CloseLoopTask(object):
 
             # Generate the OPD image
             argString = self.phosimCmpt.getOpdArgsAndFilesForPhoSim(instName)
+            self.log.info(f"PHOSIM OPD ARGSTRING: {argString}")
 
             self.phosimCmpt.runPhoSim(argString)
 
@@ -780,6 +781,7 @@ class CloseLoopTask(object):
             instSettingFileName="starSingleExp.inst",
         )
         for argString in argStringList:
+            self.log.info(f"PHOSIM CCD ARGSTRING: {argString}")
             self.phosimCmpt.runPhoSim(argString)
 
         # Repackage the images based on the image type
@@ -1014,6 +1016,13 @@ tasks:
 
         # Configure the components
         self.configSkySim(instName, pathSkyFile=pathSkyFile, starMag=15)
+
+        # If pathSkyFile using default OPD positions write this to disk
+        # so that the Butler can load it later
+        if pathSkyFile == "":
+            pathSkyFile = os.path.join(baseOutputDir, "sky_info.txt")
+            self.skySim.exportSkyToFile(pathSkyFile)
+            self.log.info(f"Wrote new sky file to {pathSkyFile}.")
 
         pathIsrDir = self.createIsrDir(baseOutputDir)
         self.configWepCalc(
