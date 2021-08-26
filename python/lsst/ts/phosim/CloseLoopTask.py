@@ -443,8 +443,8 @@ class CloseLoopTask(object):
 
         if inst == "comcam":
             return CamType.ComCam, "comcam"
-        elif inst == "lsstfam":
-            return CamType.LsstFamCam, "lsstfam"
+        elif inst in ("lsstfam", "lsst"):
+            return CamType.LsstFamCam, f"{inst}"
         else:
             raise ValueError(f"This instrument ({inst}) is not supported.")
 

@@ -265,13 +265,13 @@ def getCamera(instName):
         If input `instName` is not valid.
     """
     # Check the input
-    if instName == "lsstfam":
+    if instName in ("lsstfam", "lsst"):
         return LsstCam().getCamera()
     elif instName == "comcam":
         return LsstComCam().getCamera()
     else:
         raise ValueError(
-            f"This instrument name ({instName}) is not supported. Must be 'comcam' or 'lsstfam'."
+            f"This instrument name ({instName}) is not supported. Must be 'comcam' or 'lsstfam' or 'lsst'."
         )
 
 
