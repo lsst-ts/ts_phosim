@@ -54,10 +54,10 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
     def tearDown(self):
 
         # Remove test template from template directory
-        # try:
-        #     os.remove(os.path.join(self.templateDir, "extra_template-R22_S10.txt"))
-        # except FileNotFoundError:
-        #     pass
+        try:
+            os.remove(os.path.join(self.templateDir, "extra_template-R22_S10.txt"))
+        except FileNotFoundError:
+            pass
 
         # Remove work directory in case of clean up method test failure
         self.tempTestDirectory.cleanup()
@@ -68,8 +68,8 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         shutil.copy(
             os.path.join(
                 self.testDataDir,
-                "comcamPhosimData",
-                "donutTemplateTestData",
+                "testDonutTemplates",
+                "phosimOutput",
                 "MC_H_20211231_006001_R22_S10.fits",
             ),
             os.path.join(self.tempWorkDir, "raw", "MC_H_20211231_006001_R22_S10.fits"),
@@ -80,6 +80,7 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
             os.path.join(
                 self.testDataDir,
                 "testDonutTemplates",
+                "phosimOutput",
                 "centroid_lsst_e_9006001_f1_R22_S10_E000.txt",
             ),
             os.path.join(self.tempWorkDir, "phosimOutput", "extra"),
@@ -179,7 +180,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         intraIdList, extraIdList = self.createPhosimDonuts.generateDataIdLists(
             9006002, 9006001
         )
-        print(extraIdList)
         self.createPhosimDonuts.cutOutTemplatesAndSave(
             240,
             DefocalType.Extra,

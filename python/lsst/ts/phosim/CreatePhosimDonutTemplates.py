@@ -316,7 +316,6 @@ class CreatePhosimDonutTemplates(object):
 
         for dataId in dataIdList:
             # Open postISR File
-            print(dataId)
             postIsrImg = self.butler.get(
                 "postISRCCD", dataId=dataId, collections=[self.outputRunName]
             )
@@ -334,28 +333,17 @@ class CreatePhosimDonutTemplates(object):
             centroidX = int(centroidData[2])
             centroidY = int(centroidData[3])
             imgData = postIsrImg.getImage().getArray()
-            preCenterStampHalfWidth = int(stampHalfWidth * 1.25)
             templateStamp = imgData[
-                centroidX
-                - preCenterStampHalfWidth : centroidX
-                + preCenterStampHalfWidth,
-                centroidY
-                - preCenterStampHalfWidth : centroidY
-                + preCenterStampHalfWidth,
+                centroidX - stampHalfWidth : centroidX + stampHalfWidth,
+                centroidY - stampHalfWidth : centroidY + stampHalfWidth,
             ]
             # Reduce background noise
             templateStampBinary = centroidFind.getImgBinary(templateStamp)
-            newX, newY, radius = centroidFind.getCenterAndRfromImgBinary(
-                templateStampBinary
-            )
-            finalTemplateStamp = templateStampBinary[
-                int(newY - stampHalfWidth) : int(newY + stampHalfWidth),
-                int(newX - stampHalfWidth) : int(newX + stampHalfWidth),
-            ]
+
             # Save to file
             np.savetxt(
                 os.path.join(phosimTemplateDir, "%s" % templateName),
-                finalTemplateStamp,
+                templateStampBinary,
                 fmt="%i",
             )
 
