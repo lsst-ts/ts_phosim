@@ -25,7 +25,6 @@ import numpy as np
 import lsst.daf.butler as dafButler
 from lsst.ts.phosim.Utility import getConfigDir
 from lsst.ts.wep.Utility import runProgram, DefocalType, CentroidFindType
-from lsst.ts.wep.cwfs.Image import Image
 from lsst.ts.wep.cwfs.CentroidFindFactory import CentroidFindFactory
 from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
@@ -228,14 +227,36 @@ class CreatePhosimDonutTemplates(object):
             isrConfigFile = os.path.join(
                 self.templateDataPath, "createPhosimDonutTemplateConfig.yaml"
             )
-        runProgram(
-            f"pipetask run -b {self.repoDir} -p {isrConfigFile} -i LSSTCam/raw/all,LSSTCam/calib --instrument lsst.obs.lsst.LsstCam --register-dataset-types --output-run {self.outputRunName}"
-        )
+        pipetaskCmdStr = f"pipetask run -b {self.repoDir}"
+        pipetaskCmdStr += f" -p {isrConfigFile}"
+        pipetaskCmdStr += " -i LSSTCam/raw/all,LSSTCam/calib"
+        pipetaskCmdStr += " --instrument lsst.obs.lsst.LsstCam"
+        pipetaskCmdStr += " --register-dataset-types"
+        pipetaskCmdStr += f" --output-run {self.outputRunName}"
+        runProgram(pipetaskCmdStr)
 
         # Update butler
         self._updateButler()
 
     def generateDataIdLists(self, intraVisitId, extraVisitId):
+        """
+        Create lists of dataIds to get exposures out of the
+        butler repository for the corresponding visits.
+
+        Parameters
+        ----------
+        intraVisitId : int
+            Visit Id of the intrafocal images from Phosim.
+        extraVisitId : int
+            Visit Id of the extrafocal images from Phosim.
+
+        Returns
+        -------
+        list of dicts
+            List of intrafocal postISRCCD exposure dataId dictionaries
+        list of dicts
+            List of extrafocal postISRCCD exposure dataId dictionaries
+        """
 
         intraSuffix = str(intraVisitId)[-5:]
         extraSuffix = str(extraVisitId)[-5:]
@@ -255,20 +276,24 @@ class CreatePhosimDonutTemplates(object):
 
         return intraIds, extraIds
 
-    def cutOutIntraExtraTemplates(self, templateWidth, intraDataIds, extraDataIds):
+    def cutOutIntraExtraTemplates(self, templateWidth, intraVisitId, extraVisitId):
         """
         Cut out the donut templates from the larger extrafocal and intrafocal
         Phosim images for every detector simulated.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         templateWidth : int
             Width of square template image in pixels.
-        intraDataIds : List of dicts
-            List of dataIds of the intrafocal images from Phosim.
-        extraDataIds : List of dicts
-            List of dataIds of the extrafocal images from Phosim.
+        intraVisitId : int
+            Visit Id of the intrafocal images from Phosim.
+        extraVisitId : int
+            Visit Id of the extrafocal images from Phosim.
         """
+
+        intraDataIds, extraDataIds = self.generateDataIdLists(
+            intraVisitId, extraVisitId
+        )
 
         if len(intraDataIds) > 0:
             print("Generating intra templates")
@@ -284,8 +309,8 @@ class CreatePhosimDonutTemplates(object):
         around the donut from a CCD image to use
         as the donut template for that detector. Saves the cutout to file.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         phosimImageDir : str
             Directory where the visit ISR output is located. Inside should
             be folders for each raft.

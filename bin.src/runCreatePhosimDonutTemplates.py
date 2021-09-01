@@ -25,7 +25,7 @@ import os
 import argparse
 import tempfile
 
-from lsst.ts.wep.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
+from lsst.ts.phosim.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
 
 if __name__ == "__main__":
 
@@ -72,8 +72,8 @@ if __name__ == "__main__":
         default="",
         help="""Path to ISR pipeline configuration file.
         By default will use createPhosimDonutTemplateConfig.yaml
-        in ts_wep/policy/cwfs.
-        """
+        in ts_phosim/policy/donutTemplateData.
+        """,
     )
     parser.add_argument(
         "--tempWorkDir",
@@ -81,20 +81,20 @@ if __name__ == "__main__":
         default="",
         help="""Location to put temporary work files and directories.
         By default will use python tempfile to create one in the current
-        working directory."""
+        working directory.""",
     )
     args = parser.parse_args()
 
     if args.tempWorkDir == "":
         tempTestDirectory = tempfile.TemporaryDirectory(dir=os.environ["PWD"])
-        tempWorkDir = tempTestDirectory.name
+    else:
+        tempTestDirectory = tempfile.TemporaryDirectory(dir=args.tempWorkDir)
+    tempWorkDir = tempTestDirectory.name
 
     # Run tasks
     phosimDonuts = CreatePhosimDonutTemplates(tempWorkDir)
     phosimDonuts.createWorkDirectories()
-    detListPhosim = phosimDonuts.createDetectorLists(
-        detectorStr=args.detectorList
-    )
+    detListPhosim = phosimDonuts.createDetectorLists(detectorStr=args.detectorList)
     phosimDonuts.generateDefocalImages(detListPhosim, args.numOfProc)
     phosimDonuts.repackagePhosimImages()
     phosimDonuts.ingestImages()
