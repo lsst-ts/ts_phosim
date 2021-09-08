@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.4.2:
+
+-------------
+1.4.2
+-------------
+
+* Move `CreatePhosimDonutTemplates.py` from `ts_wep` here to `ts_phosim`.
+
 .. _lsst.ts.phosim-1.4.1:
 
 -------------
