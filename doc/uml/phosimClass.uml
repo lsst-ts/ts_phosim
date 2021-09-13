@@ -24,4 +24,5 @@ CloseLoopTask o-- OFCCalculation
 CloseLoopTask o-- PhosimCmpt
 CloseLoopTask ..> TeleFacade
 CloseLoopTask ..> OpdMetrology
+class CreatePhosimDonutTemplates
 @enduml
