@@ -46,6 +46,18 @@ Contributing
 
 ``lsst.ts.phosim`` is developed at https://github.com/lsst-ts/ts_phosim.
 
+.. _lsst.ts.phosim-see-also:
+
+See Also
+========
+
+.. toctree::
+    :maxdepth: 2
+    :titlesonly:
+    :glob:
+
+    phosimDonutTemplates.rst
+
 .. _lsst.ts.phosim-version:
 
 Version
