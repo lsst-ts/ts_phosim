@@ -42,3 +42,4 @@ phosim.telescope
 * **M1M3Sim**: M1M3 mirror distortion of gravity and temperature gradient.
 * **M2Sim**: M2 mirror distortion of gravity and temperature gradient.
 * **TeleFacade**: Telescope facade pattern that intergate the correction of camera and mirror distortion correction to PhoSim.
+* **CreatePhosimDonutTemplates**: Create donut templates on camera detectors using Phosim. See :doc:`here <phosimDonutTemplates>` for more information on generating Phosim donut templates.
