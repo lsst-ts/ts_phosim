@@ -818,6 +818,8 @@ class CloseLoopTask(object):
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+        pipelineYaml = f'{instName}Pipeline.yaml'
+        pipelineYamlPath = os.path.join(butlerRootPath, pipelineYaml)
 
         butler = dafButler.Butler(butlerRootPath)
 
@@ -829,13 +831,13 @@ class CloseLoopTask(object):
                 f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
             )
 
-        self.writeWepConfiguration(instName)
+        self.writeWepConfiguration(instName, pipelineYamlPath)
 
         runProgram(
             f"pipetask run -b {butlerRootPath} "
             f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib "
             f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
-            f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {instName}Pipeline.yaml -d "
+            f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {pipelineYamlPath} -d "
             f'"exposure IN ({self.visitIdOffset+extraObsId}, {self.visitIdOffset+intraObsId})" -j 2'
         )
 
@@ -869,18 +871,21 @@ class CloseLoopTask(object):
 
         return listOfWfErr
 
-    def writeWepConfiguration(self, instName):
+    def writeWepConfiguration(self, instName, pipelineYamlPath):
         """Write wavefront estimation pipeline task configuration.
 
         Parameters
         ----------
         instName: `str`
             Name of the instrument this configuration is intended for.
+        pipelineYamlPath: `str`
+            Path where the pipeline task configuration yaml file
+            should be saved.
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
 
-        with open(f"{instName}Pipeline.yaml", "w") as fp:
+        with open(pipelineYamlPath, "w") as fp:
             fp.write(
                 f"""# This yaml file is used to define the tasks and configuration of
 # a Gen 3 pipeline used for testing in ts_wep.
