@@ -39,7 +39,7 @@ from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
 
 
 class TestPhosimCmpt(unittest.TestCase):
-    """ Test the PhosimCmpt class."""
+    """Test the PhosimCmpt class."""
 
     def setUp(self):
 
