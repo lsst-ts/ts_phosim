@@ -818,7 +818,7 @@ class CloseLoopTask(object):
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
-        pipelineYaml = f'{instName}Pipeline.yaml'
+        pipelineYaml = f"{instName}Pipeline.yaml"
         pipelineYamlPath = os.path.join(butlerRootPath, pipelineYaml)
 
         butler = dafButler.Butler(butlerRootPath)
