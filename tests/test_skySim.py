@@ -28,7 +28,7 @@ from lsst.ts.phosim.Utility import getModulePath
 
 
 class TestSkySim(unittest.TestCase):
-    """ Test the SkySim class."""
+    """Test the SkySim class."""
 
     def setUp(self):
 

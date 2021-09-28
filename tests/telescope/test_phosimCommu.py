@@ -31,7 +31,7 @@ from lsst.ts.phosim.Utility import getModulePath, SurfaceType
 
 
 class TestPhosimCommu(unittest.TestCase):
-    """ Test the PhosimCommu class."""
+    """Test the PhosimCommu class."""
 
     def setUp(self):
 

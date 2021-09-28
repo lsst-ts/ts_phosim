@@ -648,6 +648,7 @@ class PhosimCommu(object):
 
         if outputDir is not None:
             argString += " -o %s" % outputDir
+            argString += " -w %s" % outputDir
 
         if logFilePath is not None:
             argString += " > %s 2>&1" % logFilePath

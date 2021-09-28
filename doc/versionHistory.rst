@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.4.3:/
+
+-------------
+1.4.3
+-------------
+
+* Update phosim argstring and write path for pipeline yaml file.
+
 .. _lsst.ts.phosim-1.4.2:
 
 -------------
