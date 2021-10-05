@@ -28,14 +28,14 @@ import unittest
 
 from lsst.ts.wep.Utility import FilterType, CamType
 from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
-from lsst.ts.wep.ctrlIntf.MapSensorNameAndId import MapSensorNameAndId
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.Utility import getModulePath, getCamera
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
+from lsst.ts.phosim.SensorWavefrontError import SensorWavefrontError
+from lsst.ts.phosim.MapSensorNameAndId import MapSensorNameAndId
 
 
 class TestPhosimCmpt(unittest.TestCase):
@@ -577,7 +577,7 @@ class TestPhosimCmpt(unittest.TestCase):
         sensorIdList = [2, 3, 1]
         listOfWfErr = []
         for sensorId in sensorIdList:
-            sensorWavefrontData = SensorWavefrontData()
+            sensorWavefrontData = SensorWavefrontError()
             sensorWavefrontData.setSensorId(sensorId)
 
             wfErr = np.random.rand(numOfZk)

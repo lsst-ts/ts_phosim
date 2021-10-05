@@ -80,30 +80,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(len(skySim.getStarId()), 9)
         self.assertEqual(skySim.getStarMag()[0], 15)
 
-    def testConfigWepCalc(self):
-
-        filterType = FilterType.R
-        pathIsrDir = self._makeIsrDir()
-        boresight = [1.2, 2.3]
-        rotCamInDeg = 30
-        self.closeLoopTask.configWepCalc(
-            CamType.LsstFamCam,
-            pathIsrDir,
-            filterType,
-            boresight,
-            rotCamInDeg,
-            useEimg=True,
-        )
-
-        wepCalc = self.closeLoopTask.getWepCalc()
-        self.assertEqual(wepCalc.getIsrDir(), pathIsrDir)
-        self.assertEqual(wepCalc.getFilter(), filterType)
-        self.assertEqual(wepCalc.getBoresight(), tuple(boresight))
-        self.assertEqual(wepCalc.getRotAng(), rotCamInDeg)
-
-        setting = wepCalc.getSettingFile()
-        self.assertEqual(setting.getSetting("imageType"), "eimage")
-
     def _makeIsrDir(self):
 
         isrDirName = "inputTest"
@@ -350,27 +326,6 @@ class TestCloseLoopTask(unittest.TestCase):
 
         self.closeLoopTask.assignImgType(False)
         self.assertTrue(self.closeLoopTask.useCcdImg())
-
-    def testSetWepCalcWithSkyInfo(self):
-
-        self.closeLoopTask.configSkySim("lsst")
-
-        pathIsrDir = self._makeIsrDir()
-        self.closeLoopTask.configWepCalc(
-            CamType.LsstFamCam,
-            pathIsrDir,
-            FilterType.R,
-            [0, 0],
-            0,
-        )
-
-        outputSkyInfoFilePath = self.closeLoopTask.setWepCalcWithSkyInfo(
-            self.testDir.name
-        )
-        self.assertTrue(os.path.exists(outputSkyInfoFilePath))
-
-        wepCalc = self.closeLoopTask.getWepCalc()
-        self.assertEqual(wepCalc.getSkyFile(), outputSkyInfoFilePath)
 
 
 if __name__ == "__main__":

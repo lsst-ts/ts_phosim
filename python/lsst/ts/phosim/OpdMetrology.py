@@ -330,6 +330,7 @@ class OpdMetrology(object):
         sensor = self.camera[sensorName]
 
         # Do the coordinate transformation
+        # DM Coordinates expected from the center of the pixel (0.5 pixel offset)
         fieldYInRad, fieldXInRad = sensor.transform(
             lsst.geom.Point2D(yInPixel-0.5, xInpixel-0.5), PIXELS, FIELD_ANGLE
         )
