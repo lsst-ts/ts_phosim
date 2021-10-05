@@ -221,7 +221,7 @@ class TestOpdMetrology(unittest.TestCase):
         ansFieldXinDeg = 2002 * 0.2 / 3600
         ansFieldYinDeg = 2048 * 0.2 / 3600
         fieldX, fieldY = self.metr.getFieldXY()
-        self.assertAlmostEqual(
+        np.testing.assert_array_almost_equal(
             (fieldX[-1], fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg)
         )
 

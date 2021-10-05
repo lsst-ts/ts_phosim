@@ -22,8 +22,9 @@
 import numpy as np
 import warnings
 
-from lsst.ts.wep.bsc.WcsSol import WcsSol
-from lsst.ts.wep.SourceProcessor import SourceProcessor
+import lsst.geom
+import lsst.obs.lsst as obs_lsst
+from lsst.obs.base import createInitialSkyWcsFromBoresight
 
 
 class SkySim(object):
@@ -43,10 +44,13 @@ class SkySim(object):
         self.mag = np.array([])
 
         # WCS solution
-        self._wcsSol = WcsSol()
+        self._wcsSol = None
 
-        # Source processor in ts_wep
-        self._sourProc = SourceProcessor()
+        # Observation Metadata
+        self._obsMetadata = {}
+
+        # Camera
+        self._camera = obs_lsst.LsstCam.getCamera()
 
     def getStarId(self):
         """Get the star Id.
@@ -96,7 +100,7 @@ class SkySim(object):
             transformation
         """
 
-        self._wcsSol.setCamera(camera)
+        self._camera = camera
 
     def setObservationMetaData(self, ra, decl, rotSkyPos, mjd=None):
         """Set the observation meta data.
@@ -121,7 +125,9 @@ class SkySim(object):
                 stacklevel=2,
             )
 
-        self._wcsSol.setObsMetaData(ra, decl, rotSkyPos)
+        self._obsMetadata['ra'] = ra
+        self._obsMetadata['decl'] = decl
+        self._obsMetadata['rotSkyPos'] = rotSkyPos
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
@@ -345,14 +351,17 @@ class SkySim(object):
             Decl in degree.
         """
 
-        # Get the pixel positions in DM team
-        pixelDmX, pixelDmY = self._sourProc.camXY2DmXY(xInpixelInCam, yInPixelInCam)
-
-        # Get the sky position in (ra, decl)
-        raInDeg, declInDeg = self._wcsSol.raDecFromPixelCoords(
-            pixelDmX,
-            pixelDmY,
-            sensorName,
+        # Set WCS
+        self._wcsSol = createInitialSkyWcsFromBoresight(
+            lsst.geom.SpherePoint(self._obsMetadata['ra'], self._obsMetadata['decl'], lsst.geom.degrees),
+            self._obsMetadata['rotSkyPos'] * lsst.geom.degrees,
+            self._camera[sensorName]
         )
 
-        return raInDeg, declInDeg
+        # Get the sky position in (ra, decl)
+        raOut, declOut = self._wcsSol.pixelToSky(
+            yInPixelInCam,
+            xInpixelInCam,
+        )
+
+        return raOut.asDegrees(), declOut.asDegrees()

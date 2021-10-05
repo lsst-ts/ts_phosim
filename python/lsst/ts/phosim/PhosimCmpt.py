@@ -29,9 +29,9 @@ from astropy.io import fits
 
 from lsst.ts.wep.Utility import runProgram
 from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
 from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
+from lsst.ts.phosim.SensorWavefrontError import SensorWavefrontError
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 
 
