@@ -1,0 +1,3 @@
+@startuml
+CreatePhosimDonutTemplates ..> MapSensorNameAndID
+@enduml

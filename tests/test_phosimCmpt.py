@@ -32,10 +32,10 @@ from lsst.ts.wep.ParamReader import ParamReader
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
-from lsst.ts.phosim.Utility import getModulePath, getCamera
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
-from lsst.ts.phosim.SensorWavefrontError import SensorWavefrontError
-from lsst.ts.phosim.MapSensorNameAndId import MapSensorNameAndId
+from lsst.ts.phosim.utils.Utility import getModulePath, getCamera
+from lsst.ts.phosim.utils.SensorWavefrontError import SensorWavefrontError
+from lsst.ts.phosim.utils.MapSensorNameAndId import MapSensorNameAndId
 
 
 class TestPhosimCmpt(unittest.TestCase):

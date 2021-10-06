@@ -27,7 +27,7 @@ import unittest
 from lsst.ts.wep.Utility import CamType, FilterType
 
 from lsst.ts.phosim.CloseLoopTask import CloseLoopTask
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestCloseLoopTask(unittest.TestCase):

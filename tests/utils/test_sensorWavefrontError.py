@@ -22,7 +22,7 @@
 import unittest
 import numpy as np
 
-from lsst.ts.phosim.SensorWavefrontError import SensorWavefrontError
+from lsst.ts.phosim.utils.SensorWavefrontError import SensorWavefrontError
 
 
 class TestSensorWavefrontError(unittest.TestCase):

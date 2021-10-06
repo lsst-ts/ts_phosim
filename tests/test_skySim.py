@@ -24,7 +24,7 @@ import numpy as np
 import unittest
 
 from lsst.ts.phosim.SkySim import SkySim
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestSkySim(unittest.TestCase):
@@ -33,6 +33,13 @@ class TestSkySim(unittest.TestCase):
     def setUp(self):
 
         self.skySim = SkySim()
+
+    def testSetCamera(self):
+
+        self.skySim.setCamera("lsstfam")
+        self.assertEqual(self.skySim._camera.getName(), "LSSTCam")
+        self.skySim.setCamera("comcam")
+        self.assertEqual(self.skySim._camera.getName(), "LSSTComCam")
 
     def testGetStarId(self):
 
@@ -128,10 +135,12 @@ class TestSkySim(unittest.TestCase):
 
         # Add the star
         sensorName = "R22_S11"
+        instName = "lsstfam"
         starId = 0
         xInpixelInCam = 2000
         yInPixelInCam = 2036
         starMag = 17
+        self.skySim.setCamera(instName)
         self.skySim.addStarByChipPos(
             sensorName, starId, xInpixelInCam, yInPixelInCam, starMag
         )

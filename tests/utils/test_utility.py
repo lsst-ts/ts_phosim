@@ -25,7 +25,7 @@ import unittest
 from lsst.obs.lsst import LsstComCam, LsstCam
 from lsst.afw import cameraGeom
 
-from lsst.ts.phosim.Utility import (
+from lsst.ts.phosim.utils.Utility import (
     opt2ZemaxCoorTrans,
     zemax2optCoorTrans,
     mapSurfNameToEnum,

@@ -23,10 +23,10 @@ import os
 import shutil
 import numpy as np
 import lsst.daf.butler as dafButler
-from lsst.ts.phosim.Utility import getConfigDir
+from lsst.ts.phosim.utils.Utility import getConfigDir
+from lsst.ts.phosim.utils.MapSensorNameAndId import MapSensorNameAndId
 from lsst.ts.wep.Utility import runProgram, DefocalType, CentroidFindType
 from lsst.ts.wep.cwfs.CentroidFindFactory import CentroidFindFactory
-from lsst.ts.phosim.MapSensorNameAndId import MapSensorNameAndId
 
 
 class CreatePhosimDonutTemplates(object):

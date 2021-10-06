@@ -23,8 +23,9 @@ import numpy as np
 import warnings
 
 import lsst.geom
-import lsst.obs.lsst as obs_lsst
 from lsst.obs.base import createInitialSkyWcsFromBoresight
+
+from lsst.ts.phosim.utils.Utility import getCamera
 
 
 class SkySim(object):
@@ -50,7 +51,18 @@ class SkySim(object):
         self._obsMetadata = {}
 
         # Camera
-        self._camera = obs_lsst.LsstCam.getCamera()
+        self._camera = None
+
+    def setCamera(self, instName):
+        """Set the camera.
+
+        Parameters
+        ----------
+        instName : `str`
+            Instrument name. Valid options are 'comcam or 'lsstfam'.
+            """
+
+        self._camera = getCamera(instName)
 
     def getStarId(self):
         """Get the star Id.
@@ -89,18 +101,6 @@ class SkySim(object):
         """
 
         return self.mag
-
-    def setCamera(self, camera):
-        """Set the camera object.
-
-        Parameters
-        ----------
-        camera : Camera
-            A collection of Detectors that also supports coordinate
-            transformation
-        """
-
-        self._camera = camera
 
     def setObservationMetaData(self, ra, decl, rotSkyPos, mjd=None):
         """Set the observation meta data.

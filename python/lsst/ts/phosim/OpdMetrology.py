@@ -33,8 +33,8 @@ from lsst.ts.wep.ParamReader import ParamReader
 
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 
-from lsst.ts.phosim.MetroTool import calc_pssn, psf2eAtmW
-from lsst.ts.phosim.Utility import getConfigDir
+from lsst.ts.phosim.utils.MetroTool import calc_pssn, psf2eAtmW
+from lsst.ts.phosim.utils.Utility import getConfigDir, getCamera
 
 
 class OpdMetrology(object):
@@ -42,12 +42,28 @@ class OpdMetrology(object):
         """Initialization of OPD metrology class.
 
         OPD: Optical path difference.
+
+        Parameters
+        ----------
+        instName : `str`
+            Instrument name. Valid options are 'comcam or 'lsstfam'.
         """
 
         self.wt = np.array([])
         self.fieldX = np.array([])
         self.fieldY = np.array([])
-        self.camera = obs_lsst.LsstCam.getCamera()
+        self._camera = None
+
+    def setCamera(self, instName):
+        """Set the camera.
+
+        Parameters
+        ----------
+        instName : `str`
+            Instrument name. Valid options are 'comcam or 'lsstfam'.
+            """
+
+        self._camera = getCamera(instName)
 
     def getFieldXY(self):
         """Get the field X, Y in degree.
@@ -327,7 +343,7 @@ class OpdMetrology(object):
         """
 
         # Get the sensor
-        sensor = self.camera[sensorName]
+        sensor = self._camera[sensorName]
 
         # Do the coordinate transformation
         # DM Coordinates expected from the center of the pixel (0.5 pixel offset)

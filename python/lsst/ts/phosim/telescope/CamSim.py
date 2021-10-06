@@ -23,7 +23,7 @@ import os
 import numpy as np
 
 from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.phosim.Utility import getConfigDir
+from lsst.ts.phosim.utils.Utility import getConfigDir
 
 
 class CamSim(object):

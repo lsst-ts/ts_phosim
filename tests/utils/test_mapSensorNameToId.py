@@ -21,7 +21,7 @@
 
 import unittest
 
-from lsst.ts.phosim.MapSensorNameAndId import MapSensorNameAndId
+from lsst.ts.phosim.utils.MapSensorNameAndId import MapSensorNameAndId
 
 
 class TestMapSensorNameAndId(unittest.TestCase):

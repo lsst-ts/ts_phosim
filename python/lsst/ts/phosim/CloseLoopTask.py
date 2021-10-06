@@ -37,13 +37,13 @@ from lsst.ts.wep.Utility import CamType, FilterType, runProgram
 
 from lsst.ts.ofc import OFC, OFCData
 
-from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getCamera
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
-from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
-from lsst.ts.phosim.SensorWavefrontError import SensorWavefrontError
+from lsst.ts.phosim.utils.Utility import getPhoSimPath, getAoclcOutputPath, getCamera
+from lsst.ts.phosim.utils.SensorWavefrontError import SensorWavefrontError
+from lsst.ts.phosim.utils.PlotUtil import plotFwhmOfIters
 
 
 class CloseLoopTask(object):
@@ -103,6 +103,7 @@ class CloseLoopTask(object):
         """
 
         self.skySim = SkySim()
+        self.skySim.setCamera(instName)
         if pathSkyFile == "":
             self._setSkySimBasedOnOpdFieldPos(instName, starMag)
         else:
@@ -134,6 +135,7 @@ class CloseLoopTask(object):
         )
 
         opdMetr = OpdMetrology()
+        opdMetr.setCamera(instName)
         if instName in ("comcam", "lsstfam"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
         elif instName == "lsst":
