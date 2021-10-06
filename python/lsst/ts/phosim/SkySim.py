@@ -60,7 +60,7 @@ class SkySim(object):
         ----------
         instName : `str`
             Instrument name. Valid options are 'comcam or 'lsstfam'.
-            """
+        """
 
         self._camera = getCamera(instName)
 
@@ -125,9 +125,9 @@ class SkySim(object):
                 stacklevel=2,
             )
 
-        self._obsMetadata['ra'] = ra
-        self._obsMetadata['decl'] = decl
-        self._obsMetadata['rotSkyPos'] = rotSkyPos
+        self._obsMetadata["ra"] = ra
+        self._obsMetadata["decl"] = decl
+        self._obsMetadata["rotSkyPos"] = rotSkyPos
 
     def addStarByRaDecInDeg(self, starId, raInDeg, declInDeg, mag):
         """Add the star information by (ra, dec) in degrees.
@@ -353,9 +353,11 @@ class SkySim(object):
 
         # Set WCS
         self._wcsSol = createInitialSkyWcsFromBoresight(
-            lsst.geom.SpherePoint(self._obsMetadata['ra'], self._obsMetadata['decl'], lsst.geom.degrees),
-            self._obsMetadata['rotSkyPos'] * lsst.geom.degrees,
-            self._camera[sensorName]
+            lsst.geom.SpherePoint(
+                self._obsMetadata["ra"], self._obsMetadata["decl"], lsst.geom.degrees
+            ),
+            self._obsMetadata["rotSkyPos"] * lsst.geom.degrees,
+            self._camera[sensorName],
         )
 
         # Get the sky position in (ra, decl)

@@ -61,7 +61,7 @@ class OpdMetrology(object):
         ----------
         instName : `str`
             Instrument name. Valid options are 'comcam or 'lsstfam'.
-            """
+        """
 
         self._camera = getCamera(instName)
 
@@ -348,7 +348,7 @@ class OpdMetrology(object):
         # Do the coordinate transformation
         # DM Coordinates expected from the center of the pixel (0.5 pixel offset)
         fieldYInRad, fieldXInRad = sensor.transform(
-            lsst.geom.Point2D(yInPixel-0.5, xInpixel-0.5), PIXELS, FIELD_ANGLE
+            lsst.geom.Point2D(yInPixel - 0.5, xInpixel - 0.5), PIXELS, FIELD_ANGLE
         )
         fieldXInDegree = np.degrees(fieldXInRad)
         fieldYInDegree = np.degrees(fieldYInRad)

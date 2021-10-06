@@ -59,7 +59,7 @@ class PhosimCmpt(object):
 
         # OPD metrology
         self.metr = OpdMetrology()
-        self.metr.setCamera(self.tele.surveyParam['instName'])
+        self.metr.setCamera(self.tele.surveyParam["instName"])
 
         # Output directory of data
         self.outputDir = ""
