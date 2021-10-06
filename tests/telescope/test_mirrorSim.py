@@ -25,7 +25,7 @@ import numpy as np
 
 from lsst.ts.phosim.telescope.MirrorSim import MirrorSim
 
-from lsst.ts.phosim.Utility import getConfigDir
+from lsst.ts.phosim.utils.Utility import getConfigDir
 
 
 class TestMirrorSim(unittest.TestCase):

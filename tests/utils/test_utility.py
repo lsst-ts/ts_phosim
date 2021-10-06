@@ -127,7 +127,11 @@ class TestUtility(unittest.TestCase):
         self.assertIsInstance(lsstComCam, cameraGeom.Camera)
         self.assertEqual(lsstComCam.getName(), LsstComCam.getCamera().getName())
 
-        lsstCam = getCamera("lsstfam")
+        lsstFamCam = getCamera("lsstfam")
+        self.assertIsInstance(lsstFamCam, cameraGeom.Camera)
+        self.assertEqual(lsstFamCam.getName(), LsstCam.getCamera().getName())
+
+        lsstCam = getCamera("lsst")
         self.assertIsInstance(lsstCam, cameraGeom.Camera)
         self.assertEqual(lsstCam.getName(), LsstCam.getCamera().getName())
 
