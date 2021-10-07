@@ -978,8 +978,6 @@ tasks:
             self.skySim.exportSkyToFile(pathSkyFile)
             self.log.info(f"Wrote new sky file to {pathSkyFile}.")
 
-        pathIsrDir = self.createIsrDir(baseOutputDir)
-
         self.configOfcCalc(instName)
         self.configPhosimCmpt(
             filterType, rotCamInDeg, m1m3ForceError, numPro, boresight=boresight

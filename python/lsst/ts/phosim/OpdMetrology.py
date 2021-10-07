@@ -25,7 +25,6 @@ import numpy as np
 from astropy.io import fits
 
 import lsst.geom
-import lsst.obs.lsst as obs_lsst
 from lsst.afw.cameraGeom import PIXELS, FIELD_ANGLE
 
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
@@ -345,8 +344,8 @@ class OpdMetrology(object):
         # Get the sensor
         sensor = self._camera[sensorName]
 
-        # Do the coordinate transformation
-        # DM Coordinates expected from the center of the pixel (0.5 pixel offset)
+        # Do the coordinate transformation. DM Coordinates
+        # expected from the center of the pixel (0.5 pixel offset)
         fieldYInRad, fieldXInRad = sensor.transform(
             lsst.geom.Point2D(yInPixel - 0.5, xInpixel - 0.5), PIXELS, FIELD_ANGLE
         )
