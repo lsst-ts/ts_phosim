@@ -874,11 +874,11 @@ tasks:
       boresightRa: {self.boresightRa}
       boresightDec: {self.boresightDec}
       boresightRotAng: {self.boresightRotAng}
-  estimateZernikesFamTask:
-    class: lsst.ts.wep.task.EstimateZernikesFamTask.EstimateZernikesFamTask
+  estimateZernikesScienceSensorTask:
+    class: lsst.ts.wep.task.EstimateZernikesScienceSensorTask.EstimateZernikesScienceSensorTask
     config:
       # And here we specify the configuration settings originally defined in
-      # EstimateZernikesFamTaskConfig.
+      # EstimateZernikesScienceSensorTaskConfig.
       donutTemplateSize: 160
       donutStampSize: 160
       initialCutoutPadding: 40
