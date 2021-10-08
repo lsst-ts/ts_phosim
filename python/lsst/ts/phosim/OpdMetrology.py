@@ -41,11 +41,6 @@ class OpdMetrology(object):
         """Initialization of OPD metrology class.
 
         OPD: Optical path difference.
-
-        Parameters
-        ----------
-        instName : `str`
-            Instrument name. Valid options are 'comcam or 'lsstfam'.
         """
 
         self.wt = np.array([])
