@@ -29,10 +29,10 @@ from astropy.io import fits
 
 from lsst.ts.wep.Utility import runProgram
 from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.ctrlIntf.SensorWavefrontError import SensorWavefrontError
 
-from lsst.ts.phosim.Utility import getConfigDir, sortOpdFileList
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
+from lsst.ts.phosim.utils.Utility import getConfigDir, sortOpdFileList
+from lsst.ts.phosim.utils.SensorWavefrontError import SensorWavefrontError
 
 
 class PhosimCmpt(object):
@@ -54,11 +54,12 @@ class PhosimCmpt(object):
         settingFilePath = os.path.join(self.configDir, "phosimCmptSetting.yaml")
         self._phosimCmptSettingFile = ParamReader(filePath=settingFilePath)
 
-        # OPD metrology
-        self.metr = OpdMetrology()
-
         # TeleFacade instance
         self.tele = tele
+
+        # OPD metrology
+        self.metr = OpdMetrology()
+        self.metr.setCamera(self.tele.surveyParam["instName"])
 
         # Output directory of data
         self.outputDir = ""

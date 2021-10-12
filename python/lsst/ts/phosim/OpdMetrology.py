@@ -24,14 +24,16 @@ import warnings
 import numpy as np
 from astropy.io import fits
 
+import lsst.geom
+from lsst.afw.cameraGeom import PIXELS, FIELD_ANGLE
+
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeEval
-from lsst.ts.wep.SourceProcessor import SourceProcessor
 from lsst.ts.wep.ParamReader import ParamReader
 
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc
 
-from lsst.ts.phosim.MetroTool import calc_pssn, psf2eAtmW
-from lsst.ts.phosim.Utility import getConfigDir
+from lsst.ts.phosim.utils.MetroTool import calc_pssn, psf2eAtmW
+from lsst.ts.phosim.utils.Utility import getConfigDir, getCamera
 
 
 class OpdMetrology(object):
@@ -44,6 +46,18 @@ class OpdMetrology(object):
         self.wt = np.array([])
         self.fieldX = np.array([])
         self.fieldY = np.array([])
+        self._camera = None
+
+    def setCamera(self, instName):
+        """Set the camera.
+
+        Parameters
+        ----------
+        instName : `str`
+            Instrument name. Valid options are 'comcam or 'lsstfam'.
+        """
+
+        self._camera = getCamera(instName)
 
     def getFieldXY(self):
         """Get the field X, Y in degree.
@@ -322,12 +336,16 @@ class OpdMetrology(object):
             Path to the directory of focal plane data ("focalplanelayout.txt").
         """
 
-        # Get the focal plane data and set the sensor name
-        sourProc = SourceProcessor()
-        sourProc.config(sensorName=sensorName)
+        # Get the sensor
+        sensor = self._camera[sensorName]
 
-        # Do the coordinate transformation
-        fieldXInDegree, fieldYInDegree = sourProc.camXYtoFieldXY(xInpixel, yInPixel)
+        # Do the coordinate transformation. DM Coordinates
+        # expected from the center of the pixel (0.5 pixel offset)
+        fieldYInRad, fieldXInRad = sensor.transform(
+            lsst.geom.Point2D(yInPixel - 0.5, xInpixel - 0.5), PIXELS, FIELD_ANGLE
+        )
+        fieldXInDegree = np.degrees(fieldXInRad)
+        fieldYInDegree = np.degrees(fieldYInRad)
 
         # Add to listed field x, y
         self.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)

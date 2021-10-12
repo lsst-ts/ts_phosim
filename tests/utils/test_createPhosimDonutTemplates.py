@@ -25,8 +25,8 @@ import shutil
 import tempfile
 import numpy as np
 
-from lsst.ts.phosim.Utility import getConfigDir, getModulePath
-from lsst.ts.phosim.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
+from lsst.ts.phosim.utils.Utility import getConfigDir, getModulePath
+from lsst.ts.phosim.utils.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
 from lsst.ts.wep.Utility import DefocalType
 
 

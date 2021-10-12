@@ -27,7 +27,7 @@ from lsst.ts.wep.Utility import FilterType
 
 from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
 
-from lsst.ts.phosim.Utility import getModulePath, SurfaceType
+from lsst.ts.phosim.utils.Utility import getModulePath, SurfaceType
 
 
 class TestPhosimCommu(unittest.TestCase):

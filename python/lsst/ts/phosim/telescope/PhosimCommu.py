@@ -24,7 +24,7 @@ import subprocess
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.phosim.Utility import SurfaceType
+from lsst.ts.phosim.utils.Utility import SurfaceType
 
 
 class PhosimCommu(object):

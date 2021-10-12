@@ -25,7 +25,7 @@ import numpy as np
 
 from lsst.ts.phosim.telescope.M2Sim import M2Sim
 
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestM2Sim(unittest.TestCase):

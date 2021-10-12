@@ -25,7 +25,7 @@ import os
 import argparse
 import tempfile
 
-from lsst.ts.phosim.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
+from lsst.ts.phosim.utils.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
 
 if __name__ == "__main__":
 

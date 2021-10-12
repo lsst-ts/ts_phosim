@@ -24,9 +24,8 @@ import numpy as np
 
 from lsst.ts.phosim.telescope.MirrorSim import MirrorSim
 
-from lsst.ts.phosim.Utility import opt2ZemaxCoorTrans
-from lsst.ts.phosim.PlotUtil import plotResMap
-from lsst.ts.phosim.Utility import getConfigDir
+from lsst.ts.phosim.utils.Utility import getConfigDir, opt2ZemaxCoorTrans
+from lsst.ts.phosim.utils.PlotUtil import plotResMap
 
 from lsst.ts.wep.ParamReader import ParamReader
 

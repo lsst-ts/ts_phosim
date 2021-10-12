@@ -29,7 +29,7 @@ from lsst.ts.phosim.telescope.M1M3Sim import M1M3Sim
 from lsst.ts.phosim.telescope.M2Sim import M2Sim
 from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
 
-from lsst.ts.phosim.Utility import (
+from lsst.ts.phosim.utils.Utility import (
     SurfaceType,
     CamDistType,
     getConfigDir,
