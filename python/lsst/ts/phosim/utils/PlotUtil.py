@@ -20,7 +20,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
-from lsst.ts.wep.SourceProcessor import SourceProcessor
+import lsst.obs.lsst as obs_lsst
+from lsst.afw.cameraGeom import FIELD_ANGLE
 
 import matplotlib.pyplot as plt
 
@@ -154,14 +155,13 @@ def showFieldMap(fieldX=None, fieldY=None, saveToFilePath=None, dpi=None):
     # Declare the figure
     plt.figure()
 
-    # Get the focal plane information
-    sourProc = SourceProcessor()
+    camera = obs_lsst.LsstCam.getCamera()
 
     # Plot the CCD boundary
-    for sensorName in sourProc.sensorDimList.keys():
+    for sensorName in list(camera.getNameMap().keys()):
 
         # Get the CCD corner field points in degree
-        pointXinDeg, pointYinDeg = _getCCDBoundInDeg(sourProc, sensorName)
+        pointXinDeg, pointYinDeg = _getCCDBoundInDeg(camera, sensorName)
 
         # Plot the boundary
         pointXinDeg.append(pointXinDeg[0])
@@ -196,13 +196,13 @@ def showFieldMap(fieldX=None, fieldY=None, saveToFilePath=None, dpi=None):
     _saveFig(plt, saveToFilePath=saveToFilePath, dpi=dpi)
 
 
-def _getCCDBoundInDeg(sourProc, sensorName):
+def _getCCDBoundInDeg(camera, sensorName):
     """Get the CCD four corners in degree in counter clockwise direction.
 
     Parameters
     ----------
-    sourProc : SourceProcessor
-        SourceProcessor object.
+    camera : lsst.afw.cameraGeom.Camera
+        lsst.afw.cameraGeom.Camera object.
     sensorName : str
         Sensor name
 
@@ -214,25 +214,21 @@ def _getCCDBoundInDeg(sourProc, sensorName):
         Corner points y in degree.
     """
 
-    # Set the sensor on sourProc
-    sourProc.config(sensorName=sensorName)
+    # Get the sensor from the camera
+    sensor = camera[sensorName]
 
-    # Get the dimension of CCD
-    pixDimX, pixDimY = sourProc.sensorDimList[sensorName]
+    # Get the corners of CCD
+    corners = sensor.getCorners(FIELD_ANGLE)
 
-    # Define four corner points in the counter-clockwise direction
-    pixelXlist = [0, pixDimX, pixDimX, 0]
-    pixelYlist = [0, 0, pixDimY, pixDimY]
-
-    # Transform from pixel to field degree
+    # Transform from radians to degrees
     fieldXinDegList = []
     fieldYinDeglist = []
 
-    for ii in range(len(pixelXlist)):
+    for fieldPoint in corners:
 
-        fieldX, fieldY = sourProc.camXYtoFieldXY(pixelXlist[ii], pixelYlist[ii])
-        fieldXinDegList.append(fieldX)
-        fieldYinDeglist.append(fieldY)
+        fieldY, fieldX = fieldPoint
+        fieldXinDegList.append(np.degrees(fieldX))
+        fieldYinDeglist.append(np.degrees(fieldY))
 
     return fieldXinDegList, fieldYinDeglist
 

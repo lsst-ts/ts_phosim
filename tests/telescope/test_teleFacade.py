@@ -31,7 +31,7 @@ from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
 from lsst.ts.phosim.SkySim import SkySim
 
-from lsst.ts.phosim.Utility import getModulePath, getConfigDir
+from lsst.ts.phosim.utils.Utility import getModulePath, getConfigDir
 
 
 class TestTeleFacade(unittest.TestCase):

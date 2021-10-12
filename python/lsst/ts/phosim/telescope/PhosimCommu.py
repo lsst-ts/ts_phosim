@@ -24,7 +24,7 @@ import subprocess
 
 from lsst.ts.wep.Utility import FilterType
 
-from lsst.ts.phosim.Utility import SurfaceType
+from lsst.ts.phosim.utils.Utility import SurfaceType
 
 
 class PhosimCommu(object):
@@ -648,6 +648,7 @@ class PhosimCommu(object):
 
         if outputDir is not None:
             argString += " -o %s" % outputDir
+            argString += " -w %s" % outputDir
 
         if logFilePath is not None:
             argString += " > %s 2>&1" % logFilePath

@@ -1,0 +1,4 @@
+@startuml
+CreatePhosimDonutTemplates ..> MapSensorNameAndID
+class SensorWavefrontError
+@enduml

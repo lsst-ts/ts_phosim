@@ -23,8 +23,8 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.phosim.PlotUtil import showFieldMap, plotFwhmOfIters
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.utils.PlotUtil import showFieldMap, plotFwhmOfIters
+from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestPlotUtil(unittest.TestCase):

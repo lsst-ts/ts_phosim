@@ -7,6 +7,9 @@ setupRequired(utils)
 setupRequired(phosim_utils)
 setupRequired(ts_wep)
 setupRequired(ts_ofc)
+setupRequired(geom)
+setupRequired(afw)
+setupRequired(obs_base)
 
 # The following is boilerplate for all packages.
 # See https://dmtn-001.lsst.io for details on LSST_LIBRARY_PATH.

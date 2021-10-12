@@ -25,7 +25,7 @@ import unittest
 
 from lsst.ts.phosim.telescope.CamSim import CamSim
 
-from lsst.ts.phosim.Utility import getModulePath, CamDistType
+from lsst.ts.phosim.utils.Utility import getModulePath, CamDistType
 
 
 class TestCamSim(unittest.TestCase):

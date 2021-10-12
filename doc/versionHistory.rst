@@ -6,6 +6,23 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.5.0:/
+
+-------------
+1.5.0
+-------------
+
+* Add updates to ensure compatibility with `ts_wep` v2.0.
+* Move utility related files to utils submodule.
+
+.. _lsst.ts.phosim-1.4.3:/
+
+-------------
+1.4.3
+-------------
+
+* Update phosim argstring and write path for pipeline yaml file.
+
 .. _lsst.ts.phosim-1.4.2:
 
 -------------

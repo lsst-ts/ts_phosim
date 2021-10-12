@@ -24,7 +24,7 @@ import numpy as np
 import unittest
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
-from lsst.ts.phosim.Utility import getModulePath
+from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestOpdMetrology(unittest.TestCase):
@@ -36,6 +36,13 @@ class TestOpdMetrology(unittest.TestCase):
             getModulePath(), "tests", "testData", "testOpdFunc"
         )
         self.metr = OpdMetrology()
+
+    def testSetCamera(self):
+
+        self.metr.setCamera("lsstfam")
+        self.assertEqual(self.metr._camera.getName(), "LSSTCam")
+        self.metr.setCamera("comcam")
+        self.assertEqual(self.metr._camera.getName(), "LSSTComCam")
 
     def testGetFieldXY(self):
 
@@ -214,14 +221,16 @@ class TestOpdMetrology(unittest.TestCase):
     def testAddFieldXYbyCamPos(self):
 
         sensorName = "R22_S11"
+        instName = "lsstfam"
         xInpixel = 4004
         yInPixel = 4096
+        self.metr.setCamera(instName)
         self.metr.addFieldXYbyCamPos(sensorName, xInpixel, yInPixel, self.testDataDir)
 
         ansFieldXinDeg = 2002 * 0.2 / 3600
         ansFieldYinDeg = 2048 * 0.2 / 3600
         fieldX, fieldY = self.metr.getFieldXY()
-        self.assertAlmostEqual(
+        np.testing.assert_array_almost_equal(
             (fieldX[-1], fieldY[-1]), (ansFieldXinDeg, ansFieldYinDeg)
         )
 

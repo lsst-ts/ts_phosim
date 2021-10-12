@@ -34,17 +34,16 @@ from lsst.afw.cameraGeom import DetectorType
 from lsst.daf import butler as dafButler
 
 from lsst.ts.wep.Utility import CamType, FilterType, runProgram
-from lsst.ts.wep.ctrlIntf.WEPCalculationFactory import WEPCalculationFactory
-from lsst.ts.wep.ctrlIntf.SensorWavefrontData import SensorWavefrontData
 
 from lsst.ts.ofc import OFC, OFCData
 
-from lsst.ts.phosim.Utility import getPhoSimPath, getAoclcOutputPath, getCamera
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.PhosimCmpt import PhosimCmpt
-from lsst.ts.phosim.PlotUtil import plotFwhmOfIters
 from lsst.ts.phosim.SkySim import SkySim
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
+from lsst.ts.phosim.utils.Utility import getPhoSimPath, getAoclcOutputPath, getCamera
+from lsst.ts.phosim.utils.SensorWavefrontError import SensorWavefrontError
+from lsst.ts.phosim.utils.PlotUtil import plotFwhmOfIters
 
 
 class CloseLoopTask(object):
@@ -56,9 +55,6 @@ class CloseLoopTask(object):
 
         # Sky simulator
         self.skySim = None
-
-        # WEP calculator
-        self.wepCalc = None
 
         # OFC calculator
         self.ofcCalc = None
@@ -107,6 +103,7 @@ class CloseLoopTask(object):
         """
 
         self.skySim = SkySim()
+        self.skySim.setCamera(instName)
         if pathSkyFile == "":
             self._setSkySimBasedOnOpdFieldPos(instName, starMag)
         else:
@@ -138,6 +135,7 @@ class CloseLoopTask(object):
         )
 
         opdMetr = OpdMetrology()
+        opdMetr.setCamera(instName)
         if instName in ("comcam", "lsstfam"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
         elif instName == "lsst":
@@ -155,41 +153,6 @@ class CloseLoopTask(object):
                 raInDeg += 360.0
             self.skySim.addStarByRaDecInDeg(starId, raInDeg, declInDeg, starMag)
             starId += 1
-
-    def configWepCalc(
-        self, camType, pathIsrDir, filterType, boresight, rotCamInDeg, useEimg=False
-    ):
-        """Configure the WEP calculator.
-
-        WEP: Wavefront estimation pipeline.
-        ISR: Instrument signature removal.
-
-        Parameters
-        ----------
-        camType : enum 'CamType' in lsst.ts.wep.Utility
-            Camera type.
-        pathIsrDir : str
-            Path of the ISR directory.
-        filterType : enum 'FilterType' in lsst.ts.wep.Utility
-            Filter type.
-        boresight : list[float]
-            Boresight [ra, dec] in degree.
-        rotCamInDeg : float
-            The camera rotation angle in degree (-90 to 90).
-        useEimg : bool, optional
-            Use the eimage or not. (the default is False.)
-        """
-
-        self.wepCalc = WEPCalculationFactory.getCalculator(camType, pathIsrDir)
-        self.wepCalc.setFilter(filterType)
-
-        raInDeg, decInDeg = boresight
-        self.wepCalc.setBoresight(raInDeg, decInDeg)
-        self.wepCalc.setRotAng(rotCamInDeg)
-
-        if useEimg:
-            settingFile = self.wepCalc.getSettingFile()
-            settingFile.updateSetting("imageType", "eimage")
 
     def configOfcCalc(self, instName):
         """Configure the OFC calculator.
@@ -284,20 +247,6 @@ class CloseLoopTask(object):
         """
 
         return self.skySim
-
-    def getWepCalc(self):
-        """Get the WEP calculator.
-
-        WEP: Wavefront estimation pipeline.
-
-        Returns
-        -------
-        WEPCalculation child (e.g. WEPCalculationOfComCam) or None
-            Concrete child class of WEPCalculation class. None if not
-            configured yet.
-        """
-
-        return self.wepCalc
 
     def getOfcCalc(self):
         """Get the OFC calculator.
@@ -812,12 +761,14 @@ class CloseLoopTask(object):
 
         Returns
         -------
-        listOfWfErr : `list` of `SensorWavefrontData`
-            List of SensorWavefrontData with the results of the wavefront
+        listOfWfErr : `list` of `SensorWavefrontError`
+            List of SensorWavefrontError with the results of the wavefront
             estimation pipeline for each sensor.
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+        pipelineYaml = f"{instName}Pipeline.yaml"
+        pipelineYamlPath = os.path.join(butlerRootPath, pipelineYaml)
 
         butler = dafButler.Butler(butlerRootPath)
 
@@ -829,13 +780,13 @@ class CloseLoopTask(object):
                 f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
             )
 
-        self.writeWepConfiguration(instName)
+        self.writeWepConfiguration(instName, pipelineYamlPath)
 
         runProgram(
             f"pipetask run -b {butlerRootPath} "
             f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib "
             f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
-            f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {instName}Pipeline.yaml -d "
+            f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {pipelineYamlPath} -d "
             f'"exposure IN ({self.visitIdOffset+extraObsId}, {self.visitIdOffset+intraObsId})" -j 2'
         )
 
@@ -861,7 +812,7 @@ class CloseLoopTask(object):
                 collections=[f"ts_phosim_{extraObsId}"],
             )
 
-            sensorWavefrontData = SensorWavefrontData()
+            sensorWavefrontData = SensorWavefrontError()
             sensorWavefrontData.setSensorId(dataset.dataId["detector"])
             sensorWavefrontData.setAnnularZernikePoly(zerCoeff)
 
@@ -869,18 +820,21 @@ class CloseLoopTask(object):
 
         return listOfWfErr
 
-    def writeWepConfiguration(self, instName):
+    def writeWepConfiguration(self, instName, pipelineYamlPath):
         """Write wavefront estimation pipeline task configuration.
 
         Parameters
         ----------
         instName: `str`
             Name of the instrument this configuration is intended for.
+        pipelineYamlPath: `str`
+            Path where the pipeline task configuration yaml file
+            should be saved.
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
 
-        with open(f"{instName}Pipeline.yaml", "w") as fp:
+        with open(pipelineYamlPath, "w") as fp:
             fp.write(
                 f"""# This yaml file is used to define the tasks and configuration of
 # a Gen 3 pipeline used for testing in ts_wep.
@@ -920,11 +874,11 @@ tasks:
       boresightRa: {self.boresightRa}
       boresightDec: {self.boresightDec}
       boresightRotAng: {self.boresightRotAng}
-  estimateZernikesFamTask:
-    class: lsst.ts.wep.task.EstimateZernikesFamTask.EstimateZernikesFamTask
+  estimateZernikesScienceSensorTask:
+    class: lsst.ts.wep.task.EstimateZernikesScienceSensorTask.EstimateZernikesScienceSensorTask
     config:
       # And here we specify the configuration settings originally defined in
-      # EstimateZernikesFamTaskConfig.
+      # EstimateZernikesScienceSensorTaskConfig.
       donutTemplateSize: 160
       donutStampSize: 160
       initialCutoutPadding: 40
@@ -1024,19 +978,10 @@ tasks:
             self.skySim.exportSkyToFile(pathSkyFile)
             self.log.info(f"Wrote new sky file to {pathSkyFile}.")
 
-        pathIsrDir = self.createIsrDir(baseOutputDir)
-        self.configWepCalc(
-            camType, pathIsrDir, filterType, boresight, rotCamInDeg, useEimg=useEimg
-        )
-
         self.configOfcCalc(instName)
         self.configPhosimCmpt(
             filterType, rotCamInDeg, m1m3ForceError, numPro, boresight=boresight
         )
-
-        # Set the defocal distance for WEP calculator based on the setting
-        # file in the telescope
-        self.setWepCalcWithDefocalDist()
 
         # generate bluter gen3 repo if needed
         butlerRootPath = os.path.join(baseOutputDir, "phosimData")
@@ -1113,39 +1058,6 @@ tasks:
         os.makedirs(isrDir, exist_ok=True)
 
         return isrDir
-
-    def setWepCalcWithDefocalDist(self):
-        """Set the WEP calculator with the defocal distance based on the
-        setting file of telescope.
-
-        WEP: Wavefront estimation pipeline.
-        """
-
-        tele = self.phosimCmpt.getTele()
-        defocalDisInMm = tele.getDefocalDistInMm()
-        self.wepCalc.setDefocalDisInMm(defocalDisInMm)
-
-    def setWepCalcWithSkyInfo(self, outputDir, skyInfoFileName="skyInfo.txt"):
-        """Set the WEP calculator with the sky information.
-
-        Parameters
-        ----------
-        outputDir : str
-            Output directory.
-        skyInfoFileName : str, optional
-            File name of sky information. (the default is "skyInfo.txt".)
-
-        Returns
-        -------
-        str
-            Output file path of the sky information.
-        """
-
-        outputSkyInfoFilePath = os.path.join(outputDir, skyInfoFileName)
-        self.skySim.exportSkyToFile(outputSkyInfoFilePath)
-        self.wepCalc.setSkyFile(outputSkyInfoFilePath)
-
-        return outputSkyInfoFilePath
 
     def makeCalibs(self, instName, baseOutputDir, fakeFlatDirName="fake_flats"):
         """Make the calibration products.
