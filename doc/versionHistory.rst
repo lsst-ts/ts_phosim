@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.5.3:/
+
+-------------
+1.5.3
+-------------
+
+* Add CreateSkyFile.py to create close loop input catalogs from butler reference catalogs.
+
 .. _lsst.ts.phosim-1.5.2:/
 
 -------------
