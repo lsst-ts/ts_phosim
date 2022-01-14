@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.5.1:/
+
+-------------
+1.5.1
+-------------
+
+* Updated Jenkinsfile to work after updates on our Jenkins server.
+
 .. _lsst.ts.phosim-1.5.0:/
 
 -------------
