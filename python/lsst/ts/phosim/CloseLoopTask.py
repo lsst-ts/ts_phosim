@@ -719,7 +719,7 @@ class CloseLoopTask(object):
             Snap. (the default is 0.)
         simSeed : int, optional
             Simulation seed numeber. (the default is 1000.)
-        numPro : int
+        numPro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
 
         Returns
@@ -772,7 +772,7 @@ class CloseLoopTask(object):
             Path to the butler gen3 repos.
         instName : `str`
             Instrument name.
-        numPro : int
+        numPro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
 
         Returns
