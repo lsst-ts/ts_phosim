@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.5.2:/
+
+-------------
+1.5.2
+-------------
+
+* Updates to ensure compatibility with v2.1x of ts_wep.
+
 .. _lsst.ts.phosim-1.5.1:/
 
 -------------

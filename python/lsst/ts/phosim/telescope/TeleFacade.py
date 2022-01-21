@@ -557,9 +557,7 @@ class TeleFacade(object):
         ra = boresight[0]
         dec = boresight[1]
 
-        # Have to add 90 degrees rotation to account for the inconsistency
-        # between phosim geometry and that of obs_lsst.
-        rot = self.surveyParam["rotAngInDeg"] + 90.0
+        rot = self.surveyParam["rotAngInDeg"]
         mjd = self.getCamMjd()
 
         self.phoSimCommu.getStarInstance(
@@ -669,9 +667,7 @@ class TeleFacade(object):
         ra = boresight[0]
         dec = boresight[1]
 
-        # Have to add 90 degrees rotation to account for the inconsistency
-        # between phosim geometry and that of obs_lsst.
-        rot = self.surveyParam["rotAngInDeg"] + 90.0
+        rot = self.surveyParam["rotAngInDeg"]
 
         # Write the default instance setting
         self.phoSimCommu.getOpdInstance(
