@@ -1232,7 +1232,7 @@ class PhosimCmpt(object):
                 * 1e3
                 * (-1.0 if imgType == intraFocalDirName else 1.0)
             )
-            argstring += f" --focusz {focusz} --no-derotate "
+            argstring += f" --focusz {focusz}"
 
             runProgram(command, argstring=argstring)
 
