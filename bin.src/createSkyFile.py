@@ -80,6 +80,10 @@ class CreateSkyFile(object):
             Minimum magnitude of sources to include in the closed
             loop catalog. (the default is -99.0).
         """
+        # We initialize `RefCatalogInterface` with the pointing center.
+        # We use rotAng = 0.0 since we are not going to get pixel locations
+        # for the sources in this script. We just want to make sure
+        # we get all sources within the radius and save them to a file.
         refCatInterface = RefCatalogInterface(ra, dec, 0.0)
         shardIds = refCatInterface.getShardIds(radius=radius)
         dataRefs, dataIds = refCatInterface.getDataRefs(
@@ -121,19 +125,22 @@ if __name__ == "__main__":
     )
     parser.add_argument("outFile", type=str, help="Output filepath for final catalog.")
     parser.add_argument(
-        "--radius", type=float, default=1.8, help="Radius of catalog footprint."
+        "--radius",
+        type=float,
+        default=1.8,
+        help="Radius of catalog footprint in degrees. (default: 1.8)",
     )
     parser.add_argument(
         "--magMax",
         type=float,
         default=99.0,
-        help="Maximum magnitude of sources in catalog.",
+        help="Maximum magnitude of sources in catalog. (default: 99.0)",
     )
     parser.add_argument(
         "--magMin",
         type=float,
         default=-99.0,
-        help="Minimum magnitude of sources in catalog.",
+        help="Minimum magnitude of sources in catalog. (default: -99.0)",
     )
 
     args = parser.parse_args()
