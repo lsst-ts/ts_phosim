@@ -55,6 +55,7 @@ To enable this:
 
 - **opdCloseLoop.py**: Close-loop simulation in the optical path difference (OPD) level, which means the wavefront estimation pipeline (WEP) is not considered.
 - **imgCloseLoop.py**: Close-loop simulation of the images. This task supports the amplifier images and eimages of PhoSim.
+- **createSkyFile.py**: Code to create input sky catalog files for the closed loop from reference catalogs available in a butler repository.
 
 ## Example Sky Files
 
