@@ -85,9 +85,9 @@ class CreateSkyFile(object):
         # for the sources in this script. We just want to make sure
         # we get all sources within the radius and save them to a file.
         refCatInterface = RefCatalogInterface(ra, dec, 0.0)
-        shardIds = refCatInterface.getShardIds(radius=radius)
+        htmIds = refCatInterface.getHtmIds(radius=radius)
         dataRefs, dataIds = refCatInterface.getDataRefs(
-            shardIds, self.butler, self.refCatName, self.collection
+            htmIds, self.butler, self.refCatName, self.collection
         )
         catColumns = ["Ra", "Decl", "Mag"]
         skyCat = pd.DataFrame([], columns=catColumns)

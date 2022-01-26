@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-1.5.4:/
+
+-------------
+1.5.4
+-------------
+
+* Fix bug in bin.src/createSkyFile.py and add information on createSkyFile to the README.
+
 .. _lsst.ts.phosim-1.5.3:/
 
 -------------
