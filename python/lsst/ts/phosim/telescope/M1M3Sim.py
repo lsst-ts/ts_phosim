@@ -29,7 +29,7 @@ from lsst.ts.phosim.utils.PlotUtil import plotResMap
 
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
 from lsst.ts.wep.ParamReader import ParamReader
-
+from lsst.utils import getPackageDir
 
 class M1M3Sim(MirrorSim):
     def __init__(self):
@@ -631,6 +631,59 @@ class M1M3Sim(MirrorSim):
 
         return randSurfInM
 
+    def genMirSurfFromZk(self, zAngleInRadian, 
+                         zkArray = [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,]):
+
+        # find the coordinates of 156 actuators 
+        gridFileName = 'M1M3_1um_156_force.yaml' 
+        mirrorDataDir = os.path.join(getPackageDir("ts_ofc"), 'policy', 'M1M3')
+        gridFilePath = os.path.join(mirrorDataDir, gridFileName)
+        gridFile = ParamReader()
+        gridFile.setFilePath(gridFilePath)
+        data = gridFile.getMatContent()
+        nyActuators = len(data)
+
+        x=[]
+        y=[]
+        for row in data:
+            x.append(row[1])
+            y.append(row[2])
+
+        # calculate the wavefront surface given Zk values 
+        zkVal = ZernikeAnnularEval(zkArray,
+                                        np.array(x),np.array(y),e=0.61)
+
+        # get the Look-Up Table forces 
+        zangleInDeg = np.rad2deg(zAngleInRadian)
+        LUTforce = self.getLUTforce(zangleInDeg)
+        nActuator = len(LUTforce)
+
+        # initialize myu
+        muy = np.zeros(nActuator)
+
+        # set the y-axis actuators 
+        zkValScaled  = zkVal / max(zkVal)
+        muy[:nyActuators] = zkValScaled
+
+        # scale by the LUTforce
+        muy *= LUTforce 
+
+        # balance along z-axis 
+        nzActuator = int(self._m1m3SettingFile.getSetting("numActuatorInZ"))
+        muy[nzActuator - 1] = np.sum(LUTforce[:nzActuator]) - np.sum(
+            muy[: nzActuator - 1]
+        )
+
+        # Get the net force along the z-axis
+        zf = _forceZenFile.getMatContent()
+        hf = _forceHorFile.getMatContent()
+        u0 = zf * np.cos(zAngleInRadian) + hf * np.sin(zAngleInRadian)
+
+        # Calculate the random surface
+        G = _forceInflFile.getMatContent()
+        randSurfInM = G.dot(muy - u0)
+        
+        return randSurfInM
 
 if __name__ == "__main__":
     pass
