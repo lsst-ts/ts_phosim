@@ -324,14 +324,14 @@ class TeleFacade(object):
         Raises
         ------
         ValueError
-            Defocal distance can not be <= 0.
+            Defocal distance can not be < 0.
         """
 
         if defocalDist is None:
             defocalDist = self.getDefaultDefocalDist()
 
-        if defocalDist <= 0:
-            raise ValueError("Defocal distance can not be <= 0.")
+        if defocalDist < 0:
+            raise ValueError("Defocal distance can not be < 0.")
 
         self.surveyParam["defocalDistInMm"] = defocalDist
 
