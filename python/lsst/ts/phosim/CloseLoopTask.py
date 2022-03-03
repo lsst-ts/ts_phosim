@@ -136,11 +136,8 @@ class CloseLoopTask(object):
 
         opdMetr = OpdMetrology()
         opdMetr.setCamera(instName)
-        if instName in ("comcam", "lsstfam"):
+        if instName in ("comcam", "lsstfam", "lsst"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
-        elif instName == "lsst":
-            fieldX, fieldY = opdMetr.getDefaultLsstWfsGQ()
-            opdMetr.setFieldXYinDeg(fieldX, fieldY)
         else:
             raise ValueError(f"This instrument name ({instName}) is not supported.")
 
@@ -517,6 +514,11 @@ class CloseLoopTask(object):
         refSensorNameList = self.getSensorNameListOfFields(instName)
         refSensorIdList = self.getSensorIdListOfFields(instName)
 
+        # If using wavefront sensors we measure one per pair
+        # and the field
+        if camType == CamType.LsstCam:
+            refSensorIdList = refSensorIdList[::2]
+
         # Common file and directory names
         opdZkFileName = "opd.zer"
         opdPssnFileName = "PSSN.txt"
@@ -616,18 +618,19 @@ class CloseLoopTask(object):
                 [sensor_wfe.getAnnularZernikePoly() for sensor_wfe in listOfWfErr]
             )
 
-            cwfs_sensor_id_translator = {
-                '191': 0, '192': 1, '195': 2, '196': 3, '199': 4, '200': 5, '203': 6, '204': 7
+            cwfsSensorIdToFieldIdx = {
+                '191': 2, '192': 2, '195': 1, '196': 1,
+                '199': 3, '200': 3, '203': 0, '204': 0
             }
             if camType == CamType.LsstCam:
                 sensor_ids = []
                 for sensor_wfe in listOfWfErr:
                     sensor_id_orig = str(sensor_wfe.getSensorId())
                     sensor_ids.append(
-                        [cwfs_sensor_id_translator[sensor_id_orig]]
+                        [cwfsSensorIdToFieldIdx[sensor_id_orig]]
                     )
                 sensor_ids = np.array(sensor_ids).flatten()
-                self.ofcCalc.set_fwhm_data(fwhm[::2], sensor_ids)
+                self.ofcCalc.set_fwhm_data(fwhm, sensor_ids)
             else:
                 sensor_ids = np.array(
                     [sensor_wfe.getSensorId() for sensor_wfe in listOfWfErr]
