@@ -481,7 +481,10 @@ class PhosimCmpt(object):
         """
 
         # Set the weighting ratio and field positions of OPD
-        self.metr.setWgtAndFieldXyOfGQ(instName)
+        if instName == 'lsst':
+            self.metr.setDefaultLsstGQ()
+        else:
+            self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Write the command file
         cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName, cmdFileName)
@@ -770,17 +773,17 @@ class PhosimCmpt(object):
 
         # Write the command files of conditions
         cmdFileName = "star.cmd"
-        onFocalDofInUm = self.getDofInUm()
-        onFocalOutputImgDir = self.outputImgDir
+        inFocusDofInUm = self.getDofInUm()
+        inFocusOutputImgDir = self.outputImgDir
 
         # Set the observation ID
         self.setSurveyParam(obsId=obsId)
 
         # Set the DOF
-        self.setDofInUm(onFocalDofInUm)
+        self.setDofInUm(inFocusDofInUm)
 
         # Update the output image directory
-        outputImgDir = os.path.join(onFocalOutputImgDir, wfsDirName)
+        outputImgDir = os.path.join(inFocusOutputImgDir, wfsDirName)
         self.setOutputImgDir(outputImgDir)
 
         # Get the argument to run the phosim
@@ -795,7 +798,7 @@ class PhosimCmpt(object):
         )
 
         # Return to original state
-        self.setOutputImgDir(onFocalOutputImgDir)
+        self.setOutputImgDir(inFocusOutputImgDir)
 
         return argString
 
@@ -1047,8 +1050,11 @@ class PhosimCmpt(object):
             PSSN file name.
         """
 
-        # Set the OPD weighting ratio
-        self.metr.setWgtAndFieldXyOfGQ(instName)
+        # Set the weighting ratio and field positions of OPD
+        if instName == 'lsst':
+            self.metr.setDefaultLsstGQ()
+        else:
+            self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Calculate the PSSN
         pssnList, gqEffPssn = self._calcPssnOpd()

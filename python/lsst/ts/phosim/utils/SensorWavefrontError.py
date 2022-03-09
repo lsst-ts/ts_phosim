@@ -37,6 +37,9 @@ class SensorWavefrontError(object):
         # Sensor Id
         self.sensorId = 999
 
+        # Sensor Name
+        self.sensorName = 'R99_S99'
+
         # Number of zk
         self.numOfZk = int(numOfZk)
 
@@ -82,6 +85,28 @@ class SensorWavefrontError(object):
         """
 
         return self.sensorId
+
+    def setSensorName(self, sensorName):
+        """Set the sensor name.
+
+        Parameters
+        ----------
+        sensorName : str
+            The name of the sensor.
+        """
+
+        self.sensorName = sensorName
+
+    def getSensorName(self):
+        """Get the sensor name.
+
+        Returns
+        -------
+        str
+            The name of the sensor.
+        """
+
+        return self.sensorName
 
     def setAnnularZernikePoly(self, annularZernikePoly):
         """Set the effective annular zernike poly.

@@ -136,8 +136,11 @@ class CloseLoopTask(object):
 
         opdMetr = OpdMetrology()
         opdMetr.setCamera(instName)
-        if instName in ("comcam", "lsstfam", "lsst"):
+        if instName in ("comcam", "lsstfam"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
+        elif instName == "lsst":
+            fieldX, fieldY = opdMetr.getDefaultLsstWfsGQ()
+            opdMetr.setFieldXYinDeg(fieldX, fieldY)
         else:
             raise ValueError(f"This instrument name ({instName}) is not supported.")
 
@@ -511,13 +514,21 @@ class CloseLoopTask(object):
         self.phosimCmpt.setDofInUm(state0)
 
         # Get the list of referenced sensor name (field positions)
-        refSensorNameList = self.getSensorNameListOfFields(instName)
-        refSensorIdList = self.getSensorIdListOfFields(instName)
 
         # If using wavefront sensors we measure one per pair
         # and the field
         if camType == CamType.LsstCam:
-            refSensorIdList = refSensorIdList[::2]
+            cornerSensorNameList = self.getSensorNameListOfFields(instName)
+            cornerSensorIdList = self.getSensorIdListOfFields(instName)
+            refSensorNameList = []
+            refSensorIdList = []
+            for name, id in zip(cornerSensorNameList, cornerSensorIdList):
+                if name.endswith('SW0'):
+                    refSensorNameList.append(name)
+                    refSensorIdList.append(id)
+        else:
+            refSensorNameList = self.getSensorNameListOfFields(instName)
+            refSensorIdList = self.getSensorIdListOfFields(instName)
 
         # Common file and directory names
         opdZkFileName = "opd.zer"
@@ -577,7 +588,7 @@ class CloseLoopTask(object):
                 opdPssnFileName, refSensorIdList
             )
 
-            self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
+            # self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
             # Generate the sky images and calculate the wavefront error
             if self.useCcdImg():
@@ -600,7 +611,7 @@ class CloseLoopTask(object):
             else:
                 # Simulate to get the wavefront sensor data from WEP
                 listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
-                    opdZkFileName, refSensorIdList
+                    opdZkFileName, refSensorIdList, refSensorNameList
                 )
 
             # Record the wavefront error with the same order as OPD for the
@@ -618,27 +629,17 @@ class CloseLoopTask(object):
                 [sensor_wfe.getAnnularZernikePoly() for sensor_wfe in listOfWfErr]
             )
 
-            cwfsSensorIdToFieldIdx = {
-                '191': 2, '192': 2, '195': 1, '196': 1,
-                '199': 3, '200': 3, '203': 0, '204': 0
-            }
-            if camType == CamType.LsstCam:
-                sensor_ids = []
-                for sensor_wfe in listOfWfErr:
-                    sensor_id_orig = str(sensor_wfe.getSensorId())
-                    sensor_ids.append(
-                        [cwfsSensorIdToFieldIdx[sensor_id_orig]]
-                    )
-                sensor_ids = np.array(sensor_ids).flatten()
-                self.ofcCalc.set_fwhm_data(fwhm, sensor_ids)
-            else:
-                sensor_ids = np.array(
-                    [sensor_wfe.getSensorId() for sensor_wfe in listOfWfErr]
-                )
+            sensor_names = np.array(
+                [sensor_wfe.getSensorName() for sensor_wfe in listOfWfErr]
+            )
+            field_idx = np.array(
+                [self.ofcCalc.ofc_data.field_idx[sensor_name] for sensor_name in sensor_names]
+            )
+            self.ofcCalc.set_fwhm_data(fwhm, field_idx)
 
             self.ofcCalc.calculate_corrections(
                 wfe=wfe,
-                field_idx=sensor_ids,
+                field_idx=field_idx,
                 filter_name=str(filterType),
                 gain=-1,
                 rot=rotCamInDeg,
@@ -858,7 +859,7 @@ class CloseLoopTask(object):
             estimation pipeline for each sensor.
         """
 
-        butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+        butlerInstName = "Cam"
         pipelineYaml = f"{instName}Pipeline.yaml"
         pipelineYamlPath = os.path.join(butlerRootPath, pipelineYaml)
 
@@ -889,6 +890,14 @@ class CloseLoopTask(object):
             datasetType="zernikeEstimateAvg", collections=[f"ts_phosim_{obsId}"]
         )
 
+        # Get the map for detector Id to detector name
+        camera = butler.get(
+            "camera",
+            {'instrument': f'LSST{butlerInstName}'},
+            collections=[f'LSST{butlerInstName}/calib/unbounded']
+        )
+        detMap = camera.getIdMap()
+
         listOfWfErr = []
 
         for dataset in datasetRefs:
@@ -906,6 +915,7 @@ class CloseLoopTask(object):
 
             sensorWavefrontData = SensorWavefrontError()
             sensorWavefrontData.setSensorId(dataset.dataId["detector"])
+            sensorWavefrontData.setSensorName(detMap[dataId["detector"]].getName())
             sensorWavefrontData.setAnnularZernikePoly(zerCoeff)
 
             listOfWfErr.append(sensorWavefrontData)
@@ -966,6 +976,14 @@ class CloseLoopTask(object):
             datasetType="zernikeEstimateAvg", collections=[f"ts_phosim_{extraObsId}"]
         )
 
+        # Get the map for detector Id to detector name
+        camera = butler.get(
+            "camera",
+            {'instrument': f'LSST{butlerInstName}'},
+            collections=[f'LSST{butlerInstName}/calib/unbounded']
+        )
+        detMap = camera.getIdMap()
+
         listOfWfErr = []
 
         for dataset in datasetRefs:
@@ -983,6 +1001,7 @@ class CloseLoopTask(object):
 
             sensorWavefrontData = SensorWavefrontError()
             sensorWavefrontData.setSensorId(dataset.dataId["detector"])
+            sensorWavefrontData.setSensorName(detMap[dataId["detector"]].getName())
             sensorWavefrontData.setAnnularZernikePoly(zerCoeff)
 
             listOfWfErr.append(sensorWavefrontData)
@@ -1162,7 +1181,7 @@ tasks:
             filterType, rotCamInDeg, m1m3ForceError, numPro, boresight=boresight
         )
 
-        # generate bluter gen3 repo if needed
+        # generate butler gen3 repo if needed
         butlerRootPath = os.path.join(baseOutputDir, "phosimData")
         if self.useCcdImg():
             self.generateButler(butlerRootPath, instName)
@@ -1173,7 +1192,12 @@ tasks:
             )
 
         if inst == 'lsst':
+            # Append equal weights for CWFS fields to OFC data
             self.phosimCmpt.tele.setInstName(camType, defocalDist=0.0)
+            self.ofcCalc.ofc_data.normalized_image_quality_weight = np.append(
+                self.ofcCalc.ofc_data.normalized_image_quality_weight,
+                [.25, .25, .25, .25]
+            )
         else:
             self.phosimCmpt.tele.setInstName(camType)
 
@@ -1407,7 +1431,7 @@ config.mag_column_list=['g']
             "--inst",
             type=str,
             default="comcam",
-            help="Instrument to use: comcam or lsstfam. (default: comcam)",
+            help="Instrument to use: comcam, lsstfam or lsst. (default: comcam)",
         )
 
         parser.add_argument(

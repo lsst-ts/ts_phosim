@@ -163,7 +163,7 @@ class OpdMetrology(object):
         instrumentPath = getConfigDirOfc() / instName
 
         if not instrumentPath.exists():
-            raise RuntimeError(f"OFC instrument path does exists: {instrumentPath}")
+            raise RuntimeError(f"OFC instrument path does not exist: {instrumentPath}")
 
         # Set the weighting ratio
         pathWgtFile = instrumentPath / "imgQualWgt.yaml"
@@ -188,12 +188,10 @@ class OpdMetrology(object):
         GQ: Gaussian quadrature
         """
 
-        warnings.warn(
-            "Use setWgtAndFieldXyOfGQ() instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        self.setWgtAndFieldXyOfGQ("lsst")
+        # Set Equal Weights for WFS
+        self.setWeightingRatio([1.0, 1.0, 1.0, 1.0])
+        wfsFieldX, wfsFieldY = self.getDefaultLsstWfsGQ()
+        self.setFieldXYinDeg(wfsFieldX, wfsFieldY)
 
     def getDefaultLsstWfsGQ(self):
         """Get the default field X, Y of LSST WFS on GQ.
