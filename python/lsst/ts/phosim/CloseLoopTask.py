@@ -744,6 +744,8 @@ class CloseLoopTask(object):
             Observation ID used in PhoSim.
         butlerRootPath : str
             Path to the butler repository.
+        instName : `str`
+            Instrument name.
         snap : int, optional
             Snap. (the default is 0.)
         simSeed : int, optional
@@ -794,6 +796,8 @@ class CloseLoopTask(object):
             Observation ID used in PhoSim.
         butlerRootPath : str
             Path to the butler repository.
+        instName : `str`
+            Instrument name.
         snap : int, optional
             Snap. (the default is 0.)
         simSeed : int, optional
