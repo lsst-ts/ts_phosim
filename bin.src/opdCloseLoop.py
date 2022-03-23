@@ -44,6 +44,7 @@ if __name__ == "__main__":
         args.filterType,
         args.rotCam,
         args.m1m3FErr,
+        args.m1m3FFunc,
         args.numOfProc,
         args.iterNum,
         args.output,
