@@ -523,7 +523,7 @@ class CloseLoopTask(object):
             refSensorNameList = []
             refSensorIdList = []
             for name, id in zip(cornerSensorNameList, cornerSensorIdList):
-                if name.endswith('SW0'):
+                if name.endswith("SW0"):
                     refSensorNameList.append(name)
                     refSensorIdList.append(id)
         else:
@@ -588,8 +588,6 @@ class CloseLoopTask(object):
                 opdPssnFileName, refSensorIdList
             )
 
-            # self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
-
             # Generate the sky images and calculate the wavefront error
             if self.useCcdImg():
                 if camType == CamType.LsstCam:
@@ -633,7 +631,10 @@ class CloseLoopTask(object):
                 [sensor_wfe.getSensorName() for sensor_wfe in listOfWfErr]
             )
             field_idx = np.array(
-                [self.ofcCalc.ofc_data.field_idx[sensor_name] for sensor_name in sensor_names]
+                [
+                    self.ofcCalc.ofc_data.field_idx[sensor_name]
+                    for sensor_name in sensor_names
+                ]
             )
             self.ofcCalc.set_fwhm_data(fwhm, field_idx)
 
@@ -779,9 +780,7 @@ class CloseLoopTask(object):
         # Ingest images into butler gen3
         self.ingestData(butlerRootPath=butlerRootPath, instName=instName)
 
-        listOfWfErr = self.runWfsWep(
-            obsId, butlerRootPath, instName, numPro=numPro
-        )
+        listOfWfErr = self.runWfsWep(obsId, butlerRootPath, instName, numPro=numPro)
 
         return listOfWfErr
 
@@ -897,8 +896,8 @@ class CloseLoopTask(object):
         # Get the map for detector Id to detector name
         camera = butler.get(
             "camera",
-            {'instrument': f'LSST{butlerInstName}'},
-            collections=[f'LSST{butlerInstName}/calib/unbounded']
+            {"instrument": f"LSST{butlerInstName}"},
+            collections=[f"LSST{butlerInstName}/calib/unbounded"],
         )
         detMap = camera.getIdMap()
 
@@ -983,8 +982,8 @@ class CloseLoopTask(object):
         # Get the map for detector Id to detector name
         camera = butler.get(
             "camera",
-            {'instrument': f'LSST{butlerInstName}'},
-            collections=[f'LSST{butlerInstName}/calib/unbounded']
+            {"instrument": f"LSST{butlerInstName}"},
+            collections=[f"LSST{butlerInstName}/calib/unbounded"],
         )
         detMap = camera.getIdMap()
 
@@ -1195,12 +1194,12 @@ tasks:
                 pathSkyFile=pathSkyFile,
             )
 
-        if inst == 'lsst':
+        if inst == "lsst":
             # Append equal weights for CWFS fields to OFC data
             self.phosimCmpt.tele.setInstName(camType, defocalDist=0.0)
             self.ofcCalc.ofc_data.normalized_image_quality_weight = np.append(
                 self.ofcCalc.ofc_data.normalized_image_quality_weight,
-                [.25, .25, .25, .25]
+                [0.25, 0.25, 0.25, 0.25],
             )
         else:
             self.phosimCmpt.tele.setInstName(camType)

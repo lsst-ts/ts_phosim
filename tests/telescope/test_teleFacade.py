@@ -184,11 +184,21 @@ class TestTeleFacade(unittest.TestCase):
 
         self.assertRaises(ValueError, self.tele.setInstName, "wrongType")
 
+    def testSetInstNameWithZeroDefocalDistLsstCam(self):
+
+        defocalDist = 0.0
+        self.tele.setInstName(CamType.LsstCam, defocalDist=0.0)
+        self.assertEqual(self.tele.surveyParam["instName"], "lsst")
+        self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
+
+    def testSetInstNameWithZeroDefocalDistNotLsstCam(self):
+
+        self.assertRaises(ValueError, self.tele.setInstName, CamType.ComCam, 0.0)
+
     def testSetInstNameWithNegativeDefocalDist(self):
 
         self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam, -1.5)
-
-        self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam, 0)
+        self.assertRaises(ValueError, self.tele.setInstName, CamType.ComCam, -1.5)
 
     def testSetDofInUm(self):
 

@@ -188,6 +188,18 @@ class OpdMetrology(object):
         GQ: Gaussian quadrature
         """
 
+        warnings.warn(
+            "Use setWgtAndFieldXyOfGQ() instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        self.setWgtAndFieldXyOfGQ("lsst")
+
+    def setDefaultLsstWfsGQ(self):
+        """Set default values for LSST WFS field X, Y
+        and weighting ratio.
+        """
+
         # Set Equal Weights for WFS
         self.setWeightingRatio([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY = self.getDefaultLsstWfsGQ()

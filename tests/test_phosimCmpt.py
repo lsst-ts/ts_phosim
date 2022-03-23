@@ -134,6 +134,11 @@ class TestPhosimCmpt(unittest.TestCase):
         dirName = self.phosimCmpt.getExtraFocalDirName()
         self.assertEqual(dirName, "extra")
 
+    def testGetWfsDirName(self):
+
+        dirName = self.phosimCmpt.getWfsDirName()
+        self.assertEqual(dirName, "wfs")
+
     def testGetOutputDir(self):
 
         outputDir = self.phosimCmpt.getOutputDir()
@@ -480,6 +485,27 @@ class TestPhosimCmpt(unittest.TestCase):
         self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 12)
 
         instFilePath = os.path.join(self.phosimCmpt.getOutputDir(), "starExtra.inst")
+        numOfLine = self._getNumOfLineInFile(instFilePath)
+        self.assertEqual(numOfLine, 63)
+
+    def testGetWfsStarArgsAndFilesForPhoSim(self):
+
+        obsId = 9005000
+        skySim = self._addSglStarToSkySim()
+
+        with self.assertWarns(UserWarning):
+            argString = self.phosimCmpt.getWfsStarArgsAndFilesForPhoSim(
+                obsId,
+                skySim,
+                simSeed=1000,
+                cmdSettingFileName="starDefault.cmd",
+                instSettingFileName="starSingleExp.inst",
+            )
+
+        self.assertTrue(isinstance(argString, str))
+        self.assertEqual(self._getNumOfFileInFolder(self.outputDir), 11)
+
+        instFilePath = os.path.join(self.phosimCmpt.getOutputDir(), "starWfs.inst")
         numOfLine = self._getNumOfLineInFile(instFilePath)
         self.assertEqual(numOfLine, 63)
 

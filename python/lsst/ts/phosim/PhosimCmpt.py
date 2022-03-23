@@ -481,8 +481,8 @@ class PhosimCmpt(object):
         """
 
         # Set the weighting ratio and field positions of OPD
-        if instName == 'lsst':
-            self.metr.setDefaultLsstGQ()
+        if instName == "lsst":
+            self.metr.setDefaultLsstWfsGQ()
         else:
             self.metr.setWgtAndFieldXyOfGQ(instName)
 
@@ -1051,8 +1051,8 @@ class PhosimCmpt(object):
         """
 
         # Set the weighting ratio and field positions of OPD
-        if instName == 'lsst':
-            self.metr.setDefaultLsstGQ()
+        if instName == "lsst":
+            self.metr.setDefaultLsstWfsGQ()
         else:
             self.metr.setWgtAndFieldXyOfGQ(instName)
 
@@ -1312,7 +1312,7 @@ class PhosimCmpt(object):
         argstring += f" --inst {instName} "
         if isEimg:
             argstring += " --eimage"
-        argstring += f" --focusz 0"
+        argstring += " --focusz 0"
 
         runProgram(command, argstring=argstring)
 

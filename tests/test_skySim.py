@@ -99,9 +99,9 @@ class TestSkySim(unittest.TestCase):
 
         ra, decl = self.skySim.getRaDecInDeg()
         self.assertEqual(ra[2], -1.176)
-        self.assertEqual(decl[2], 1.196)
+        self.assertEqual(decl[2], 1.216)
 
-        self.assertEqual(self.skySim.getStarMag()[2], 17.0)
+        self.assertEqual(self.skySim.getStarMag()[2], 15.0)
 
     def _addStarByFile(self, skyFileName):
 

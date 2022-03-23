@@ -38,7 +38,7 @@ class SensorWavefrontError(object):
         self.sensorId = 999
 
         # Sensor Name
-        self.sensorName = 'R99_S99'
+        self.sensorName = "R99_S99"
 
         # Number of zk
         self.numOfZk = int(numOfZk)
