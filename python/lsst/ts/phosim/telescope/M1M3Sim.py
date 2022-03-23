@@ -31,6 +31,7 @@ from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
 from lsst.ts.wep.ParamReader import ParamReader
 from lsst.utils import getPackageDir
 
+
 class M1M3Sim(MirrorSim):
     def __init__(self):
         """Initiate the M1M3 simulator class."""
@@ -631,59 +632,99 @@ class M1M3Sim(MirrorSim):
 
         return randSurfInM
 
-    def genMirSurfFromZk(self, zAngleInRadian, 
-                         zkArray = [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,]):
+    def genMirSurfFromZk(self, zAngleInRadian,
+                         zkArray=[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                         e=0.61):
+        """Generate the mirror surface based on input Zk wavefront.
 
-        # find the coordinates of 156 actuators 
-        gridFileName = 'M1M3_1um_156_force.yaml' 
+        LUT: Loop-Up table.
+
+        Parameters
+        ----------
+        zAngleInRadian : float
+            Zenith angle in radian.
+        zkArray : numpy.ndarray
+            Coefficient of annular Zernike polynomials.
+        e : float
+            Obscuration value. It is 0.61 in LSST.
+
+        Returns
+        -------
+        numpy.ndarray
+            Generated mirror surface random error in m.
+        """
+        # find the coordinates of 156 actuators
+        gridFileName = 'M1M3_1um_156_force.yaml'
         mirrorDataDir = os.path.join(getPackageDir("ts_ofc"), 'policy', 'M1M3')
         gridFilePath = os.path.join(mirrorDataDir, gridFileName)
         gridFile = ParamReader()
         gridFile.setFilePath(gridFilePath)
         data = gridFile.getMatContent()
-        nyActuators = len(data)
+        # nzActuators = len(data)
 
-        x=[]
-        y=[]
+        x = []
+        y = []
         for row in data:
             x.append(row[1])
             y.append(row[2])
 
-        # calculate the wavefront surface given Zk values 
+        # calculate the wavefront surface given Zk values
         zkVal = ZernikeAnnularEval(zkArray,
-                                        np.array(x),np.array(y),e=0.61)
+                                   np.array(x), np.array(y), e)
 
-        # get the Look-Up Table forces 
+        # get the Look-Up Table forces
         zangleInDeg = np.rad2deg(zAngleInRadian)
         LUTforce = self.getLUTforce(zangleInDeg)
-        nActuator = len(LUTforce)
+        nActuator = len(LUTforce)  # 256 : 156 actuators with z-motion
 
         # initialize myu
-        muy = np.zeros(nActuator)
+        # only the first 156 blocks are filled from zks,
+        # the last 100 blocks are kept as 1, i.e.
+        # unchanging the LUT
+        myu = np.ones(nActuator)
 
-        # set the y-axis actuators 
-        zkValScaled  = zkVal / max(zkVal)
-        muy[:nyActuators] = zkValScaled
-
-        # scale by the LUTforce
-        muy *= LUTforce 
-
-        # balance along z-axis 
+        # set the z-axis actuators by the normalized Zk values
         nzActuator = int(self._m1m3SettingFile.getSetting("numActuatorInZ"))
-        muy[nzActuator - 1] = np.sum(LUTforce[:nzActuator]) - np.sum(
-            muy[: nzActuator - 1]
+
+        # need for the M1M3Zk data to match the number
+        # z-axis actuators
+        assert nzActuator == len(data)
+
+        # scale the LUT forces by the normalized zk
+        # originally this line read 
+        # myu = (1 + 2 * (np.random.rand(nActuator) - 0.5) * m1m3ForceError) * LUTforce
+        # with np.random.rand(nActuator) \in [0,1]
+        # and 2 * (np.random.rand(nActuator) - 0.5)  \in [-1,1]
+        # and here  
+        # zkVal / max(zkVal) has range [-1,1]
+        # so I treat it like 2*(rand-0.5),
+        # i.e. need to add 1 to make  range [0,1] 
+        myu[:nzActuator] = 1+(zkVal / max(zkVal))
+        
+        
+        # scaling by LUT the first 156 elements from zk,
+        # and the last 100 elements which are 1
+        myu *= LUTforce
+
+        # balance forces along z-axis
+        myu[nzActuator - 1] = np.sum(LUTforce[:nzActuator]) - np.sum(
+            myu[: nzActuator - 1]
         )
 
+        # Note: balancing forces along y-axis is not needed because
+        # they are already identical as the LUT
+
         # Get the net force along the z-axis
-        zf = _forceZenFile.getMatContent()
-        hf = _forceHorFile.getMatContent()
+        zf = self._forceZenFile.getMatContent()
+        hf = self._forceHorFile.getMatContent()
         u0 = zf * np.cos(zAngleInRadian) + hf * np.sin(zAngleInRadian)
 
         # Calculate the random surface
-        G = _forceInflFile.getMatContent()
-        randSurfInM = G.dot(muy - u0)
-        
+        G = self._forceInflFile.getMatContent()
+        randSurfInM = G.dot(myu - u0)
+
         return randSurfInM
+
 
 if __name__ == "__main__":
     pass
