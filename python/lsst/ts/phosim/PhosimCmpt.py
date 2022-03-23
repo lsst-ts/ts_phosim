@@ -72,6 +72,9 @@ class PhosimCmpt(object):
 
         # M1M3 force error
         self.m1m3ForceError = 0.05
+        
+        # M!M# force function
+        self.m1m3ForceFunction = 'random'
 
     def setM1M3ForceError(self, m1m3ForceError):
         """Set the M1M3 force error.
@@ -94,6 +97,29 @@ class PhosimCmpt(object):
         """
 
         return self.m1m3ForceError
+    
+    def setM1M3ForceFunction(self, m1m3ForceFunction):
+        """Set the M1M3 force function.
+
+        Parameters
+        ----------
+        m1m3ForceFunction : str
+            random or zernike
+        """
+
+        self.m1m3ForceFunction= m1m3ForceFunction
+
+    def getM1M3ForceFunction(self):
+        """Get the M1M3 force function.
+
+        Returns
+        -------
+        str
+            random or zernike
+        """
+
+        return self.m1m3ForceFunction
+    
 
     def getSettingFile(self):
         """Get the setting file.
@@ -513,6 +539,7 @@ class PhosimCmpt(object):
                 self.outputDir,
                 seedNum=self.seedNum,
                 m1m3ForceError=self.m1m3ForceError,
+                m1m3ForceFunction=self.m1m3ForceFunction,
                 saveResMapFig=True,
                 pertCmdFileName=pertCmdFileName,
             )
