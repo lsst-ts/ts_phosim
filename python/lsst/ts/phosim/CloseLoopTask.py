@@ -172,6 +172,7 @@ class CloseLoopTask(object):
         filterType,
         rotAngInDeg,
         m1m3ForceError,
+        m1m3ForceFunction,
         numPro,
         boresight=[0, 0],
         zAngleInDeg=27.0912,
@@ -226,6 +227,9 @@ class CloseLoopTask(object):
 
         # Set the M1M3 force error
         self.phosimCmpt.setM1M3ForceError(m1m3ForceError)
+        
+        # Set the M1M3 force function
+        self.phosimCmpt.setM1M3ForceFuntion(m1m3ForceFunction)
 
         # Update the number of processor if necessary
         if numPro > 1:
@@ -316,6 +320,7 @@ class CloseLoopTask(object):
         filterTypeName,
         rotCamInDeg,
         m1m3ForceError,
+        m1m3ForceFunction,
         numPro,
         iterNum,
         baseOutputDir,
@@ -355,7 +360,7 @@ class CloseLoopTask(object):
 
         # Configure the components
         self.configOfcCalc(instName)
-        self.configPhosimCmpt(filterType, rotCamInDeg, m1m3ForceError, numPro)
+        self.configPhosimCmpt(filterType, rotCamInDeg, m1m3ForceError, m1m3ForceFunction, numPro)
 
         butlerRootPath = os.path.join(baseOutputDir, "phosimData")
         # Run the simulation
@@ -940,6 +945,7 @@ tasks:
         filterTypeName,
         rotCamInDeg,
         m1m3ForceError,
+        m1m3ForceFunction,
         numPro,
         iterNum,
         baseOutputDir,
@@ -1000,7 +1006,8 @@ tasks:
 
         self.configOfcCalc(instName)
         self.configPhosimCmpt(
-            filterType, rotCamInDeg, m1m3ForceError, numPro, boresight=boresight
+            filterType, rotCamInDeg, m1m3ForceError, m1m3ForceFunction,
+            numPro, boresight=boresight
         )
 
         # generate bluter gen3 repo if needed
@@ -1268,6 +1275,13 @@ config.mag_column_list=['g']
             type=float,
             default=0.05,
             help="Ratio of M1M3 actuator force error between 0 and 1. (default: 0.05)",
+        )
+
+        parser.add_argument(
+            "--m1m3FFunc",
+            type=str,
+            default='random',
+            help="Function to calculatie M1M3 actuator forces: random or zernike (default: random)",
         )
 
         parser.add_argument(
