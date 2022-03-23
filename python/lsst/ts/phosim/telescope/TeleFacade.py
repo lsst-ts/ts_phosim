@@ -697,6 +697,7 @@ class TeleFacade(object):
         pertCmdFileDir,
         seedNum=None,
         m1m3ForceError=0.05,
+        m1m3ForceFunction='random',
         saveResMapFig=False,
         pertCmdFileName="pert.cmd",
     ):
@@ -740,6 +741,7 @@ class TeleFacade(object):
                 m1m3ZcFilePath,
                 content,
                 m1m3ForceError,
+                m1m3ForceFunction,
                 seedNum=seedNum,
             )
 
@@ -777,7 +779,8 @@ class TeleFacade(object):
         m1m3ZcFilePath,
         content,
         m1m3ForceError,
-        seedNum=None,
+        m1m3ForceFunction,
+        seedNum=None
     ):
         """Add the perturbation of M1M3.
 
@@ -808,11 +811,17 @@ class TeleFacade(object):
         printthzInM = self.m1m3.getPrintthz(zAngleInRad)
 
         # Add the surface error if necessary
-        randSurfInM = None
-        if seedNum is not None:
-            randSurfInM = self.m1m3.genMirSurfRandErr(
-                zAngleInRad, m1m3ForceError=m1m3ForceError, seedNum=seedNum
-            )
+        if m1m3ForceFunction == 'random':
+            randSurfInM = None
+            if seedNum is not None:
+                randSurfInM = self.m1m3.genMirSurfRandErr(
+                    zAngleInRad, m1m3ForceError=m1m3ForceError, seedNum=seedNum
+                )
+        elif m1m3ForceFunction == 'zernike':  
+            zkArray = [0,0,1,0]
+            randSurfInM = self.m1m3.genMirSurfFromZk(zAngleInRad, 
+                                                       zkArray)
+            print(f'\nUsed {zkArray} for m1m3 mirror surface')
 
         # Do the temperature correction
         m1m3TBulk = self._teleSettingFile.getSetting("m1m3TBulk")
