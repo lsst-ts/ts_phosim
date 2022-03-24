@@ -14,7 +14,8 @@ intraDirName: intra
 extraDirName: extra
 
 # Wavefront Sensor directory name. This is needed if the defocal image is
-# provided by the wavefront sensors.
+# provided by the wavefront sensors. This is where PhoSim works
+# and saves the images within each iterX/img directory.
 wfsDirName: wfs
 
 # PhoSim-related default parameters

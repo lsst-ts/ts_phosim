@@ -636,7 +636,13 @@ class CloseLoopTask(object):
                     for sensor_name in sensor_names
                 ]
             )
-            self.ofcCalc.set_fwhm_data(fwhm, field_idx)
+            if camType == CamType.LsstCam:
+                # For the wavefront sensors the sensor ids
+                # are different than the corresponding field row
+                # index in the sensitivity matrix.
+                self.ofcCalc.set_fwhm_data(fwhm, field_idx)
+            else:
+                self.ofcCalc.set_fwhm_data(fwhm, sensor_id)
 
             self.ofcCalc.calculate_corrections(
                 wfe=wfe,
@@ -745,7 +751,7 @@ class CloseLoopTask(object):
             Observation ID used in PhoSim.
         butlerRootPath : str
             Path to the butler repository.
-        instName : `str`
+        instName : str
             Instrument name.
         snap : int, optional
             Snap. (the default is 0.)
@@ -795,7 +801,7 @@ class CloseLoopTask(object):
             Observation ID used in PhoSim.
         butlerRootPath : str
             Path to the butler repository.
-        instName : `str`
+        instName : str
             Instrument name.
         snap : int, optional
             Snap. (the default is 0.)
@@ -846,18 +852,18 @@ class CloseLoopTask(object):
 
         Parameters
         ----------
-        obsId : `int`
+        obsId : int
             Observation id.
-        butlerRootPath : `str`
+        butlerRootPath : str
             Path to the butler gen3 repos.
-        instName : `str`
+        instName : str
             Instrument name.
         numPro : int, optional
             Number of processor to run DM pipeline. (the default is 1.)
 
         Returns
         -------
-        listOfWfErr : `list` of `SensorWavefrontError`
+        list[lsst.ts.wep.ctrlIntf.SensorWavefrontError]
             List of SensorWavefrontError with the results of the wavefront
             estimation pipeline for each sensor.
         """
@@ -1197,6 +1203,8 @@ tasks:
         if inst == "lsst":
             # Append equal weights for CWFS fields to OFC data
             self.phosimCmpt.tele.setInstName(camType, defocalDist=0.0)
+            # Assign equal normalized weights to each of the
+            # four corner wavefront sensor pairs.
             self.ofcCalc.ofc_data.normalized_image_quality_weight = np.append(
                 self.ofcCalc.ofc_data.normalized_image_quality_weight,
                 [0.25, 0.25, 0.25, 0.25],

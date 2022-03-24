@@ -746,14 +746,8 @@ class PhosimCmpt(object):
             Observation Id.
         skySim : SkySim
             Sky simulator
-        cmdFileName : str, optional
-            Physical command file name. (the default is "star.cmd".)
-        instFileName : str, optional
-            Star instance file name. (the default is "star.inst".)
-        logFileName : str, optional
-            Log file name. (the default is "starPhoSim.log".)
         simSeed : int, optional
-            Random number seed. (the default is 1000)
+            Random number seed. (the default is 1000.)
         cmdSettingFileName : str, optional
             Physical command setting file name. (the default is
             "starDefault.cmd".)
@@ -1293,7 +1287,7 @@ class PhosimCmpt(object):
 
         Parameters
         ----------
-        instName : `str`
+        instName : str
             Instrument name.
         isEimg : bool, optional
             Is eimage or not. (the default is False.)
@@ -1312,6 +1306,7 @@ class PhosimCmpt(object):
         argstring += f" --inst {instName} "
         if isEimg:
             argstring += " --eimage"
+        # Wavefront sensors require camera to be in focus (focusz = 0)
         argstring += " --focusz 0"
 
         runProgram(command, argstring=argstring)

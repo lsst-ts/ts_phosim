@@ -332,7 +332,7 @@ class TeleFacade(object):
         if defocalDist is None:
             defocalDist = self.getDefaultDefocalDist()
 
-        if (defocalDist == 0) & (camType != CamType.LsstCam):
+        if (defocalDist == 0) and (camType != CamType.LsstCam):
             raise ValueError(
                 "Defocal distance can only be zero if working with ",
                 "LSSTCam and corner wavefront sensors.",

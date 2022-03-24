@@ -200,7 +200,8 @@ class OpdMetrology(object):
         and weighting ratio.
         """
 
-        # Set Equal Weights for WFS
+        # Set equal full weights for each of the
+        # four corner wavefront sensor pairs.
         self.setWeightingRatio([1.0, 1.0, 1.0, 1.0])
         wfsFieldX, wfsFieldY = self.getDefaultLsstWfsGQ()
         self.setFieldXYinDeg(wfsFieldX, wfsFieldY)
