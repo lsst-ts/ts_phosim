@@ -34,6 +34,7 @@ class TestSensorWavefrontError(unittest.TestCase):
         self.sensorWavefrontError = SensorWavefrontError(numOfZk=self.numOfZk)
 
         self.sensorId = 999
+        self.sensorName = "R99_S99"
 
     def testGetNumOfZk(self):
 
@@ -65,6 +66,20 @@ class TestSensorWavefrontError(unittest.TestCase):
     def testSetSensorIdWithValueLessThanZero(self):
 
         self.assertRaises(ValueError, self.sensorWavefrontError.setSensorId, -1)
+
+    def testGetSensorName(self):
+
+        sensorName = self.sensorWavefrontError.getSensorName()
+        self.assertEqual(sensorName, self.sensorName)
+        self.assertTrue(isinstance(sensorName, str))
+
+    def testSetSensorName(self):
+
+        sensorName = "R42_S24"
+        self.sensorWavefrontError.setSensorName(sensorName)
+
+        sensorNameInObject = self.sensorWavefrontError.getSensorName()
+        self.assertEqual(sensorNameInObject, sensorName)
 
     def testGetAnnularZernikePoly(self):
 

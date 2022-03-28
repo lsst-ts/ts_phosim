@@ -150,6 +150,17 @@ class PhosimCmpt(object):
 
         return self._phosimCmptSettingFile.getSetting("extraDirName")
 
+    def getWfsDirName(self):
+        """Get the WFS directory name.
+
+        Returns
+        -------
+        str
+            WFS directory name.
+        """
+
+        return self._phosimCmptSettingFile.getSetting("wfsDirName")
+
     def getOpdMetr(self):
         """Get the OPD metrology object.
 
@@ -470,7 +481,10 @@ class PhosimCmpt(object):
         """
 
         # Set the weighting ratio and field positions of OPD
-        self.metr.setWgtAndFieldXyOfGQ(instName)
+        if instName == "lsst":
+            self.metr.setDefaultLsstWfsGQ()
+        else:
+            self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Write the command file
         cmdFilePath = self._writePertAndCmdFiles(cmdSettingFileName, cmdFileName)
@@ -714,6 +728,73 @@ class PhosimCmpt(object):
         self.setOutputImgDir(onFocalOutputImgDir)
 
         return argStringList
+
+    def getWfsStarArgsAndFilesForPhoSim(
+        self,
+        obsId,
+        skySim,
+        simSeed=1000,
+        cmdSettingFileName="starDefault.cmd",
+        instSettingFileName="starSingleExp.inst",
+    ):
+        """Get the star calculation arguments and files for the
+        wavefront sensors for the PhoSim calculation.
+
+        Parameters
+        ----------
+        obsId : int
+            Observation Id.
+        skySim : SkySim
+            Sky simulator
+        simSeed : int, optional
+            Random number seed. (the default is 1000.)
+        cmdSettingFileName : str, optional
+            Physical command setting file name. (the default is
+            "starDefault.cmd".)
+        instSettingFileName : str, optional
+            Instance setting file name. (the default is "starSingleExp.inst".)
+
+        Returns
+        -------
+        str
+            Arguments to run the PhoSim.
+        """
+
+        instFileName = "starWfs.inst"
+        logFileName = "starWfsPhosim.log"
+
+        wfsDirName = self.getWfsDirName()
+
+        # Write the command files of conditions
+        cmdFileName = "star.cmd"
+        inFocusDofInUm = self.getDofInUm()
+        inFocusOutputImgDir = self.outputImgDir
+
+        # Set the observation ID
+        self.setSurveyParam(obsId=obsId)
+
+        # Set the DOF
+        self.setDofInUm(inFocusDofInUm)
+
+        # Update the output image directory
+        outputImgDir = os.path.join(inFocusOutputImgDir, wfsDirName)
+        self.setOutputImgDir(outputImgDir)
+
+        # Get the argument to run the phosim
+        argString = self.getStarArgsAndFilesForPhoSim(
+            skySim,
+            cmdFileName=cmdFileName,
+            instFileName=instFileName,
+            logFileName=logFileName,
+            simSeed=simSeed,
+            cmdSettingFileName=cmdSettingFileName,
+            instSettingFileName=instSettingFileName,
+        )
+
+        # Return to original state
+        self.setOutputImgDir(inFocusOutputImgDir)
+
+        return argString
 
     def getStarArgsAndFilesForPhoSim(
         self,
@@ -963,8 +1044,11 @@ class PhosimCmpt(object):
             PSSN file name.
         """
 
-        # Set the OPD weighting ratio
-        self.metr.setWgtAndFieldXyOfGQ(instName)
+        # Set the weighting ratio and field positions of OPD
+        if instName == "lsst":
+            self.metr.setDefaultLsstWfsGQ()
+        else:
+            self.metr.setWgtAndFieldXyOfGQ(instName)
 
         # Calculate the PSSN
         pssnList, gqEffPssn = self._calcPssnOpd()
@@ -1197,6 +1281,46 @@ class PhosimCmpt(object):
             fwhmCollection = np.append(fwhmCollection, fwhm)
 
         return fwhmCollection, sensor_id
+
+    def repackageWfsCamImgs(self, instName, isEimg=False):
+        """Repackage the images from in focus camera for processing.
+
+        Parameters
+        ----------
+        instName : str
+            Instrument name.
+        isEimg : bool, optional
+            Is eimage or not. (the default is False.)
+        """
+
+        # Make a temporary directory
+        tmpDirPath = os.path.join(self.outputImgDir, "tmp")
+        self._makeDir(tmpDirPath)
+
+        wfsDirName = self.getWfsDirName()
+
+        # Repackage the images to the temporary directory
+        command = "phosim_repackager.py"
+        phosimImgDir = os.path.join(self.outputImgDir, wfsDirName)
+        argstring = "%s --out_dir=%s" % (phosimImgDir, tmpDirPath)
+        argstring += f" --inst {instName} "
+        if isEimg:
+            argstring += " --eimage"
+        # Wavefront sensors require camera to be in focus (focusz = 0)
+        argstring += " --focusz 0"
+
+        runProgram(command, argstring=argstring)
+
+        # Remove the image data in the original directory
+        argstring = "-rf %s/*.fits*" % phosimImgDir
+        runProgram("rm", argstring=argstring)
+
+        # Put the repackaged data into the image directory
+        argstring = "%s/*.fits %s" % (tmpDirPath, phosimImgDir)
+        runProgram("mv", argstring=argstring)
+
+        # Remove the temporary directory
+        shutil.rmtree(tmpDirPath)
 
     def repackagePistonCamImgs(self, instName, isEimg=False):
         """Repackage the images of piston camera (ComCam and LSST FAM) from

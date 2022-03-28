@@ -163,7 +163,7 @@ class OpdMetrology(object):
         instrumentPath = getConfigDirOfc() / instName
 
         if not instrumentPath.exists():
-            raise RuntimeError(f"OFC instrument path does exists: {instrumentPath}")
+            raise RuntimeError(f"OFC instrument path does not exist: {instrumentPath}")
 
         # Set the weighting ratio
         pathWgtFile = instrumentPath / "imgQualWgt.yaml"
@@ -194,6 +194,17 @@ class OpdMetrology(object):
             stacklevel=2,
         )
         self.setWgtAndFieldXyOfGQ("lsst")
+
+    def setDefaultLsstWfsGQ(self):
+        """Set default values for LSST WFS field X, Y
+        and weighting ratio.
+        """
+
+        # Set equal full weights for each of the
+        # four corner wavefront sensor pairs.
+        self.setWeightingRatio([1.0, 1.0, 1.0, 1.0])
+        wfsFieldX, wfsFieldY = self.getDefaultLsstWfsGQ()
+        self.setFieldXYinDeg(wfsFieldX, wfsFieldY)
 
     def getDefaultLsstWfsGQ(self):
         """Get the default field X, Y of LSST WFS on GQ.

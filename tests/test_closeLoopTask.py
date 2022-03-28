@@ -149,6 +149,12 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(camType, CamType.LsstFamCam)
         self.assertEqual(instName, "lsstfam")
 
+    def testGetCamTypeAndInstNameLsst(self):
+
+        camType, instName = self.closeLoopTask.getCamTypeAndInstName("lsst")
+        self.assertEqual(camType, CamType.LsstCam)
+        self.assertEqual(instName, "lsst")
+
     def testGetCamTypeAndInstNameErr(self):
 
         self.assertRaises(
