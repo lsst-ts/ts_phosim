@@ -324,14 +324,22 @@ class TeleFacade(object):
         Raises
         ------
         ValueError
-            Defocal distance can not be <= 0.
+            Defocal distance can only be = 0 with LsstCam.
+        ValueError
+            Defocal distance can not be < 0.
         """
 
         if defocalDist is None:
             defocalDist = self.getDefaultDefocalDist()
 
-        if defocalDist <= 0:
-            raise ValueError("Defocal distance can not be <= 0.")
+        if (defocalDist == 0) and (camType != CamType.LsstCam):
+            raise ValueError(
+                "Defocal distance can only be zero if working with ",
+                "LSSTCam and corner wavefront sensors.",
+            )
+
+        if defocalDist < 0:
+            raise ValueError("Defocal distance can not be < 0.")
 
         self.surveyParam["defocalDistInMm"] = defocalDist
 

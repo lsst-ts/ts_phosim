@@ -188,6 +188,17 @@ class TestOpdMetrology(unittest.TestCase):
             RuntimeError, self.metr.setWgtAndFieldXyOfGQ, "NoThisInstName"
         )
 
+    def testSetDefaultLsstWfsGQ(self):
+
+        self.metr.setDefaultLsstWfsGQ()
+
+        fieldX, fieldY = self.metr.getFieldXY()
+        self.assertCountEqual(fieldX, [1.176, -1.176, -1.176, 1.176])
+        self.assertCountEqual(fieldY, [1.176, -1.176, -1.176, 1.176])
+
+        wgt = self.metr.getWeightingRatio()
+        self.assertCountEqual(wgt, [0.25, 0.25, 0.25, 0.25])
+
     def testGetDefaultLsstWfsGQ(self):
 
         fieldWFSx, fieldWFSy = self.metr.getDefaultLsstWfsGQ()

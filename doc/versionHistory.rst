@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.0.0/
+
+-------------
+2.0.0
+-------------
+
+* Enable closed loop to run with LSSTCam corner wavefront sensors.
+
 .. _lsst.ts.phosim-1.5.4:/
 
 -------------
