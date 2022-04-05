@@ -333,7 +333,7 @@ class M1M3Sim(MirrorSim):
             alphaMat[ii, idxM3] = alpha3[ii]
 
         # Calculate the radius
-        r2 = xInMm ** 2 + yInMm ** 2
+        r2 = xInMm**2 + yInMm**2
 
         # Calculate the ideal surface
 
@@ -343,7 +343,7 @@ class M1M3Sim(MirrorSim):
         # sum(ai * r^(2*i)) + sum(Aj * Zj)
         # where i = 1-8, j = 1-N
 
-        z0 = cMat * r2 / (1 + np.sqrt(1 - (1 + kMat) * cMat ** 2 * r2))
+        z0 = cMat * r2 / (1 + np.sqrt(1 - (1 + kMat) * cMat**2 * r2))
         for ii in range(8):
             z0 += alphaMat[ii, :] * r2 ** (ii + 1)
 

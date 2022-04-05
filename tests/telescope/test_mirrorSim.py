@@ -29,7 +29,7 @@ from lsst.ts.phosim.utils.Utility import getConfigDir
 
 
 class TestMirrorSim(unittest.TestCase):
-    """ Test the MirrorSim class."""
+    """Test the MirrorSim class."""
 
     @classmethod
     def setUpClass(cls):

@@ -275,7 +275,7 @@ class MirrorSim(object):
                 y = -y
 
                 # Calculate the radius
-                r = np.sqrt(x ** 2 + y ** 2)
+                r = np.sqrt(x**2 + y**2)
 
                 # Set the value as zero when the radius is not between the
                 # inner and outer radius.

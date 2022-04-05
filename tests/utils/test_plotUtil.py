@@ -28,7 +28,7 @@ from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestPlotUtil(unittest.TestCase):
-    """ Test the PlotUtil functions."""
+    """Test the PlotUtil functions."""
 
     def setUp(self):
 

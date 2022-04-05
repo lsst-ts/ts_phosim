@@ -156,7 +156,7 @@ def calc_pssn(
     psfa = otf2psf(otfa)
 
     # Atmospheric PSS (point spread sensitivity) = 1/neff_atm
-    pssa = np.sum(psfa ** 2)
+    pssa = np.sum(psfa**2)
 
     # Calculate PSF with error (atmosphere + system)
     if aType == "opd":
@@ -213,7 +213,7 @@ def calc_pssn(
     psftot = otf2psf(otftot)
 
     # atmospheric + error PSS
-    pss = np.sum(psftot ** 2)
+    pss = np.sum(psftot**2)
 
     # normalized PSS
     pssn = pss / pssa
@@ -561,7 +561,7 @@ def psf2eW(psf, pixinum, wlum, atmModel="Gau", debugLevel=0):
         e1 = (Q11 - Q22) / T
         e2 = 2 * Q12 / T
 
-        e = np.sqrt(e1 ** 2 + e2 ** 2)
+        e = np.sqrt(e1**2 + e2**2)
 
     # No correlation
     else:
@@ -624,7 +624,7 @@ def createAtm(
         sig = fwhminum / 2 / np.sqrt(2 * np.log(2))
         sig = sig / (pixinum / oversample)
 
-        z = np.exp(-r2 / 2 / sig ** 2)
+        z = np.exp(-r2 / 2 / sig**2)
 
     elif model == "2Gau":
         # Below is used to manually solve for sigma
@@ -636,7 +636,7 @@ def createAtm(
         # In (oversampled) pixel
         sig = sig / (pixinum / oversample)
 
-        z = np.exp(-r2 / 2 / sig ** 2) + 0.4 / 4 * np.exp(-r2 / 8 / sig ** 2)
+        z = np.exp(-r2 / 2 / sig**2) + 0.4 / 4 * np.exp(-r2 / 8 / sig**2)
 
     if debugLevel >= 3:
         print("sigma1=%6.4f arcsec" % (sig * (pixinum / oversample) / 10 * 0.2))
@@ -734,7 +734,7 @@ def opd2psf(
     # If imagedelta = 0, we don't do any padding, and go with below
     z = pupil * np.exp(-2j * np.pi * opd / wavelength)
     z = np.fft.fftshift(np.fft.fft2(np.fft.fftshift(z), s=z.shape))
-    z = np.absolute(z ** 2)
+    z = np.absolute(z**2)
 
     # Normalize the PSF
     z = z / np.sum(z)
