@@ -29,7 +29,7 @@ from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestM1M3Sim(unittest.TestCase):
-    """ Test the M1M3Sim class."""
+    """Test the M1M3Sim class."""
 
     def setUp(self):
 

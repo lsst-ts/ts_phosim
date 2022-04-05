@@ -28,7 +28,7 @@ from lsst.ts.phosim.utils.Utility import getModulePath
 
 
 class TestOpdMetrology(unittest.TestCase):
-    """ Test the OpdMetrology class."""
+    """Test the OpdMetrology class."""
 
     def setUp(self):
 
