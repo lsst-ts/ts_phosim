@@ -35,7 +35,7 @@ from lsst.ts.phosim.utils.Utility import getModulePath, getConfigDir
 
 
 class TestTeleFacade(unittest.TestCase):
-    """ Test the TeleFacade class."""
+    """Test the TeleFacade class."""
 
     def setUp(self):
 

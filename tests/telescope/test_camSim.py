@@ -29,7 +29,7 @@ from lsst.ts.phosim.utils.Utility import getModulePath, CamDistType
 
 
 class TestCamSim(unittest.TestCase):
-    """ Test the CamSim class."""
+    """Test the CamSim class."""
 
     def setUp(self):
 
