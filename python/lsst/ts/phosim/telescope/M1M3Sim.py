@@ -29,7 +29,7 @@ from lsst.ts.phosim.utils.PlotUtil import plotResMap
 
 from lsst.ts.wep.cwfs.Tool import ZernikeAnnularFit, ZernikeAnnularEval
 from lsst.ts.wep.ParamReader import ParamReader
-
+from scipy.interpolate import griddata
 
 class M1M3Sim(MirrorSim):
     def __init__(self):
@@ -629,8 +629,37 @@ class M1M3Sim(MirrorSim):
         G = self._forceInflFile.getMatContent()
         randSurfInM = G.dot(myu - u0)
 
-        return randSurfInM
+        
+        # rotate the surface itself by N degrees,
+        # keeping the grid unchanged
+        nodeM1, nodeM3, xgrid, ygrid, bz = self._getMirCoor() 
+        xrot, yrot = self.rotate_xy(xgrid, ygrid, 60)
+        regrid_randSurfInM = griddata((xrot, yrot), randSurfInM, (xgrid, ygrid), method='nearest')
 
+        #return randSurfInM
+        return regrid_randSurfInM
+
+    def rot_mat(self, rot):
+        """Return rotation matrix.
+        Parameters
+        ----------
+        rot : `float`
+            Rotation angle in degrees.
+        """
+        rot_rad = np.deg2rad(rot)
+        c, s = np.cos(rot_rad), np.sin(rot_rad)
+        return np.array(((c, -s), (s, c)))
+
+    def rotate_xy(self, x,y,angleInDeg):
+        xrot = np.zeros_like(x)
+        yrot = np.zeros_like(y)
+        for i in range(len(x)):
+            xy = np.array([x[i],y[i]])
+            xyrot = self.rot_mat(angleInDeg).dot(xy)
+            xrot[i] = xyrot[0]
+            yrot[i] = xyrot[1]
+
+        return xrot, yrot
 
 if __name__ == "__main__":
     pass
