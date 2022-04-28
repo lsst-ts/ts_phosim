@@ -208,7 +208,7 @@ class CloseLoopTask(object):
 
         # Set the Telescope facade class
         tele = TeleFacade()
-        tele.addSubSys(addCam=True, addM1M3=True, addM2=True)
+        tele.addSubSys(addCam=True, addM1M3=True, addM2=False)
 
         phosimDir = getPhoSimPath()
         tele.setPhoSimDir(phosimDir)
