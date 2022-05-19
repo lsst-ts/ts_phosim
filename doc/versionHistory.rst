@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.0.2/
+
+-------------
+2.0.2
+-------------
+
+* Upgrade refcat generation to Gen3 butler
+
 .. _lsst.ts.phosim-2.0.1/
 
 -------------
