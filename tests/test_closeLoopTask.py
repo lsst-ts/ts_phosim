@@ -221,6 +221,7 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(args.iterNum, 5)
         self.assertEqual(args.output, "")
         self.assertEqual(args.clobber, False)
+        self.assertEqual(args.pipelineFile, "")
 
     def testSetImgParser(self):
 
