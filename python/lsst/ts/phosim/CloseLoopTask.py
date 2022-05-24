@@ -1354,7 +1354,7 @@ tasks:
             Name of the instrument.
         """
 
-        self.log.info(f"Generating bulter gen3 in {butlerRootPath} for {instName}")
+        self.log.info(f"Generating butler gen3 in {butlerRootPath} for {instName}")
 
         runProgram(f"butler create {butlerRootPath}")
 
@@ -1386,22 +1386,20 @@ tasks:
         catDir = os.path.join(butlerRootPath, "skydata")
         skyFilename = os.path.join(catDir, "sky_data.csv")
         catConfigFilename = os.path.join(catDir, "cat.cfg")
-        catRefConfigFilename = os.path.join(catDir, "convertRefCat.cfg")
-
+        skyEcsvFilename = os.path.join(catDir, "filename_to_htm.ecsv")
+        catLogFilename = os.path.join(catDir, "convert.log")
         os.mkdir(catDir)
 
         # Read sky file and convert it to csv
         skyData = astropy.io.ascii.read(pathSkyFile)
+
         # Constructing the catalog of stars to use in the wavefront estimation
-        # pipeline. Here it assign the g filter. Since this is only for target
+        # pipeline. Here it assigns the g filter. Since this is only for target
         # selection it really doesn't matter which filter we select, as long
         # as it is a valid one.
         skyData.rename_column("Mag", "g")
 
         skyData.write(skyFilename, format="csv", overwrite=True)
-
-        with open(os.path.join(catDir, "_mapper"), "w") as fp:
-            fp.write("lsst.obs.lsst.LsstCamMapper\n")
 
         with open(catConfigFilename, "w") as fp:
             fp.write(
@@ -1411,16 +1409,17 @@ config.id_name='Id'
 config.mag_column_list=['g']
 """
             )
-        with open(catRefConfigFilename, "w") as fp:
-            fp.write('config.datasetIncludePatterns = ["ref_cat", ]\n')
-            fp.write('config.refCats = ["cal_ref_cat"]\n')
 
         runProgram(
-            f"ingestReferenceCatalog.py {catDir} {skyFilename} --configfile {catConfigFilename}"
+            f"convertReferenceCatalog {catDir} {catConfigFilename} {skyFilename} &> {catLogFilename}"
         )
 
         runProgram(
-            f"butler convert --gen2root {catDir} --config-file {catRefConfigFilename} {butlerRootPath}"
+            f"butler register-dataset-type {butlerRootPath} cal_ref_cat SimpleCatalog htm7"
+        )
+
+        runProgram(
+            f"butler ingest-files -t direct {butlerRootPath} cal_ref_cat refcats {skyEcsvFilename}"
         )
 
     @staticmethod
