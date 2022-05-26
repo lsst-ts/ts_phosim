@@ -48,4 +48,5 @@ if __name__ == "__main__":
         args.iterNum,
         args.output,
         args.clobber,
+        args.pipelineFile,
     )

@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.0.3/
+
+-------------
+2.0.3
+-------------
+
+* Add configuration option to specify pipeline file.
+
 .. _lsst.ts.phosim-2.0.2/
 
 -------------

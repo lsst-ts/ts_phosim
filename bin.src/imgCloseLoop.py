@@ -55,4 +55,5 @@ if __name__ == "__main__":
         args.boresightDeg,
         args.skyFile,
         args.eimage,
+        args.pipelineFile,
     )
