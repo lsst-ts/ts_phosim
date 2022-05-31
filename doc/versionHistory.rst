@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.1.0/
+
+-------------
+2.1.0
+-------------
+
+* Add ConvertZernikesToPsfWidth.py to convert Zernike amplitudes to their quadrature contribution to the PSF FWHM in arcseconds.
+
 .. _lsst.ts.phosim-2.0.3/
 
 -------------
