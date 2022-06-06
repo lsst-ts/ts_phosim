@@ -150,7 +150,7 @@ pipeline {
 
                   pip install ltd-conveyor
 
-                  ltd upload --product ${env.DOCUMENT_NAME} --git-ref ${env.GIT_BRANCH} --dir doc/_build/html
+                  ltd upload --product ${env.DOCUMENT_NAME} --git-ref ${env.BRANCH_NAME} --dir doc/_build/html
                 """
 
               if ( RESULT != 0 ) {
