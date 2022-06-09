@@ -1,6 +1,10 @@
+[![docs](https://img.shields.io/badge/docs-ts--phosim.lsst.io-brightgreen)](https://ts-phosim.lsst.io/)
+
 # PhoSim Use
 
 This module is a high-level module to use PhoSim.
+
+See the docs: https://ts-phosim.lsst.io/
 
 ## Platform
 

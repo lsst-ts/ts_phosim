@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.0.4/
+
+-------------
+2.0.4
+-------------
+
+* Add docs information to README.
+* Update Jenkinsfile to fix online documentation.
+
 .. _lsst.ts.phosim-2.0.3/
 
 -------------
