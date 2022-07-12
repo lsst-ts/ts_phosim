@@ -5,6 +5,13 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.0.6/
+
+-------------
+2.0.6
+-------------
+
+* Set detector center as the default star position for corner sensors simulation.
 
 .. _lsst.ts.phosim-2.0.5/
 

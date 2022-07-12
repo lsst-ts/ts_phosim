@@ -29,7 +29,7 @@ import astropy.io.ascii
 
 import numpy as np
 
-from lsst.afw.cameraGeom import DetectorType
+from lsst.afw.cameraGeom import DetectorType, FIELD_ANGLE
 
 from lsst.daf import butler as dafButler
 
@@ -135,7 +135,14 @@ class CloseLoopTask(object):
         if instName in ("comcam", "lsstfam"):
             opdMetr.setWgtAndFieldXyOfGQ(instName)
         elif instName == "lsst":
-            fieldX, fieldY = opdMetr.getDefaultLsstWfsGQ()
+            fieldX, fieldY = list(), list()
+            camera = getCamera(instName)
+            for name in self.getSensorNameListOfFields(instName):
+                detector = camera.get(name)
+                xRad, yRad = detector.getCenter(FIELD_ANGLE)
+                xDeg, yDeg = np.rad2deg(xRad), np.rad2deg(yRad)
+                fieldY.append(xDeg)  # transpose for phoSim
+                fieldX.append(yDeg)
             opdMetr.setFieldXYinDeg(fieldX, fieldY)
         else:
             raise ValueError(f"This instrument name ({instName}) is not supported.")

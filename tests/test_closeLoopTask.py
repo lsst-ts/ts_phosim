@@ -67,7 +67,7 @@ class TestCloseLoopTask(unittest.TestCase):
         self.closeLoopTask.configSkySim("lsst")
 
         skySim = self.closeLoopTask.getSkySim()
-        self.assertEqual(len(skySim.getStarId()), 4)
+        self.assertEqual(len(skySim.getStarId()), 8)
 
     def testConfigSkySimWithSkyFile(self):
 
