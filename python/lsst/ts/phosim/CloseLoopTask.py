@@ -68,10 +68,6 @@ class CloseLoopTask(object):
         # Use the eimage
         self.useEimg = False
 
-        # offset between the specified obsId and the assigned visitId, e.g.
-        # obsId = 9006000, visitId = 4021123106000.
-        self.visitIdOffset = 4021114100000
-
         # Ra/Dec/RotAng coordinates used in the simulation.
         self.boresightRa = None
         self.boresightDec = None
@@ -931,13 +927,21 @@ class CloseLoopTask(object):
             runProgram(
                 f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
             )
-
+        # Sequence number or seqNum is an integer number
+        # associated with each image taken in a single day.
+        # The limit for seqNum is 5 digits,
+        # set by the expectation that no more than 100K images
+        # could be taken in a single day (i.e. no more than 1/sec).
+        # In phosim_repackager we construct seqNum from RUNNUM,
+        # also called obsHistId, or obsId, selecting the last 5 digits,
+        # i.e. obsHistId=9012345 makes seqNum=12345.
+        seqNum = str(obsId)[-5:]
         runProgram(
             f"pipetask run -b {butlerRootPath} "
             f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib/unbounded "
             f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
             f"--register-dataset-types --output-run ts_phosim_{obsId} -p {pipelineYamlPath} -d "
-            f'"exposure IN ({self.visitIdOffset+obsId})" -j {numPro}'
+            f'"visit.seq_num IN ({seqNum})" -j {numPro}'
         )
 
         # Need to redefine butler because the database changed.
@@ -1031,13 +1035,16 @@ class CloseLoopTask(object):
             runProgram(
                 f"butler write-curated-calibrations {butlerRootPath} lsst.obs.lsst.Lsst{butlerInstName}"
             )
+        # as defined in phosim_repackager
+        seqNumIntra = str(intraObsId)[-5:]
+        seqNumExtra = str(extraObsId)[-5:]
 
         runProgram(
             f"pipetask run -b {butlerRootPath} "
             f"-i refcats,LSST{butlerInstName}/raw/all,LSST{butlerInstName}/calib/unbounded "
             f"--instrument lsst.obs.lsst.Lsst{butlerInstName} "
             f"--register-dataset-types --output-run ts_phosim_{extraObsId} -p {pipelineYamlPath} -d "
-            f'"exposure IN ({self.visitIdOffset+extraObsId}, {self.visitIdOffset+intraObsId})" -j {numPro}'
+            f'"visit.seq_num IN ({seqNumIntra}, {seqNumExtra})" -j {numPro}'
         )
 
         # Need to redefine butler because the database changed.
