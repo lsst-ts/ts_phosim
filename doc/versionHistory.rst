@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.0.5/
+
+-------------
+2.0.5
+-------------
+
+* Update butler query to seqNum to allow arbitrary MJD in teleSetting.
+
 .. _lsst.ts.phosim-2.0.4/
 
 -------------
