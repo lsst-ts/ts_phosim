@@ -5,6 +5,14 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.0.7/
+
+-------------
+2.0.7
+-------------
+
+* Fix bug in mapOpdDataToListOfWfErr to work in CloseLoopTask.
+
 .. _lsst.ts.phosim-2.0.6/
 
 -------------
@@ -20,6 +28,7 @@ Version History
 -------------
 
 * Update butler query to seqNum to allow arbitrary MJD in teleSetting.
+
 
 .. _lsst.ts.phosim-2.0.4/
 
