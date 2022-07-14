@@ -340,7 +340,7 @@ class TestPhosimCmpt(unittest.TestCase):
         ansSensorIdList = mapSensorNameAndId.mapSensorNameToId(refSensorNameList)
 
         listOfWfErr = self.phosimCmpt.mapOpdDataToListOfWfErr(
-            self.zkFileName, ansSensorIdList
+            self.zkFileName, ansSensorIdList, refSensorNameList
         )
 
         self.assertEqual(len(listOfWfErr), len(refSensorNameList))
