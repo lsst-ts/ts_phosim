@@ -605,9 +605,9 @@ class M1M3Sim(MirrorSim):
         # Assume the m1m3ForceError=0.05
         # Add 5% force error to the original actuator forces
         # This means from -5% to +5% of original actuator's force.
-        np.random.seed(int(seedNum))
+        rng = np.random.RandomState(int(seedNum))
         nActuator = len(LUTforce)
-        myu = (1 + 2 * (np.random.rand(nActuator) - 0.5) * m1m3ForceError) * LUTforce
+        myu = (1 + 2 * (rng.rand(nActuator) - 0.5) * m1m3ForceError) * LUTforce
 
         # Balance forces along z-axis
         # This statement is intentionally to make the force balance.
