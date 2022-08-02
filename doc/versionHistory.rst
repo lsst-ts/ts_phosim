@@ -5,6 +5,14 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.0.8/
+
+-------------
+2.0.8
+-------------
+
+* Updating random.seed() generator.
+
 .. _lsst.ts.phosim-2.0.7/
 
 -------------
@@ -28,7 +36,6 @@ Version History
 -------------
 
 * Update butler query to seqNum to allow arbitrary MJD in teleSetting.
-
 
 .. _lsst.ts.phosim-2.0.4/
 
