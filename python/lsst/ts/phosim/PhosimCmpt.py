@@ -1127,7 +1127,7 @@ class PhosimCmpt(object):
 
         return effFwhmList, gqEffFwhm
 
-    def mapOpdDataToListOfWfErr(self, opdZkFileName, sensorIdList):
+    def mapOpdDataToListOfWfErr(self, opdZkFileName, sensorIdList, sensorNameList):
         """Map the OPD data to the list of wavefront error.
 
         OPD: Optical path difference.
@@ -1137,6 +1137,8 @@ class PhosimCmpt(object):
         opdZkFileName : str
             OPD zk file name.
         sensorIdList : list
+            Reference sensor ID list.
+        sensorNameList : list
             Reference sensor name list.
 
         Returns
@@ -1148,10 +1150,11 @@ class PhosimCmpt(object):
         opdZk = self._getZkFromFile(opdZkFileName)
 
         listOfWfErr = []
-        for sensorId, zk in zip(sensorIdList, opdZk):
+        for sensorId, sensorName, zk in zip(sensorIdList, sensorNameList, opdZk):
 
             sensorWavefrontData = SensorWavefrontError(numOfZk=self.getNumOfZk())
             sensorWavefrontData.setSensorId(sensorId)
+            sensorWavefrontData.setSensorName(sensorName)
             sensorWavefrontData.setAnnularZernikePoly(zk)
 
             listOfWfErr.append(sensorWavefrontData)
@@ -1351,10 +1354,8 @@ class PhosimCmpt(object):
             argstring += f" --inst {instName} "
             if isEimg:
                 argstring += " --eimage"
-            focusz = (
-                self.tele.getDefocalDistInMm()
-                * 1e3
-                * (-1.0 if imgType == intraFocalDirName else 1.0)
+            focusz = self.tele.getDefocalDistInMm() * (
+                -1.0 if imgType == intraFocalDirName else 1.0
             )
             argstring += f" --focusz {focusz}"
 

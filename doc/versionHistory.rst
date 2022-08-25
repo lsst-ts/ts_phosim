@@ -6,6 +6,46 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.0.9/
+
+-------------
+2.0.9
+-------------
+
+* Change focusZ values to millimeters instead of micrometers when repackaging phosim images in closed loop as a result of obs_lsst update.
+
+.. _lsst.ts.phosim-2.0.8/
+
+-------------
+2.0.8
+-------------
+
+* Updating random.seed() generator.
+
+.. _lsst.ts.phosim-2.0.7/
+
+-------------
+2.0.7
+-------------
+
+* Fix bug in mapOpdDataToListOfWfErr to work in CloseLoopTask.
+
+.. _lsst.ts.phosim-2.0.6/
+
+-------------
+2.0.6
+-------------
+
+* Set detector center as the default star position for corner sensors simulation.
+
+.. _lsst.ts.phosim-2.0.5/
+
+-------------
+2.0.5
+-------------
+
+* Update butler query to seqNum to allow arbitrary MJD in teleSetting.
+
 .. _lsst.ts.phosim-2.0.4/
 
 -------------
