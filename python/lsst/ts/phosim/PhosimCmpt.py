@@ -1354,10 +1354,8 @@ class PhosimCmpt(object):
             argstring += f" --inst {instName} "
             if isEimg:
                 argstring += " --eimage"
-            focusz = (
-                self.tele.getDefocalDistInMm()
-                * 1e3
-                * (-1.0 if imgType == intraFocalDirName else 1.0)
+            focusz = self.tele.getDefocalDistInMm() * (
+                -1.0 if imgType == intraFocalDirName else 1.0
             )
             argstring += f" --focusz {focusz}"
 

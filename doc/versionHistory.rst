@@ -5,6 +5,15 @@
 ##################
 Version History
 ##################
+
+.. _lsst.ts.phosim-2.0.9/
+
+-------------
+2.0.9
+-------------
+
+* Change focusZ values to millimeters instead of micrometers when repackaging phosim images in closed loop as a result of obs_lsst update.
+
 .. _lsst.ts.phosim-2.0.8/
 
 -------------
