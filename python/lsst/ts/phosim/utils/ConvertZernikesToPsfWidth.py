@@ -19,39 +19,78 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
-
+import galsim
 import numpy as np
-from lsst.ts.phosim.utils.Utility import getConfigDir
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.cwfs.Instrument import Instrument
 from lsst.ts.wep.Utility import CamType
 
 
-def _load_conversion_factors() -> dict:
-    """Load the conversion factors for ConvertZernikesToPsfWidth.
+def getPsfGradPerZernike(
+    jmax: int = 22,
+    inst: Instrument = None,
+) -> np.ndarray:
+    """Get the gradient of the PSF FWHM with respect to each Zernike.
 
-    Conversion factors saved in
-    `ts_phosim/policy/convertZernikesToPsfWidthSetting.yaml`
+    Parameters
+    ----------
+    jmax : int
+        The max Zernike Noll index, inclusive. (the default is 22.)
+    inst : Instrument, optional
+        The ts.wep instrument used in the Algorithm class to solve the TIE.
+        (the default is the default LsstCam.)
+
+    Returns
+    -------
+    np.ndarray
+        Gradient of the PSF FWHM with respect to the corresponding Zernike.
+        Units are arcsec / micron.
     """
-    # load the settings file
-    settingFilePath = os.path.join(
-        getConfigDir(), "convertZernikesToPsfWidthSetting.yaml"
-    )
-    settingFile = ParamReader(filePath=settingFilePath)
+    # If inst is None, get the default LsstCame
+    if inst is None:
+        inst = Instrument()
+        inst.configFromFile(
+            160,  # Donut dimension; irrelevant for this function
+            CamType.LsstCam,  # Default is LsstCam
+        )
 
-    # get all conversion factors
-    conversion_factors = settingFile.getSetting("conversion_factors")
-    conversion_factors = {
-        getattr(CamType, camType): np.array(factors)
-        for camType, factors in conversion_factors.items()
-    }
+    # Get the inner and outer radii of the instrument
+    R_outer = inst.apertureDiameter / 2
+    R_inner = R_outer * inst.obscuration
+
+    # Calculate the conversion factors
+    conversion_factors = np.zeros(jmax - 4)
+    for i in range(4, jmax + 1):
+        # Set coefficients for this Noll index: coefs = [0, 0, ..., 1]
+        # Note the first coefficient is Noll index 0, which does not exist and
+        # is therefore always ignored by galsim
+        coefs = [0] * i + [1]
+
+        # Create the Zernike polynomial with these coefficients
+        Z = galsim.zernike.Zernike(coefs, R_outer=R_outer, R_inner=R_inner)
+
+        # We can calculate the size of the PSF from the RMS of the gradient of
+        # the wavefront. The gradient of the wavefront perturbs photon paths.
+        # The RMS quantifies the size of the collective perturbation.
+        # If we expand the wavefront gradient in another series of Zernike
+        # polynomials, we can exploit the orthonormality of the Zernikes to
+        # calculate the RMS from the Zernike coefficients.
+        rms_tilt = np.sqrt(np.sum(Z.gradX.coef**2 + Z.gradY.coef**2))
+
+        # Convert to arcsec per micron
+        rms_tilt = np.rad2deg(rms_tilt * 1e-6) * 3600
+
+        # Convert rms -> fwhm
+        fwhm_tilt = 2 * np.sqrt(2 * np.log(2)) * rms_tilt
+
+        # Save this conversion factor
+        conversion_factors[i] = fwhm_tilt
 
     return conversion_factors
 
 
 def convertZernikesToPsfWidth(
     zernikes: np.ndarray,
-    camType: CamType = CamType.LsstCam,
+    inst: Instrument = None,
 ) -> np.ndarray:
     """Convert Zernike amplitudes to quadrature contribution to the PSF FWHM.
 
@@ -69,55 +108,25 @@ def convertZernikesToPsfWidth(
     Then the resultant PSF FWHM will be degraded by
     sqrt[(0.1 - 0.1)^2 + (-0.2 - (-0.3))^2 + (0.3 - 0.2)^2] ~ 0.14 arcsecs.
 
-    Note that this conversion is camera dependent. Currently, conversions exist
-    for LsstCam (the main Rubin camera) and AuxTel (the camera on the Auxiliary
-    Telescope).
+    Note this conversion depends on the aperture of the telescope.
 
     Parameters
     ----------
     zernikes: np.ndarray
-        Zernike amplitudes (in microns), starting with Noll index 4. Can
-        include up to Noll index 37 (inclusive).
-    camType: enum 'CamType', default=CamType.LsstCam
-        Camera for which the conversion is performed. Currently the valid
-        options are CamType.LsstCam and CamType.AuxTel.
-        Specified via lsst.ts.wep.Utility.CamType.
+        Zernike amplitudes (in microns), starting with Noll index 4.
+        Either a 1D array of zernike amplitudes, or a 2D array, where each row
+        corresponds to a different set of amplitudes.
+    inst: Instrument, optional
+        The ts.wep instrument used in the Algorithm class to solve the TIE.
+        (the default is the default LsstCam.)
 
     Returns
     -------
     np.ndarray
         Quadrature contribution of each Zernike vector to the PSF FWHM
         (in arcseconds).
-
-    Raises
-    ------
-    KeyError
-        If the camType is not one of the supported cameras.
-    ValueError
-        If the length of the zernike array is greater than 34, since only Noll
-        indices 4 -> 37 (inclusive) are supported.
     """
-    # load all the conversion factors
-    conversion_factors = _load_conversion_factors()
+    conversion_factors = getPsfGradPerZernike(zernikes.shape[-1], inst)
 
-    # pull out the conversion factors for the requested camera
-    try:
-        conversion_factors = conversion_factors[camType]
-    except KeyError as error:
-        raise KeyError(
-            "Currently, conversions are only available for "
-            f"{', '.join([cam.name for cam in conversion_factors])}."
-        ) from error
-
-    # make sure zernike array isn't too long
-    if len(zernikes) > len(conversion_factors):
-        raise ValueError(
-            f"Zernike conversion for {camType.name} is only supported for "
-            f"Noll indices 4 -> {4 + len(conversion_factors) - 1}."
-        )
-
-    # convert the zernike amplitudes from microns
-    # to PSF FWHM quadrature contributions in arcsecs
-    psf_fwhm_contrib = zernikes * conversion_factors[: len(zernikes)]
-
-    return psf_fwhm_contrib
+    # Convert the zernike amplitudes from microns to PSF FWHM
+    return conversion_factors * zernikes

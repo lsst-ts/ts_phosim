@@ -19,13 +19,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import os
 import unittest
 
 import numpy as np
 from lsst.ts.phosim.utils.ConvertZernikesToPsfWidth import (
-    _load_conversion_factors,
     convertZernikesToPsfWidth,
+    getPsfGradPerZernike,
 )
+from lsst.ts.phosim.utils.Utility import getModulePath
+from lsst.ts.wep.cwfs.Instrument import Instrument
 from lsst.ts.wep.Utility import CamType
 
 
@@ -33,35 +36,43 @@ class TestConvertZernikesToPsfWidth(unittest.TestCase):
     """Test the convertZernikesToPsfWidth function."""
 
     def setUp(self):
-        """Load conversion factors, and sets of valid and invalid cameras."""
-        self.conversion_factors = _load_conversion_factors()
-        self.valid_cameras = set(self.conversion_factors)
-        self.invalid_cameras = set(CamType) - self.valid_cameras
+        """Load saved conversion factors."""
+        self.testDataDir = os.path.join(
+            getModulePath(), "tests", "testData", "psfGradientsPerZernike"
+        )
 
-    def testOnes(self):
-        """Test that converting array of 1s returns the conversion factors."""
-        for camType in self.valid_cameras:
-            with self.subTest(camType=camType):
-                conversion_factors = self.conversion_factors[camType]
-                zks = np.ones(len(conversion_factors))
-                zks_arcsecs = convertZernikesToPsfWidth(zks, camType)
-                self.assertTrue(np.allclose(zks_arcsecs, conversion_factors))
+    def testLsstCam(self):
+        """Test that the LsstCam values match the expected values."""
+        # LsstCam should be selected by default
+        conversion_factors = getPsfGradPerZernike(37)
+        expected_factors = np.genfromtxt(os.path.join(self.testDataDir, "lsstcam.txt"))
+        self.assertTrue(np.allclose(conversion_factors, expected_factors, atol=1e-3))
 
-    def testTooManyZernikes(self):
-        """Test that ValueError is raised when too many zernikes are passed."""
-        for camType in self.valid_cameras:
-            with self.subTest(camType=camType):
-                conversion_factors = self.conversion_factors[camType]
-                zks = np.ones(len(conversion_factors) + 1)
-                with self.assertRaises(ValueError):
-                    convertZernikesToPsfWidth(zks, camType)
+    def testAuxTel(self):
+        """Test that the AuxTel values match the expected values."""
+        # Setup the AuxTel instrument
+        # Note the donut dimension shouldn't matter for this computation
+        inst = Instrument()
+        inst.configFromFile(160, CamType.AuxTel)
 
-    def testInvalidCameras(self):
-        """Test that supplying unsupported camType raises a KeyError."""
-        for camType in self.invalid_cameras:
-            with self.subTest(camType=camType):
-                with self.assertRaises(KeyError):
-                    convertZernikesToPsfWidth(np.ones(1), camType)
+        # Calculate and compare conversion factors
+        conversion_factors = getPsfGradPerZernike(37, inst)
+        expected_factors = np.genfromtxt(os.path.join(self.testDataDir, "auxtel.txt"))
+        self.assertTrue(np.allclose(conversion_factors, expected_factors, atol=1e-3))
+
+    def testAllCamTypes(self):
+        """Test that we can convert Zernikes for all cameras."""
+        dummy_zernikes = np.ones(24)
+        for cam in CamType:
+            with self.subTest(cam=cam):
+                # Create the instrument
+                inst = Instrument()
+                inst.configFromFile(160, cam)
+
+                # Convert zernikes
+                converted_zernikes = convertZernikesToPsfWidth(dummy_zernikes, inst)
+
+                self.assertTrue(np.all(converted_zernikes > 0))
 
 
 if __name__ == "__main__":
