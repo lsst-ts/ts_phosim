@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.1.0/
+
+-------------
+2.1.0
+-------------
+
+* Update Jenkinsfile to use github plantuml.
+
 .. _lsst.ts.phosim-2.0.9/
 
 -------------
