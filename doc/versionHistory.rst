@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.2.1/
+
+-------------
+2.2.1
+-------------
+
+* Update plantuml links.
+
 .. _lsst.ts.phosim-2.2.0/
 
 -------------
