@@ -130,7 +130,8 @@ pipeline {
                 def RESULT = sh returnStatus: true, script: """
                   source ${env.LSST_STACK}/loadLSST.bash
 
-                  curl -O ${env.PLANTUML_URL}
+                  curl -L ${env.PLANTUML_URL} -o plantuml.jar
+                  export PATH_PLANTUML=${env.WORKSPACE}/plantuml.jar
 
                   pip install sphinxcontrib-plantuml
 

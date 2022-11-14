@@ -6,7 +6,15 @@
 Version History
 ##################
 
-.. _lsst.ts.phosim-2.2.0/
+.. _lsst.ts.phosim-2.2.1:
+
+-------------
+2.2.1
+-------------
+
+* Update plantuml links.
+
+.. _lsst.ts.phosim-2.2.0:
 
 -------------
 2.2.0
@@ -14,7 +22,7 @@ Version History
 
 * Add ConvertZernikesToPsfWidth.py to convert Zernike amplitudes to their quadrature contribution to the PSF FWHM in arcseconds.
 
-.. _lsst.ts.phosim-2.1.0/
+.. _lsst.ts.phosim-2.1.0:
 
 -------------
 2.1.0
@@ -22,7 +30,7 @@ Version History
 
 * Update Jenkinsfile to use github plantuml.
 
-.. _lsst.ts.phosim-2.0.9/
+.. _lsst.ts.phosim-2.0.9:
 
 -------------
 2.0.9
@@ -30,7 +38,7 @@ Version History
 
 * Change focusZ values to millimeters instead of micrometers when repackaging phosim images in closed loop as a result of obs_lsst update.
 
-.. _lsst.ts.phosim-2.0.8/
+.. _lsst.ts.phosim-2.0.8:
 
 -------------
 2.0.8
@@ -38,7 +46,7 @@ Version History
 
 * Updating random.seed() generator.
 
-.. _lsst.ts.phosim-2.0.7/
+.. _lsst.ts.phosim-2.0.7:
 
 -------------
 2.0.7
@@ -46,7 +54,7 @@ Version History
 
 * Fix bug in mapOpdDataToListOfWfErr to work in CloseLoopTask.
 
-.. _lsst.ts.phosim-2.0.6/
+.. _lsst.ts.phosim-2.0.6:
 
 -------------
 2.0.6
@@ -54,7 +62,7 @@ Version History
 
 * Set detector center as the default star position for corner sensors simulation.
 
-.. _lsst.ts.phosim-2.0.5/
+.. _lsst.ts.phosim-2.0.5:
 
 -------------
 2.0.5
@@ -62,7 +70,7 @@ Version History
 
 * Update butler query to seqNum to allow arbitrary MJD in teleSetting.
 
-.. _lsst.ts.phosim-2.0.4/
+.. _lsst.ts.phosim-2.0.4:
 
 -------------
 2.0.4
@@ -71,7 +79,7 @@ Version History
 * Add docs information to README.
 * Update Jenkinsfile to fix online documentation.
 
-.. _lsst.ts.phosim-2.0.3/
+.. _lsst.ts.phosim-2.0.3:
 
 -------------
 2.0.3
@@ -79,7 +87,7 @@ Version History
 
 * Add configuration option to specify pipeline file.
 
-.. _lsst.ts.phosim-2.0.2/
+.. _lsst.ts.phosim-2.0.2:
 
 -------------
 2.0.2
@@ -87,7 +95,7 @@ Version History
 
 * Upgrade refcat generation to Gen3 butler
 
-.. _lsst.ts.phosim-2.0.1/
+.. _lsst.ts.phosim-2.0.1:
 
 -------------
 2.0.1
@@ -95,7 +103,7 @@ Version History
 
 * Run black v22.3.
 
-.. _lsst.ts.phosim-2.0.0/
+.. _lsst.ts.phosim-2.0.0:
 
 -------------
 2.0.0
@@ -103,7 +111,7 @@ Version History
 
 * Enable closed loop to run with LSSTCam corner wavefront sensors.
 
-.. _lsst.ts.phosim-1.5.4:/
+.. _lsst.ts.phosim-1.5.4:
 
 -------------
 1.5.4
@@ -111,7 +119,7 @@ Version History
 
 * Fix bug in bin.src/createSkyFile.py and add information on createSkyFile to the README.
 
-.. _lsst.ts.phosim-1.5.3:/
+.. _lsst.ts.phosim-1.5.3:
 
 -------------
 1.5.3
@@ -119,7 +127,7 @@ Version History
 
 * Add CreateSkyFile.py to create close loop input catalogs from butler reference catalogs.
 
-.. _lsst.ts.phosim-1.5.2:/
+.. _lsst.ts.phosim-1.5.2:
 
 -------------
 1.5.2
@@ -127,7 +135,7 @@ Version History
 
 * Updates to ensure compatibility with v2.1x of ts_wep.
 
-.. _lsst.ts.phosim-1.5.1:/
+.. _lsst.ts.phosim-1.5.1:
 
 -------------
 1.5.1
@@ -135,7 +143,7 @@ Version History
 
 * Updated Jenkinsfile to work after updates on our Jenkins server.
 
-.. _lsst.ts.phosim-1.5.0:/
+.. _lsst.ts.phosim-1.5.0:
 
 -------------
 1.5.0
@@ -144,7 +152,7 @@ Version History
 * Add updates to ensure compatibility with `ts_wep` v2.0.
 * Move utility related files to utils submodule.
 
-.. _lsst.ts.phosim-1.4.3:/
+.. _lsst.ts.phosim-1.4.3:
 
 -------------
 1.4.3
