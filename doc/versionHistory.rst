@@ -5,6 +5,13 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.2.2:
+
+-------------
+2.2.2
+-------------
+
+* Update config to run convertReferenceCatalog.
 
 .. _lsst.ts.phosim-2.2.1:
 
