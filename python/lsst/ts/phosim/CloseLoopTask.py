@@ -1488,6 +1488,7 @@ tasks:
 config.dec_name='Decl'
 config.id_name='Id'
 config.mag_column_list=['g']
+config.dataset_config.ref_dataset_name='ref_cat'
 """
             )
 
