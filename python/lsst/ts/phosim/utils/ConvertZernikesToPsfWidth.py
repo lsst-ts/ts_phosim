@@ -66,24 +66,19 @@ def getPsfGradPerZernike(
         # Create the Zernike polynomial with these coefficients
         Z = galsim.zernike.Zernike(coefs, R_outer=R_outer, R_inner=R_inner)
 
-        # We can calculate the size of the PSF from the RSS of the gradient of
+        # We can calculate the size of the PSF from the RMS of the gradient of
         # the wavefront. The gradient of the wavefront perturbs photon paths.
-        # The RSS quantifies the size of the collective perturbation.
+        # The RMS quantifies the size of the collective perturbation.
         # If we expand the wavefront gradient in another series of Zernike
         # polynomials, we can exploit the orthonormality of the Zernikes to
-        # calculate the RSS from the Zernike coefficients.
-        rss_tilt = np.sqrt(np.sum(Z.gradX.coef**2 + Z.gradY.coef**2))
+        # calculate the RMS from the Zernike coefficients.
+        rms_tilt = np.sqrt(np.sum(Z.gradX.coef**2 + Z.gradY.coef**2) / 2)
 
         # Convert to arcsec per micron
-        rss_tilt = np.rad2deg(rss_tilt * 1e-6) * 3600
+        rms_tilt = np.rad2deg(rms_tilt * 1e-6) * 3600
 
         # Convert rms -> fwhm
-        fwhm_tilt = 2 * np.sqrt(2 * np.log(2)) * rss_tilt
-
-        # Multiply by factor of 1/sqrt(2)
-        # The origin of this factor is uncertain.
-        # It's value is determined empirically from Galsim simulation.
-        fwhm_tilt /= np.sqrt(2)
+        fwhm_tilt = 2 * np.sqrt(2 * np.log(2)) * rms_tilt
 
         # Save this conversion factor
         conversion_factors[i] = fwhm_tilt
