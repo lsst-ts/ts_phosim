@@ -28,3 +28,4 @@ tasks:
       doApplyGains: True
       doFringe: False
       doOverscan: True
+      python: OverscanCorrectionTask.ConfigClass.fitType = 'MEDIAN'
