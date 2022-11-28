@@ -5,6 +5,14 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.2.3:
+
+-------------
+2.2.3
+-------------
+
+* Update default ISR overscan setting.
+
 .. _lsst.ts.phosim-2.2.2:
 
 -------------
