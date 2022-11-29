@@ -5,6 +5,15 @@
 ##################
 Version History
 ##################
+
+.. _lsst.ts.phosim-2.2.4:
+
+-------------
+2.2.4
+-------------
+
+* Update documentation in ConvertZernikesToPsfWidth.py to account for factor of 1/sqrt(2).
+
 .. _lsst.ts.phosim-2.2.3:
 
 -------------
