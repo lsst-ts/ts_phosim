@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.2.5:
+
+-------------
+2.2.5
+-------------
+
+* Update CloseLoopTask ISR setting.
+
 .. _lsst.ts.phosim-2.2.4:
 
 -------------
