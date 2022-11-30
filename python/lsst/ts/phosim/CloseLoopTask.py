@@ -1140,6 +1140,7 @@ tasks:
       doApplyGains: True
       doFringe: False
       doOverscan: True
+      python: OverscanCorrectionTask.ConfigClass.fitType = 'MEDIAN'
   generateDonutCatalogWcsTask:
     class: lsst.ts.wep.task.GenerateDonutCatalogWcsTask.GenerateDonutCatalogWcsTask
     # Here we specify the configurations for pointing that we added into the class
