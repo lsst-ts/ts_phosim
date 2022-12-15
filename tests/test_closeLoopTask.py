@@ -202,6 +202,17 @@ class TestCloseLoopTask(unittest.TestCase):
             ValueError, self.closeLoopTask.getFilterType, "noThisFilterType"
         )
 
+    def testGetMagLimits(self):
+
+        # check that each magLimits dictionary contains both low
+        # and high values
+        for filterTypeName in "ugrizy":
+            magLimits = self.closeLoopTask.getMagLimits(filterTypeName)
+            self.assertCountEqual(magLimits.keys(), ["low", "high"])
+
+        # check that incorrect filter name throws an exception
+        self.assertRaises(ValueError, self.closeLoopTask.getMagLimits, "x")
+
     def testCheckAndCreateBaseOutputDir(self):
 
         # first, check that the output dir is created in the AOCLC output
@@ -211,7 +222,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
         # second, check that the output dir is created
         # where the name is given
-        baseOutputDir = os.path.join(self.testDir, "testBaseOutputDir")
+        baseOutputDir = os.path.join(self.testDir.name, "testBaseOutputDir")
         self.assertFalse(os.path.exists(baseOutputDir))
         self.closeLoopTask.checkAndCreateBaseOutputDir(baseOutputDir)
         self.assertTrue(os.path.exists(baseOutputDir))
