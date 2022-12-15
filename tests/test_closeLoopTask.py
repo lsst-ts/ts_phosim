@@ -27,7 +27,7 @@ import unittest
 from lsst.ts.wep.Utility import CamType, FilterType
 
 from lsst.ts.phosim.CloseLoopTask import CloseLoopTask
-from lsst.ts.phosim.utils.Utility import getModulePath
+from lsst.ts.phosim.utils.Utility import getModulePath, getAoclcOutputPath
 
 
 class TestCloseLoopTask(unittest.TestCase):
@@ -198,14 +198,23 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testGetFilterTypeErr(self):
 
-        filterType = self.closeLoopTask.getFilterType("y")
-        self.assertEqual(filterType, FilterType.Y)
-
-    def testCheckAndCreateBaseOutputDir(self):
-
         self.assertRaises(
             ValueError, self.closeLoopTask.getFilterType, "noThisFilterType"
         )
+
+    def testCheckAndCreateBaseOutputDir(self):
+
+        # first, check that the output dir is created in the AOCLC output
+        # dir if no output dir is provided
+        self.closeLoopTask.checkAndCreateBaseOutputDir()
+        self.assertTrue(os.path.exists(getAoclcOutputPath()))
+
+        # second, check that the output dir is created
+        # where the name is given
+        baseOutputDir = os.path.join(self.testDir, 'testBaseOutputDir')
+        self.assertFalse(os.path.exists(baseOutputDir))
+        self.closeLoopTask.checkAndCreateBaseOutputDir(baseOutputDir)
+        self.assertTrue(os.path.exists(baseOutputDir))
 
     def testSetDefaultParser(self):
 
