@@ -476,14 +476,17 @@ class CloseLoopTask(object):
             Dictionary of magnitude limits,
             with keys {"low":mag_min, "high":mag_max}.
         """
-        # Obtain filter magnitude limits
-        configDir = getConfigDir()
-        settingFilePath = os.path.join(configDir, "task/magLimitStar.yaml")
-        magLimitSettingFile = ParamReader(filePath=settingFilePath)
+        if filterTypeName in 'ugrizy':
+            # Obtain filter magnitude limits
+            configDir = getConfigDir()
+            settingFilePath = os.path.join(configDir, "task/magLimitStar.yaml")
+            magLimitSettingFile = ParamReader(filePath=settingFilePath)
 
-        # The yaml file has limits for UGRIZY
-        magLimits = magLimitSettingFile.getSetting(f"filter{filterTypeName.upper()}")
-        return magLimits
+            # The yaml file has limits for UGRIZY
+            magLimits = magLimitSettingFile.getSetting(f"filter{filterTypeName.upper()}")
+            return magLimits
+        else:
+            raise ValueError(f"This filter type ({filterTypeName}) is not supported.")
 
     def checkAndCreateBaseOutputDir(self, baseOutputDir):
         """Check and create the base output directory.
