@@ -462,6 +462,29 @@ class CloseLoopTask(object):
         else:
             return filterTypeName
 
+    def getMagLimits(self, filterTypeName):
+        """ Read magnitude limits from the settings file.
+
+        Parameters
+        ----------
+        filterTypeName: str
+            Filter type name: u, g, r, i, z, or y.
+
+        Returns
+        -------
+        magLimits: dict
+            Dictionary of magnitude limits,
+            with keys {"low":mag_min, "high":mag_max}.
+        """
+        # Obtain filter magnitude limits
+        configDir = getConfigDir()
+        settingFilePath = os.path.join(configDir, "task/magLimitStar.yaml")
+        magLimitSettingFile = ParamReader(filePath=settingFilePath)
+
+        # The yaml file has limits for UGRIZY
+        magLimits = magLimitSettingFile.getSetting(f"filter{filterTypeName.upper()}")
+        return magLimits
+
     def checkAndCreateBaseOutputDir(self, baseOutputDir):
         """Check and create the base output directory.
 
@@ -1145,15 +1168,11 @@ class CloseLoopTask(object):
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
         sensorType = "Cwfs" if instName == "lsst" else "ScienceSensor"
 
-        # Remap reference filter to g
+        # Remap reference filter
         filterTypeName = self.mapFilterRefToG(filterTypeName)
 
-        # Obtain filter magnitude limits
-        configDir = getConfigDir()
-        settingFilePath = os.path.join(configDir, "task/magLimitStar.yaml")
-        magLimitSettingFile = ParamReader(filePath=settingFilePath)
-        # The yaml file has limits for UGRIZY
-        magLimits = magLimitSettingFile.getSetting(f"filter{filterTypeName.upper()}")
+        # Read magnitude limits from setting file
+        magLimits = self.getMagLimits(filterTypeName)
 
         with open(pipelineYamlPath, "w") as fp:
             fp.write(
