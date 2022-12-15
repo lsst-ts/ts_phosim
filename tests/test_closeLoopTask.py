@@ -206,12 +206,12 @@ class TestCloseLoopTask(unittest.TestCase):
 
         # first, check that the output dir is created in the AOCLC output
         # dir if no output dir is provided
-        self.closeLoopTask.checkAndCreateBaseOutputDir()
+        self.closeLoopTask.checkAndCreateBaseOutputDir("")
         self.assertTrue(os.path.exists(getAoclcOutputPath()))
 
         # second, check that the output dir is created
         # where the name is given
-        baseOutputDir = os.path.join(self.testDir, 'testBaseOutputDir')
+        baseOutputDir = os.path.join(self.testDir, "testBaseOutputDir")
         self.assertFalse(os.path.exists(baseOutputDir))
         self.closeLoopTask.checkAndCreateBaseOutputDir(baseOutputDir)
         self.assertTrue(os.path.exists(baseOutputDir))
@@ -342,6 +342,20 @@ class TestCloseLoopTask(unittest.TestCase):
 
         self.closeLoopTask.assignImgType(False)
         self.assertTrue(self.closeLoopTask.useCcdImg())
+
+    def testMapFilterRefToG(self):
+
+        # test that the reference filter
+        # gets mapped to g
+        for filterTypeName in ["ref", ""]:
+            mappedFilterName = self.closeLoopTask.mapFilterRefToG(filterTypeName)
+            self.assertEqual(mappedFilterName, "g")
+
+        # test that all other filters are
+        # mapped to themselves
+        for filterTypeName in ["ugrizy"]:
+            mappedFilterName = self.closeLoopTask.mapFilterRefToG(filterTypeName)
+            self.assertEqual(mappedFilterName, filterTypeName)
 
 
 if __name__ == "__main__":
