@@ -447,34 +447,37 @@ class CloseLoopTask(object):
 
     def mapFilterRefToG(self, filterTypeName):
         """Map the reference filter to the G filter.
+
         Parameters
         ----------
         filterTypeName : str
             Filter type name: ref (or ''), u, g, r, i, z, or y.
+
         Returns
         -------
         filterTypeName : str
             Mapped filter type.
         """
-
-        if filterTypeName in ["ref", ""]:
-            return "g"
-        else:
-            return filterTypeName
+        return "g" if filterTypeName in ("ref", "") else filterTypeName
 
     def getMagLimits(self, filterTypeName):
         """Read magnitude limits from the settings file.
 
         Parameters
         ----------
-        filterTypeName: str
+        filterTypeName : str
             Filter type name: u, g, r, i, z, or y.
 
         Returns
         -------
-        magLimits: dict
+        magLimits : dict
             Dictionary of magnitude limits,
-            with keys {"low":mag_min, "high":mag_max}.
+            with keys {"low": mag_min, "high": mag_max}.
+
+        Raises
+        ------
+        ValueError
+            Wrong filter type.
         """
         if filterTypeName in "ugrizy":
             # Obtain filter magnitude limits
@@ -1171,9 +1174,9 @@ class CloseLoopTask(object):
 
         Parameters
         ----------
-        instName: str
+        instName : str
             Name of the instrument this configuration is intended for.
-        pipelineYamlPath: str
+        pipelineYamlPath : str
             Path where the pipeline task configuration yaml file
             should be saved.
         filterTypeName : str
