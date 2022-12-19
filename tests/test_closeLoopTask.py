@@ -365,7 +365,7 @@ class TestCloseLoopTask(unittest.TestCase):
 
         # test that all other filters are
         # mapped to themselves
-        for filterTypeName in ["ugrizy"]:
+        for filterTypeName in "ugrizy":
             mappedFilterName = self.closeLoopTask.mapFilterRefToG(filterTypeName)
             self.assertEqual(mappedFilterName, filterTypeName)
 
