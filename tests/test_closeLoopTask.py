@@ -25,9 +25,10 @@ import tempfile
 import unittest
 
 from lsst.ts.wep.Utility import CamType, FilterType
+from lsst.ts.wep.ParamReader import ParamReader
 
 from lsst.ts.phosim.CloseLoopTask import CloseLoopTask
-from lsst.ts.phosim.utils.Utility import getModulePath
+from lsst.ts.phosim.utils.Utility import getModulePath, getAoclcOutputPath
 
 
 class TestCloseLoopTask(unittest.TestCase):
@@ -198,14 +199,34 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testGetFilterTypeErr(self):
 
-        filterType = self.closeLoopTask.getFilterType("y")
-        self.assertEqual(filterType, FilterType.Y)
-
-    def testCheckAndCreateBaseOutputDir(self):
-
         self.assertRaises(
             ValueError, self.closeLoopTask.getFilterType, "noThisFilterType"
         )
+
+    def testGetMagLimits(self):
+
+        # check that each magLimits dictionary contains both low
+        # and high values
+        for filterTypeName in "ugrizy":
+            magLimits = self.closeLoopTask.getMagLimits(filterTypeName)
+            self.assertCountEqual(magLimits.keys(), ["low", "high"])
+
+        # check that incorrect filter name throws an exception
+        self.assertRaises(ValueError, self.closeLoopTask.getMagLimits, "x")
+
+    def testCheckAndCreateBaseOutputDir(self):
+
+        # first, check that the output dir is created in the AOCLC output
+        # dir if no output dir is provided
+        self.closeLoopTask.checkAndCreateBaseOutputDir("")
+        self.assertTrue(os.path.exists(getAoclcOutputPath()))
+
+        # second, check that the output dir is created
+        # where the name is given
+        baseOutputDir = os.path.join(self.testDir.name, "testBaseOutputDir")
+        self.assertFalse(os.path.exists(baseOutputDir))
+        self.closeLoopTask.checkAndCreateBaseOutputDir(baseOutputDir)
+        self.assertTrue(os.path.exists(baseOutputDir))
 
     def testSetDefaultParser(self):
 
@@ -333,6 +354,69 @@ class TestCloseLoopTask(unittest.TestCase):
 
         self.closeLoopTask.assignImgType(False)
         self.assertTrue(self.closeLoopTask.useCcdImg())
+
+    def testMapFilterRefToG(self):
+
+        # test that the reference filter
+        # gets mapped to g
+        for filterTypeName in ["ref", ""]:
+            mappedFilterName = self.closeLoopTask.mapFilterRefToG(filterTypeName)
+            self.assertEqual(mappedFilterName, "g")
+
+        # test that all other filters are
+        # mapped to themselves
+        for filterTypeName in "ugrizy":
+            mappedFilterName = self.closeLoopTask.mapFilterRefToG(filterTypeName)
+            self.assertEqual(mappedFilterName, filterTypeName)
+
+    def testWriteWepConfiguration(self):
+        # Check that correct instName gets written
+        for instName in ["comcam", "lsst"]:
+            pipelineYamlPath = os.path.join(self.testDir.name, f"{instName}_test.yaml")
+            self.closeLoopTask.writeWepConfiguration(instName, pipelineYamlPath, "g")
+
+            # test that yaml file exists
+            self.assertTrue(os.path.exists(pipelineYamlPath))
+
+            # test for correct content
+            yamlFile = ParamReader(pipelineYamlPath)
+            content = yamlFile.getMatContent().item()
+            butlerInstName = "ComCam" if instName == "comcam" else "Cam"
+            self.assertEqual(
+                content["instrument"], f"lsst.obs.lsst.Lsst{butlerInstName}"
+            )
+
+        # Check that correct filter gets written
+        for filterTypeName in "ugrizy":
+            pipelineYamlPath = os.path.join(
+                self.testDir.name, f"{instName}_{filterTypeName}_test.yaml"
+            )
+            self.closeLoopTask.writeWepConfiguration(
+                instName, pipelineYamlPath, filterTypeName
+            )
+
+            # read the written yaml file
+            yamlFile = ParamReader(pipelineYamlPath)
+            content = yamlFile.getMatContent().item()
+
+            # test that the correct content was written
+            config = content["tasks"]["generateDonutCatalogWcsTask"]["config"]
+            self.assertEqual(config["filterName"], filterTypeName)
+            self.assertEqual(
+                config["referenceSelector.magLimit.fluxField"], f"{filterTypeName}_flux"
+            )
+            self.assertEqual(
+                config["donutSelector.fluxField"], f"{filterTypeName}_flux"
+            )
+
+            # check that correct magnitude limits were written
+            magLimits = self.closeLoopTask.getMagLimits(filterTypeName)
+            self.assertEqual(
+                config["referenceSelector.magLimit.maximum"], magLimits["high"]
+            )
+            self.assertEqual(
+                config["referenceSelector.magLimit.minimum"], magLimits["low"]
+            )
 
 
 if __name__ == "__main__":

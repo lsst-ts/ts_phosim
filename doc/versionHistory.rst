@@ -5,6 +5,13 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.2.6:
+
+-------------
+2.2.6
+-------------
+
+* Pass correct filterType to writeWepConfiguration and reference catalogs.
 
 .. _lsst.ts.phosim-2.2.5:
 
