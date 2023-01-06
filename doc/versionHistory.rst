@@ -5,6 +5,14 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.2.7:
+
+-------------
+2.2.7
+-------------
+
+* Change refcat ingestion to use `relsymlink` instead of `direct` to make it easy to move closed loop repos between machines.
+
 .. _lsst.ts.phosim-2.2.6:
 
 -------------
