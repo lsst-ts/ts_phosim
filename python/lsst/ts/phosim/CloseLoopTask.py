@@ -1592,7 +1592,7 @@ config.dataset_config.ref_dataset_name='ref_cat'
         )
 
         runProgram(
-            f"butler ingest-files -t direct {butlerRootPath} cal_ref_cat refcats {skyEcsvFilename}"
+            f"butler ingest-files -t relsymlink {butlerRootPath} cal_ref_cat refcats {skyEcsvFilename}"
         )
 
     @staticmethod
