@@ -32,7 +32,7 @@ pipeline {
         // Module name used in the pytest coverage analysis
         MODULE_NAME = "lsst.ts.phosim"
         // PlantUML url
-        PLANTUML_URL = "http://sourceforge.net/projects/plantuml/files/plantuml.jar"
+        PLANTUML_URL = "https://github.com/plantuml/plantuml/releases/download/v1.2022.12/plantuml.jar"
         // Authority to publish the document online
         user_ci = credentials('lsst-io')
         LTD_USERNAME = "${user_ci_USR}"
@@ -130,7 +130,8 @@ pipeline {
                 def RESULT = sh returnStatus: true, script: """
                   source ${env.LSST_STACK}/loadLSST.bash
 
-                  curl -O ${env.PLANTUML_URL}
+                  curl -L ${env.PLANTUML_URL} -o plantuml.jar
+                  export PATH_PLANTUML=${env.WORKSPACE}/plantuml.jar
 
                   pip install sphinxcontrib-plantuml
 
