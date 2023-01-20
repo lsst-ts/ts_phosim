@@ -4,7 +4,7 @@
 
 This module is a high-level module to use PhoSim.
 
-See the docs: https://ts-phosim.lsst.io/
+See the docs: <https://ts-phosim.lsst.io/>
 
 ## Platform
 
@@ -16,6 +16,7 @@ See the docs: https://ts-phosim.lsst.io/
 
 - [ts_wep](https://github.com/lsst-ts/ts_wep)
 - [ts_ofc](https://github.com/lsst-ts/ts_ofc)
+- [phosim_utils](https://github.com/lsst-dm/phosim_utils)
 - [black](https://github.com/psf/black) (optional)
 - [documenteer](https://github.com/lsst-sqre/documenteer) (optional)
 - [plantuml](http://plantuml.com) (optional)
@@ -23,7 +24,15 @@ See the docs: https://ts-phosim.lsst.io/
 
 ## Use of Module
 
-1. Setup the WEP and OFC environments first, and then, setup the PhoSim environment by `eups`:
+1. Setup the WEP and OFC environments first, and then setup and build phosim_utils:
+
+```bash
+cd $phosim_utils_directory
+setup -k -r .
+scons
+```
+
+2. Setup the PhoSim environment by `eups`:
 
 ```bash
 cd $ts_phosim_directory
@@ -31,7 +40,7 @@ setup -k -r .
 scons
 ```
 
-2. Set the path variables:
+3. Set the path variables:
 
 ```bash
 export PHOSIMPATH=$path_to_phosim

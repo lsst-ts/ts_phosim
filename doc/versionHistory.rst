@@ -5,6 +5,15 @@
 ##################
 Version History
 ##################
+
+.. _lsst.ts.phosim-2.2.8:
+
+-------------
+2.2.8
+-------------
+
+* Updated install directions to include phosim_utils.
+
 .. _lsst.ts.phosim-2.2.7:
 
 -------------
