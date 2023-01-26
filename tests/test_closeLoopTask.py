@@ -400,23 +400,9 @@ class TestCloseLoopTask(unittest.TestCase):
             content = yamlFile.getMatContent().item()
 
             # test that the correct content was written
-            config = content["tasks"]["generateDonutCatalogWcsTask"]["config"]
-            self.assertEqual(config["filterName"], filterTypeName)
-            self.assertEqual(
-                config["referenceSelector.magLimit.fluxField"], f"{filterTypeName}_flux"
-            )
-            self.assertEqual(
-                config["donutSelector.fluxField"], f"{filterTypeName}_flux"
-            )
-
-            # check that correct magnitude limits were written
-            magLimits = self.closeLoopTask.getMagLimits(filterTypeName)
-            self.assertEqual(
-                config["referenceSelector.magLimit.maximum"], magLimits["high"]
-            )
-            self.assertEqual(
-                config["referenceSelector.magLimit.minimum"], magLimits["low"]
-            )
+            config = content["tasks"]
+            self.assertTrue("isr" in config)
+            self.assertTrue("generateDonutCatalogWcsTask" in config)
 
 
 if __name__ == "__main__":

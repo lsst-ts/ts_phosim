@@ -1184,13 +1184,9 @@ class CloseLoopTask(object):
         """
 
         butlerInstName = "ComCam" if instName == "comcam" else "Cam"
-        sensorType = "Cwfs" if instName == "lsst" else "ScienceSensor"
 
         # Remap reference filter
         filterTypeName = self.mapFilterRefToG(filterTypeName)
-
-        # Read magnitude limits from setting file
-        magLimits = self.getMagLimits(filterTypeName)
 
         with open(pipelineYamlPath, "w") as fp:
             fp.write(
@@ -1200,6 +1196,9 @@ description: wep basic processing test pipeline
 # Here we specify the corresponding instrument for the data we
 # will be using.
 instrument: lsst.obs.lsst.Lsst{butlerInstName}
+# Use imported instrument configuration
+imports:
+  - location: {getConfigDir()}/cwfs/instData/{instName}/instParamPipeConfig.yaml
 # Then we can specify each task in our pipeline by a name
 # and then specify the class name corresponding to that task
 tasks:
@@ -1227,25 +1226,6 @@ tasks:
       python: OverscanCorrectionTask.ConfigClass.fitType = 'MEDIAN'
   generateDonutCatalogWcsTask:
     class: lsst.ts.wep.task.GenerateDonutCatalogWcsTask.GenerateDonutCatalogWcsTask
-    # Here we specify the configurations for pointing that we added into the class
-    # GenerateDonutCatalogWcsTaskConfig.
-    config:
-      filterName: '{filterTypeName}'
-      referenceSelector.doMagLimit: True
-      referenceSelector.magLimit.maximum: {magLimits['high']}
-      referenceSelector.magLimit.minimum: {magLimits['low']}
-      referenceSelector.magLimit.fluxField: '{filterTypeName}_flux'
-      doDonutSelection: True
-      donutSelector.fluxField: '{filterTypeName}_flux'
-      donutSelector.donutRadius: 80
-  estimateZernikes{sensorType}Task:
-    class: lsst.ts.wep.task.EstimateZernikes{sensorType}Task.EstimateZernikes{sensorType}Task
-    config:
-      # And here we specify the configuration settings originally defined in
-      # EstimateZernikes{sensorType}TaskConfig.
-      donutTemplateSize: 160
-      donutStampSize: 160
-      initialCutoutPadding: 5
 """
             )
 

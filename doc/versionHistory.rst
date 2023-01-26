@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.3.0:
+
+-------------
+2.3.0
+-------------
+
+* Use CutOutDonuts and CalcZernikes in default WEP pipeline instead of EstimateZernikesTasks.
+
 .. _lsst.ts.phosim-2.2.8:
 
 -------------
