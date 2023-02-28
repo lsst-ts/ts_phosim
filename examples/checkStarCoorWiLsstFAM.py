@@ -30,7 +30,6 @@ from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, getAoclcOutputPa
 
 
 def main(phosimDir):
-
     # Set the output directory
     outputDir = getAoclcOutputPath()
     outputImgDir = os.path.join(outputDir, "img")
@@ -62,7 +61,6 @@ def main(phosimDir):
 
     argStringList = []
     for ii in (-1, 1):
-
         tele.setSurveyParam(obsId=obsIdList[str(ii)])
 
         # Update the telescope degree of freedom
@@ -99,7 +97,6 @@ def main(phosimDir):
 
 
 def _prepareTeleAndSky(phosimDir):
-
     # Survey information
     filterType = FilterType.REF
     ra = 20
@@ -139,6 +136,5 @@ def _prepareTeleAndSky(phosimDir):
 
 
 if __name__ == "__main__":
-
     phosimDir = getPhoSimPath()
     main(phosimDir)

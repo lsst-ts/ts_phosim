@@ -32,11 +32,9 @@ class TestCamSim(unittest.TestCase):
     """Test the CamSim class."""
 
     def setUp(self):
-
         self.camSim = CamSim()
 
     def testSetRotAngInRad(self):
-
         rotAngInRad = 1.0
         self.camSim.setRotAngInRad(rotAngInRad)
         self.assertEqual(self.camSim.camRotInRad, rotAngInRad)
@@ -45,7 +43,6 @@ class TestCamSim(unittest.TestCase):
         self.assertRaises(ValueError, self.camSim.setRotAngInRad, 4)
 
     def testSetRotAngInDeg(self):
-
         rotAngInDeg = 30.0
         self.camSim.setRotAngInDeg(rotAngInDeg)
         self.assertEqual(self.camSim.camRotInRad, np.deg2rad(rotAngInDeg))
@@ -54,7 +51,6 @@ class TestCamSim(unittest.TestCase):
         self.assertRaises(ValueError, self.camSim.setRotAngInDeg, 91)
 
     def testSetBodyTempInDegC(self):
-
         tempInDegC = 10.0
         self.camSim.setBodyTempInDegC(tempInDegC)
         self.assertEqual(self.camSim.camTBinDegC, tempInDegC)
@@ -63,7 +59,6 @@ class TestCamSim(unittest.TestCase):
         self.assertRaises(ValueError, self.camSim.setBodyTempInDegC, 16.1)
 
     def testGetCamDistortionInMm(self):
-
         self.camSim.setBodyTempInDegC(6.5650)
         self.camSim.setRotAngInRad(-1.2323)
 
@@ -84,6 +79,5 @@ class TestCamSim(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

@@ -696,7 +696,6 @@ class PhosimCmpt(object):
         onFocalOutputImgDir = self.outputImgDir
         argStringList = []
         for ii in (-1, 1):
-
             # Set the observation ID
             self.setSurveyParam(obsId=obsIdList[str(ii)])
 
@@ -1151,7 +1150,6 @@ class PhosimCmpt(object):
 
         listOfWfErr = []
         for sensorId, sensorName, zk in zip(sensorIdList, sensorNameList, opdZk):
-
             sensorWavefrontData = SensorWavefrontError(numOfZk=self.getNumOfZk())
             sensorWavefrontData.setSensorId(sensorId)
             sensorWavefrontData.setSensorName(sensorName)
@@ -1346,7 +1344,6 @@ class PhosimCmpt(object):
         intraFocalDirName = self.getIntraFocalDirName()
         extraFocalDirName = self.getExtraFocalDirName()
         for imgType in (intraFocalDirName, extraFocalDirName):
-
             # Repackage the images to the temporary directory
             command = "phosim_repackager.py"
             phosimImgDir = os.path.join(self.outputImgDir, imgType)

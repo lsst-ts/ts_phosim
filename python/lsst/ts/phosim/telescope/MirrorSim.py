@@ -266,7 +266,6 @@ class MirrorSim(object):
         #  Write the rows and columns
         for jj in range(1, NUM_X_PIXELS + 1):
             for ii in range(1, NUM_Y_PIXELS + 1):
-
                 # x and y positions
                 x = minx + (ii - 1) * delx
                 y = miny + (jj - 1) * dely
@@ -280,7 +279,6 @@ class MirrorSim(object):
                 # Set the value as zero when the radius is not between the
                 # inner and outer radius.
                 if (r < innerRinMm / extFr) or (r > outerRinMm * extFr):
-
                     z = 0
                     dx = 0
                     dy = 0
@@ -288,7 +286,6 @@ class MirrorSim(object):
 
                 # Get the value by the fitting
                 else:
-
                     # Get the z
                     z = Ff(x, y)
 
