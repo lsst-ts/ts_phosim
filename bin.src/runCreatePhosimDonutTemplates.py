@@ -28,7 +28,6 @@ import tempfile
 from lsst.ts.phosim.utils.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(
         description="Generate donut templates for AOS using Phosim."
     )

@@ -32,7 +32,6 @@ class TestM1M3Sim(unittest.TestCase):
     """Test the M1M3Sim class."""
 
     def setUp(self):
-
         self.testM3Data = os.path.join(
             getModulePath(), "tests", "testData", "testM1M3Func"
         )
@@ -45,12 +44,10 @@ class TestM1M3Sim(unittest.TestCase):
         cls.m1m3 = M1M3Sim()
 
     def testInit(self):
-
         self.assertEqual(self.m1m3.getInnerRinM(), (2.558, 0.550))
         self.assertEqual(self.m1m3.getOuterRinM(), (4.180, 2.508))
 
     def testGetPrintthz(self):
-
         zAngleInDeg = 27.0912
         printthzInM = self._getPrintthzInM(zAngleInDeg)
 
@@ -67,14 +64,12 @@ class TestM1M3Sim(unittest.TestCase):
         self.assertAlmostEqual(printthzInM[2] * 1e8, -2.04782, places=4)
 
     def _getPrintthzInM(self, zAngleInDeg):
-
         zAngleInRadian = np.deg2rad(zAngleInDeg)
         printthzInM = self.m1m3.getPrintthz(zAngleInRadian)
 
         return printthzInM
 
     def testGetTempCorr(self):
-
         tempCorrInUm = self._getTempCorrInUm()
 
         tempCorrMax = np.max(tempCorrInUm)
@@ -90,7 +85,6 @@ class TestM1M3Sim(unittest.TestCase):
         self.assertAlmostEqual(tempCorrInUm[2] * 1e1, 6.49608, places=4)
 
     def _getTempCorrInUm(self):
-
         m1m3TBulk = 0.0902
         m1m3TxGrad = -0.0894
         m1m3TyGrad = -0.1973
@@ -103,7 +97,6 @@ class TestM1M3Sim(unittest.TestCase):
         return tempCorrInUm
 
     def testGenMirSurfRandErr(self):
-
         iSim = 6
         zAngleInDeg = 27.0912
         randSurfInM = self._getRandSurfInM(iSim, zAngleInDeg)
@@ -113,14 +106,12 @@ class TestM1M3Sim(unittest.TestCase):
         self.assertLess(np.sum(np.abs(randSurfInM - ansRandSurfInM)), 1e-10)
 
     def _getRandSurfInM(self, iSim, zAngleInDeg):
-
         zAngleInRadian = np.deg2rad(zAngleInDeg)
         randSurfInM = self.m1m3.genMirSurfRandErr(zAngleInRadian, seedNum=iSim)
 
         return randSurfInM
 
     def testGetMirrorResInMmInZemax(self):
-
         self._setSurfAlongZ()
         zcInMmInZemax = self.m1m3.getMirrorResInMmInZemax()[3]
 
@@ -133,7 +124,6 @@ class TestM1M3Sim(unittest.TestCase):
         self.assertLess(delta, 1e-9)
 
     def _setSurfAlongZ(self):
-
         iSim = 6
         zAngleInDeg = 27.0912
 
@@ -148,7 +138,6 @@ class TestM1M3Sim(unittest.TestCase):
         self.m1m3.setSurfAlongZ(mirrorSurfInUm)
 
     def testWriteMirZkAndGridResInZemax(self):
-
         resFile = self._writeMirZkAndGridResInZemax()
         resFile1, resFile3 = resFile
 
@@ -177,7 +166,6 @@ class TestM1M3Sim(unittest.TestCase):
         os.remove(resFile3)
 
     def _writeMirZkAndGridResInZemax(self):
-
         self._setSurfAlongZ()
 
         resFile1 = os.path.join(self.outputDir, "M1res.txt")
@@ -188,7 +176,6 @@ class TestM1M3Sim(unittest.TestCase):
         return resFile
 
     def testShowMirResMap(self):
-
         resFile = self._writeMirZkAndGridResInZemax()
         resFile1, resFile3 = resFile
 
@@ -206,6 +193,5 @@ class TestM1M3Sim(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

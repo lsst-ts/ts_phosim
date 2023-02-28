@@ -42,7 +42,6 @@ class TestUtility(unittest.TestCase):
     """Test the Utility functions."""
 
     def testPhosim2ZemaxCoorTrans(self):
-
         xInPhosim, yInPhosim, zInPhosim = 1, 2, 3
         xInZemax, yInZemax, zInZemax = opt2ZemaxCoorTrans(
             xInPhosim, yInPhosim, zInPhosim
@@ -52,7 +51,6 @@ class TestUtility(unittest.TestCase):
         )
 
     def testZemax2phosimCoorTrans(self):
-
         xInZemax, yInZemax, zInZemax = 1, 2, 3
         xInPhosim, yInPhosim, zInPhosim = zemax2optCoorTrans(
             xInZemax, yInZemax, zInZemax
@@ -62,18 +60,15 @@ class TestUtility(unittest.TestCase):
         )
 
     def testMapSurfNameToEnum(self):
-
         surfName = "L2F"
         surfaceType = mapSurfNameToEnum(surfName)
         self.assertEqual(surfaceType, SurfaceType.L2F)
         self.assertRaises(ValueError, mapSurfNameToEnum, "L123F")
 
     def testGetPhoSimPathNotExist(self):
-
         self.assertRaises(RuntimeError, getPhoSimPath, "WRONGPATH")
 
     def testGetPhoSimPath(self):
-
         PHOSIMPATH = "/path/to/phosim"
         os.environ["PHOSIMPATH"] = PHOSIMPATH
 
@@ -83,14 +78,12 @@ class TestUtility(unittest.TestCase):
         os.environ.pop("PHOSIMPATH")
 
     def testGetAoclcOutputPathNotAssigned(self):
-
         with self.assertWarns(UserWarning):
             aoclcOutputPath = getAoclcOutputPath()
 
         self.assertEqual(aoclcOutputPath, os.path.join(getModulePath(), "output"))
 
     def testGetAoclcOutputPath(self):
-
         AOCLCOUTPUTPATH = "/path/to/aoclc/output"
         os.environ["AOCLCOUTPUTPATH"] = AOCLCOUTPUTPATH
 
@@ -100,7 +93,6 @@ class TestUtility(unittest.TestCase):
         os.environ.pop("AOCLCOUTPUTPATH")
 
     def testSortOpdFileList(self):
-
         fileDir = "/fileDir"
         opdFileNameList = [
             "opd_100_3.fits.gz",
@@ -118,11 +110,9 @@ class TestUtility(unittest.TestCase):
         self.assertListEqual(sortedOpdFileList, ansOpdFileList)
 
     def testSortOpdFileListWithUnmatchedName(self):
-
         self.assertRaises(ValueError, sortOpdFileList, ["wrong_name"])
 
     def testGetCamera(self):
-
         lsstComCam = getCamera("comcam")
         self.assertIsInstance(lsstComCam, cameraGeom.Camera)
         self.assertEqual(lsstComCam.getName(), LsstComCam.getCamera().getName())
@@ -140,6 +130,5 @@ class TestUtility(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

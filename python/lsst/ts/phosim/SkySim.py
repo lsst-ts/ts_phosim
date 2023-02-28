@@ -238,7 +238,6 @@ class SkySim(object):
 
         # Only consider the non-empty data
         if len(data) != 0:
-
             # Change to 2D array if the input is 1D array
             if data.ndim == 1:
                 data = np.expand_dims(data, axis=0)

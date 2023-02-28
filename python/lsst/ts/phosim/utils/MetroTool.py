@@ -160,14 +160,12 @@ def calc_pssn(
 
     # Calculate PSF with error (atmosphere + system)
     if aType == "opd":
-
         if array.ndim == 2:
             ninst = 1
         else:
             ninst = array.shape[0]
 
         for ii in range(ninst):
-
             if array.ndim == 2:
                 array2D = array
             else:
@@ -184,7 +182,6 @@ def calc_pssn(
         psfe = psfe / ninst
 
     elif aType == "psf":
-
         if array.shape[0] == mk:
             psfe = array
 
@@ -326,7 +323,6 @@ def atmSF(D, m, wlum, zen, r0inmRef, model):
 
     # van Karman power spectrum
     elif model == "vonK":
-
         # Outer scale in meter
         L0 = 30
 
@@ -710,7 +706,6 @@ def opd2psf(
 
         # Check the padding
         if padding < 1:
-
             errorMes = "opd2psf: Sampling too low, data inaccurate.\n"
             errorMes += "Imagedelta needs to be smaller than"
             errorMes += " fno * wlum = %4.2f um.\n" % (fno * wavelength)

@@ -38,7 +38,6 @@ class TestTeleFacade(unittest.TestCase):
     """Test the TeleFacade class."""
 
     def setUp(self):
-
         self.configDir = getConfigDir()
         self.modulePath = getModulePath()
 
@@ -67,58 +66,48 @@ class TestTeleFacade(unittest.TestCase):
         )
 
     def tearDown(self):
-
         self._setDefaultTeleSetting()
         self.outputDir.cleanup()
 
     def _setDefaultTeleSetting(self):
-
         self.tele.setSensorOn()
         self.tele.setDofInUm(np.zeros(50))
         self.tele.setSurveyParam(filterType=self.filterType)
         self.tele.setInstName(CamType.LsstFamCam)
 
     def testGetDofInUm(self):
-
         dofInUm = self.tele.getDofInUm()
 
         self.assertEqual(len(dofInUm), 50)
         self.assertEqual(np.sum(np.abs(dofInUm)), 0)
 
     def testGetNumOfDof(self):
-
         numOfDof = self.tele.getNumOfDof()
         self.assertEqual(numOfDof, 50)
 
     def testGetDefaultDefocalDist(self):
-
         defocalDist = self.tele.getDefocalDistInMm()
         self.assertEqual(defocalDist, 1.5)
 
     def testGetSurfGridN(self):
-
         surfGridN = self.tele.getSurfGridN()
         self.assertEqual(surfGridN, 200)
 
     def testGetCamMjd(self):
-
         mjd = self.tele.getCamMjd()
         self.assertEqual(mjd, 59580.0)
 
     def testGetRefWaveLength(self):
-
         refWaveLength = self.tele.getRefWaveLength()
         self.assertEqual(refWaveLength, 500)
 
     def testGetDefocalDisInMm(self):
-
         defocalDist = 1.3
         self.tele.setInstName(CamType.LsstCam, defocalDist=defocalDist)
 
         self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
     def testSetSurveyParamWithCorrectInput(self):
-
         obsId = 100
         filterType = FilterType.U
         boresight = (10, 20)
@@ -141,7 +130,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(tele.surveyParam["rotAngInDeg"], rotAngInDeg)
 
     def testSetSurveyParamWithWrongInput(self):
-
         defaultObsId = self.tele.surveyParam["obsId"]
 
         obsId = 1.0
@@ -151,7 +139,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(self.tele.surveyParam["filterType"], FilterType.G)
 
     def testSetSensorOnWithCorrectInput(self):
-
         sciSensorOn = False
         wfSensorOn = False
         guidSensorOn = True
@@ -164,7 +151,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(self.tele.sensorOn["guidSensorOn"], guidSensorOn)
 
     def testGetPhoSimArgs(self):
-
         instFilePath = "temp.inst"
         argString = self.tele.getPhoSimArgs(instFilePath)
 
@@ -173,7 +159,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(argString, ansArgString)
 
     def testSetInstName(self):
-
         defocalDist = 1.0
         self.tele.setInstName(CamType.ComCam, defocalDist=1.0)
 
@@ -181,49 +166,40 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
     def testSetInstNameWithWrongCamType(self):
-
         self.assertRaises(ValueError, self.tele.setInstName, "wrongType")
 
     def testSetInstNameWithZeroDefocalDistLsstCam(self):
-
         defocalDist = 0.0
         self.tele.setInstName(CamType.LsstCam, defocalDist=0.0)
         self.assertEqual(self.tele.surveyParam["instName"], "lsst")
         self.assertEqual(self.tele.getDefocalDistInMm(), defocalDist)
 
     def testSetInstNameWithZeroDefocalDistNotLsstCam(self):
-
         self.assertRaises(ValueError, self.tele.setInstName, CamType.ComCam, 0.0)
 
     def testSetInstNameWithNegativeDefocalDist(self):
-
         self.assertRaises(ValueError, self.tele.setInstName, CamType.LsstCam, -1.5)
         self.assertRaises(ValueError, self.tele.setInstName, CamType.ComCam, -1.5)
 
     def testSetDofInUm(self):
-
         dofInUm = np.random.rand(50)
         self.tele.setDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
     def testSetDofInUmWithWrongLeng(self):
-
         dofInUm = np.random.rand(45)
         self.assertRaises(ValueError, self.tele.setDofInUm, dofInUm)
 
     def testAccDofInUm(self):
-
         dofInUm = np.random.rand(50)
         self.tele.accDofInUm(dofInUm)
         self.assertEqual(np.sum(np.abs(self.tele.dofInUm - dofInUm)), 0)
 
     def testAccDofInUmWithWrongLeng(self):
-
         dofInUm = np.random.rand(45)
         self.assertRaises(ValueError, self.tele.accDofInUm, dofInUm)
 
     def testAddSubSys(self):
-
         tele = TeleFacade()
         self.assertEqual(tele.cam, None)
         self.assertEqual(tele.m1m3, None)
@@ -236,7 +212,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertNotEqual(tele.m2, None)
 
     def testWriteAccDofFile(self):
-
         dofFilePath = self.tele.writeAccDofFile(self.outputDir.name)
         dof = np.loadtxt(dofFilePath)
 
@@ -244,14 +219,12 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(len(dof), 50)
 
     def testWritePertBaseOnConfigFile(self):
-
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir.name)
 
         numOfLineInFile = self._getNumOfLineInFile(pertCmdFilePath)
         self.assertEqual(numOfLineInFile, 256)
 
     def _writePertBaseOnConfigFile(self, outputDir):
-
         iSim = 6
         pertCmdFilePath = self.tele.writePertBaseOnConfigFile(
             outputDir,
@@ -264,12 +237,10 @@ class TestTeleFacade(unittest.TestCase):
         return pertCmdFilePath
 
     def _getNumOfLineInFile(self, filePath):
-
         with open(filePath, "r") as file:
             return sum(1 for line in file.readlines())
 
     def testWriteCmdFile(self):
-
         starCmdSettingFile = os.path.join(self.configDir, "cmdFile", "starDefault.cmd")
 
         pertCmdFilePath = self._writePertBaseOnConfigFile(self.outputDir.name)
@@ -284,14 +255,12 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(numOfLineInFile, 268)
 
     def testGetPhoSimCamSurf(self):
-
         camSurfName = "L1S2zer"
         surfaceType = self.tele._getPhoSimCamSurf(camSurfName)
         self.assertEqual(surfaceType.name, "L1B")
         self.assertRaises(ValueError, self.tele._getPhoSimCamSurf, "L4S2zer")
 
     def testWriteOpdInstFile(self):
-
         metr, opdInstSettingFile = self._generateOpd()
 
         with self.assertWarns(UserWarning):
@@ -303,7 +272,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(numOfLineInFile, 59)
 
     def testWriteOpdInstFileWithFilterRef(self):
-
         self.tele.setSurveyParam(filterType=FilterType.REF)
 
         metr, opdInstSettingFile = self._generateOpd()
@@ -316,7 +284,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(numOfLineInFile, 59)
 
     def _generateOpd(self):
-
         metr = OpdMetrology()
         metr.addFieldXYbyDeg(0, 0)
         opdInstSettingFile = os.path.join(self.configDir, "instFile", "opdDefault.inst")
@@ -324,7 +291,6 @@ class TestTeleFacade(unittest.TestCase):
         return metr, opdInstSettingFile
 
     def testWriteStarInstFile(self):
-
         skySim, starInstSettingFile = self._generateFakeSky()
 
         instFilePath = self.tele.writeStarInstFile(
@@ -335,7 +301,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(numOfLineInFile, 63)
 
     def testWriteStarInstFileWithFilterRef(self):
-
         self.tele.setSurveyParam(filterType=FilterType.REF)
 
         skySim, starInstSettingFile = self._generateFakeSky()
@@ -348,7 +313,6 @@ class TestTeleFacade(unittest.TestCase):
         self.assertEqual(numOfLineInFile, 63)
 
     def _generateFakeSky(self):
-
         skySim = SkySim()
         skySim.addStarByRaDecInDeg(0, 1.0, 1.0, 17.0)
 
@@ -360,6 +324,5 @@ class TestTeleFacade(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

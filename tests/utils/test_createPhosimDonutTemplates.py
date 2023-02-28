@@ -34,7 +34,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
     """Test the CreatePhosimDonutTemplates class."""
 
     def setUp(self):
-
         modulePath = getModulePath()
         self.testDataDir = os.path.join(modulePath, "tests", "testData")
 
@@ -52,7 +51,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self.createPhosimDonuts = CreatePhosimDonutTemplates(self.tempWorkDir)
 
     def tearDown(self):
-
         # Remove test template from template directory
         try:
             os.remove(os.path.join(self.templateDir, "extra_template-R22_S10.txt"))
@@ -63,7 +61,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self.tempTestDirectory.cleanup()
 
     def _copyPhosimFiles(self):
-
         # copy the raw amp image file
         shutil.copy(
             os.path.join(
@@ -87,7 +84,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         )
 
     def testCreateAndCleanUpWorkDirectories(self):
-
         # Test clean up of work directories
         self.createPhosimDonuts.cleanUpWorkDirs()
         self.assertFalse(os.path.exists(self.tempWorkDir))
@@ -100,7 +96,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         )
 
     def testCreateDetectorLists(self):
-
         testDetectors = "R22_S00 R22_S11"
 
         detStrPhosim = self.createPhosimDonuts.createDetectorLists(testDetectors)
@@ -108,7 +103,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self.assertEqual(detStrPhosim, "R22_S00|R22_S11")
 
     def testIngestImages(self):
-
         # Populate the raw phosim output directory
         self.createPhosimDonuts.createWorkDirectories()
         self._copyPhosimFiles()
@@ -121,7 +115,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         )
 
     def testRunISR(self):
-
         self.createPhosimDonuts.createWorkDirectories()
         # Populate the repo
         self._copyPhosimFiles()
@@ -142,7 +135,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self.assertEqual(len(datasetsList), 1)
 
     def testGenerateDataIdLists(self):
-
         self.createPhosimDonuts.createWorkDirectories()
         # Populate the repo
         self._copyPhosimFiles()
@@ -169,7 +161,6 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         )
 
     def testCutOutTemplatesAndSave(self):
-
         # Move centroid file into place
         self.createPhosimDonuts.createWorkDirectories()
         self._copyPhosimFiles()
@@ -198,6 +189,5 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Do the unit test
     unittest.main()

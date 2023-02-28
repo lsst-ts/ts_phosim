@@ -43,16 +43,13 @@ class TestMirrorSim(unittest.TestCase):
         cls.mirror.config(numTerms=28, lutFileName="")
 
     def testInit(self):
-
         self.assertEqual(self.mirror.getInnerRinM(), self.innerRinM)
         self.assertEqual(self.mirror.getOuterRinM(), self.outerRinM)
 
     def testGetNumTerms(self):
-
         self.assertEqual(self.mirror.getNumTerms(), 28)
 
     def testSetAndGetSurfAlongZ(self):
-
         surfAlongZinUm = np.random.rand(3, 3)
         self.mirror.setSurfAlongZ(surfAlongZinUm)
 
@@ -60,7 +57,6 @@ class TestMirrorSim(unittest.TestCase):
         self.assertEqual(delta, 0)
 
     def testGetLUTforce(self):
-
         m1m3DataDir = os.path.join(getConfigDir(), "M1M3")
         mirror = MirrorSim(self.innerRinM, self.outerRinM, m1m3DataDir)
         mirror.config(numTerms=28, lutFileName="M1M3_LUT.yaml")
@@ -75,27 +71,21 @@ class TestMirrorSim(unittest.TestCase):
         self.assertLess(np.sum(np.abs(lutForce - ansLutForce)), 1e-10)
 
     def testGetPrintthz(self):
-
         self.assertRaises(NotImplementedError, self.mirror.getPrintthz, 0)
 
     def testGetTempCorr(self):
-
         self.assertRaises(NotImplementedError, self.mirror.getTempCorr)
 
     def testGetMirrorResInMmInZemax(self):
-
         self.assertRaises(NotImplementedError, self.mirror.getMirrorResInMmInZemax)
 
     def testWriteMirZkAndGridResInZemax(self):
-
         self.assertRaises(NotImplementedError, self.mirror.writeMirZkAndGridResInZemax)
 
     def testShowMirResMap(self):
-
         self.assertRaises(NotImplementedError, self.mirror.showMirResMap, "")
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

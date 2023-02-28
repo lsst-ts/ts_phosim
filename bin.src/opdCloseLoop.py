@@ -27,7 +27,6 @@ from lsst.ts.phosim.CloseLoopTask import CloseLoopTask
 
 
 if __name__ == "__main__":
-
     # Set the parser
     parser = argparse.ArgumentParser(
         description="Run AOS closed-loop simulation in optical path difference (OPD) level."

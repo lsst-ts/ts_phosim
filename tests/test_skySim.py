@@ -31,24 +31,20 @@ class TestSkySim(unittest.TestCase):
     """Test the SkySim class."""
 
     def setUp(self):
-
         self.skySim = SkySim()
 
     def testSetCamera(self):
-
         self.skySim.setCamera("lsstfam")
         self.assertEqual(self.skySim._camera.getName(), "LSSTCam")
         self.skySim.setCamera("comcam")
         self.assertEqual(self.skySim._camera.getName(), "LSSTComCam")
 
     def testGetStarId(self):
-
         starId = self.skySim.getStarId()
         self.assertEqual(len(starId), 0)
         self.assertTrue(isinstance(starId, np.ndarray))
 
     def testGetRaDecInDeg(self):
-
         ra, decl = self.skySim.getRaDecInDeg()
 
         self.assertEqual(len(ra), 0)
@@ -58,13 +54,11 @@ class TestSkySim(unittest.TestCase):
         self.assertTrue(isinstance(decl, np.ndarray))
 
     def testGetStarMag(self):
-
         mag = self.skySim.getStarMag()
         self.assertEqual(len(mag), 0)
         self.assertTrue(isinstance(mag, np.ndarray))
 
     def testAddStarByRaDecInDeg(self):
-
         self.skySim.addStarByRaDecInDeg(1, 2, 3, 4)
         self.assertEqual(len(self.skySim.getStarId()), 1)
 
@@ -79,20 +73,17 @@ class TestSkySim(unittest.TestCase):
         self.assertEqual(len(self.skySim.getStarId()), 2)
 
     def testResetSky(self):
-
         self.skySim.addStarByRaDecInDeg(1, 2, 3, 4)
         self.skySim.resetSky()
         self.assertEqual(len(self.skySim.getStarId()), 0)
 
     def testSetStarRaDecInDeg(self):
-
         self.skySim.setStarRaDecInDeg(
             np.array([0]), np.array([1]), np.array([2]), np.array([3])
         )
         self.assertEqual(len(self.skySim.getStarId()), 1)
 
     def testAddStarByFile(self):
-
         self._addStarByFile("wfsStar.txt")
 
         self.assertEqual(len(self.skySim.getStarId()), 8)
@@ -104,12 +95,10 @@ class TestSkySim(unittest.TestCase):
         self.assertEqual(self.skySim.getStarMag()[2], 15.0)
 
     def _addStarByFile(self, skyFileName):
-
         skyFile = os.path.join(getModulePath(), "tests", "testData", "sky", skyFileName)
         self.skySim.addStarByFile(skyFile)
 
     def testAddStarByFileWithSglStar(self):
-
         self._addStarByFile("wfsSglStar.txt")
 
         self.assertEqual(len(self.skySim.getStarId()), 1)
@@ -121,7 +110,6 @@ class TestSkySim(unittest.TestCase):
         self.assertEqual(self.skySim.getStarMag()[0], 17.0)
 
     def testExportSkyToFile(self):
-
         self._addStarByFile("wfsStar.txt")
         outputFilePath = os.path.join(getModulePath(), "output", "testSkyOutput.txt")
 
@@ -130,7 +118,6 @@ class TestSkySim(unittest.TestCase):
         os.remove(outputFilePath)
 
     def testAddStarByChipPos(self):
-
         self._setObservationMetaData()
 
         # Add the star
@@ -151,7 +138,6 @@ class TestSkySim(unittest.TestCase):
         self.assertAlmostEqual(decl[0], -8.333e-05)
 
     def _setObservationMetaData(self):
-
         ra = 0
         decl = 0
         rotSkyPos = 0
@@ -159,6 +145,5 @@ class TestSkySim(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

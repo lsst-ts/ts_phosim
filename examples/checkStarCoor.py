@@ -30,7 +30,6 @@ from lsst.ts.phosim.Utility import getConfigDir, getPhoSimPath, getAoclcOutputPa
 
 
 def main(phosimDir):
-
     # Settings
     outputDir = getAoclcOutputPath()
     outputImgDir = os.path.join(outputDir, "img")
@@ -106,6 +105,5 @@ def main(phosimDir):
 
 
 if __name__ == "__main__":
-
     phosimDir = getPhoSimPath()
     main(phosimDir)

@@ -32,7 +32,6 @@ class TestM2Sim(unittest.TestCase):
     """Test the M2Sim class."""
 
     def setUp(self):
-
         self.testM2Data = os.path.join(
             getModulePath(), "tests", "testData", "testM2Func"
         )
@@ -45,12 +44,10 @@ class TestM2Sim(unittest.TestCase):
         cls.m2 = M2Sim()
 
     def testInit(self):
-
         self.assertEqual(self.m2.getInnerRinM(), 0.9)
         self.assertEqual(self.m2.getOuterRinM(), 1.71)
 
     def testGetPrintthz(self):
-
         zAngleInDeg = 27.0912
         zAngleInRadian = np.deg2rad(zAngleInDeg)
         printthzInUm = self.m2.getPrintthz(zAngleInRadian)
@@ -68,7 +65,6 @@ class TestM2Sim(unittest.TestCase):
         self.assertEqual(np.where(printthzInUm == printthzMin)[0][0], 15731)
 
     def testGetTempCorr(self):
-
         m2TzGrad = -0.0675
         m2TrGrad = -0.1416
         tempCorrInUm = self.m2.getTempCorr(m2TzGrad, m2TrGrad)
@@ -86,7 +82,6 @@ class TestM2Sim(unittest.TestCase):
         self.assertEqual(np.where(tempCorrInUm == tempCorrMin)[0][0], 3618)
 
     def testGetMirrorResInMmInZemax(self):
-
         self._setSurfAlongZ()
         zcInMmInZemax = self.m2.getMirrorResInMmInZemax()[3]
 
@@ -103,7 +98,6 @@ class TestM2Sim(unittest.TestCase):
         self.assertEqual(np.where(zcInMmInZemax == zcMin)[0][0], 20)
 
     def _setSurfAlongZ(self):
-
         zAngleInDeg = 27.0912
         zAngleInRadian = np.deg2rad(zAngleInDeg)
         printthzInUm = self.m2.getPrintthz(zAngleInRadian)
@@ -116,7 +110,6 @@ class TestM2Sim(unittest.TestCase):
         self.m2.setSurfAlongZ(mirrorSurfInUm)
 
     def testWriteMirZkAndGridResInZemax(self):
-
         resFile = self._writeMirZkAndGridResInZemax()
         content = np.loadtxt(resFile)
 
@@ -132,7 +125,6 @@ class TestM2Sim(unittest.TestCase):
         os.remove(resFile)
 
     def _writeMirZkAndGridResInZemax(self):
-
         self._setSurfAlongZ()
         resFile = os.path.join(self.outputDir, "M2res.txt")
         self.m2.writeMirZkAndGridResInZemax(resFile=resFile)
@@ -140,7 +132,6 @@ class TestM2Sim(unittest.TestCase):
         return resFile
 
     def testShowMirResMap(self):
-
         resFile = self._writeMirZkAndGridResInZemax()
         writeToResMapFilePath = os.path.join(self.outputDir, "M2resMap.png")
 
@@ -152,6 +143,5 @@ class TestM2Sim(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()
