@@ -769,7 +769,6 @@ class TeleFacade(object):
 
         # Save the mirror residue map if necessary
         if saveResMapFig:
-
             if self.m1m3 is not None:
                 self._saveM1M3ResMapFig(m1ResFilePath, m3ResFilePath)
 

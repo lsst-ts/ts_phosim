@@ -85,6 +85,5 @@ class TestConvertZernikesToPsfWidth(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

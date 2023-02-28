@@ -72,7 +72,6 @@ def plotResMap(
     ax[1].set_xlabel("x (mm)")
 
     if resFile is not None:
-
         # Get the data
         data = np.loadtxt(resFile)
         NUM_X_PIXELS, NUM_Y_PIXELS, delxInMm, delyInMm = data[0, :]
@@ -159,7 +158,6 @@ def showFieldMap(fieldX=None, fieldY=None, saveToFilePath=None, dpi=None):
 
     # Plot the CCD boundary
     for sensorName in list(camera.getNameMap().keys()):
-
         # Get the CCD corner field points in degree
         pointXinDeg, pointYinDeg = _getCCDBoundInDeg(camera, sensorName)
 
@@ -225,7 +223,6 @@ def _getCCDBoundInDeg(camera, sensorName):
     fieldYinDeglist = []
 
     for fieldPoint in corners:
-
         fieldY, fieldX = fieldPoint
         fieldXinDegList.append(np.degrees(fieldX))
         fieldYinDeglist.append(np.degrees(fieldY))
@@ -257,7 +254,6 @@ def plotFwhmOfIters(pssnFiles, saveToFilePath=None, dpi=None):
     numOfFwhmData = 0
     fwhmDataAll = np.array([])
     for pssnFile in pssnFiles:
-
         fwhmData = np.loadtxt(pssnFile)[1, :]
         if numOfFwhmData == 0:
             numOfFwhmData = len(fwhmData)

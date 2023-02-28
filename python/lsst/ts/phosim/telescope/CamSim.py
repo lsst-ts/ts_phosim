@@ -250,7 +250,6 @@ class CamSim(object):
 
         # Get the correction value by the linear fitting
         else:
-
             # Find the temperature boundary indexes
             p2 = (
                 camDistData[startTempRowIdx:, 2] > self.camTBinDegC

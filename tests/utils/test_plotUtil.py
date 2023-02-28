@@ -31,7 +31,6 @@ class TestPlotUtil(unittest.TestCase):
     """Test the PlotUtil functions."""
 
     def setUp(self):
-
         modulePath = getModulePath()
         self.testData = os.path.join(modulePath, "tests", "testData")
         self.outFigFilePath = os.path.join(modulePath, "output", "img", "testFig.png")
@@ -41,7 +40,6 @@ class TestPlotUtil(unittest.TestCase):
             os.remove(self.outFigFilePath)
 
     def testShowFieldMap(self):
-
         fieldX = np.array([0, 0])
         fieldY = np.array([0, 1])
 
@@ -49,7 +47,6 @@ class TestPlotUtil(unittest.TestCase):
         self.assertTrue(os.path.exists(self.outFigFilePath))
 
     def testPlotFwhmOfIters(self):
-
         iterDataDir = os.path.join(self.testData, "iterData")
         pssnFiles = [
             os.path.join(iterDataDir, "iter%d" % num, "img", "PSSN.txt")
@@ -61,6 +58,5 @@ class TestPlotUtil(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

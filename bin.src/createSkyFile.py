@@ -111,7 +111,6 @@ class CreateSkyFile(object):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("butlerPath", type=str, help="Butler Repository with refcats.")
     parser.add_argument(

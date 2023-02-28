@@ -28,7 +28,6 @@ from lsst.ts.phosim.utils.Utility import SurfaceType
 
 
 class PhosimCommu(object):
-
     DOF_START_IDX = 5
     DOF_NUM = 50
 
@@ -529,7 +528,6 @@ class PhosimCommu(object):
             raise ValueError("Mode: %s is not supported." % mode)
 
         if (content is not None) or (sourceFile is not None):
-
             # Open the file. If the file path does not exist, the new file
             # will be generated.
             # Use the append instead of it.

@@ -31,21 +31,18 @@ class TestOpdMetrology(unittest.TestCase):
     """Test the OpdMetrology class."""
 
     def setUp(self):
-
         self.testDataDir = os.path.join(
             getModulePath(), "tests", "testData", "testOpdFunc"
         )
         self.metr = OpdMetrology()
 
     def testSetCamera(self):
-
         self.metr.setCamera("lsstfam")
         self.assertEqual(self.metr._camera.getName(), "LSSTCam")
         self.metr.setCamera("comcam")
         self.assertEqual(self.metr._camera.getName(), "LSSTComCam")
 
     def testGetFieldXY(self):
-
         fieldX, fieldY = self.metr.getFieldXY()
         self.assertEqual(len(fieldX), 0)
         self.assertEqual(len(fieldY), 0)
@@ -53,13 +50,11 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertTrue(isinstance(fieldY, np.ndarray))
 
     def testGetWeightingRatio(self):
-
         wt = self.metr.getWeightingRatio()
         self.assertEqual(len(wt), 0)
         self.assertTrue(isinstance(wt, np.ndarray))
 
     def testSetWeightingRatio(self):
-
         wt = [1, 2]
         self.metr.setWeightingRatio(wt)
 
@@ -70,7 +65,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertRaises(ValueError, self.metr.setWeightingRatio, [-1, 1])
 
     def testSetFieldXYinDeg(self):
-
         fieldXInDegree = 0.1
         fieldYInDegree = 0.2
         self.metr.setFieldXYinDeg(fieldXInDegree, fieldYInDegree)
@@ -80,7 +74,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertEqual(fieldY, fieldYInDegree)
 
     def testAddFieldXYbyDeg(self):
-
         fieldXInDegree = 0.1
         fieldYInDegree = 0.2
         self.metr.addFieldXYbyDeg(fieldXInDegree, fieldYInDegree)
@@ -94,7 +87,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertEqual(len(fieldX), 2)
 
     def testSetWgtAndFieldXyOfGQLsst(self):
-
         self.metr.setWgtAndFieldXyOfGQ("lsst")
 
         fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtLsst()
@@ -109,7 +101,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertLess(np.sum(np.abs(wgt - wgtAns)), 1e-10)
 
     def _calcFieldXyAndWgtLsst(self):
-
         # The distance of point xi (used in Gaussian quadrature plane) to the
         # origin
         # This value is in [-1.75, 1.75]
@@ -134,7 +125,6 @@ class TestOpdMetrology(unittest.TestCase):
         return fieldX, fieldY, wgt / np.sum(wgt)
 
     def testSetWgtAndFieldXyOfGQComCam(self):
-
         self.metr.setWgtAndFieldXyOfGQ("comcam")
 
         fieldXAns, fieldYAns, wgtAns = self._calcFieldXyAndWgtComCam()
@@ -149,7 +139,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertLess(np.sum(np.abs(wgt - wgtAns)), 1e-10)
 
     def _calcFieldXyAndWgtComCam(self):
-
         # ComCam is the cetral raft of LSST cam, which is composed of 3 x 3
         # CCDs.
         nRow = 3
@@ -173,7 +162,6 @@ class TestOpdMetrology(unittest.TestCase):
         return fieldX, fieldY, wgt / np.sum(wgt)
 
     def testSetWgtAndFieldXyOfGQLsstFam(self):
-
         self.metr.setWgtAndFieldXyOfGQ("lsstfam")
 
         fieldX, fieldY = self.metr.getFieldXY()
@@ -183,13 +171,11 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertEqual(len(wgt), 189)
 
     def testSetWgtAndFieldXyOfGQErr(self):
-
         self.assertRaises(
             RuntimeError, self.metr.setWgtAndFieldXyOfGQ, "NoThisInstName"
         )
 
     def testSetDefaultLsstWfsGQ(self):
-
         self.metr.setDefaultLsstWfsGQ()
 
         fieldX, fieldY = self.metr.getFieldXY()
@@ -200,12 +186,10 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertCountEqual(wgt, [0.25, 0.25, 0.25, 0.25])
 
     def testGetDefaultLsstWfsGQ(self):
-
         fieldWFSx, fieldWFSy = self.metr.getDefaultLsstWfsGQ()
         self.assertEqual(len(fieldWFSx), 4)
 
     def testGetZkFromOpd(self):
-
         opdFilePath = self._getOpdFilePath()
         zk = self.metr.getZkFromOpd(opdFitsFile=opdFilePath)[0]
 
@@ -215,14 +199,12 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertLess(np.sum(np.abs(zk - allOpdAns[0, :])), 1e-10)
 
     def _getOpdFilePath(self):
-
         opdFileName = "sim6_iter0_opd0.fits.gz"
         opdFilePath = os.path.join(self.testDataDir, opdFileName)
 
         return opdFilePath
 
     def testRmPTTfromOPD(self):
-
         opdFilePath = self._getOpdFilePath()
         opdRmPTT, opdx, opdy = self.metr.rmPTTfromOPD(opdFitsFile=opdFilePath)
 
@@ -230,7 +212,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertLess(np.sum(np.abs(zkRmPTT[0:3])), 5e-2)
 
     def testAddFieldXYbyCamPos(self):
-
         sensorName = "R22_S11"
         instName = "lsstfam"
         xInpixel = 4004
@@ -246,13 +227,11 @@ class TestOpdMetrology(unittest.TestCase):
         )
 
     def calcPSSN(self):
-
         pssn = self._calcPssn()
         allData = self._getMetroAllAnsData()
         self.assertAlmostEqual(pssn, allData[0, 0])
 
     def _calcPssn(self):
-
         wavelengthInUm = 0.5
         opdFilePath = self._getOpdFilePath()
         pssn = self.metr.calcPSSN(wavelengthInUm, opdFitsFile=opdFilePath)
@@ -260,7 +239,6 @@ class TestOpdMetrology(unittest.TestCase):
         return pssn
 
     def _getMetroAllAnsData(self):
-
         ansAllDataFileName = "sim6_iter0_PSSN.txt"
         ansAllDataFilePath = os.path.join(self.testDataDir, ansAllDataFileName)
         allData = np.loadtxt(ansAllDataFilePath)
@@ -268,7 +246,6 @@ class TestOpdMetrology(unittest.TestCase):
         return allData
 
     def testCalcFWHMeff(self):
-
         pssn = self._calcPssn()
         fwhm = self.metr.calcFWHMeff(pssn)
 
@@ -276,7 +253,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertAlmostEqual(fwhm, allData[1, 0])
 
     def testCalcDm5(self):
-
         pssn = self._calcPssn()
         dm5 = self.metr.calcDm5(pssn)
 
@@ -284,7 +260,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertAlmostEqual(dm5, allData[2, 0])
 
     def testCalcEllip(self):
-
         wavelengthInUm = 0.5
         opdFilePath = self._getOpdFilePath()
         elli = self.metr.calcEllip(wavelengthInUm, opdFitsFile=opdFilePath)
@@ -295,7 +270,6 @@ class TestOpdMetrology(unittest.TestCase):
         self.assertAlmostEqual(elli, allElli[0])
 
     def testCalcGQvalue(self):
-
         self.metr.setWgtAndFieldXyOfGQ("lsst")
         allData = self._getMetroAllAnsData()
         valueList = allData[0, 0:31]
@@ -305,6 +279,5 @@ class TestOpdMetrology(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

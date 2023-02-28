@@ -520,7 +520,6 @@ class M1M3Sim(MirrorSim):
 
         # Grid sample map for M1 and M3
         for ii, idx in zip((0, 1), (idx1, idx3)):
-
             # Change the unit from m to mm
             innerRinMm = self.getInnerRinM()[ii] * 1e3
             outerRinMm = self.getOuterRinM()[ii] * 1e3

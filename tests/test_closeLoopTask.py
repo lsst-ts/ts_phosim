@@ -35,43 +35,36 @@ class TestCloseLoopTask(unittest.TestCase):
     """Test the CloseLoopTask class."""
 
     def setUp(self):
-
         self.closeLoopTask = CloseLoopTask()
 
         rootTestDir = os.path.join(getModulePath(), "tests")
         self.testDir = tempfile.TemporaryDirectory(dir=rootTestDir)
 
     def tearDown(self):
-
         self.testDir.cleanup()
 
     def testConfigSkySimWithError(self):
-
         self.assertRaises(ValueError, self.closeLoopTask.configSkySim, "NoThisInstName")
 
     def testConfigSkySimNoSkyFileLSSTFAM(self):
-
         self.closeLoopTask.configSkySim("lsstfam")
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 189)
 
     def testConfigSkySimNoSkyFileCOMCAM(self):
-
         self.closeLoopTask.configSkySim("comcam")
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 9)
 
     def testConfigSkySimNoSkyFileLSST(self):
-
         self.closeLoopTask.configSkySim("lsst")
 
         skySim = self.closeLoopTask.getSkySim()
         self.assertEqual(len(skySim.getStarId()), 8)
 
     def testConfigSkySimWithSkyFile(self):
-
         testSkyFile = os.path.join(
             getModulePath(), "tests", "testData", "sky", "skyComCam.txt"
         )
@@ -82,7 +75,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(skySim.getStarMag()[0], 15)
 
     def _makeIsrDir(self):
-
         isrDirName = "inputTest"
         isrDir = self.closeLoopTask.createIsrDir(
             self.testDir.name, isrDirName=isrDirName
@@ -91,7 +83,6 @@ class TestCloseLoopTask(unittest.TestCase):
         return isrDir
 
     def testConfigOfcCalc(self):
-
         instName = "comcam"
         self.closeLoopTask.configOfcCalc(instName)
 
@@ -99,7 +90,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(ofcCalc.ofc_data.name, instName)
 
     def testConfigPhosimCmpt(self):
-
         # Set the environment variable of phosim path
         PHOSIMPATH = "/path/to/phosim"
         os.environ["PHOSIMPATH"] = PHOSIMPATH
@@ -139,72 +129,59 @@ class TestCloseLoopTask(unittest.TestCase):
         os.environ.pop("PHOSIMPATH")
 
     def testGetCamTypeAndInstNameComCam(self):
-
         camType, instName = self.closeLoopTask.getCamTypeAndInstName("comcam")
         self.assertEqual(camType, CamType.ComCam)
         self.assertEqual(instName, "comcam")
 
     def testGetCamTypeAndInstNameLsstFam(self):
-
         camType, instName = self.closeLoopTask.getCamTypeAndInstName("lsstfam")
         self.assertEqual(camType, CamType.LsstFamCam)
         self.assertEqual(instName, "lsstfam")
 
     def testGetCamTypeAndInstNameLsst(self):
-
         camType, instName = self.closeLoopTask.getCamTypeAndInstName("lsst")
         self.assertEqual(camType, CamType.LsstCam)
         self.assertEqual(instName, "lsst")
 
     def testGetCamTypeAndInstNameErr(self):
-
         self.assertRaises(
             ValueError, self.closeLoopTask.getCamTypeAndInstName, "noThisInst"
         )
 
     def testGetFilterTypeRef(self):
-
         filterType = self.closeLoopTask.getFilterType("ref")
         self.assertEqual(filterType, FilterType.REF)
 
     def testGetFilterTypeU(self):
-
         filterType = self.closeLoopTask.getFilterType("u")
         self.assertEqual(filterType, FilterType.U)
 
     def testGetFilterTypeG(self):
-
         filterType = self.closeLoopTask.getFilterType("g")
         self.assertEqual(filterType, FilterType.G)
 
     def testGetFilterTypeR(self):
-
         filterType = self.closeLoopTask.getFilterType("r")
         self.assertEqual(filterType, FilterType.R)
 
     def testGetFilterTypeI(self):
-
         filterType = self.closeLoopTask.getFilterType("i")
         self.assertEqual(filterType, FilterType.I)
 
     def testGetFilterTypeZ(self):
-
         filterType = self.closeLoopTask.getFilterType("z")
         self.assertEqual(filterType, FilterType.Z)
 
     def testGetFilterTypeY(self):
-
         filterType = self.closeLoopTask.getFilterType("y")
         self.assertEqual(filterType, FilterType.Y)
 
     def testGetFilterTypeErr(self):
-
         self.assertRaises(
             ValueError, self.closeLoopTask.getFilterType, "noThisFilterType"
         )
 
     def testGetMagLimits(self):
-
         # check that each magLimits dictionary contains both low
         # and high values
         for filterTypeName in "ugrizy":
@@ -215,7 +192,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertRaises(ValueError, self.closeLoopTask.getMagLimits, "x")
 
     def testCheckAndCreateBaseOutputDir(self):
-
         # first, check that the output dir is created in the AOCLC output
         # dir if no output dir is provided
         self.closeLoopTask.checkAndCreateBaseOutputDir("")
@@ -229,7 +205,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertTrue(os.path.exists(baseOutputDir))
 
     def testSetDefaultParser(self):
-
         parser = argparse.ArgumentParser()
         parser = CloseLoopTask.setDefaultParser(parser)
 
@@ -245,7 +220,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(args.pipelineFile, "")
 
     def testSetImgParser(self):
-
         parser = argparse.ArgumentParser()
         parser = CloseLoopTask.setImgParser(parser)
 
@@ -257,7 +231,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(args.eimage, False)
 
     def testGetSensorNameListOfFieldsComCam(self):
-
         sensorNameList = self.closeLoopTask.getSensorNameListOfFields("comcam")
         self.assertEqual(len(sensorNameList), 9)
 
@@ -275,7 +248,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(sensorNameList, sensorNameListAns)
 
     def testGetSensorNameListOfFieldsLsstFam(self):
-
         sensorNameList = self.closeLoopTask.getSensorNameListOfFields("lsstfam")
         self.assertEqual(len(sensorNameList), 189)
         self.assertEqual(sensorNameList[0], "R01_S00")
@@ -291,7 +263,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertTrue("R00_SG0" not in sensorNameList)
 
     def testEraseDirectoryContent(self):
-
         # Make the temporary directory
         tempDir = os.path.join(self.testDir.name, "tempDir")
         os.mkdir(tempDir)
@@ -305,7 +276,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(len(files), 0)
 
     def testCheckBoresight(self):
-
         self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [1, 2], "")
         self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [-1, 0], "")
         self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [361, 0], "")
@@ -313,12 +283,10 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertRaises(ValueError, self.closeLoopTask.checkBoresight, [0, 91], "")
 
     def testCreateIsrDir(self):
-
         isrDir = self._makeIsrDir()
         self.assertTrue(os.path.exists(isrDir))
 
     def testMakeCalibsLSST(self):
-
         fakeFlatDir = self.closeLoopTask.makeCalibs("lsst", self.testDir.name)
 
         self.assertTrue(os.path.exists(fakeFlatDir))
@@ -327,7 +295,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(len(files), 48)
 
     def testMakeCalibsComCam(self):
-
         fakeFlatDir = self.closeLoopTask.makeCalibs("comcam", self.testDir.name)
 
         self.assertTrue(os.path.exists(fakeFlatDir))
@@ -336,7 +303,6 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertEqual(len(files), 54)
 
     def testAssignImgType(self):
-
         self.assertFalse(self.closeLoopTask.useCcdImg())
 
         self.closeLoopTask.assignImgType(False)
@@ -349,14 +315,12 @@ class TestCloseLoopTask(unittest.TestCase):
         self.assertFalse(self.closeLoopTask.useCcdImg())
 
     def testUseCcdImg(self):
-
         self.assertFalse(self.closeLoopTask.useCcdImg())
 
         self.closeLoopTask.assignImgType(False)
         self.assertTrue(self.closeLoopTask.useCcdImg())
 
     def testMapFilterRefToG(self):
-
         # test that the reference filter
         # gets mapped to g
         for filterTypeName in ["ref", ""]:
@@ -406,6 +370,5 @@ class TestCloseLoopTask(unittest.TestCase):
 
 
 if __name__ == "__main__":
-
     # Run the unit test
     unittest.main()

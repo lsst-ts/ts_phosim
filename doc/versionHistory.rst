@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.3.1:
+
+-------------
+2.3.1
+-------------
+
+* Run black v23.1.0.
+* Update Jenkinsfile.
+
 .. _lsst.ts.phosim-2.3.0:
 
 -------------

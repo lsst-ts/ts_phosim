@@ -608,7 +608,6 @@ class CloseLoopTask(object):
         # Do the iteration
         obsId = 9006000
         for iterCount in range(iterNum):
-
             # Set the observation Id
             self.phosimCmpt.setSurveyParam(obsId=obsId)
 
@@ -1001,7 +1000,6 @@ class CloseLoopTask(object):
         butler = dafButler.Butler(butlerRootPath)
 
         if f"LSST{butlerInstName}/calib" not in butler.registry.queryCollections():
-
             self.log.info("Ingesting curated calibrations.")
 
             runProgram(
@@ -1112,7 +1110,6 @@ class CloseLoopTask(object):
         butler = dafButler.Butler(butlerRootPath)
 
         if f"LSST{butlerInstName}/calib" not in butler.registry.queryCollections():
-
             self.log.info("Ingesting curated calibrations.")
 
             runProgram(
