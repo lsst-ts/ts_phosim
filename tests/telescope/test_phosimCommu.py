@@ -23,7 +23,7 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.utility import FilterType
 
 from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
 

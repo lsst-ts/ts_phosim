@@ -33,8 +33,8 @@ from lsst.afw.cameraGeom import DetectorType, FIELD_ANGLE
 
 from lsst.daf import butler as dafButler
 
-from lsst.ts.wep.Utility import CamType, FilterType, runProgram, getConfigDir
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.utility import CamType, FilterType, runProgram, getConfigDir
+from lsst.ts.wep.paramReader import ParamReader
 
 from lsst.ts.ofc import OFC, OFCData
 
@@ -185,7 +185,7 @@ class CloseLoopTask(object):
 
         Parameters
         ----------
-        filterType : enum 'FilterType' in lsst.ts.wep.Utility
+        filterType : enum 'FilterType' in lsst.ts.wep.utility
             Filter type.
         rotAngInDeg : float
             The camera rotation angle in degree (-90 to 90).
@@ -389,7 +389,7 @@ class CloseLoopTask(object):
 
         Returns
         -------
-        camType : enum 'CamType' in lsst.ts.wep.Utility
+        camType : enum 'CamType' in lsst.ts.wep.utility
             Camera type.
         instName : enum 'InstName' in lsst.ts.ofc.Utility
             Instrument name.
@@ -419,7 +419,7 @@ class CloseLoopTask(object):
 
         Returns
         -------
-        filterType : enum 'FilterType' in lsst.ts.wep.Utility
+        filterType : enum 'FilterType' in lsst.ts.wep.utility
             Filter type.
 
         Raises
@@ -549,7 +549,7 @@ class CloseLoopTask(object):
 
         Parameters
         ----------
-        camType : enum 'CamType' in lsst.ts.wep.Utility
+        camType : enum 'CamType' in lsst.ts.wep.utility
             Camera type.
         instName : enum 'InstName' in lsst.ts.ofc.Utility
             Instrument name.
@@ -1222,7 +1222,7 @@ tasks:
       doOverscan: True
       python: OverscanCorrectionTask.ConfigClass.fitType = 'MEDIAN'
   generateDonutCatalogWcsTask:
-    class: lsst.ts.wep.task.GenerateDonutCatalogWcsTask.GenerateDonutCatalogWcsTask
+    class: lsst.ts.wep.task.generateDonutCatalogWcsTask.GenerateDonutCatalogWcsTask
 """
             )
 

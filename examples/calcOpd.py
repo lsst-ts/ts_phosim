@@ -22,7 +22,7 @@
 import os
 import numpy as np
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.utility import FilterType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.OpdMetrology import OpdMetrology

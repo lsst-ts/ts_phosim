@@ -22,7 +22,7 @@
 import os
 import subprocess
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.utility import FilterType
 
 from lsst.ts.phosim.utils.Utility import SurfaceType
 
