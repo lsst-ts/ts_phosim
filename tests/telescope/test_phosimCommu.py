@@ -42,7 +42,7 @@ class TestPhosimCommu(unittest.TestCase):
         self.assertEqual(self.phosimCom.getPhoSimDir(), phosimDir)
 
     def testGetFilterId(self):
-        phosimFilterID = self.phosimCom.getFilterId(FilterType.R)
+        phosimFilterID = self.phosimCom.getFilterId(FilterType.LSST_R)
         self.assertEqual(phosimFilterID, 2)
 
     def testGetFilterIdWithFilterRef(self):

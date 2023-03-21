@@ -95,7 +95,7 @@ class TestCloseLoopTask(unittest.TestCase):
         os.environ["PHOSIMPATH"] = PHOSIMPATH
 
         # Configure the PhoSim component
-        filterType = FilterType.R
+        filterType = FilterType.LSST_R
         rotAngInDeg = 30
         m1m3ForceError = 0.07
         numPro = 2
@@ -154,27 +154,27 @@ class TestCloseLoopTask(unittest.TestCase):
 
     def testGetFilterTypeU(self):
         filterType = self.closeLoopTask.getFilterType("u")
-        self.assertEqual(filterType, FilterType.U)
+        self.assertEqual(filterType, FilterType.LSST_U)
 
     def testGetFilterTypeG(self):
         filterType = self.closeLoopTask.getFilterType("g")
-        self.assertEqual(filterType, FilterType.G)
+        self.assertEqual(filterType, FilterType.LSST_G)
 
     def testGetFilterTypeR(self):
         filterType = self.closeLoopTask.getFilterType("r")
-        self.assertEqual(filterType, FilterType.R)
+        self.assertEqual(filterType, FilterType.LSST_R)
 
     def testGetFilterTypeI(self):
         filterType = self.closeLoopTask.getFilterType("i")
-        self.assertEqual(filterType, FilterType.I)
+        self.assertEqual(filterType, FilterType.LSST_I)
 
     def testGetFilterTypeZ(self):
         filterType = self.closeLoopTask.getFilterType("z")
-        self.assertEqual(filterType, FilterType.Z)
+        self.assertEqual(filterType, FilterType.LSST_Z)
 
     def testGetFilterTypeY(self):
         filterType = self.closeLoopTask.getFilterType("y")
-        self.assertEqual(filterType, FilterType.Y)
+        self.assertEqual(filterType, FilterType.LSST_Y)
 
     def testGetFilterTypeErr(self):
         self.assertRaises(

@@ -53,7 +53,7 @@ class TestTeleFacade(unittest.TestCase):
 
         # Set the survey parameters
         obsId = 9006000
-        cls.filterType = FilterType.G
+        cls.filterType = FilterType.LSST_G
         boresight = (0.2, 0.3)
         zAngleInDeg = 27.0912
         rotAngInDeg = np.rad2deg(-1.2323)
@@ -109,7 +109,7 @@ class TestTeleFacade(unittest.TestCase):
 
     def testSetSurveyParamWithCorrectInput(self):
         obsId = 100
-        filterType = FilterType.U
+        filterType = FilterType.LSST_U
         boresight = (10, 20)
         zAngleInDeg = 10.0
         rotAngInDeg = 11.0
@@ -136,7 +136,7 @@ class TestTeleFacade(unittest.TestCase):
         self.tele.setSurveyParam(obsId=obsId)
 
         self.assertEqual(self.tele.surveyParam["obsId"], defaultObsId)
-        self.assertEqual(self.tele.surveyParam["filterType"], FilterType.G)
+        self.assertEqual(self.tele.surveyParam["filterType"], FilterType.LSST_G)
 
     def testSetSensorOnWithCorrectInput(self):
         sciSensorOn = False

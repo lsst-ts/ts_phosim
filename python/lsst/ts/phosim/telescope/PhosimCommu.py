@@ -84,17 +84,17 @@ class PhosimCommu(object):
         """
 
         filterId = -1
-        if filterType == FilterType.U:
+        if filterType == FilterType.LSST_U:
             filterId = 0
-        elif filterType == FilterType.G:
+        elif filterType == FilterType.LSST_G:
             filterId = 1
-        elif filterType == FilterType.R:
+        elif filterType == FilterType.LSST_R:
             filterId = 2
-        elif filterType == FilterType.I:
+        elif filterType == FilterType.LSST_I:
             filterId = 3
-        elif filterType == FilterType.Z:
+        elif filterType == FilterType.LSST_Z:
             filterId = 4
-        elif filterType == FilterType.Y:
+        elif filterType == FilterType.LSST_Y:
             filterId = 5
         else:
             raise ValueError(

@@ -431,17 +431,17 @@ class CloseLoopTask(object):
         if filterTypeName in {"", "ref"}:
             return FilterType.REF
         elif filterTypeName == "u":
-            return FilterType.U
+            return FilterType.LSST_U
         elif filterTypeName == "g":
-            return FilterType.G
+            return FilterType.LSST_G
         elif filterTypeName == "r":
-            return FilterType.R
+            return FilterType.LSST_R
         elif filterTypeName == "i":
-            return FilterType.I
+            return FilterType.LSST_I
         elif filterTypeName == "z":
-            return FilterType.Z
+            return FilterType.LSST_Z
         elif filterTypeName == "y":
-            return FilterType.Y
+            return FilterType.LSST_Y
         else:
             raise ValueError(f"This filter type ({filterTypeName}) is not supported.")
 
