@@ -23,8 +23,8 @@ import os
 import numpy as np
 from scipy.interpolate import Rbf
 
-from lsst.ts.wep.cwfs.Tool import ZernikeFit, ZernikeEval
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.cwfs.tool import ZernikeFit, ZernikeEval
+from lsst.ts.wep.paramReader import ParamReader
 
 
 class MirrorSim(object):

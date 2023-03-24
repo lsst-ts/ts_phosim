@@ -21,7 +21,7 @@
 
 import os
 
-from lsst.ts.wep.Utility import FilterType, CamType
+from lsst.ts.wep.utility import FilterType, CamType
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim

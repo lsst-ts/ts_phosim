@@ -26,8 +26,8 @@ import numpy as np
 import warnings
 import unittest
 
-from lsst.ts.wep.Utility import FilterType, CamType
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.utility import FilterType, CamType
+from lsst.ts.wep.paramReader import ParamReader
 
 from lsst.ts.phosim.telescope.TeleFacade import TeleFacade
 from lsst.ts.phosim.SkySim import SkySim

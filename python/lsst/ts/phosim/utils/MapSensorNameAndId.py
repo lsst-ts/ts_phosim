@@ -21,8 +21,8 @@
 
 import os
 
-from lsst.ts.wep.ParamReader import ParamReader
-from lsst.ts.wep.Utility import getConfigDir
+from lsst.ts.wep.paramReader import ParamReader
+from lsst.ts.wep.utility import getConfigDir
 
 
 class MapSensorNameAndId(object):

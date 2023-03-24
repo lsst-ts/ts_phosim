@@ -27,7 +27,7 @@ from lsst.ts.phosim.telescope.MirrorSim import MirrorSim
 from lsst.ts.phosim.utils.Utility import getConfigDir, opt2ZemaxCoorTrans
 from lsst.ts.phosim.utils.PlotUtil import plotResMap
 
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.paramReader import ParamReader
 
 
 class M2Sim(MirrorSim):
