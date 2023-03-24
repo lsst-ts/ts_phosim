@@ -23,7 +23,7 @@ import os
 import numpy as np
 import unittest
 
-from lsst.ts.wep.Utility import FilterType
+from lsst.ts.wep.utility import FilterType
 
 from lsst.ts.phosim.telescope.PhosimCommu import PhosimCommu
 
@@ -42,7 +42,7 @@ class TestPhosimCommu(unittest.TestCase):
         self.assertEqual(self.phosimCom.getPhoSimDir(), phosimDir)
 
     def testGetFilterId(self):
-        phosimFilterID = self.phosimCom.getFilterId(FilterType.R)
+        phosimFilterID = self.phosimCom.getFilterId(FilterType.LSST_R)
         self.assertEqual(phosimFilterID, 2)
 
     def testGetFilterIdWithFilterRef(self):

@@ -28,7 +28,7 @@ from astropy import units as u
 
 from lsst.daf.butler import Butler
 
-from lsst.ts.wep.task.RefCatalogInterface import RefCatalogInterface
+from lsst.ts.wep.task.refCatalogInterface import RefCatalogInterface
 
 
 class CreateSkyFile(object):

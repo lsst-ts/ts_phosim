@@ -36,8 +36,8 @@ from lsst.ts.phosim.utils.Utility import (
     mapSurfNameToEnum,
 )
 
-from lsst.ts.wep.Utility import FilterType, CamType, mapFilterRefToG
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.utility import FilterType, CamType, mapFilterRefToG
+from lsst.ts.wep.paramReader import ParamReader
 
 
 class TeleFacade(object):
@@ -194,7 +194,7 @@ class TeleFacade(object):
         ----------
         obsId : int, optional
             Observation Id. (the default is None.)
-        filterType : enum 'FilterType' in lsst.ts.wep.Utility, optional
+        filterType : enum 'FilterType' in lsst.ts.wep.utility, optional
             Active filter type. (the default is None.)
         boresight : tuple, optional
             Telescope boresight in (ra, decl). (the default is None.)
@@ -315,7 +315,7 @@ class TeleFacade(object):
 
         Parameters
         ----------
-        camType : enum 'CamType' in lsst.ts.wep.Utility
+        camType : enum 'CamType' in lsst.ts.wep.utility
             Camera type.
         defocalDist : float, optional
             Defocal distance in mm. If None, the default value will be used.
@@ -350,7 +350,7 @@ class TeleFacade(object):
 
         Parameters
         ----------
-        camType : enum 'CamType' in lsst.ts.wep.Utility
+        camType : enum 'CamType' in lsst.ts.wep.utility
             Camera type.
 
         Raises

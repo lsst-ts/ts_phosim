@@ -23,7 +23,7 @@ import numpy as np
 import warnings
 import scipy.special as sp
 
-from lsst.ts.wep.cwfs.Tool import padArray, extractArray
+from lsst.ts.wep.cwfs.tool import padArray, extractArray
 
 
 def calc_pssn(

@@ -22,7 +22,7 @@
 import os
 import numpy as np
 
-from lsst.ts.wep.ParamReader import ParamReader
+from lsst.ts.wep.paramReader import ParamReader
 from lsst.ts.phosim.utils.Utility import getConfigDir
 
 

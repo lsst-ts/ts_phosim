@@ -27,7 +27,7 @@ import numpy as np
 
 from lsst.ts.phosim.utils.Utility import getConfigDir, getModulePath
 from lsst.ts.phosim.utils.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
-from lsst.ts.wep.Utility import DefocalType
+from lsst.ts.wep.utility import DefocalType
 
 
 class TestCreatePhosimDonutTemplates(unittest.TestCase):
