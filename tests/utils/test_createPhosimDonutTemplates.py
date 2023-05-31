@@ -110,6 +110,8 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self.createPhosimDonuts.ingestImages()
         registry = self.createPhosimDonuts.butler.registry
 
+        print(list(registry.queryDataIds('exposure')))
+        print(list(registry.queryCollections()))
         self.assertEqual(
             list(registry.queryDataIds("exposure"))[0]["exposure"], 4021123106001
         )
@@ -154,7 +156,7 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
                     "band": "g",
                     "instrument": "LSSTCam",
                     "detector": 93,
-                    "physical_filter": "g",
+                    "physical_filter": "g_6",
                     "exposure": 4021123106001,
                 }
             ],
