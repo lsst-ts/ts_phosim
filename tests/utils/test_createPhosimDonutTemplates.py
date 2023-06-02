@@ -25,6 +25,7 @@ import shutil
 import tempfile
 import numpy as np
 
+from lsst.daf.butler import Butler
 from lsst.ts.phosim.utils.Utility import getConfigDir, getModulePath
 from lsst.ts.phosim.utils.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
 from lsst.ts.wep.utility import DefocalType
@@ -108,10 +109,10 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self._copyPhosimFiles()
         # Run the ingest
         self.createPhosimDonuts.ingestImages()
+        # Refresh the butler to get latest ingest
+        self.createPhosimDonuts.butler = Butler(self.createPhosimDonuts.repoDir)
         registry = self.createPhosimDonuts.butler.registry
 
-        print(list(registry.queryDataIds('exposure')))
-        print(list(registry.queryCollections()))
         self.assertEqual(
             list(registry.queryDataIds("exposure"))[0]["exposure"], 4021123106001
         )

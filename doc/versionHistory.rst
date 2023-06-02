@@ -6,6 +6,15 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.3.3:
+
+-------------
+2.3.3
+-------------
+
+* Update filter in test data for test_createPhosimDonutTemplates from 'g' to 'g_6'.
+* Refresh butler in test_createPhosimDonutTemplates to find ingested data.
+
 .. _lsst.ts.phosim-2.3.2:
 
 -------------
