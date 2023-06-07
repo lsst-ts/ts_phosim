@@ -25,6 +25,7 @@ import shutil
 import tempfile
 import numpy as np
 
+from lsst.daf.butler import Butler
 from lsst.ts.phosim.utils.Utility import getConfigDir, getModulePath
 from lsst.ts.phosim.utils.CreatePhosimDonutTemplates import CreatePhosimDonutTemplates
 from lsst.ts.wep.utility import DefocalType
@@ -108,6 +109,8 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
         self._copyPhosimFiles()
         # Run the ingest
         self.createPhosimDonuts.ingestImages()
+        # Refresh the butler to get latest ingest
+        self.createPhosimDonuts.butler = Butler(self.createPhosimDonuts.repoDir)
         registry = self.createPhosimDonuts.butler.registry
 
         self.assertEqual(
@@ -154,7 +157,7 @@ class TestCreatePhosimDonutTemplates(unittest.TestCase):
                     "band": "g",
                     "instrument": "LSSTCam",
                     "detector": 93,
-                    "physical_filter": "g",
+                    "physical_filter": "g_6",
                     "exposure": 4021123106001,
                 }
             ],
