@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.3.4:
+
+-------------
+2.3.4
+-------------
+
+* Update setup configuration files.
+
 .. _lsst.ts.phosim-2.3.3:
 
 -------------
