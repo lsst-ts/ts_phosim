@@ -33,7 +33,7 @@ from lsst.afw.cameraGeom import DetectorType, FIELD_ANGLE
 
 from lsst.daf import butler as dafButler
 
-from lsst.ts.wep.utility import CamType, FilterType, runProgram, getConfigDir
+from lsst.ts.wep.utils import CamType, FilterType, runProgram, getConfigDir
 from lsst.ts.wep.paramReader import ParamReader
 
 from lsst.ts.ofc import OFC, OFCData
@@ -185,7 +185,7 @@ class CloseLoopTask(object):
 
         Parameters
         ----------
-        filterType : enum 'FilterType' in lsst.ts.wep.utility
+        filterType : enum 'FilterType' in lsst.ts.wep.utils
             Filter type.
         rotAngInDeg : float
             The camera rotation angle in degree (-90 to 90).
