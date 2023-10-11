@@ -5,6 +5,13 @@
 ##################
 Version History
 ##################
+.. _lsst.ts.phosim-2.3.5:
+
+-------------
+2.3.5
+-------------
+
+* Update to use lsst.ts.wep.utils (ts_wep v7.0.0).
 
 .. _lsst.ts.phosim-2.3.4:
 
