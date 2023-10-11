@@ -27,7 +27,7 @@ from lsst.ts.phosim.telescope.MirrorSim import MirrorSim
 from lsst.ts.phosim.utils.Utility import getConfigDir, opt2ZemaxCoorTrans
 from lsst.ts.phosim.utils.PlotUtil import plotResMap
 
-from lsst.ts.wep.cwfs.tool import ZernikeAnnularFit, ZernikeAnnularEval
+from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeAnnularEval
 from lsst.ts.wep.paramReader import ParamReader
 
 
