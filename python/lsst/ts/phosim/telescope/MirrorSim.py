@@ -23,7 +23,7 @@ import os
 import numpy as np
 from scipy.interpolate import Rbf
 
-from lsst.ts.wep.cwfs.tool import ZernikeFit, ZernikeEval
+from lsst.ts.wep.utils import ZernikeFit, ZernikeEval
 from lsst.ts.wep.paramReader import ParamReader
 
 
