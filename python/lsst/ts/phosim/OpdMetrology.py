@@ -27,7 +27,7 @@ from astropy.io import fits
 import lsst.geom
 from lsst.afw.cameraGeom import PIXELS, FIELD_ANGLE
 
-from lsst.ts.wep.cwfs.tool import ZernikeAnnularFit, ZernikeEval
+from lsst.ts.wep.utils import ZernikeAnnularFit, ZernikeEval
 from lsst.ts.wep.paramReader import ParamReader
 
 from lsst.ts.ofc.utils import get_config_dir as getConfigDirOfc

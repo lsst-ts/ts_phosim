@@ -24,7 +24,7 @@ import argparse
 import tempfile
 import unittest
 
-from lsst.ts.wep.utility import CamType, FilterType
+from lsst.ts.wep.utils import CamType, FilterType
 from lsst.ts.wep.paramReader import ParamReader
 
 from lsst.ts.phosim.CloseLoopTask import CloseLoopTask

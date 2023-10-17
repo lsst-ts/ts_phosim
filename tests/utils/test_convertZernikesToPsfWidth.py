@@ -29,7 +29,7 @@ from lsst.ts.phosim.utils.ConvertZernikesToPsfWidth import (
 )
 from lsst.ts.phosim.utils.Utility import getModulePath
 from lsst.ts.wep.cwfs.instrument import Instrument
-from lsst.ts.wep.utility import CamType
+from lsst.ts.wep.utils import CamType
 
 
 class TestConvertZernikesToPsfWidth(unittest.TestCase):
