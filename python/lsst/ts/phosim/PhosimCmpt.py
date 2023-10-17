@@ -27,7 +27,7 @@ import numpy as np
 from scipy import ndimage
 from astropy.io import fits
 
-from lsst.ts.wep.utility import runProgram
+from lsst.ts.wep.utils import runProgram
 from lsst.ts.wep.paramReader import ParamReader
 
 from lsst.ts.phosim.OpdMetrology import OpdMetrology
@@ -280,7 +280,7 @@ class PhosimCmpt(object):
         ----------
         obsId : int, optional
             Observation Id. (the default is None.)
-        filterType : enum 'FilterType' in lsst.ts.wep.utility, optional
+        filterType : enum 'FilterType' in lsst.ts.wep.utils, optional
             Active filter type. (the default is None.)
         boresight : tuple, optional
             Telescope boresight in (ra, decl). (the default is None.)
