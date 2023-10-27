@@ -1,5 +1,8 @@
 [![docs](https://img.shields.io/badge/docs-ts--phosim.lsst.io-brightgreen)](https://ts-phosim.lsst.io/)
 
+# Discontinued development deprecation note
+As of v8.0.0 of [ts_wep](https://github.com/lsst-ts/ts_wep) stopped being  compatible with `ts_phosim`  due to the introduction of `ts_imsim`-specific rotations. As of October 2023, all functionality of `ts_phosim` to simulate the AOS loop is ported to `ts_imsim`. Please see [ts_imsim](https://github.com/lsst-ts/ts_imsim) for all installation instructions. 
+
 # PhoSim Use
 
 This module is a high-level module to use PhoSim.
