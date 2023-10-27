@@ -6,6 +6,14 @@
 Version History
 ##################
 
+.. _lsst.ts.phosim-2.3.6:
+
+-------------
+2.3.6
+-------------
+
+* Added deprecation note, as of ts_wep v8.0.0 - switch to ts_imsim.n
+
 .. _lsst.ts.phosim-2.3.5:
 
 -------------
